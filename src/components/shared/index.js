@@ -1,0 +1,1 @@
+export { GenderBadge } from './GenderBadge';
