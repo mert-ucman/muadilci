@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
@@ -13,6 +14,7 @@ export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments, addComment, toggleCompFavorite, isCompFavorite } = useData();
   const { user, isMod } = useAuth();
+  const { sm, md } = useW();
 
   const initOrigId = queryParams?.orijinal || '';
   const initOrigBrand = initOrigId ? (perfumes.find((p) => String(p.id) === String(initOrigId))?.brandName || '') : '';
@@ -24,6 +26,7 @@ export function ComparisonPage({ queryParams }) {
   const [selMuadilId, setSelMuadilId] = useState(initMuadilId);
   const [muadilSortDir, setMuadilSortDir] = useState('desc');
   const [showCForm, setShowCForm] = useState(false);
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [cSim, setCSim] = useState(5);
   const [cProj, setCProj] = useState(5);
   const [cLon, setCLon] = useState(5);
@@ -55,22 +58,23 @@ export function ComparisonPage({ queryParams }) {
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '32px' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
+        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '22px' }}>
+        {/* Selectors */}
+        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}><Select label="Parfüm Evi" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); }} options={origBrandOpts} /></div>
               <div style={{ flex: 1 }}><Select label="Model" value={selOrigId} onChange={(e) => setSelOrigId(e.target.value)} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Muadil Parfüm</div>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}><Select label="Muadil Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
               <div style={{ flex: 1 }}><Select label="Muadil Model" value={selMuadilId} onChange={(e) => setSelMuadilId(e.target.value)} options={mPerfOpts} /></div>
             </div>
@@ -79,7 +83,8 @@ export function ComparisonPage({ queryParams }) {
 
         {selOrig && selMuadil ? (
           <div className="fade-in">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr', gap: '18px', marginBottom: '18px' }}>
+            {/* Top cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: '14px', marginBottom: '14px' }}>
               <Card style={{ padding: '0', overflow: 'hidden' }}>
                 <div style={{ width: '100%', aspectRatio: '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
                   <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -100,15 +105,31 @@ export function ComparisonPage({ queryParams }) {
                   <Badge color="green">Muadil</Badge>
                 </div>
               </Card>
-              <Card style={{ padding: '24px', position: 'relative' }}>
+              <Card style={{ padding: '24px', position: 'relative', gridColumn: sm ? '1' : md ? '1 / -1' : 'auto' }}>
                 <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.id, selOrig.id, selMuadil.id); }}
                   style={{ position: 'absolute', top: '14px', right: '14px', background: isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}>
                   {isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? '❤️' : '🤍'}
                 </button>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: C.textMid, marginBottom: '10px' }}>{selOrig.brandName} {selOrig.name} vs {selMuadil.brandName} {selMuadil.name}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: C.textMid, marginBottom: '10px', paddingRight: '40px' }}>{selOrig.brandName} {selOrig.name} vs {selMuadil.brandName} {selMuadil.name}</div>
                 <div style={{ marginBottom: '4px' }}><span style={{ fontSize: '13px', color: C.textLight }}>Muadil markası : </span><span style={{ fontWeight: 700, color: C.text }}>{selMuadil.brandName}</span></div>
                 <div style={{ marginBottom: '14px' }}><span style={{ fontSize: '13px', color: C.textLight }}>Muadil Parfüm : </span><span style={{ fontWeight: 700, color: C.text }}>{selMuadil.name}</span></div>
                 <div style={{ height: '1px', background: C.border, marginBottom: '14px' }} />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', position: 'relative' }}>
+                  <button
+                    onMouseEnter={() => setShowScoreInfo(true)}
+                    onMouseLeave={() => setShowScoreInfo(false)}
+                    style={{ width: '20px', height: '20px', borderRadius: '50%', border: `1px solid ${C.border}`, background: '#f4f4f6', color: C.textLight, fontSize: '12px', fontWeight: 700, cursor: 'default', fontFamily: F, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                  >?</button>
+                  {showScoreInfo && (
+                    <div style={{ position: 'absolute', top: '26px', right: 0, width: '240px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px', boxShadow: '0 8px 24px rgba(0,0,0,.1)', zIndex: 10, fontSize: '12px', color: C.text, lineHeight: 1.6 }}>
+                      <div style={{ fontWeight: 700, color: C.navy, marginBottom: '8px', fontSize: '13px' }}>Puanlar Nasıl Hesaplanır?</div>
+                      <div style={{ marginBottom: '6px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Koku Yakınlığı:</span> Kullanıcıların orijinal kokuya benzerlik oylarının ortalaması.</div>
+                      <div style={{ marginBottom: '6px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Yayılım:</span> Parfümün çevreye ne kadar yayıldığına verilen oyların ortalaması.</div>
+                      <div style={{ marginBottom: '8px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Kalıcılık:</span> Kokunun üstte ne kadar süre kaldığına verilen oyların ortalaması.</div>
+                      <div style={{ paddingTop: '8px', borderTop: `1px solid ${C.borderLight}` }}><span style={{ fontWeight: 600, color: C.gold }}>Genel Puan:</span> Koku yakınlığı, yayılım ve kalıcılığın eşit ağırlıklı ortalamasıdır (0–10).</div>
+                    </div>
+                  )}
+                </div>
                 <ScoreBar label="koku yakınlığı" value={scores.scent} empty={scores.scent === null} />
                 <ScoreBar label="yayılım" value={scores.projection} empty={scores.projection === null} />
                 <ScoreBar label="kalıcılık" value={scores.longevity} empty={scores.longevity === null} />
@@ -126,14 +147,14 @@ export function ComparisonPage({ queryParams }) {
               </Card>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '18px' }}>
-              {/* Orijinal notalar */}
+            {/* Notes + Other muadils */}
+            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
               <Card style={{ padding: '22px' }}>
                 <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}` }}>{selOrig.name}</div>
                 <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>Koku Notaları</div>
-                {[['Üst', selOrig.notes?.top || []], ['Kalp', selOrig.notes?.heart || []], ['Dip', selOrig.notes?.base || []]].map(([l, n]) => (
+                {[['Üst', '🌿', selOrig.notes?.top || []], ['Kalp', '🩷', selOrig.notes?.heart || []], ['Dip', '🪵', selOrig.notes?.base || []]].map(([l, icon, n]) => (
                   <div key={l} style={{ marginBottom: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px' }}>{l}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}><span>{icon}</span>{l}</div>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                       {n.map((note) => <span key={note} style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: C.gold }}>{note}</span>)}
                     </div>
@@ -142,7 +163,6 @@ export function ComparisonPage({ queryParams }) {
                 <div style={{ marginTop: '12px', fontSize: '13px', color: C.textMid, lineHeight: 1.6, fontStyle: 'italic' }}>"{selOrig.description}"</div>
               </Card>
 
-              {/* Diğer muadiller */}
               <Card style={{ padding: '22px' }}>
                 <div style={{ fontWeight: 700, fontSize: '15px', color: C.green, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}` }}>{selMuadil.name}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -181,7 +201,7 @@ export function ComparisonPage({ queryParams }) {
               </Card>
             </div>
 
-            {/* Yorumlar — tam genişlik */}
+            {/* Comments */}
             <Card style={{ padding: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontWeight: 700, fontSize: '16px', color: C.navy }}>Yorumlar ({muadilComments.length})</span>
@@ -190,7 +210,7 @@ export function ComparisonPage({ queryParams }) {
 
               {showCForm && (
                 <div className="fade-in" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
                       <div key={l}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -219,20 +239,20 @@ export function ComparisonPage({ queryParams }) {
               )}
 
               {muadilComments.length === 0 && <div style={{ textAlign: 'center', color: C.textLight, fontSize: '14px', padding: '32px' }}>Henüz yorum yok.</div>}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
                 {muadilComments.map((c) => (
                   <div key={c.id} style={{ border: `1px solid ${c.status === 'pending' ? C.goldBorder : C.border}`, borderRadius: '12px', padding: '14px 16px', background: c.status === 'pending' ? C.goldBg : C.card }}>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
                       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>{c.userAvatar}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                           <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{c.userName}</span>
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                             {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
                             <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '12px', marginTop: '3px', fontSize: '12px', color: C.textMid }}>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap' }}>
                           <span>Ben. <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
                           <span>Yay. <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
                           <span>Kal. <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
@@ -246,10 +266,10 @@ export function ComparisonPage({ queryParams }) {
             </Card>
           </div>
         ) : (
-          <Card style={{ padding: '60px', textAlign: 'center' }}>
+          <Card style={{ padding: sm ? '40px 20px' : '60px', textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '14px' }}>🔍</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Karşılaştırmak istediğiniz parfümü seçin</div>
-            <div style={{ color: C.textLight, fontSize: '14px' }}>Soldaki menüden orijinal parfümü, sağdaki menüden muadilini seçin.</div>
+            <div style={{ fontSize: sm ? '16px' : '20px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Karşılaştırmak istediğiniz parfümü seçin</div>
+            <div style={{ color: C.textLight, fontSize: '14px' }}>Orijinal parfümü ve muadilini seçin.</div>
           </Card>
         )}
       </div>

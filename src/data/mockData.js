@@ -1,12 +1,12 @@
 export const INIT_BRANDS = [
-  { id: 1, slug: 'chanel', name: 'Chanel', type: 'original', origin: 'Fransa', founded: 1910, logo: 'CH', category: 'Lüks', bio: "1910'dan bu yana moda ve parfüm dünyasının öncüsü.", likes: 9823, active: true },
-  { id: 2, slug: 'dior', name: 'Dior', type: 'original', origin: 'Fransa', founded: 1947, logo: 'CD', category: 'Lüks', bio: "Christian Dior'un yarattığı zamansız lüks.", likes: 8741, active: true },
-  { id: 3, slug: 'tom-ford', name: 'Tom Ford', type: 'original', origin: 'ABD', founded: 2005, logo: 'TF', category: 'Lüks', bio: 'Cesur, seksi ve sofistike parfümler.', likes: 7654, active: true },
-  { id: 4, slug: 'ysl', name: 'Yves Saint Laurent', type: 'original', origin: 'Fransa', founded: 1962, logo: 'YSL', category: 'Premium', bio: 'Özgürlüğü ve gücü simgeleyen parfümler.', likes: 6532, active: true },
-  { id: 101, slug: 'mfy', name: 'MFY', type: 'muadil', origin: 'Türkiye', founded: 2015, logo: 'MFY', category: 'Muadil', bio: "Türkiye'nin önde gelen muadil parfüm markası.", likes: 4200, active: true },
-  { id: 102, slug: 'zara-parfums', name: 'Zara Parfums', type: 'muadil', origin: 'İspanya', founded: 2010, logo: 'ZP', category: 'Muadil', bio: 'Uygun şık parfümler.', likes: 3800, active: true },
-  { id: 103, slug: 'lattafa', name: 'Lattafa', type: 'muadil', origin: 'BAE', founded: 2004, logo: 'LA', category: 'Muadil', bio: "Orta Doğu'nun prestijli muadil parfüm evi.", likes: 5100, active: true },
-  { id: 104, slug: 'armaf', name: 'Armaf', type: 'muadil', origin: 'BAE', founded: 2012, logo: 'AR', category: 'Muadil', bio: 'Lüksü demokratize eden parfüm evi.', likes: 4600, active: true },
+  { id: 1, slug: 'chanel', name: 'Chanel', type: 'original', origin: 'Fransa', founded: 1910, logo: 'CH', category: 'Designer', bio: "1910'dan bu yana moda ve parfüm dünyasının öncüsü.", likes: 9823, active: true },
+  { id: 2, slug: 'dior', name: 'Dior', type: 'original', origin: 'Fransa', founded: 1947, logo: 'CD', category: 'Designer', bio: "Christian Dior'un yarattığı zamansız lüks.", likes: 8741, active: true },
+  { id: 3, slug: 'tom-ford', name: 'Tom Ford', type: 'original', origin: 'ABD', founded: 2005, logo: 'TF', category: 'Niche', bio: 'Cesur, seksi ve sofistike parfümler.', likes: 7654, active: true },
+  { id: 4, slug: 'ysl', name: 'Yves Saint Laurent', type: 'original', origin: 'Fransa', founded: 1962, logo: 'YSL', category: 'Designer', bio: 'Özgürlüğü ve gücü simgeleyen parfümler.', likes: 6532, active: true },
+  { id: 101, slug: 'mfy', name: 'MFY', type: 'muadil', origin: 'Türkiye', founded: 2015, logo: 'MFY', category: '', bio: "Türkiye'nin önde gelen muadil parfüm markası.", likes: 4200, active: true },
+  { id: 102, slug: 'zara-parfums', name: 'Zara Parfums', type: 'muadil', origin: 'İspanya', founded: 2010, logo: 'ZP', category: '', bio: 'Uygun şık parfümler.', likes: 3800, active: true },
+  { id: 103, slug: 'lattafa', name: 'Lattafa', type: 'muadil', origin: 'BAE', founded: 2004, logo: 'LA', category: '', bio: "Orta Doğu'nun prestijli muadil parfüm evi.", likes: 5100, active: true },
+  { id: 104, slug: 'armaf', name: 'Armaf', type: 'muadil', origin: 'BAE', founded: 2012, logo: 'AR', category: '', bio: 'Lüksü demokratize eden parfüm evi.', likes: 4600, active: true },
 ];
 
 export const INIT_PERFUMES = [

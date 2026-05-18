@@ -1,4 +1,5 @@
 import { useRouter } from '@/contexts/RouterContext';
+import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
 
 const FEATURES = [
@@ -9,12 +10,19 @@ const FEATURES = [
 
 export function ComparisonSection() {
   const { navigate } = useRouter();
+  const { md } = useW();
   return (
-    <div style={{ background: '#fff', padding: '72px 32px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '56px', alignItems: 'center' }}>
+    <div style={{ background: '#fff', padding: md ? '48px 16px' : '72px 32px' }}>
+      <div style={{
+        maxWidth: '1100px', margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: md ? '1fr' : '1fr 1fr',
+        gap: md ? '32px' : '56px',
+        alignItems: 'center',
+      }}>
         {/* Image */}
         <div style={{ position: 'relative' }}>
-          <div style={{ width: '100%', height: '320px', borderRadius: '22px', overflow: 'hidden', boxShadow: C.shadowLg, background: 'linear-gradient(135deg,#2a1f0e,#1a1205)' }}>
+          <div style={{ width: '100%', height: md ? '220px' : '320px', borderRadius: '22px', overflow: 'hidden', boxShadow: C.shadowLg, background: 'linear-gradient(135deg,#2a1f0e,#1a1205)' }}>
             <img
               src="https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=600&q=80"
               alt="Karşılaştırma"

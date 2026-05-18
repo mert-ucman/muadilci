@@ -14,6 +14,7 @@ import { ForgotPasswordPage } from '@/pages/Auth/ForgotPasswordPage';
 import { ProfilePage }       from '@/pages/Profile';
 import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
+import { LeaderboardPage }   from '@/pages/Leaderboard';
 
 const ROUTES = [
   { pat: '/',                       C: LandingPage },
@@ -24,6 +25,7 @@ const ROUTES = [
   { pat: '/kayit',                  C: RegisterPage },
   { pat: '/sifre-sifirla',          C: ForgotPasswordPage },
   { pat: '/profil',                 C: ProfilePage },
+  { pat: '/en-iyiler',               C: LeaderboardPage },
   { pat: '/moderasyon',             C: ModerationPage },
   { pat: '/admin',                  C: AdminPanel },
   { pat: '/marka/:brandSlug',       C: BrandPage },

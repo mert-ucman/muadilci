@@ -1,3 +1,4 @@
+import { useW } from '@/hooks/useW';
 import { C } from '@/constants/theme';
 
 const STEPS = [
@@ -8,8 +9,9 @@ const STEPS = [
 ];
 
 export function HowItWorksSection() {
+  const { sm } = useW();
   return (
-    <div style={{ background: '#f7f8fc', padding: '72px 32px' }}>
+    <div style={{ background: '#f7f8fc', padding: sm ? '48px 16px' : '72px 32px' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <span style={{ display: 'inline-block', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '20px', padding: '5px 16px', fontSize: '12px', fontWeight: 700, color: C.gold, marginBottom: '14px' }}>NASIL ÇALIŞIR?</span>

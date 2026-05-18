@@ -1,5 +1,6 @@
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
+import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { Card, Badge, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
@@ -9,6 +10,7 @@ import noImage from '@/img/no-image.jpg';
 export function PerfumeDetailPage({ params }) {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments } = useData();
+  const { sm } = useW();
   const perfume = perfumes.find((p) => p.brandSlug === params?.brandSlug && p.slug === params?.perfumeSlug);
 
   if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;
@@ -16,10 +18,10 @@ export function PerfumeDetailPage({ params }) {
   const muadiller = muadilPerfumes.filter((m) => m.targetPerfumeId === perfume.id);
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: '32px' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
       <div style={{ maxWidth: '960px', margin: '0 auto' }}>
         {/* Breadcrumb */}
-        <div style={{ display: 'flex', gap: '6px', fontSize: '13px', color: C.textLight, marginBottom: '22px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '6px', fontSize: '13px', color: C.textLight, marginBottom: '22px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: C.gold }}>Ana Sayfa</span>
           <span>/</span>
           <span onClick={() => navigate(`/marka/${perfume.brandSlug}`)} style={{ cursor: 'pointer', color: C.gold }}>{perfume.brandName}</span>
@@ -27,33 +29,40 @@ export function PerfumeDetailPage({ params }) {
           <span style={{ color: C.text, fontWeight: 600 }}>{perfume.name}</span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '28px', marginBottom: '32px' }}>
-          <Card style={{ padding: '26px', display: 'flex', flexDirection: 'column', alignItems: 'center', background: `linear-gradient(135deg,${C.goldBg},#fff)` }}>
-            <div style={{ fontSize: '68px', marginBottom: '14px' }}>🧴</div>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: C.navy, textAlign: 'center', marginBottom: '4px' }}>{perfume.name}</div>
-            <div style={{ fontSize: '14px', color: C.textMid, marginBottom: '14px' }}>{perfume.brandName}</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <GenderBadge gender={perfume.gender} />
-              <Badge color="gold">{perfume.year}</Badge>
+        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '260px 1fr', gap: '24px', marginBottom: '32px' }}>
+          <Card style={{ padding: '0', overflow: 'hidden' }}>
+            <div style={{ width: '100%', aspectRatio: sm ? '16/9' : '4/3', background: `linear-gradient(135deg,${C.goldBg},#fff)`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={perfume.images?.[0]?.src || noImage} alt={perfume.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-            <Btn style={{ marginTop: '18px', width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}`)}>
-              Muadil Karşılaştır
-            </Btn>
+            <div style={{ padding: '16px 18px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: C.navy, marginBottom: '3px' }}>{perfume.name}</div>
+              <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '12px' }}>{perfume.brandName}</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <GenderBadge gender={perfume.gender} />
+                <Badge color="gold">{perfume.year}</Badge>
+              </div>
+              <Btn style={{ marginTop: '14px', width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}`)}>
+                Muadil Karşılaştır
+              </Btn>
+            </div>
           </Card>
 
-          <div>
-            <h1 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 900, color: C.navy, marginBottom: '8px' }}>{perfume.name}</h1>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: sm ? '18px' : '24px' }}>
+            <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 900, color: C.navy, marginBottom: '8px' }}>{perfume.name}</h1>
             <div style={{ fontSize: '15px', color: C.textMid, marginBottom: '16px' }}>{perfume.brandName} · Est. {perfume.year}</div>
             <p style={{ fontSize: '15px', color: C.text, lineHeight: 1.7, marginBottom: '22px', fontStyle: 'italic' }}>"{perfume.description}"</p>
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Koku Notaları</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
               {[
-                ['Üst Notalar', perfume.notes?.top || [], C.goldBg, C.goldBorder, C.gold],
-                ['Kalp Notaları', perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
-                ['Dip Notalar', perfume.notes?.base || [], C.greenBg, C.greenBorder, C.green],
-              ].map(([l, notes, bg, border, col]) => (
+                ['Üst Notalar', '🌿', perfume.notes?.top || [], C.goldBg, C.goldBorder, C.gold],
+                ['Kalp Notaları', '🩷', perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
+                ['Dip Notalar', '🪵', perfume.notes?.base || [], C.greenBg, C.greenBorder, C.green],
+              ].map(([l, icon, notes, bg, border, col]) => (
                 <div key={l} style={{ background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: '12px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: '8px' }}>{l}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '14px' }}>{icon}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase' }}>{l}</span>
+                  </div>
                   {notes.map((n) => (
                     <div key={n} style={{ fontSize: '13px', color: C.text, marginBottom: '4px', display: 'flex', gap: '5px', alignItems: 'center' }}>
                       <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: col, flexShrink: 0, display: 'inline-block' }} />
@@ -67,7 +76,7 @@ export function PerfumeDetailPage({ params }) {
         </div>
 
         <h2 style={{ fontSize: '22px', fontWeight: 800, color: C.navy, marginBottom: '16px' }}>Muadil Parfümler ({muadiller.length})</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill,minmax(${sm ? '100%' : '260px'},1fr))`, gap: '16px' }}>
           {muadiller.map((m) => {
             const ms = calcScores(m.id, comments);
             return (

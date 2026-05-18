@@ -1,15 +1,17 @@
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
+import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { C, F } from '@/constants/theme';
 
 export function PopularMatchesSection() {
   const { navigate } = useRouter();
   const { muadilPerfumes, comments } = useData();
+  const { sm } = useW();
   const top = muadilPerfumes.slice(0, 3);
 
   return (
-    <div style={{ background: '#f7f8fc', padding: '72px 32px' }}>
+    <div style={{ background: '#f7f8fc', padding: sm ? '48px 16px' : '72px 32px' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
@@ -21,7 +23,7 @@ export function PopularMatchesSection() {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(300px,1fr))', gap: '16px' }}>
           {top.map((mp) => {
             const sc = calcScores(mp.id, comments);
             return (
@@ -33,13 +35,11 @@ export function PopularMatchesSection() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = C.shadow; }}
               >
                 <div style={{ marginBottom: '14px' }}>
-                  <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '4px' }}>Orijinal → Muadil</div>
-                  <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy }}>{mp.targetBrandName} {mp.targetPerfumeName}</div>
-                  <div style={{ fontSize: '13px', color: C.green, fontWeight: 600, marginTop: '2px' }}>→ {mp.brandName} {mp.name}</div>
+                  <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy }}>{mp.targetBrandName} {mp.targetPerfumeName} vs {mp.brandName} {mp.name}</div>
                 </div>
                 <div style={{ marginBottom: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontSize: '12px', color: C.textMid }}>Genel Puan</span>
+                    <span style={{ fontSize: '12px', color: C.textMid }}>Muadil Genel Puanı</span>
                     <span style={{ fontSize: '12px', fontWeight: 700, color: sc.overall !== null ? C.gold : C.textLight }}>
                       {sc.overall !== null ? `${sc.overall}/10` : 'Henüz puan yok'}
                     </span>

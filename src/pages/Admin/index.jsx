@@ -131,6 +131,98 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, reorderSli
   );
 }
 
+function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 5 }) {
+  const [dragSrcIdx, setDragSrcIdx] = useState(null);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+
+  const readFile = (idx, file) => {
+    if (!file || !file.type.startsWith('image/') || file.size > MAX_SIZE_MB * 1024 * 1024) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const next = [...images];
+      next[idx] = { src: e.target.result, name: file.name };
+      onChange(next);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px' }}>
+        Parfüm Görselleri <span style={{ fontWeight: 400, color: C.textLight }}>(maks. {MAX_SIZE_MB}MB · sürükleyerek sırala)</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 84px)', gap: '10px' }}>
+        {images.map((img, idx) => (
+          <div
+            key={idx}
+            draggable={!!img}
+            onDragStart={(e) => { if (!img) { e.preventDefault(); return; } setDragSrcIdx(idx); }}
+            onDragOver={(e) => { e.preventDefault(); setDragOverIdx(idx); }}
+            onDragLeave={() => setDragOverIdx(null)}
+            onDragEnd={() => { setDragSrcIdx(null); setDragOverIdx(null); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOverIdx(null);
+              if (dragSrcIdx !== null) {
+                if (dragSrcIdx !== idx) {
+                  const next = [...images];
+                  [next[dragSrcIdx], next[idx]] = [next[idx], next[dragSrcIdx]];
+                  onChange(next);
+                }
+                setDragSrcIdx(null);
+                return;
+              }
+              readFile(idx, e.dataTransfer.files[0]);
+            }}
+            onClick={() => !img && document.getElementById(`perf-img-${idx}`).click()}
+            style={{
+              width: '84px',
+              height: '84px',
+              borderRadius: '10px',
+              border: `2px ${dragOverIdx === idx ? 'solid' : 'dashed'} ${dragOverIdx === idx ? C.gold : C.border}`,
+              background: dragOverIdx === idx ? C.goldBg : img ? '#fff' : '#fafafa',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: img ? 'grab' : 'pointer',
+              overflow: 'hidden',
+              position: 'relative',
+              transition: 'border .15s, background .15s',
+              opacity: dragSrcIdx === idx ? 0.45 : 1,
+              userSelect: 'none',
+            }}
+          >
+            <input
+              id={`perf-img-${idx}`}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              style={{ display: 'none' }}
+              onChange={(e) => { readFile(idx, e.target.files[0]); e.target.value = ''; }}
+            />
+            {img ? (
+              <>
+                <img src={img.src} alt={img.name} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                <span style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(0,0,0,.55)', borderRadius: '5px', padding: '2px 7px', fontSize: '11px', fontWeight: 800, color: '#fff' }}>{idx + 1}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); const next = [...images]; next[idx] = null; onChange(next); }}
+                  style={{ position: 'absolute', top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(220,38,38,.85)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '14px', fontFamily: F, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                >×</button>
+                <span style={{ position: 'absolute', bottom: '6px', right: '6px', background: 'rgba(0,0,0,.4)', borderRadius: '5px', padding: '2px 6px', fontSize: '13px', color: 'rgba(255,255,255,.8)' }}>⠿</span>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
+                <div style={{ fontSize: '28px', marginBottom: '4px' }}>📷</div>
+                <div style={{ fontSize: '11px', color: C.textLight, fontWeight: 500 }}>Görsel {idx + 1}</div>
+                <div style={{ fontSize: '10px', color: C.textLight, marginTop: '2px' }}>Tıkla veya bırak</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function AdminPanel() {
   const { isAdmin } = useAuth();
   const { navigate } = useRouter();
@@ -162,9 +254,9 @@ export function AdminPanel() {
   const [delTarget, setDelTarget] = useState(null);
   const [selBrand, setSelBrand] = useState(null);
   const [ebf, setEbf] = useState(null);
-  const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', category: 'Lüks', bio: '' });
-  const [pf, setPf] = useState({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '' });
-  const [mf, setMf] = useState({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '' });
+  const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' });
+  const [pf, setPf] = useState({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '', images: [null, null, null] });
+  const [mf, setMf] = useState({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '', images: [null, null, null] });
   const [ef, setEf] = useState(null);
   const [emf, setEmf] = useState(null);
 
@@ -180,15 +272,15 @@ export function AdminPanel() {
   const sbrand = () => {
     if (!bf.name) return;
     addBrand({ ...bf, slug: bf.slug || slugify(bf.name), founded: Number(bf.founded) || 2000 });
-    setBf({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', category: 'Lüks', bio: '' });
+    setBf({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Lüks', bio: '' });
     setShowBM(false);
   };
 
   const sperf = () => {
     if (!pf.name || !pf.brandId) return;
     const b = brands.find((x) => x.id === Number(pf.brandId));
-    addPerfume({ ...pf, brandId: Number(pf.brandId), slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: 'floral' });
-    setPf({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '' });
+    addPerfume({ ...pf, brandId: Number(pf.brandId), slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: 'floral', images: pf.images });
+    setPf({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '', images: [null, null, null] });
     setShowPM(false);
   };
 
@@ -196,14 +288,14 @@ export function AdminPanel() {
     if (!mf.name || !mf.brandId || !mf.targetPerfumeId) return;
     const b = brands.find((x) => x.id === Number(mf.brandId));
     const t = perfumes.find((x) => x.id === Number(mf.targetPerfumeId));
-    addMuadil({ ...mf, brandId: Number(mf.brandId), targetPerfumeId: Number(mf.targetPerfumeId), slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '' });
-    setMf({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '' });
+    addMuadil({ ...mf, brandId: Number(mf.brandId), targetPerfumeId: Number(mf.targetPerfumeId), slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '', images: mf.images });
+    setMf({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '', images: [null, null, null] });
     setShowMM(false);
   };
 
   const openEditBrand = (b) => {
     setSelBrand(b);
-    setEbf({ name: b.name, slug: b.slug, type: b.type, origin: b.origin || '', founded: String(b.founded || ''), logo: b.logo || '', category: b.category || 'Lüks', bio: b.bio || '' });
+    setEbf({ name: b.name, slug: b.slug, type: b.type, origin: b.origin || '', founded: String(b.founded || ''), logo: b.logo || '', logoImage: b.logoImage || '', category: b.category || 'Lüks', bio: b.bio || '' });
   };
 
   const saveBrand = () => {
@@ -359,7 +451,7 @@ export function AdminPanel() {
           }));
           const q = search.toLowerCase();
           const filtered = baseBrands.filter((b) => !q || b.name.toLowerCase().includes(q) || (b.origin || '').toLowerCase().includes(q));
-          const sorted = applySort(filtered, (b, k) => ({ name: b.name, origin: b.origin || '', perfumeCount: b.perfumeCount, active: b.active ? 'Aktif' : 'Pasif' })[k]);
+          const sorted = applySort(filtered, (b, k) => ({ name: b.name, origin: b.origin || '', category: b.category || '', perfumeCount: b.perfumeCount, active: b.active ? 'Aktif' : 'Pasif' })[k]);
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '14px' }}><Btn onClick={() => setShowBM(true)}>+ Marka Ekle</Btn></div>
@@ -370,6 +462,7 @@ export function AdminPanel() {
                   <thead><tr style={{ background: '#f9f9fb' }}>
                     <SortTh label="Marka" sortKey="name" sort={sort} onSort={toggleSort} />
                     <SortTh label="Köken" sortKey="origin" sort={sort} onSort={toggleSort} />
+                    {isOrig && <SortTh label="Kategori" sortKey="category" sort={sort} onSort={toggleSort} />}
                     <SortTh label="Parfüm Sayısı" sortKey="perfumeCount" sort={sort} onSort={toggleSort} />
                     <SortTh label="Durum" sortKey="active" sort={sort} onSort={toggleSort} />
                     <th style={thStyle}>İşlem</th>
@@ -377,8 +470,17 @@ export function AdminPanel() {
                   <tbody>
                     {sorted.map((b) => (
                       <tr key={b.id} style={{ borderBottom: `1px solid ${C.borderLight}` }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold }}>{b.logo}</div><div><div style={{ fontWeight: 600, fontSize: '14px', color: C.text }}>{b.name}</div><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
+                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><div style={{ fontWeight: 600, fontSize: '14px', color: C.text }}>{b.name}</div><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{b.origin}</td>
+                        {isOrig && (
+                          <td style={tdStyle}>
+                            {b.category && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
+                                {b.category === 'Designer' ? '👔' : '💎'} {b.category}
+                              </span>
+                            )}
+                          </td>
+                        )}
                         <td style={tdStyle}><span style={{ fontSize: '15px', fontWeight: 700, color: b.perfumeCount > 0 ? C.gold : C.textLight }}>{b.perfumeCount}</span></td>
                         <td style={tdStyle}><Badge color={b.active ? 'green' : 'red'}>{b.active ? 'Aktif' : 'Pasif'}</Badge></td>
                         <td style={tdStyle}>
@@ -579,9 +681,47 @@ export function AdminPanel() {
           <Input label="Marka Adı *" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} placeholder="Örn: Dior" />
           <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value })} placeholder="oto" />
           <Select label="Tür" value={bf.type} onChange={(e) => setBf({ ...bf, type: e.target.value })} options={[{ value: 'original', label: 'Orijinal' }, { value: 'muadil', label: 'Muadil' }]} />
-          <Input label="Logo" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} placeholder="CH" />
+          <Input label="Logo Kısaltma" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} placeholder="CH" />
           <Input label="Köken" value={bf.origin} onChange={(e) => setBf({ ...bf, origin: e.target.value })} placeholder="Fransa" />
           <Input label="Kuruluş" type="number" value={bf.founded} onChange={(e) => setBf({ ...bf, founded: e.target.value })} placeholder="1947" />
+        </div>
+        {bf.type === 'original' && (
+          <div style={{ marginTop: '8px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px' }}>Parfüm Kategorisi</div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {['Designer', 'Niche'].map((cat) => (
+                <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: `1px solid ${bf.category === cat ? C.navy : C.border}`, borderRadius: '10px', background: bf.category === cat ? '#f0f0f8' : '#fafafa', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: bf.category === cat ? C.navy : C.textMid, transition: 'all .15s' }}>
+                  <input type="radio" name="bf-category" value={cat} checked={bf.category === cat} onChange={() => setBf({ ...bf, category: cat })} style={{ accentColor: C.navy }} />
+                  {cat === 'Designer' ? '👔 Designer' : '💎 Niche'}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+        <div style={{ marginTop: '4px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Logo Görseli</div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div
+              onClick={() => document.getElementById('brand-logo-add').click()}
+              style={{ width: '64px', height: '64px', borderRadius: '12px', border: `2px dashed ${bf.logoImage ? C.gold : C.border}`, background: bf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
+              {bf.logoImage
+                ? <img src={bf.logoImage} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: '22px' }}>🖼️</span>}
+            </div>
+            <input id="brand-logo-add" type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file || !file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => setBf({ ...bf, logoImage: ev.target.result });
+                reader.readAsDataURL(file);
+                e.target.value = '';
+              }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
+              {bf.logoImage && <button onClick={() => setBf({ ...bf, logoImage: '' })} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
+            </div>
+          </div>
         </div>
         <Textarea label="Açıklama" value={bf.bio} onChange={(e) => setBf({ ...bf, bio: e.target.value })} rows={3} />
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}><Btn variant="secondary" onClick={() => setShowBM(false)}>İptal</Btn><Btn onClick={sbrand} disabled={!bf.name}>Ekle</Btn></div>
@@ -599,7 +739,8 @@ export function AdminPanel() {
         <Input label="Kalp Notaları" value={pf.heartNotes} onChange={(e) => setPf({ ...pf, heartNotes: e.target.value })} placeholder="Lavanta, Sedir" />
         <Input label="Dip Notalar" value={pf.baseNotes} onChange={(e) => setPf({ ...pf, baseNotes: e.target.value })} placeholder="Amber, Misk" />
         <Textarea label="Açıklama" value={pf.description} onChange={(e) => setPf({ ...pf, description: e.target.value })} rows={2} />
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}><Btn variant="secondary" onClick={() => setShowPM(false)}>İptal</Btn><Btn onClick={sperf} disabled={!pf.name || !pf.brandId}>Ekle</Btn></div>
+        <PerfumeImageSlots images={pf.images} onChange={(imgs) => setPf({ ...pf, images: imgs })} />
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}><Btn variant="secondary" onClick={() => setShowPM(false)}>İptal</Btn><Btn onClick={sperf} disabled={!pf.name || !pf.brandId}>Ekle</Btn></div>
       </Modal>
 
       {/* Muadil Modal */}
@@ -611,6 +752,7 @@ export function AdminPanel() {
           <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => setMf({ ...mf, targetPerfumeId: e.target.value })} options={[{ value: '', label: 'Parfüm seçin' }, ...perfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
         </div>
         <Textarea label="Açıklama" value={mf.description} onChange={(e) => setMf({ ...mf, description: e.target.value })} rows={3} />
+        <PerfumeImageSlots images={mf.images} onChange={(imgs) => setMf({ ...mf, images: imgs })} />
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}><Btn variant="secondary" onClick={() => setShowMM(false)}>İptal</Btn><Btn onClick={smuadil} disabled={!mf.name || !mf.brandId || !mf.targetPerfumeId}>Ekle</Btn></div>
       </Modal>
 
@@ -669,9 +811,47 @@ export function AdminPanel() {
               <Input label="Marka Adı *" value={ebf.name} onChange={(e) => setEbf({ ...ebf, name: e.target.value })} />
               <Input label="Slug" value={ebf.slug} onChange={(e) => setEbf({ ...ebf, slug: e.target.value })} />
               <Select label="Tür" value={ebf.type} onChange={(e) => setEbf({ ...ebf, type: e.target.value })} options={[{ value: 'original', label: 'Orijinal' }, { value: 'muadil', label: 'Muadil' }]} />
-              <Input label="Logo" value={ebf.logo} onChange={(e) => setEbf({ ...ebf, logo: e.target.value })} />
+              <Input label="Logo Kısaltma" value={ebf.logo} onChange={(e) => setEbf({ ...ebf, logo: e.target.value })} />
               <Input label="Köken" value={ebf.origin} onChange={(e) => setEbf({ ...ebf, origin: e.target.value })} />
               <Input label="Kuruluş" type="number" value={ebf.founded} onChange={(e) => setEbf({ ...ebf, founded: e.target.value })} />
+            </div>
+            {ebf.type === 'original' && (
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px' }}>Parfüm Kategorisi</div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {['Designer', 'Niche'].map((cat) => (
+                    <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: `1px solid ${ebf.category === cat ? C.navy : C.border}`, borderRadius: '10px', background: ebf.category === cat ? '#f0f0f8' : '#fafafa', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: ebf.category === cat ? C.navy : C.textMid, transition: 'all .15s' }}>
+                      <input type="radio" name="ebf-category" value={cat} checked={ebf.category === cat} onChange={() => setEbf({ ...ebf, category: cat })} style={{ accentColor: C.navy }} />
+                      {cat === 'Designer' ? '👔 Designer' : '💎 Niche'}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div style={{ marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Logo Görseli</div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div
+                  onClick={() => document.getElementById('brand-logo-edit').click()}
+                  style={{ width: '64px', height: '64px', borderRadius: '12px', border: `2px dashed ${ebf.logoImage ? C.gold : C.border}`, background: ebf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
+                  {ebf.logoImage
+                    ? <img src={ebf.logoImage} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontSize: '22px' }}>🖼️</span>}
+                </div>
+                <input id="brand-logo-edit" type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (!file || !file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setEbf({ ...ebf, logoImage: ev.target.result });
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                  }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
+                  {ebf.logoImage && <button onClick={() => setEbf({ ...ebf, logoImage: '' })} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
+                </div>
+              </div>
             </div>
             <Textarea label="Açıklama" value={ebf.bio} onChange={(e) => setEbf({ ...ebf, bio: e.target.value })} rows={3} />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
