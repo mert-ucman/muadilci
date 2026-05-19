@@ -11,7 +11,7 @@ export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
   const { perfumes, brands } = useData();
-  const { w, md } = useW();
+  const { w, md, lg } = useW();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -48,8 +48,8 @@ export function Navbar() {
       }}>
         <div style={{
           maxWidth: '1320px', margin: '0 auto',
-          padding: md ? '0 16px' : w >= 1280 ? '0 48px' : '0 32px', height: '64px',
-          display: 'flex', alignItems: 'center', gap: md ? '12px' : '20px',
+          padding: lg ? '0 16px' : w >= 1280 ? '0 48px' : '0 32px', height: '64px',
+          display: 'flex', alignItems: 'center', gap: lg ? '12px' : '20px',
         }}>
           {/* Logo */}
           <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexShrink: 0 }}>
@@ -60,7 +60,7 @@ export function Navbar() {
           </div>
 
           {/* Nav Links — desktop only */}
-          {!md && (
+          {!lg && (
             <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
               {navLinks.map((l) => (
                 <button
@@ -87,10 +87,10 @@ export function Navbar() {
             </div>
           )}
 
-          {md && <div style={{ flex: 1 }} />}
+          {lg && <div style={{ flex: 1 }} />}
 
           {/* Search — desktop only */}
-          {!md && (
+          {!lg && (
             <div style={{ position: 'relative' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '260px', background: '#f4f4f8', border: `1.5px solid ${searchOpen ? C.gold : 'transparent'}`, borderRadius: '12px', padding: '0 12px', height: '38px', transition: 'border-color .2s, box-shadow .2s', boxShadow: searchOpen ? `0 0 0 3px ${C.goldBg}` : 'none' }}>
                 <svg width="14" height="14" fill="none" stroke={searchOpen ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0, transition: 'stroke .2s' }}>
@@ -142,14 +142,17 @@ export function Navbar() {
           )}
 
           {/* User Menu — desktop only */}
-          {!md && user && (
+          {!lg && user && (
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '10px', padding: '6px 12px 6px 8px', cursor: 'pointer' }}
               >
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700 }}>
-                  {user.name?.[0]?.toUpperCase()}
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
+                  {user.photoURL
+                    ? <img src={user.photoURL} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    : user.name?.[0]?.toUpperCase()
+                  }
                 </div>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: C.text, lineHeight: 1.2 }}>{user.name}</div>
@@ -176,7 +179,7 @@ export function Navbar() {
           )}
 
           {/* Desktop — not logged in */}
-          {!md && !user && (
+          {!lg && !user && (
             <div style={{ display: 'flex', gap: '8px' }}>
               <Btn variant="secondary" size="sm" onClick={() => navigate('/giris')}>Giriş Yap</Btn>
               <Btn size="sm" onClick={() => navigate('/kayit')}>Üye Ol</Btn>
@@ -184,7 +187,7 @@ export function Navbar() {
           )}
 
           {/* Mobile — hamburger */}
-          {md && (
+          {lg && (
             <button
               onClick={() => setMobileOpen(true)}
               style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f4f4f8', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', flexShrink: 0 }}
@@ -198,7 +201,7 @@ export function Navbar() {
       </nav>
 
       {/* Mobile drawer overlay */}
-      {md && mobileOpen && (
+      {lg && mobileOpen && (
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.45)' }}
           onClick={() => setMobileOpen(false)}
@@ -251,8 +254,11 @@ export function Navbar() {
               {user ? (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>
-                      {user.name?.[0]?.toUpperCase()}
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#fff', fontWeight: 700, flexShrink: 0, overflow: 'hidden' }}>
+                      {user.photoURL
+                        ? <img src={user.photoURL} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        : user.name?.[0]?.toUpperCase()
+                      }
                     </div>
                     <div>
                       <div style={{ fontSize: '14px', fontWeight: 700, color: C.text }}>{user.name}</div>

@@ -14,7 +14,8 @@
     "@fortawesome/react-fontawesome": "^3.3.1",
     "firebase": "^12.13.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-easy-crop": "^5.5.7"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
@@ -6,14 +7,40 @@ import { useW } from '@/hooks/useW';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F } from '@/constants/theme';
 
+function getCroppedImg(src, pixelCrop, outputSize = 240) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(
+          img,
+          Math.round(pixelCrop.x), Math.round(pixelCrop.y),
+          Math.round(pixelCrop.width), Math.round(pixelCrop.height),
+          0, 0, outputSize, outputSize
+        );
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
 const ROLE_LABEL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const ROLE_COLOR = { admin: 'red', moderator: 'blue', user: 'gold' };
 
 export function ProfilePage({ queryParams }) {
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateProfilePhoto, deleteProfilePhoto } = useAuth();
+
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
-  const { comments, perfumes, muadilPerfumes, brands, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite } = useData();
+  const { comments, perfumes, muadilPerfumes, brands, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
 
   const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : 'info';
   const [tab, setTab] = useState(tabInit);
@@ -21,8 +48,19 @@ export function ProfilePage({ queryParams }) {
   const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', bio: 'Koku meraklısı.' });
   const [saved, setSaved] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoErr, setPhotoErr] = useState('');
+  const [avatarHover, setAvatarHover] = useState(false);
+  const fileInputRef = useRef(null);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [cropLoading, setCropLoading] = useState(false);
+  const [cropErr, setCropErr] = useState('');
 
   if (!user) return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
@@ -34,6 +72,55 @@ export function ProfilePage({ queryParams }) {
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
   const save = () => { setSaved(true); setEdit(false); setTimeout(() => setSaved(false), 3000); };
+
+  const onCropComplete = useCallback((_, pixels) => { setCroppedAreaPixels(pixels); }, []);
+
+  const MAX_MB = 2;
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const mb = file.size / 1024 / 1024;
+    if (mb > MAX_MB) { setPhotoErr(`Dosya boyutu ${mb.toFixed(1)} MB — maksimum ${MAX_MB} MB olabilir.`); return; }
+    if (!file.type.startsWith('image/')) { setPhotoErr('Lütfen geçerli bir görsel dosyası seçin (JPG, PNG, WEBP).'); return; }
+    setPhotoErr('');
+    setCropErr('');
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCropSrc(ev.target.result);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropSave = async () => {
+    if (!cropSrc || !croppedAreaPixels) return;
+    setCropLoading(true);
+    setCropErr('');
+    try {
+      const dataUrl = await getCroppedImg(cropSrc, croppedAreaPixels);
+      await updateProfilePhoto(dataUrl);
+      setCropSrc(null);
+    } catch (err) {
+      setCropErr('Fotoğraf kaydedilemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setCropLoading(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropSrc(null);
+    setCropErr('');
+  };
+
+  const handleDeletePhoto = async () => {
+    setPhotoErr('');
+    setPhotoLoading(true);
+    try { await deleteProfilePhoto(); } catch (_) { setPhotoErr('Fotoğraf silinemedi.'); }
+    finally { setPhotoLoading(false); }
+  };
 
   const handleDeleteAccount = async () => {
     setDeleteLoading(true);
@@ -55,6 +142,57 @@ export function ProfilePage({ queryParams }) {
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg }}>
+      {/* Fotoğraf kırpma modalı */}
+      {cropSrc && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '420px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,.4)' }}>
+            <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 800, fontSize: '15px', color: C.navy }}>Profil Fotoğrafı</span>
+              <button onClick={handleCropCancel} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: C.textLight, lineHeight: 1, padding: '0 4px' }}>×</button>
+            </div>
+            <div style={{ position: 'relative', height: '300px', background: '#1a1a1a' }}>
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <div style={{ padding: '14px 18px' }}>
+              {/* Zoom slider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ flex: 1, accentColor: C.gold, cursor: 'pointer' }} />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </div>
+              {/* Gereksinimler */}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                {[`Maks. ${MAX_MB} MB`, 'JPG · PNG · WEBP', 'Kare kırpılır'].map((t) => (
+                  <span key={t} style={{ fontSize: '11px', color: C.textLight, background: C.bg, borderRadius: '6px', padding: '3px 8px', border: `1px solid ${C.border}` }}>{t}</span>
+                ))}
+              </div>
+              {/* Hata */}
+              {cropErr && (
+                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '8px', padding: '8px 12px', color: '#c53030', fontSize: '12px', marginBottom: '10px' }}>
+                  ⚠ {cropErr}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <Btn variant="secondary" size="sm" onClick={handleCropCancel} disabled={cropLoading}>İptal</Btn>
+                <Btn size="sm" onClick={handleCropSave} disabled={cropLoading}>
+                  {cropLoading ? 'Kaydediliyor...' : 'Kırp ve Kaydet'}
+                </Btn>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hesap silme onay modalı */}
       <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
@@ -81,8 +219,38 @@ export function ProfilePage({ queryParams }) {
       {/* Profile header */}
       <div style={{ background: `linear-gradient(135deg,${C.navy},${C.navyLight})`, padding: sm ? '28px 16px' : '40px 32px' }}>
         <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
-          <div style={{ width: sm ? '56px' : '70px', height: sm ? '56px' : '70px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: sm ? '20px' : '24px', color: '#fff', fontWeight: 900, flexShrink: 0 }}>
-            {user.name?.[0]?.toUpperCase()}
+          {/* Avatar */}
+          <div style={{ position: 'relative', flexShrink: 0 }}
+            onMouseEnter={() => setAvatarHover(true)}
+            onMouseLeave={() => setAvatarHover(false)}
+          >
+            <div
+              onClick={() => !photoLoading && fileInputRef.current?.click()}
+              style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', border: '3px solid rgba(255,255,255,.25)' }}
+            >
+              {user.photoURL
+                ? <img src={user.photoURL} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                : <svg width={sm ? 22 : 28} height={sm ? 22 : 28} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              }
+              {(avatarHover || photoLoading) && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                  {photoLoading
+                    ? <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,.4)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    : <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        {!sm && <span style={{ fontSize: '9px', color: 'rgba(255,255,255,.9)', fontWeight: 700, letterSpacing: '.02em' }}>{user.photoURL ? 'Değiştir' : 'Ekle'}</span>}
+                      </>
+                  }
+                </div>
+              )}
+            </div>
+            {user.photoURL && !photoLoading && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDeletePhoto(); }}
+                style={{ position: 'absolute', top: '0px', right: '0px', width: '20px', height: '20px', borderRadius: '50%', background: '#e53e3e', border: '2px solid rgba(255,255,255,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px', color: '#fff', fontFamily: F, lineHeight: 1, padding: 0 }}
+              >×</button>
+            )}
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: sm ? '20px' : '26px', fontWeight: 900, color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
@@ -94,6 +262,11 @@ export function ProfilePage({ queryParams }) {
       </div>
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: sm ? '20px 16px' : `28px ${px}` }}>
+        {photoErr && (
+          <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '10px 14px', color: '#c53030', fontSize: '13px', marginBottom: '16px' }}>
+            ⚠ {photoErr}
+          </div>
+        )}
         {/* Tabs — scrollable on mobile */}
         <div className="tabs-scroll" style={{ borderBottom: `1px solid ${C.border}`, marginBottom: '28px' }}>
           {[{ k: 'info', l: 'Bilgilerim' }, { k: 'favorites', l: 'Favorilerim' }, { k: 'reviews', l: 'Yorumlarım' }].map(({ k, l }) => (
@@ -278,6 +451,19 @@ export function ProfilePage({ queryParams }) {
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
                       <Badge color={c.status === 'approved' ? 'green' : 'orange'}>{c.status === 'approved' ? 'Yayında' : 'Onay Bekliyor'}</Badge>
                       <span style={{ fontSize: '12px', color: C.textLight }}>{c.date}</span>
+                      {confirmDeleteCommentId === c.id
+                        ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                            <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteCommentId(null); }}
+                              style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Sil</button>
+                            <button onClick={() => setConfirmDeleteCommentId(null)}
+                              style={{ fontSize: '11px', color: C.textMid, background: '#f0f0f0', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Vazgeç</button>
+                          </span>
+                        : <button onClick={() => setConfirmDeleteCommentId(c.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: C.textLight, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                            title="Yorumu sil">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                          </button>
+                      }
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: C.textMid, marginBottom: '8px', flexWrap: 'wrap' }}>

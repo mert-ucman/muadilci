@@ -30,7 +30,7 @@ export function Footer() {
             Bizi takip edin
           </span>
           <a
-            href="https://www.instagram.com/muadilci"
+            href="https://www.instagram.com/muadilciapp"
             target="_blank"
             rel="noopener noreferrer"
             style={{

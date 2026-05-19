@@ -1,11 +1,13 @@
 import { useW } from '@/hooks/useW';
 import { C } from '@/constants/theme';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMagnifyingGlass, faScaleBalanced, faStar, faBullseye } from '@fortawesome/free-solid-svg-icons';
 
 const STEPS = [
-  { icon: '🔍', n: '1', title: 'Orijinalini Seç', desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
-  { icon: '⚖️', n: '2', title: 'Muadilleri Gör', desc: 'Aynı koku profiline sahip muadilleri yan yana gör.' },
-  { icon: '⭐', n: '3', title: 'Yorumları Oku', desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
-  { icon: '🎯', n: '4', title: 'En Yakını Bul', desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
+  { icon: faMagnifyingGlass, n: '1', title: 'Orijinalini Seç', desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
+  { icon: faScaleBalanced, n: '2', title: 'Muadilleri Gör', desc: 'Aynı koku profiline sahip muadilleri yan yana gör.' },
+  { icon: faStar, n: '3', title: 'Yorumları Oku', desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
+  { icon: faBullseye, n: '4', title: 'En Yakını Bul', desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
 ];
 
 export function HowItWorksSection() {
@@ -27,7 +29,9 @@ export function HowItWorksSection() {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = C.shadow; }}
             >
               <div style={{ position: 'absolute', top: '18px', right: '18px', width: '26px', height: '26px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: C.gold }}>{s.n}</div>
-              <div style={{ fontSize: '34px', marginBottom: '14px' }}>{s.icon}</div>
+              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
+                <FontAwesomeIcon icon={s.icon} style={{ fontSize: '20px', color: C.gold }} />
+              </div>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: C.navy, marginBottom: '8px' }}>{s.title}</h3>
               <p style={{ fontSize: '14px', color: C.textLight, lineHeight: 1.6 }}>{s.desc}</p>
             </div>

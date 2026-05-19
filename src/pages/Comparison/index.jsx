@@ -14,7 +14,7 @@ import noImage from '@/img/no-image.jpg';
 
 export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, addComment, toggleCompFavorite, isCompFavorite } = useData();
+  const { perfumes, muadilPerfumes, comments, addComment, deleteComment, toggleCompFavorite, isCompFavorite } = useData();
   const { user, isMod } = useAuth();
   const { w, sm, md, xs } = useW();
 
@@ -28,6 +28,7 @@ export function ComparisonPage({ queryParams }) {
   const [selMuadilId, setSelMuadilId] = useState(initMuadilId);
   const [muadilSortDir, setMuadilSortDir] = useState('desc');
   const [showCForm, setShowCForm] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [cSim, setCSim] = useState(5);
   const [cProj, setCProj] = useState(5);
@@ -70,15 +71,15 @@ export function ComparisonPage({ queryParams }) {
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
-              <div style={{ flex: 1 }}><Select label="Parfüm Evi" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); }} options={origBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Model" value={selOrigId} onChange={(e) => setSelOrigId(e.target.value)} options={origPerfOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); }} options={origBrandOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => setSelOrigId(e.target.value)} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Muadil Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
-              <div style={{ flex: 1 }}><Select label="Muadil Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Muadil Model" value={selMuadilId} onChange={(e) => setSelMuadilId(e.target.value)} options={mPerfOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => setSelMuadilId(e.target.value)} options={mPerfOpts} /></div>
             </div>
           </Card>
         </div>
@@ -86,35 +87,45 @@ export function ComparisonPage({ queryParams }) {
         {selOrig && selMuadil ? (
           <div className="fade-in">
             {/* Top cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: '14px', marginBottom: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px', marginBottom: '14px' }}>
               <Card style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
+                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
                   <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div style={{ padding: '14px 16px' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: C.navy, marginBottom: '2px' }}>{selOrig.name}</div>
-                  <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '8px' }}>{selOrig.brandName}</div>
-                  <GenderBadge gender={selOrig.gender} />
+                <div style={{ padding: sm ? '8px 10px' : '14px 16px' }}>
+                  <div style={{ fontSize: sm ? '13px' : '16px', fontWeight: 900, color: C.navy, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selOrig.name}</div>
+                  <div style={{ fontSize: sm ? '11px' : '13px', color: C.textMid, marginBottom: sm ? '4px' : '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selOrig.brandName}</div>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    <Badge color="blue">Orijinal</Badge>
+                    <GenderBadge gender={selOrig.gender} />
+                  </div>
                 </div>
               </Card>
               <Card style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
+                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
                   <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div style={{ padding: '14px 16px' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 900, color: C.navy, marginBottom: '2px' }}>{selMuadil.name}</div>
-                  <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '8px' }}>{selMuadil.brandName}</div>
-                  <Badge color="green">Muadil</Badge>
+                <div style={{ padding: sm ? '8px 10px' : '14px 16px' }}>
+                  <div style={{ fontSize: sm ? '13px' : '16px', fontWeight: 900, color: C.navy, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selMuadil.name}</div>
+                  <div style={{ fontSize: sm ? '11px' : '13px', color: C.textMid, marginBottom: sm ? '4px' : '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selMuadil.brandName}</div>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    <Badge color="green">Muadil</Badge>
+                    <GenderBadge gender={selMuadil.gender || selOrig.gender} />
+                  </div>
                 </div>
               </Card>
-              <Card style={{ padding: '24px', position: 'relative', gridColumn: sm ? '1' : md ? '1 / -1' : 'auto' }}>
-                <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.id, selOrig.id, selMuadil.id); }}
-                  style={{ position: 'absolute', top: '14px', right: '14px', background: isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}>
-                  {isCompFavorite(user?.id, selOrig?.id, selMuadil?.id) ? '❤️' : '🤍'}
+              <Card style={{ padding: sm ? '14px' : '24px', position: 'relative', gridColumn: sm ? '1 / -1' : md ? '1 / -1' : 'auto' }}>
+                <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.uid, selOrig.id, selMuadil.id); }}
+                  style={{ position: 'absolute', top: '14px', right: '14px', background: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}>
+                  {isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? '❤️' : '🤍'}
                 </button>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: C.textMid, marginBottom: '10px', paddingRight: '40px' }}>{selOrig.brandName} {selOrig.name} vs {selMuadil.brandName} {selMuadil.name}</div>
-                <div style={{ marginBottom: '4px' }}><span style={{ fontSize: '13px', color: C.textLight }}>Muadil markası : </span><span style={{ fontWeight: 700, color: C.text }}>{selMuadil.brandName}</span></div>
-                <div style={{ marginBottom: '14px' }}><span style={{ fontSize: '13px', color: C.textLight }}>Muadil Parfüm : </span><span style={{ fontWeight: 700, color: C.text }}>{selMuadil.name}</span></div>
+                <div style={{ fontSize: sm ? '12px' : '13px', fontWeight: 700, color: C.textMid, marginBottom: '8px', paddingRight: '40px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span>{selOrig.brandName} <span style={{ color: C.textLight, fontWeight: 400 }}>-</span> {selOrig.name}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, color: '#fff', fontSize: '9px', fontWeight: 900, flexShrink: 0, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}>VS</span>
+                  <span>{selMuadil.brandName} <span style={{ color: C.textLight, fontWeight: 400 }}>-</span> {selMuadil.name}</span>
+                </div>
+                <div style={{ marginBottom: '3px' }}><span style={{ fontSize: sm ? '12px' : '13px', color: C.textLight }}>Muadil markası: </span><span style={{ fontWeight: 700, color: C.text, fontSize: sm ? '12px' : '13px' }}>{selMuadil.brandName}</span></div>
+                <div style={{ marginBottom: sm ? '8px' : '14px' }}><span style={{ fontSize: sm ? '12px' : '13px', color: C.textLight }}>Muadil Parfüm: </span><span style={{ fontWeight: 700, color: C.text, fontSize: sm ? '12px' : '13px' }}>{selMuadil.name}</span></div>
                 <div style={{ height: '1px', background: C.border, marginBottom: '14px' }} />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', position: 'relative' }}>
                   <button
@@ -132,19 +143,19 @@ export function ComparisonPage({ queryParams }) {
                     </div>
                   )}
                 </div>
-                <ScoreBar label="koku yakınlığı" value={scores.scent} empty={scores.scent === null} />
-                <ScoreBar label="yayılım" value={scores.projection} empty={scores.projection === null} />
-                <ScoreBar label="kalıcılık" value={scores.longevity} empty={scores.longevity === null} />
+                <ScoreBar label="Koku Yakınlığı" value={scores.scent} empty={scores.scent === null} />
+                <ScoreBar label="Yayılım" value={scores.projection} empty={scores.projection === null} />
+                <ScoreBar label="Kalıcılık" value={scores.longevity} empty={scores.longevity === null} />
                 {scores.count === 0 && <div style={{ fontSize: '12px', color: C.textLight, fontStyle: 'italic', textAlign: 'center', marginBottom: '8px' }}>Henüz onaylanmış yorum yok</div>}
-                <div style={{ marginTop: '14px', padding: '14px', background: C.goldBg, borderRadius: '10px', border: `1px solid ${C.goldBorder}` }}>
-                  <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '8px', fontWeight: 600 }}>Genel Puan</div>
+                <div style={{ marginTop: sm ? '8px' : '14px', padding: sm ? '10px 12px' : '14px', background: C.goldBg, borderRadius: '10px', border: `1px solid ${C.goldBorder}` }}>
+                  <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '6px', fontWeight: 600 }}>Genel Puan</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1, height: '8px', background: C.borderLight, borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ flex: 1, height: sm ? '6px' : '8px', background: C.borderLight, borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: scores.overall !== null ? `${(scores.overall / 10) * 100}%` : '0%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, borderRadius: '4px' }} />
                     </div>
-                    <span style={{ fontWeight: 900, color: scores.overall !== null ? C.gold : C.textLight, fontSize: '18px', minWidth: '48px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
+                    <span style={{ fontWeight: 900, color: scores.overall !== null ? C.gold : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
                   </div>
-                  {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight, marginTop: '5px' }}>{scores.count} yorumun ortalaması</div>}
+                  {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight, marginTop: '4px' }}>{scores.count} yorumun ortalaması</div>}
                 </div>
               </Card>
             </div>
@@ -261,8 +272,11 @@ export function ComparisonPage({ queryParams }) {
                       {isAdmin && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
                       {isModerator && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
                       <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none' }}>
-                          {isAdmin ? '👑' : c.userAvatar}
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none', overflow: 'hidden' }}>
+                          {c.userPhotoURL && !isAdmin
+                            ? <img src={c.userPhotoURL} alt={c.userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            : isAdmin ? '👑' : c.userAvatar
+                          }
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
@@ -282,12 +296,26 @@ export function ComparisonPage({ queryParams }) {
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                               {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
                               <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
+                              {user?.uid === c.userId && (
+                                confirmDeleteId === c.id
+                                  ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                      <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); }}
+                                        style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Sil</button>
+                                      <button onClick={() => setConfirmDeleteId(null)}
+                                        style={{ fontSize: '11px', color: C.textMid, background: '#f0f0f0', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Vazgeç</button>
+                                    </span>
+                                  : <button onClick={() => setConfirmDeleteId(c.id)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: C.textLight, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                                      title="Yorumu sil">
+                                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                                    </button>
+                              )}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap' }}>
-                            <span>Ben. <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
-                            <span>Yay. <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
-                            <span>Kal. <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
+                            <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
+                            <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
+                            <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
                           </div>
                         </div>
                       </div>

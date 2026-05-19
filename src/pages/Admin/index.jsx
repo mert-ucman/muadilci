@@ -63,7 +63,7 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, reorderSli
     arr.slice(0, remaining).forEach((file) => {
       if (!file.type.startsWith('image/')) { setError('Sadece görsel dosyaları (JPG, PNG, WebP) kabul edilir.'); return; }
       if (file.size > MAX_SIZE_MB * 1024 * 1024) { setError(`"${file.name}" ${MAX_SIZE_MB}MB sınırını aşıyor.`); return; }
-      compressToDataURL(file, 1280, 0.75).then((src) => addSliderImage({ src, name: file.name })).catch(() => setError(`"${file.name}" işlenirken hata oluştu.`));
+      compressToDataURL(file, 1920, 0.82, 800).then((src) => addSliderImage({ src, name: file.name })).catch(() => setError(`"${file.name}" işlenirken hata oluştu.`));
     });
   };
 
@@ -83,7 +83,7 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, reorderSli
     <div>
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: 800, color: C.navy, marginBottom: '4px' }}>Ana Sayfa Slider Görselleri</h2>
-        <p style={{ fontSize: '13px', color: C.textLight }}>En fazla {MAX_SLIDER} görsel · Maks. {MAX_SIZE_MB}MB/görsel · Önerilen: 1920×1080px · Sürükle-bırak ile sıra değiştir</p>
+        <p style={{ fontSize: '13px', color: C.textLight }}>En fazla {MAX_SLIDER} görsel · Maks. {MAX_SIZE_MB}MB/görsel · Otomatik 1920×800px'e yeniden boyutlandırılır · Sürükle-bırak ile sıra değiştir</p>
       </div>
 
       {sliderImages.length < MAX_SLIDER && (
@@ -234,17 +234,29 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
   );
 }
 
-function compressToDataURL(file, maxW, quality) {
+// maxH: sadece slider gibi sabit yüksekliği olan yerlerde crop için kullan
+function compressToDataURL(file, maxW, quality, maxH = null) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
+        // Önce genişliğe göre ölçekle
         const scale = img.width > maxW ? maxW / img.width : 1;
+        const scaledW = Math.round(img.width * scale);
+        const scaledH = Math.round(img.height * scale);
+
+        // maxH verilmişse yüksekliği kırp (center crop)
+        const outH = maxH ? Math.min(scaledH, maxH) : scaledH;
+        const srcY = maxH && scaledH > maxH
+          ? Math.round((scaledH - maxH) / 2 / scale)
+          : 0;
+        const srcH = Math.round(outH / scale);
+
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.width = scaledW;
+        canvas.height = outH;
+        canvas.getContext('2d').drawImage(img, 0, srcY, img.width, srcH, 0, 0, scaledW, outH);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.onerror = reject;

@@ -8,7 +8,7 @@ import { CTASection }           from './CTASection';
 
 export function LandingPage() {
   return (
-    <div style={{ background: '#fff', minHeight: '100vh' }}>
+    <div style={{ background: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
       <HeroSection />
       <HowItWorksSection />
       <ComparisonSection />

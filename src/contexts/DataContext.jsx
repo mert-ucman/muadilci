@@ -94,6 +94,7 @@ export function DataProvider({ children }) {
       userId: user?.uid,
       userName: user?.username ? `@${user.username}` : user?.name,
       userAvatar: user?.avatar,
+      userPhotoURL: user?.photoURL || null,
       userRole: user?.role ?? 'user',
       status: 'pending',
       createdAt: serverTimestamp(),
@@ -116,6 +117,22 @@ export function DataProvider({ children }) {
 
   const approveComment = async (id) => updateDoc(docRef('reviews', id), { status: 'approved' });
   const rejectComment = async (id) => deleteDoc(docRef('reviews', id));
+
+  const deleteComment = async (id) => {
+    const ref = docRef('reviews', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const c = snap.data();
+    if (c.userId !== user?.uid) throw new Error('Yetkisiz işlem.');
+    await deleteDoc(ref);
+    const muadilId = c.muadilId || String(c.muadilPerfumeId ?? '');
+    if (muadilId) {
+      const mSnap = await getDoc(docRef('muadils', muadilId));
+      if (mSnap.exists()) {
+        await updateDoc(docRef('muadils', muadilId), { reviewCount: Math.max(0, (mSnap.data().reviewCount ?? 1) - 1) });
+      }
+    }
+  };
 
   // ─── Users ────────────────────────────────────────────────────────────────
   const updateUser = async (id, d) => updateDoc(docRef('users', id), d);
@@ -213,7 +230,7 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      addComment, approveComment, rejectComment,
+      addComment, approveComment, rejectComment, deleteComment,
       updateUser, deleteUser,
       brandFavorites, toggleBrandFavorite, isBrandFavorite, getUserFavoriteBrands,
       togglePerfumeFavorite, isPerfumeFavorite, getUserFavoritePerfumes,

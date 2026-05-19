@@ -3,8 +3,9 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
+import noImage from '@/img/no-image.jpg';
 
-const STATS = [['2.400+', 'Parfüm'], ['45K+', 'Eşleşme'], ['12K+', 'Yorum'], ['180+', 'Marka']];
+const STATS = [['25+', 'Orijinal Parfüm Markası'], ['200+', 'Orijinal Parfüm'], ['15+', 'Muadil Parfüm Markası'], ['150+', 'Muadil Parfüm']];
 const INTERVAL = 5000;
 
 function ScoreRow({ label, value, color }) {
@@ -21,7 +22,16 @@ function ScoreRow({ label, value, color }) {
   );
 }
 
-function DefaultVisual() {
+function DefaultVisual({ perfumes, muadilPerfumes }) {
+  // En çok yorumu olan muadili göster
+  const muadil = [...muadilPerfumes].sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))[0];
+  const perfume = muadil ? perfumes.find((p) => p.id === muadil.targetPerfumeId) : null;
+
+  const origImg = perfume?.images?.[0]?.src || noImage;
+  const muadilImg = muadil?.image || muadil?.images?.[0]?.src || noImage;
+  const origName = perfume ? `${perfume.brandName} ${perfume.name}` : 'Orijinal Parfüm';
+  const muadilName = muadil ? `${muadil.brandName} ${muadil.name}` : 'Muadil Parfüm';
+
   return (
     <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '340px' }}>
       <div style={{ position: 'absolute', width: '280px', height: '280px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(184,150,90,.12) 0%,transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
@@ -30,18 +40,22 @@ function DefaultVisual() {
       <div style={{ position: 'relative', width: '260px', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.14)', borderRadius: '20px', padding: '18px', backdropFilter: 'blur(12px)', boxShadow: '0 20px 60px rgba(0,0,0,.35)' }}>
         <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,.4)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Karşılaştırma</div>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-          <div style={{ flex: 1, background: 'rgba(255,255,255,.06)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(255,255,255,.1)' }}>
-            <div style={{ fontSize: '18px', marginBottom: '4px' }}>🧴</div>
+          <div style={{ flex: 1, background: 'rgba(255,255,255,.06)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: '1px solid rgba(255,255,255,.1)', overflow: 'hidden' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', margin: '0 auto 6px' }}>
+              <img src={origImg} alt={origName} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
             <div style={{ fontSize: '9px', color: 'rgba(255,255,255,.5)', marginBottom: '2px' }}>Orijinal</div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Dior Sauvage</div>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#fff', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{origName}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', justifyContent: 'center', gap: '4px' }}>
             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 900, color: '#fff', boxShadow: `0 4px 12px rgba(184,150,90,.5)` }}>VS</div>
           </div>
-          <div style={{ flex: 1, background: `rgba(184,150,90,.12)`, borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: `1px solid rgba(184,150,90,.25)` }}>
-            <div style={{ fontSize: '18px', marginBottom: '4px' }}>✨</div>
+          <div style={{ flex: 1, background: `rgba(184,150,90,.12)`, borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: `1px solid rgba(184,150,90,.25)`, overflow: 'hidden' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '8px', overflow: 'hidden', margin: '0 auto 6px' }}>
+              <img src={muadilImg} alt={muadilName} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
             <div style={{ fontSize: '9px', color: C.goldLight, marginBottom: '2px' }}>Muadil</div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: C.goldLight, lineHeight: 1.2 }}>MFY Sauvage</div>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: C.goldLight, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{muadilName}</div>
           </div>
         </div>
         <ScoreRow label="Koku Yakınlığı" value={9.1} color={C.goldLight} />
@@ -79,7 +93,7 @@ function DefaultVisual() {
   );
 }
 
-function HeroContent({ navigate, isMobile }) {
+function HeroContent({ navigate, isMobile, perfumes, muadilPerfumes }) {
   return (
     <div style={{
       maxWidth: '1100px', margin: '0 auto',
@@ -119,15 +133,15 @@ function HeroContent({ navigate, isMobile }) {
           ))}
         </div>
       </div>
-      {!isMobile && <DefaultVisual />}
+      {!isMobile && <DefaultVisual perfumes={perfumes} muadilPerfumes={muadilPerfumes} />}
     </div>
   );
 }
 
 export function HeroSection() {
   const { navigate } = useRouter();
-  const { sliderImages } = useData();
-  const { w, md, xs } = useW();
+  const { sliderImages, perfumes, muadilPerfumes } = useData();
+  const { w, md, xs, lg } = useW();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -146,14 +160,14 @@ export function HeroSection() {
     return (
       <div style={{ background: `linear-gradient(135deg,${C.navy} 0%,#0f1c38 100%)`, padding: xs ? '40px 16px 36px' : md ? '56px 24px 48px' : w >= 1280 ? '100px 48px 100px' : '80px 32px 80px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 50%,rgba(184,150,90,.1) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(184,150,90,.07) 0%,transparent 40%)' }} />
-        <HeroContent navigate={navigate} isMobile={md} />
+        <HeroContent navigate={navigate} isMobile={lg} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
       </div>
     );
   }
 
   return (
     <div
-      style={{ position: 'relative', overflow: 'hidden', height: md ? '60vh' : '75vh', minHeight: '500px' }}
+      style={{ position: 'relative', overflow: 'hidden', height: lg ? '60vh' : '75vh', minHeight: '500px' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}>
       <div style={{ display: 'flex', height: '100%', transform: `translateX(-${current * 100}%)`, transition: 'transform .55s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}>
@@ -162,8 +176,8 @@ export function HeroSection() {
             <img src={img.src} alt={img.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             {i === 0 && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(13,27,56,.82) 0%,rgba(13,27,56,.55) 60%,rgba(13,27,56,.2) 100%)' }} />}
             {i === 0 && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: md ? '0 16px' : '0 32px' }}>
-                <div style={{ width: '100%' }}><HeroContent navigate={navigate} isMobile={md} /></div>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: lg ? '0 16px' : '0 32px' }}>
+                <div style={{ width: '100%' }}><HeroContent navigate={navigate} isMobile={lg} perfumes={perfumes} muadilPerfumes={muadilPerfumes} /></div>
               </div>
             )}
           </div>

@@ -8,7 +8,9 @@ export function PopularMatchesSection() {
   const { navigate } = useRouter();
   const { muadilPerfumes, comments } = useData();
   const { sm } = useW();
-  const top = muadilPerfumes.slice(0, 3);
+  const top = [...muadilPerfumes]
+    .sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))
+    .slice(0, 3);
 
   return (
     <div style={{ background: '#f7f8fc', padding: sm ? '48px 16px' : '72px 32px' }}>

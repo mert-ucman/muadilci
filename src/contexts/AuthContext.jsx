@@ -14,7 +14,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, writeBatch, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, writeBatch, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 const AuthCtx = createContext(null);
@@ -145,6 +145,20 @@ export function AuthProvider({ children }) {
   const verifyResetCode = (oobCode) => verifyPasswordResetCode(auth, oobCode);
   const confirmReset = (oobCode, newPassword) => confirmPasswordReset(auth, oobCode, newPassword);
 
+  const updateProfilePhoto = async (dataUrl) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('Oturum açık değil.');
+    await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: dataUrl });
+    setUser((prev) => ({ ...prev, photoURL: dataUrl }));
+  };
+
+  const deleteProfilePhoto = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('Oturum açık değil.');
+    await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: null });
+    setUser((prev) => ({ ...prev, photoURL: null }));
+  };
+
   const reauthenticate = async (password) => {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Oturum açık değil.');
@@ -157,7 +171,7 @@ export function AuthProvider({ children }) {
   const loading = user === undefined;
 
   return (
-    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, deleteAccount, reauthenticate, isAdmin, isMod }}>
+    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, isAdmin, isMod }}>
       {children}
     </AuthCtx.Provider>
   );
