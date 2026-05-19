@@ -10,11 +10,11 @@ const FEATURES = [
 
 export function ComparisonSection() {
   const { navigate } = useRouter();
-  const { md } = useW();
+  const { w, md, xs } = useW();
   return (
-    <div style={{ background: '#fff', padding: md ? '48px 16px' : '72px 32px' }}>
+    <div style={{ background: '#fff', padding: xs ? '36px 16px' : md ? '48px 24px' : w >= 1280 ? '80px 48px' : '72px 32px' }}>
       <div style={{
-        maxWidth: '1100px', margin: '0 auto',
+        maxWidth: '1320px', margin: '0 auto',
         display: 'grid',
         gridTemplateColumns: md ? '1fr' : '1fr 1fr',
         gap: md ? '32px' : '56px',

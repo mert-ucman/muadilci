@@ -27,7 +27,6 @@ export function CTASection() {
       {/* CTA Banner */}
       <div style={{ background: `linear-gradient(135deg,${C.navy},#0f1c38)`, padding: sm ? '48px 16px' : '72px 32px', textAlign: 'center' }}>
         <div style={{ maxWidth: '580px', margin: '0 auto' }}>
-          <div style={{ fontSize: '40px', marginBottom: '14px' }}>🧴</div>
           <h2 style={{ fontSize: 'clamp(22px,4vw,38px)', fontWeight: 900, color: '#fff', marginBottom: '12px', lineHeight: 1.2 }}>
             Koku yolculuğuna <span style={{ color: C.goldLight }}>bugün başla</span>
           </h2>

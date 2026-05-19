@@ -4,11 +4,11 @@ import { C } from '@/constants/theme';
 
 export function Footer() {
   const { navigate } = useRouter();
-  const { sm } = useW();
+  const { w, sm, xs } = useW();
   return (
-    <footer style={{ background: C.navy, padding: sm ? '32px 16px' : '40px 32px' }}>
+    <footer style={{ background: C.navy, padding: sm ? '28px 16px' : '40px 32px' }}>
       <div style={{
-        maxWidth: '1280px', margin: '0 auto',
+        maxWidth: '1320px', margin: '0 auto',
         display: 'flex',
         flexDirection: sm ? 'column' : 'row',
         justifyContent: 'space-between',

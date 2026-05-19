@@ -8,13 +8,15 @@ import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { Badge } from '@/components/ui/Badge';
 import { C, F } from '@/constants/theme';
+import { faArrowUp, faHeart, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
 export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments, addComment, toggleCompFavorite, isCompFavorite } = useData();
   const { user, isMod } = useAuth();
-  const { sm, md } = useW();
+  const { w, sm, md, xs } = useW();
 
   const initOrigId = queryParams?.orijinal || '';
   const initOrigBrand = initOrigId ? (perfumes.find((p) => String(p.id) === String(initOrigId))?.brandName || '') : '';
@@ -58,8 +60,8 @@ export function ComparisonPage({ queryParams }) {
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
         <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
 
@@ -152,9 +154,9 @@ export function ComparisonPage({ queryParams }) {
               <Card style={{ padding: '22px' }}>
                 <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}` }}>{selOrig.name}</div>
                 <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>Koku Notaları</div>
-                {[['Üst', '🌿', selOrig.notes?.top || []], ['Kalp', '🩷', selOrig.notes?.heart || []], ['Dip', '🪵', selOrig.notes?.base || []]].map(([l, icon, n]) => (
+                {[['Üst', faArrowUp, selOrig.notes?.top || []], ['Kalp', faHeart, selOrig.notes?.heart || []], ['Dip', faArrowDown, selOrig.notes?.base || []]].map(([l, icon, n]) => (
                   <div key={l} style={{ marginBottom: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}><span>{icon}</span>{l}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}><FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}</div>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                       {n.map((note) => <span key={note} style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: C.gold }}>{note}</span>)}
                     </div>
@@ -240,28 +242,59 @@ export function ComparisonPage({ queryParams }) {
 
               {muadilComments.length === 0 && <div style={{ textAlign: 'center', color: C.textLight, fontSize: '14px', padding: '32px' }}>Henüz yorum yok.</div>}
               <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
-                {muadilComments.map((c) => (
-                  <div key={c.id} style={{ border: `1px solid ${c.status === 'pending' ? C.goldBorder : C.border}`, borderRadius: '12px', padding: '14px 16px', background: c.status === 'pending' ? C.goldBg : C.card }}>
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>{c.userAvatar}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                          <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{c.userName}</span>
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
-                            <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
+                {muadilComments.map((c) => {
+                  const isAdmin = c.userRole === 'admin';
+                  const isModerator = c.userRole === 'moderator';
+                  const avatarBg = isAdmin
+                    ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
+                    : isModerator
+                    ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
+                    : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
+                  return (
+                    <div key={c.id} style={{
+                      border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
+                      borderRadius: '12px', padding: '14px 16px',
+                      background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
+                      position: 'relative', overflow: 'hidden',
+                    }}>
+                      {/* Admin şerit */}
+                      {isAdmin && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
+                      {isModerator && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
+                      <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none' }}>
+                          {isAdmin ? '👑' : c.userAvatar}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <span style={{ fontWeight: 800, fontSize: '13px', color: isAdmin ? C.gold : isModerator ? '#6d28d9' : C.text }}>{c.userName}</span>
+                              {isAdmin && (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, borderRadius: '6px', padding: '1px 7px', fontSize: '10px', fontWeight: 800, color: C.goldLight, letterSpacing: '.04em' }}>
+                                  👑 KURUCU
+                                </span>
+                              )}
+                              {isModerator && (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#ede9fe', border: '1px solid #a78bfa', borderRadius: '6px', padding: '1px 7px', fontSize: '10px', fontWeight: 700, color: '#5b21b6', letterSpacing: '.04em' }}>
+                                  🛡 MODERATÖR
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
+                              <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap' }}>
+                            <span>Ben. <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
+                            <span>Yay. <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
+                            <span>Kal. <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap' }}>
-                          <span>Ben. <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
-                          <span>Yay. <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
-                          <span>Kal. <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
-                        </div>
                       </div>
+                      <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{c.text}</p>
                     </div>
-                    <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{c.text}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>

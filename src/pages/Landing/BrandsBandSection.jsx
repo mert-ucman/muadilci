@@ -7,15 +7,15 @@ import noImage from '@/img/no-image.jpg';
 export function BrandsBandSection() {
   const { navigate } = useRouter();
   const { brands } = useData();
-  const { sm } = useW();
+  const { w, sm } = useW();
   const visible = brands.filter((b) => b.active !== false);
   const originals = visible.filter((b) => b.type === 'original');
   const muadils  = visible.filter((b) => b.type === 'muadil');
   const sorted = [...originals, ...muadils];
 
   return (
-    <div style={{ background: '#faf9f7', padding: sm ? '32px 16px' : '40px 32px', borderTop: `1px solid ${C.border}` }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{ background: '#faf9f7', padding: sm ? '28px 16px' : w >= 1280 ? '48px 48px' : '40px 32px', borderTop: `1px solid ${C.border}` }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <span style={{ fontSize: '11px', color: C.textLight, fontWeight: 700, letterSpacing: '.14em' }}>DESTEKLENEN MARKALAR</span>
         </div>

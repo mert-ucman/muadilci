@@ -11,7 +11,7 @@ export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
   const { perfumes, brands } = useData();
-  const { md } = useW();
+  const { w, md } = useW();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -47,8 +47,8 @@ export function Navbar() {
         boxShadow: '0 1px 8px rgba(0,0,0,.06)',
       }}>
         <div style={{
-          maxWidth: '1280px', margin: '0 auto',
-          padding: md ? '0 16px' : '0 32px', height: '64px',
+          maxWidth: '1320px', margin: '0 auto',
+          padding: md ? '0 16px' : w >= 1280 ? '0 48px' : '0 32px', height: '64px',
           display: 'flex', alignItems: 'center', gap: md ? '12px' : '20px',
         }}>
           {/* Logo */}

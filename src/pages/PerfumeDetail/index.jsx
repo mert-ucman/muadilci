@@ -5,12 +5,14 @@ import { calcScores } from '@/utils/scoring';
 import { Card, Badge, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C } from '@/constants/theme';
+import { faArrowUp, faHeart, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
 export function PerfumeDetailPage({ params }) {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments } = useData();
-  const { sm } = useW();
+  const { sm, xs } = useW();
   const perfume = perfumes.find((p) => p.brandSlug === params?.brandSlug && p.slug === params?.perfumeSlug);
 
   if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;
@@ -18,8 +20,8 @@ export function PerfumeDetailPage({ params }) {
   const muadiller = muadilPerfumes.filter((m) => m.targetPerfumeId === perfume.id);
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
         {/* Breadcrumb */}
         <div style={{ display: 'flex', gap: '6px', fontSize: '13px', color: C.textLight, marginBottom: '22px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: C.gold }}>Ana Sayfa</span>
@@ -54,13 +56,13 @@ export function PerfumeDetailPage({ params }) {
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Koku Notaları</h3>
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
               {[
-                ['Üst Notalar', '🌿', perfume.notes?.top || [], C.goldBg, C.goldBorder, C.gold],
-                ['Kalp Notaları', '🩷', perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
-                ['Dip Notalar', '🪵', perfume.notes?.base || [], C.greenBg, C.greenBorder, C.green],
+                ['Üst Notalar', faArrowUp, perfume.notes?.top || [], C.goldBg, C.goldBorder, C.gold],
+                ['Kalp Notaları', faHeart, perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
+                ['Dip Notalar', faArrowDown, perfume.notes?.base || [], C.greenBg, C.greenBorder, C.green],
               ].map(([l, icon, notes, bg, border, col]) => (
                 <div key={l} style={{ background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '14px' }}>{icon}</span>
+                    <FontAwesomeIcon icon={icon} style={{ fontSize: '11px', color: col }} />
                     <span style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase' }}>{l}</span>
                   </div>
                   {notes.map((n) => (
@@ -76,7 +78,7 @@ export function PerfumeDetailPage({ params }) {
         </div>
 
         <h2 style={{ fontSize: '22px', fontWeight: 800, color: C.navy, marginBottom: '16px' }}>Muadil Parfümler ({muadiller.length})</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill,minmax(${sm ? '100%' : '260px'},1fr))`, gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(260px,1fr))', gap: '16px' }}>
           {muadiller.map((m) => {
             const ms = calcScores(m.id, comments);
             return (

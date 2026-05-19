@@ -13,4 +13,4 @@ export function matchRoute(pattern, base) {
   return params;
 }
 
-export const NO_LAYOUT_PATHS = ['/giris', '/kayit', '/sifre-sifirla'];
+export const NO_LAYOUT_PATHS = ['/giris', '/kayit', '/sifre-sifirla', '/sifre-yenile'];

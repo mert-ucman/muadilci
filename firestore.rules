@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() { return request.auth != null; }
+    function isOwner(uid) { return isAuth() && request.auth.uid == uid; }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isAdmin() { return isAuth() && userDoc().role == 'admin'; }
+    function isMod() { return isAuth() && (userDoc().role == 'moderator' || userDoc().role == 'admin'); }
+
+    // ── Users ────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+
+      // Favoriler alt-koleksiyonu
+      match /favorites/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ── Usernames (benzersizlik için) ─────────────────────────────────────
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ── Brands ───────────────────────────────────────────────────────────
+    match /brands/{brandId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Perfumes (orijinal) ───────────────────────────────────────────────
+    match /perfumes/{perfumeId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Muadils ───────────────────────────────────────────────────────────
+    match /muadils/{muadilId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Reviews ───────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAdmin() || (isAuth() && request.resource.data.userId == request.auth.uid);
+      allow update: if isMod() || (isOwner(resource.data.userId) && resource.data.status == 'pending');
+      allow delete: if isMod();
+    }
+
+    // ── Slider Images ─────────────────────────────────────────────────────
+    match /sliderImages/{imgId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

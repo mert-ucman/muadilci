@@ -127,7 +127,7 @@ function HeroContent({ navigate, isMobile }) {
 export function HeroSection() {
   const { navigate } = useRouter();
   const { sliderImages } = useData();
-  const { md } = useW();
+  const { w, md, xs } = useW();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -144,7 +144,7 @@ export function HeroSection() {
 
   if (total === 0) {
     return (
-      <div style={{ background: `linear-gradient(135deg,${C.navy} 0%,#0f1c38 100%)`, padding: md ? '56px 16px 48px' : '80px 32px 80px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: `linear-gradient(135deg,${C.navy} 0%,#0f1c38 100%)`, padding: xs ? '40px 16px 36px' : md ? '56px 24px 48px' : w >= 1280 ? '100px 48px 100px' : '80px 32px 80px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 50%,rgba(184,150,90,.1) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(184,150,90,.07) 0%,transparent 40%)' }} />
         <HeroContent navigate={navigate} isMobile={md} />
       </div>

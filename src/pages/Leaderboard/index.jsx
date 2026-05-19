@@ -120,7 +120,7 @@ function BrandTable({ rows, navigate }) {
 export function LeaderboardPage() {
   const { muadilPerfumes, comments, brands } = useData();
   const { navigate } = useRouter();
-  const { sm } = useW();
+  const { w, sm, xs } = useW();
 
   const muadilScores = muadilPerfumes
     .filter((m) => m.active)
@@ -145,8 +145,8 @@ export function LeaderboardPage() {
     .slice(0, 10);
 
   return (
-    <div style={{ background: C.bg, minHeight: '100vh', padding: sm ? '28px 16px 60px' : '40px 0 80px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: sm ? '0' : '0 32px' }}>
+    <div style={{ background: C.bg, minHeight: '100vh', padding: xs ? '20px 16px 40px' : sm ? '28px 16px 60px' : '40px 0 80px' }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto', padding: sm ? '0' : w >= 1280 ? '0 48px' : '0 32px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '32px', textAlign: 'center' }}>

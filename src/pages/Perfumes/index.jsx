@@ -13,7 +13,7 @@ export function PerfumesPage() {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, updatePerfume, deletePerfume, updateMuadil, deleteMuadil, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { isMod, user } = useAuth();
-  const { sm } = useW();
+  const { w, sm, xs } = useW();
   const [pTab, setPTab] = useState('original');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -43,8 +43,8 @@ export function PerfumesPage() {
   const filtM = muadilPerfumes.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.brandName.toLowerCase().includes(search.toLowerCase()) || m.targetPerfumeName.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
         <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '4px' }}>Parfümler</h1>
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '22px' }}>Orijinal parfümler ve muadilleri</p>
 
@@ -75,7 +75,7 @@ export function PerfumesPage() {
         </div>
 
         {pTab === 'original' && (
-          <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(290px,1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(290px,1fr))', gap: '16px' }}>
             {filtO.map((p) => {
               const mc = muadilPerfumes.filter((m) => m.targetPerfumeId === p.id).length;
               return (
@@ -105,7 +105,7 @@ export function PerfumesPage() {
         )}
 
         {pTab === 'muadil' && (
-          <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(290px,1fr))', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(290px,1fr))', gap: '16px' }}>
             {filtM.map((m) => (
               <Card key={m.id} hover style={{ padding: '0', cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`)}>
                 {isMod && <button onClick={(e) => { e.stopPropagation(); openEdit('muadil', m); }} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1, background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '8px', padding: '4px 10px', fontSize: '12px', fontWeight: 600, color: C.gold, cursor: 'pointer', fontFamily: F }}>Düzenle</button>}

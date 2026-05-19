@@ -7,7 +7,18 @@ export function useRouter() {
 }
 
 export function RouterProvider({ children }) {
-  const getHash = () => window.location.hash.slice(1) || '/';
+  const getHash = () => {
+    // Firebase şifre sıfırlama maili: parametreler hash'te değil search'te gelir
+    const sp = new URLSearchParams(window.location.search);
+    const mode = sp.get('mode');
+    const oobCode = sp.get('oobCode');
+    if (mode === 'resetPassword' && oobCode) {
+      const newHash = `/sifre-yenile?oobCode=${encodeURIComponent(oobCode)}`;
+      window.history.replaceState(null, '', window.location.pathname + '#' + newHash);
+      return newHash;
+    }
+    return window.location.hash.slice(1) || '/';
+  };
   const [path, setPath] = useState(getHash);
 
   useEffect(() => {

@@ -41,3 +41,33 @@ select {
 }
 
 .fade-in { animation: fadein 0.3s ease; }
+
+/* Responsive utilities */
+img { max-width: 100%; display: block; }
+html { -webkit-text-size-adjust: 100%; }
+
+/* Touch scroll */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Tabs scroll on mobile */
+.tabs-scroll {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 4px;
+  padding-bottom: 1px;
+}
+.tabs-scroll::-webkit-scrollbar { display: none; }
+
+/* Responsive grid helpers (used by landing sections) */
+@media (max-width: 480px) {
+  .grid-xs-1 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 639px) {
+  .grid-sm-1 { grid-template-columns: 1fr !important; }
+  .grid-sm-2 { grid-template-columns: 1fr 1fr !important; }
+}
+
+/* Range input */
+input[type='range'] { cursor: pointer; }

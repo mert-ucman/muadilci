@@ -4,6 +4,8 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { Card, Badge } from '@/components/ui';
+import { faShirt, faGem } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
 import { C, F } from '@/constants/theme';
 import noImage from '@/img/no-image.jpg';
@@ -11,7 +13,7 @@ import noImage from '@/img/no-image.jpg';
 export function BrandPage({ params }) {
   const { navigate } = useRouter();
   const { brands, perfumes, muadilPerfumes, comments } = useData();
-  const { sm } = useW();
+  const { sm, xs } = useW();
   const [showTooltip, setShowTooltip] = useState(false);
   const brand = brands.find((b) => b.slug === params?.brandSlug);
 
@@ -44,7 +46,7 @@ export function BrandPage({ params }) {
               <Badge color={isOrig ? 'gold' : 'green'}>{isOrig ? 'Orijinal Marka' : 'Muadil Marka'}</Badge>
               {isOrig && brand.category && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: brand.category === 'Niche' ? 'rgba(167,139,250,.25)' : 'rgba(147,197,253,.2)', color: brand.category === 'Niche' ? '#c4b5fd' : '#93c5fd', border: `1px solid ${brand.category === 'Niche' ? 'rgba(167,139,250,.4)' : 'rgba(147,197,253,.3)'}` }}>
-                  {brand.category === 'Designer' ? '👔' : '💎'} {brand.category}
+                  <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} style={{ fontSize: '11px' }} /> {brand.category}
                 </span>
               )}
             </div>
@@ -85,7 +87,7 @@ export function BrandPage({ params }) {
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: sm ? '24px 16px' : '36px 32px' }}>
         <h2 style={{ fontSize: '22px', fontWeight: 800, color: C.navy, marginBottom: '18px' }}>Parfümler</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill,minmax(${sm ? '100%' : '260px'},1fr))`, gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(260px,1fr))', gap: '16px' }}>
           {items.map((item) => {
             const ms = !isOrig ? calcScores(item.id, comments) : null;
             return (

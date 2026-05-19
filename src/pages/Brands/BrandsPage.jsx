@@ -11,14 +11,14 @@ export function BrandsPage() {
   const { navigate } = useRouter();
   const { brands, toggleBrandFavorite, isBrandFavorite } = useData();
   const { user } = useAuth();
-  const { sm } = useW();
+  const { sm, xs } = useW();
   const [tab, setTab] = useState('original');
   const filtered = brands.filter((b) => b.type === tab && b.active);
   const isOrig = tab === 'original';
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
         <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '4px' }}>Markalar</h1>
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '22px' }}>Orijinal ve muadil parfüm evleri</p>
 
@@ -28,7 +28,7 @@ export function BrandsPage() {
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))', gap: '14px' }}>
           {filtered.map((b) => (
             <Card key={b.id} hover style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
               <button

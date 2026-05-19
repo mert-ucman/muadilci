@@ -1,4 +1,5 @@
 import { useRouter } from '@/contexts/RouterContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { matchRoute, NO_LAYOUT_PATHS } from '@/constants/routes';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -11,6 +12,7 @@ import { PerfumeDetailPage } from '@/pages/PerfumeDetail';
 import { LoginPage }         from '@/pages/Auth/LoginPage';
 import { RegisterPage }      from '@/pages/Auth/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/Auth/ForgotPasswordPage';
+import { ResetPasswordPage }  from '@/pages/Auth/ResetPasswordPage';
 import { ProfilePage }       from '@/pages/Profile';
 import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
@@ -24,6 +26,7 @@ const ROUTES = [
   { pat: '/giris',                  C: LoginPage },
   { pat: '/kayit',                  C: RegisterPage },
   { pat: '/sifre-sifirla',          C: ForgotPasswordPage },
+  { pat: '/sifre-yenile',          C: ResetPasswordPage },
   { pat: '/profil',                 C: ProfilePage },
   { pat: '/en-iyiler',               C: LeaderboardPage },
   { pat: '/moderasyon',             C: ModerationPage },
@@ -34,7 +37,15 @@ const ROUTES = [
 
 export function App() {
   const { basePath, query } = useRouter();
+  const { loading } = useAuth();
   const noLayout = NO_LAYOUT_PATHS.includes(basePath);
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fb' }}>
+      <div style={{ width: '36px', height: '36px', border: '3px solid #e5e7eb', borderTop: '3px solid #b8965a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
   const isLanding = basePath === '/';
 
   let Page = LandingPage;
