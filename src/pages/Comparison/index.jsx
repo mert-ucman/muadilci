@@ -8,13 +8,13 @@ import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { Badge } from '@/components/ui/Badge';
 import { C, F } from '@/constants/theme';
-import { faArrowUp, faHeart, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
 export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, addComment, deleteComment, toggleCompFavorite, isCompFavorite } = useData();
+  const { perfumes, muadilPerfumes, comments, users, addComment, deleteComment, toggleCompFavorite, isCompFavorite } = useData();
   const { user, isMod } = useAuth();
   const { w, sm, md, xs } = useW();
 
@@ -34,6 +34,7 @@ export function ComparisonPage({ queryParams }) {
   const [cProj, setCProj] = useState(5);
   const [cLon, setCLon] = useState(5);
   const [cText, setCText] = useState('');
+  const [cRecommend, setCRecommend] = useState(null);
 
   const origBrands = [...new Set(perfumes.map((p) => p.brandName))];
   const origFiltered = selOrigBrand ? perfumes.filter((p) => p.brandName === selOrigBrand) : perfumes;
@@ -51,8 +52,8 @@ export function ComparisonPage({ queryParams }) {
 
   const submitC = () => {
     if (!cText.trim() || !user || !selMuadil) return;
-    addComment({ muadilPerfumeId: selMuadil.id, userId: user.id, userName: user.name, userAvatar: user.name[0], similarity: cSim, projection: cProj, longevity: cLon, text: cText, status: isMod ? 'approved' : 'pending' });
-    setCText(''); setCSim(5); setCProj(5); setCLon(5); setShowCForm(false);
+    addComment({ muadilPerfumeId: selMuadil.id, similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend, status: isMod ? 'approved' : 'pending' });
+    setCText(''); setCSim(5); setCProj(5); setCLon(5); setCRecommend(null); setShowCForm(false);
   };
 
   const origBrandOpts = [{ value: '', label: 'Parfüm Evi Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
@@ -151,9 +152,9 @@ export function ComparisonPage({ queryParams }) {
                   <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '6px', fontWeight: 600 }}>Genel Puan</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ flex: 1, height: sm ? '6px' : '8px', background: C.borderLight, borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: scores.overall !== null ? `${(scores.overall / 10) * 100}%` : '0%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, borderRadius: '4px' }} />
+                      <div style={{ height: '100%', width: scores.overall !== null ? `${(scores.overall / 10) * 100}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)', borderRadius: '4px' }} />
                     </div>
-                    <span style={{ fontWeight: 900, color: scores.overall !== null ? C.gold : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
+                    <span style={{ fontWeight: 900, color: scores.overall !== null ? (scores.overall <= 4 ? C.red : scores.overall <= 6 ? C.orange : C.green) : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
                   </div>
                   {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight, marginTop: '4px' }}>{scores.count} yorumun ortalaması</div>}
                 </div>
@@ -162,18 +163,18 @@ export function ComparisonPage({ queryParams }) {
 
             {/* Notes + Other muadils */}
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-              <Card style={{ padding: '22px' }}>
-                <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}` }}>{selOrig.name}</div>
+              <Card style={{ padding: '22px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}`, width: '100%', textAlign: 'center' }}>{selOrig.name}</div>
                 <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>Koku Notaları</div>
-                {[['Üst', faArrowUp, selOrig.notes?.top || []], ['Kalp', faHeart, selOrig.notes?.heart || []], ['Dip', faArrowDown, selOrig.notes?.base || []]].map(([l, icon, n]) => (
-                  <div key={l} style={{ marginBottom: '8px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}><FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}</div>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {[['Üst', faArrowUp, selOrig.notes?.top || []], ['Kalp', faHeart, selOrig.notes?.heart || []], ['Alt', faArrowDown, selOrig.notes?.base || []]].map(([l, icon, n]) => (
+                  <div key={l} style={{ marginBottom: '8px', width: '100%' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}</div>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                       {n.map((note) => <span key={note} style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: C.gold }}>{note}</span>)}
                     </div>
                   </div>
                 ))}
-                <div style={{ marginTop: '12px', fontSize: '13px', color: C.textMid, lineHeight: 1.6, fontStyle: 'italic' }}>"{selOrig.description}"</div>
+                <div style={{ marginTop: '12px', fontSize: '13px', color: C.textMid, lineHeight: 1.6, fontStyle: 'italic', textAlign: 'center' }}>"{selOrig.description}"</div>
               </Card>
 
               <Card style={{ padding: '22px' }}>
@@ -235,8 +236,19 @@ export function ComparisonPage({ queryParams }) {
                     ))}
                   </div>
                   <textarea value={cText} onChange={(e) => setCText(e.target.value)} placeholder="Deneyiminizi paylaşın..." rows={3}
-                    style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: '10px', boxSizing: 'border-box' }} />
-                  {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>⚠ Yorumunuz moderatör onayından sonra yayınlanacak.</div>}
+                    style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: '12px', boxSizing: 'border-box' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '13px', color: C.textMid, fontWeight: 600 }}>Bu muadili tavsiye eder misiniz?</span>
+                    <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
+                      style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+                      <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '15px' }} />
+                    </button>
+                    <button onClick={() => setCRecommend(cRecommend === false ? null : false)}
+                      style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+                      <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
+                    </button>
+                  </div>
+                  {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                     <Btn variant="secondary" size="sm" onClick={() => setShowCForm(false)}>İptal</Btn>
                     <Btn size="sm" onClick={submitC} disabled={!cText.trim()}>Gönder</Btn>
@@ -254,8 +266,13 @@ export function ComparisonPage({ queryParams }) {
               {muadilComments.length === 0 && <div style={{ textAlign: 'center', color: C.textLight, fontSize: '14px', padding: '32px' }}>Henüz yorum yok.</div>}
               <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
                 {muadilComments.map((c) => {
-                  const isAdmin = c.userRole === 'admin';
-                  const isModerator = c.userRole === 'moderator';
+                  const commentUser = users.find((u) => u.uid === c.userId);
+                  const liveRole = commentUser?.role || c.userRole;
+                  const liveName = commentUser ? (commentUser.username ? `@${commentUser.username}` : commentUser.name) : c.userName;
+                  const livePhoto = commentUser?.photoURL || null;
+                  const liveAvatar = commentUser?.avatar || c.userAvatar;
+                  const isAdmin = liveRole === 'admin';
+                  const isModerator = liveRole === 'moderator';
                   const avatarBg = isAdmin
                     ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
                     : isModerator
@@ -273,29 +290,29 @@ export function ComparisonPage({ queryParams }) {
                       {isModerator && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
                       <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none', overflow: 'hidden' }}>
-                          {c.userPhotoURL && !isAdmin
-                            ? <img src={c.userPhotoURL} alt={c.userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                            : isAdmin ? '👑' : c.userAvatar
+                          {livePhoto
+                            ? <img src={livePhoto} alt={liveName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            : isAdmin ? <FontAwesomeIcon icon={faCrown} style={{ fontSize: '14px' }} /> : liveAvatar
                           }
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                              <span style={{ fontWeight: 800, fontSize: '13px', color: isAdmin ? C.gold : isModerator ? '#6d28d9' : C.text }}>{c.userName}</span>
-                              {isAdmin && (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, borderRadius: '6px', padding: '1px 7px', fontSize: '10px', fontWeight: 800, color: C.goldLight, letterSpacing: '.04em' }}>
-                                  👑 KURUCU
+                              {isAdmin ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, borderRadius: '6px', padding: '2px 9px', fontSize: '12px', fontWeight: 800, color: C.goldLight }}>
+                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} />{liveName}
                                 </span>
-                              )}
-                              {isModerator && (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#ede9fe', border: '1px solid #a78bfa', borderRadius: '6px', padding: '1px 7px', fontSize: '10px', fontWeight: 700, color: '#5b21b6', letterSpacing: '.04em' }}>
-                                  🛡 MODERATÖR
+                              ) : isModerator ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#ede9fe', border: '1px solid #a78bfa', borderRadius: '6px', padding: '2px 9px', fontSize: '12px', fontWeight: 700, color: '#5b21b6' }}>
+                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} />{liveName}
                                 </span>
+                              ) : (
+                                <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{liveName}</span>
                               )}
                             </div>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                               {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
-                              <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
+                              <span style={{ fontSize: '11px', color: C.textLight }}>{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
                               {user?.uid === c.userId && (
                                 confirmDeleteId === c.id
                                   ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -312,10 +329,22 @@ export function ComparisonPage({ queryParams }) {
                               )}
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap', alignItems: 'center' }}>
                             <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
                             <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
                             <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
+                            <span style={{ color: C.border }}>|</span>
+                            <span>Puan <strong style={{ color: C.gold }}>{((c.similarity + c.projection + c.longevity) / 3).toFixed(1)}/10</strong></span>
+                            {c.recommend === true && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '20px', padding: '2px 8px', color: C.green, fontWeight: 700 }}>
+                                <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
+                              </span>
+                            )}
+                            {c.recommend === false && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '20px', padding: '2px 8px', color: C.red, fontWeight: 700 }}>
+                                <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

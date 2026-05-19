@@ -40,13 +40,15 @@ export function ProfilePage({ queryParams }) {
 
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
-  const { comments, perfumes, muadilPerfumes, brands, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
+  const { comments, perfumes, muadilPerfumes, brands, updateUser, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
 
   const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : 'info';
   const [tab, setTab] = useState(tabInit);
   const [edit, setEdit] = useState(false);
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', bio: 'Koku meraklısı.' });
+  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', bio: user?.bio || '' });
   const [saved, setSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveErr, setSaveErr] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -71,7 +73,21 @@ export function ProfilePage({ queryParams }) {
   );
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
-  const save = () => { setSaved(true); setEdit(false); setTimeout(() => setSaved(false), 3000); };
+
+  const save = async () => {
+    setSaveLoading(true);
+    setSaveErr('');
+    try {
+      await updateUser(user.uid, { name: form.name, bio: form.bio });
+      setSaved(true);
+      setEdit(false);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      setSaveErr('Kaydedilemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const onCropComplete = useCallback((_, pixels) => { setCroppedAreaPixels(pixels); }, []);
 
@@ -279,15 +295,21 @@ export function ProfilePage({ queryParams }) {
 
         {tab === 'info' && (
           <div style={{ maxWidth: '480px' }}>
-            {saved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '11px 16px', color: C.green, marginBottom: '14px', fontSize: '13px' }}>✓ Bilgileriniz kaydedildi.</div>}
+            {saved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '11px 16px', color: C.green, marginBottom: '14px', fontSize: '13px' }}>Bilgileriniz kaydedildi.</div>}
+            {saveErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '11px 16px', color: C.red, marginBottom: '14px', fontSize: '13px' }}>{saveErr}</div>}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: C.navy }}>Kişisel Bilgiler</h3>
-              <Btn variant={edit ? 'primary' : 'ghost'} size="sm" onClick={() => edit ? save() : setEdit(true)}>{edit ? 'Kaydet' : 'Düzenle'}</Btn>
+              {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
             </div>
             <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={!edit} />
-            <Input label="E-posta" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!edit} />
-            <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} />
-            {edit && <Btn variant="secondary" size="sm" onClick={() => setEdit(false)}>İptal</Btn>}
+            <Input label="E-posta" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={true} />
+            <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} disabled={!edit} />
+            {edit && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <Btn size="sm" onClick={save} disabled={saveLoading}>{saveLoading ? 'Kaydediliyor...' : 'Kaydet'}</Btn>
+                <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', email: user?.email || '', bio: user?.bio || '' }); }}>İptal</Btn>
+              </div>
+            )}
             <div style={{ marginTop: '40px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Şifre Değiştir</h3>
               <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>

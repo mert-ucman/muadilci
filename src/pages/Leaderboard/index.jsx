@@ -2,6 +2,8 @@ import { useData } from '@/contexts/DataContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
+import { faTrophy, faMedal } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 function calcMuadilScore(muadilId, comments) {
   const approved = comments.filter((c) => c.muadilPerfumeId === muadilId && c.status === 'approved');
@@ -169,7 +171,7 @@ export function LeaderboardPage() {
                 background: `linear-gradient(135deg,${C.gold},${C.goldLight})`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
-                <span style={{ fontSize: '18px' }}>🏆</span>
+                <FontAwesomeIcon icon={faTrophy} style={{ fontSize: '16px', color: '#fff' }} />
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: C.navy, fontFamily: F }}>
@@ -196,7 +198,7 @@ export function LeaderboardPage() {
                 background: `linear-gradient(135deg,${C.navy},${C.navyLight})`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
-                <span style={{ fontSize: '18px' }}>🥇</span>
+                <FontAwesomeIcon icon={faMedal} style={{ fontSize: '16px', color: '#fff' }} />
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: C.navy, fontFamily: F }}>

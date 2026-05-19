@@ -459,7 +459,12 @@ export function AdminPanel() {
                 <h3 style={{ fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Son Kullanıcılar</h3>
                 {users.slice(-4).reverse().map((u) => (
                   <div key={u.id} style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingBottom: '10px', marginBottom: '10px', borderBottom: `1px solid ${C.borderLight}` }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: C.goldBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: C.gold }}>{u.avatar}</div>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: C.goldBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: C.gold, overflow: 'hidden', flexShrink: 0 }}>
+                      {u.photoURL
+                        ? <img src={u.photoURL} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
+                      }
+                    </div>
                     <div style={{ flex: 1 }}><div style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>{u.name}</div><div style={{ fontSize: '12px', color: C.textLight }}>{u.email}</div></div>
                     <Badge color={RC[u.role]}>{RL[u.role]}</Badge>
                   </div>
@@ -505,7 +510,12 @@ export function AdminPanel() {
                       <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}` }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700 }}>{u.avatar}</div>
+                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
+                              {u.photoURL
+                                ? <img src={u.photoURL} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
+                              }
+                            </div>
                             <button onClick={() => setSelUser(u)} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: F }}>{u.name}</button>
                           </div>
                         </td>
@@ -768,7 +778,12 @@ export function AdminPanel() {
           return (
             <>
               <div style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '14px', background: C.goldBg, borderRadius: '12px', border: `1px solid ${C.goldBorder}`, marginBottom: '18px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>{selUser.avatar}</div>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#fff', fontWeight: 700, flexShrink: 0, overflow: 'hidden' }}>
+                  {(selUser.photoURL || (selUser.avatar?.startsWith?.('http') ? selUser.avatar : null))
+                    ? <img src={selUser.photoURL || selUser.avatar} alt={selUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    : (selUser.avatar?.length === 1 ? selUser.avatar : selUser.name?.[0]?.toUpperCase() || '?')
+                  }
+                </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '16px', color: C.navy }}>{selUser.name}</div>
                   <div style={{ fontSize: '13px', color: C.textMid }}>{selUser.email}</div>
@@ -781,7 +796,7 @@ export function AdminPanel() {
               <div style={{ marginBottom: '18px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '10px', letterSpacing: '.05em' }}>OTURUM BİLGİLERİ</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {[['Son Giriş', '13.05.2026 09:42'], ['Son Çıkış', '13.05.2026 11:18'], ['Katılım Tarihi', selUser.joinDate || '—'], ['Toplam Yorum', uc.length]].map(([k, v]) => (
+                  {[['Son Giriş', '—'], ['Son Çıkış', '—'], ['Katılım Tarihi', selUser.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || '—'], ['Toplam Yorum', uc.length]].map(([k, v]) => (
                     <div key={k} style={{ background: '#f9f9fb', borderRadius: '10px', padding: '10px 14px', border: `1px solid ${C.border}` }}>
                       <div style={{ fontSize: '11px', color: C.textLight, marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.05em' }}>{k}</div>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: C.text }}>{v}</div>

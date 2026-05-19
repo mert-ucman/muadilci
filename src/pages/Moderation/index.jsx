@@ -30,7 +30,12 @@ export function ModerationPage() {
             return (
               <Card key={c.id} style={{ padding: '20px', border: `1px solid ${C.goldBorder}` }}>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#fff', fontWeight: 700, flexShrink: 0 }}>{c.userAvatar}</div>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#fff', fontWeight: 700, flexShrink: 0, overflow: 'hidden' }}>
+                    {c.userPhotoURL
+                      ? <img src={c.userPhotoURL} alt={c.userName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      : (c.userAvatar?.length === 1 ? c.userAvatar : c.userName?.[0]?.toUpperCase() || '?')
+                    }
+                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 700, color: C.text }}>{c.userName}</span>

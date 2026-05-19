@@ -36,8 +36,8 @@ const ROUTES = [
 ];
 
 export function App() {
-  const { basePath, query } = useRouter();
-  const { loading } = useAuth();
+  const { basePath, query, navigate } = useRouter();
+  const { loading, user, isAdmin, isMod } = useAuth();
   const noLayout = NO_LAYOUT_PATHS.includes(basePath);
 
   if (loading) return (
@@ -46,7 +46,25 @@ export function App() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
-  const isLanding = basePath === '/';
+
+  // Route korumaları
+  if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) {
+    navigate('/giris');
+    return null;
+  }
+  if (user && !isMod && basePath === '/moderasyon') {
+    navigate('/');
+    return null;
+  }
+  if (user && !isAdmin && basePath === '/admin') {
+    navigate('/');
+    return null;
+  }
+  // Giriş yapmış kullanıcıyı auth sayfalarından yönlendir
+  if (user && (basePath === '/giris' || basePath === '/kayit')) {
+    navigate('/');
+    return null;
+  }
 
   let Page = LandingPage;
   let params = {};

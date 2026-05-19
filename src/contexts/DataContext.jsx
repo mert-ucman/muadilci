@@ -42,12 +42,10 @@ export function DataProvider({ children }) {
     return () => unsubs.forEach((u) => u());
   }, []);
 
-  // Admin: users listesi
   useEffect(() => {
-    if (!user || (user.role !== 'admin' && user.role !== 'moderator')) return;
     const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s)));
     return () => unsub();
-  }, [user?.role]);
+  }, []);
 
   // ─── Brands ──────────────────────────────────────────────────────────────
   const addBrand = async (b) => {

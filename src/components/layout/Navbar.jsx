@@ -6,6 +6,7 @@ import { useW } from '@/hooks/useW';
 import { Badge } from '@/components/ui/Badge';
 import { Btn } from '@/components/ui/Btn';
 import { C, F } from '@/constants/theme';
+import logoDark from '@/img/logos/logo-dark-minified.png';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
@@ -48,16 +49,13 @@ export function Navbar() {
       }}>
         <div style={{
           maxWidth: '1320px', margin: '0 auto',
-          padding: lg ? '0 16px' : w >= 1280 ? '0 48px' : '0 32px', height: '64px',
+          padding: lg ? '0 16px' : w >= 1280 ? '0 48px' : '0 32px', height: '75px',
           display: 'flex', alignItems: 'center', gap: lg ? '12px' : '20px',
         }}>
           {/* Logo */}
-          <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexShrink: 0 }}>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontSize: '16px', fontWeight: 900 }}>M</span>
-            </div>
-            <span style={{ fontSize: '20px', fontWeight: 900, color: C.navy }}>muadilci</span>
-          </div>
+          <a onClick={(e) => { e.preventDefault(); navigate('/'); }} href="/#/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, textDecoration: 'none' }}>
+            <img src={logoDark} alt="muadilci" style={{ height: '70px', width: 'auto', display: 'block', marginTop: '-2px' }} />
+          </a>
 
           {/* Nav Links — desktop only */}
           {!lg && (
@@ -212,7 +210,7 @@ export function Navbar() {
           >
             {/* Drawer header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.border}` }}>
-              <span style={{ fontSize: '16px', fontWeight: 900, color: C.navy }}>muadilci</span>
+              <img src={logoDark} alt="muadilci" style={{ height: '32px', width: 'auto' }} />
               <button onClick={() => setMobileOpen(false)} style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f4f4f8', border: 'none', fontSize: '18px', cursor: 'pointer', color: C.textMid, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             </div>
 

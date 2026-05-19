@@ -36,6 +36,7 @@ async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
     username: extraData.username || null,
     email: firebaseUser.email,
     avatar: firebaseUser.photoURL || name[0].toUpperCase(),
+    photoURL: firebaseUser.photoURL || null,
     role: 'user',
     active: true,
     createdAt: serverTimestamp(),

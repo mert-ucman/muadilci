@@ -33,6 +33,7 @@ muadilci/
 │   │   │   ├── Badge.jsx
 │   │   │   ├── Btn.jsx
 │   │   │   ├── Card.jsx
+│   │   │   ├── FaIcon.jsx       # FontAwesome ikon sarmalayıcı
 │   │   │   ├── Input.jsx
 │   │   │   ├── Modal.jsx
 │   │   │   ├── ScoreBar.jsx
@@ -67,10 +68,12 @@ muadilci/
 │   │   │   ├── TestimonialsSection.jsx
 │   │   │   └── CTASection.jsx
 │   │   ├── Auth/
-│   │   │   ├── AuthLayout.jsx   # Ortak layout + GoogleBtn + Divider + EyeIcon
+│   │   │   ├── AuthLayout.jsx        # Ortak layout + GoogleBtn + Divider + EyeIcon
 │   │   │   ├── LoginPage.jsx
 │   │   │   ├── RegisterPage.jsx
-│   │   │   └── ForgotPasswordPage.jsx
+│   │   │   ├── ForgotPasswordPage.jsx
+│   │   │   ├── ResetPasswordPage.jsx # oobCode ile şifre yenileme (/#/sifre-yenile)
+│   │   │   └── TermsModal.jsx        # Kayıt sırasında kullanım şartları modal
 │   │   ├── Perfumes/index.jsx   # Orijinal ve muadil parfüm listesi
 │   │   ├── PerfumeDetail/index.jsx
 │   │   ├── Brands/
@@ -119,6 +122,7 @@ navigate('/karsilastir?orijinal=3&muadil=101');
 // /#/giris                    → LoginPage   (layout yok)
 // /#/kayit                    → RegisterPage (layout yok)
 // /#/sifre-sifirla            → ForgotPasswordPage (layout yok)
+// /#/sifre-yenile             → ResetPasswordPage (layout yok, ?oobCode=... parametresi alır)
 // /#/profil                   → ProfilePage
 // /#/moderasyon               → ModerationPage
 // /#/admin                    → AdminPanel
@@ -126,7 +130,7 @@ navigate('/karsilastir?orijinal=3&muadil=101');
 // /#/:brandSlug/:perfumeSlug  → PerfumeDetailPage
 ```
 
-Auth sayfaları (`/giris`, `/kayit`, `/sifre-sifirla`) `NO_LAYOUT_PATHS` listesinde — bu sayfalarda Navbar ve Footer render edilmez.
+Auth sayfaları (`/giris`, `/kayit`, `/sifre-sifirla`, `/sifre-yenile`) `NO_LAYOUT_PATHS` listesinde — bu sayfalarda Navbar ve Footer render edilmez.
 
 ---
 
@@ -329,9 +333,10 @@ reviews/{reviewId}
 users/{uid}
   - uid: string
   - name: string
+  - username: string         (benzersiz kullanıcı adı, @username formatında gösterilir)
   - email: string
-  - avatar: string           (ilk harf veya photoURL)
-  - photoURL: string         (opsiyonel, Google giriş)
+  - avatar: string           (ilk harf büyük harf, ör: "M")
+  - photoURL: string         (opsiyonel — profil fotoğrafı data URL veya Google photoURL)
   - role: "user" | "moderator" | "admin"
   - favBrands: string[]      (favori marka id'leri)
   - favPerfumes: string[]
@@ -339,6 +344,10 @@ users/{uid}
   - favComps: string[]       (format: "origId_muadilId")
   - active: boolean
   - createdAt: Timestamp
+
+usernames/{username}
+  - uid: string
+  - email: string
 
 sliderImages/{imageId}
   - id: string
@@ -386,15 +395,35 @@ Kullanıcı giriş yapınca Firestore'da `users/{uid}` dokümanı otomatik oluş
 ### AuthContext (`src/contexts/AuthContext.jsx`)
 
 ```js
-const { user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, isAdmin, isMod } = useAuth();
+const {
+  user, loading,
+  loginWithEmail,       // email veya @username ile giriş
+  register,             // name, username, email, password — usernames koleksiyonuna da yazar
+  loginWithGoogle,
+  logout,
+  resetPassword,        // şifre sıfırlama e-postası gönder
+  verifyResetCode,      // oobCode geçerli mi kontrol et
+  confirmReset,         // oobCode + yeni şifre ile sıfırla
+  checkUsername,        // kullanıcı adı müsait mi? (true=müsait)
+  deleteAccount,        // hesabı ve users/usernames dokümanlarını sil
+  reauthenticate,       // şifre ile yeniden doğrulama (hassas işlem öncesi)
+  updateProfilePhoto,   // base64 data URL → Firestore users/{uid}.photoURL
+  deleteProfilePhoto,   // profil fotoğrafını kaldır
+  isAdmin, isMod,
+} = useAuth();
 
 // user objesi:
-// { uid, name, email, avatar, role, favBrands, favPerfumes, ... }
+// { uid, name, username, email, avatar, photoURL, role, favBrands, favPerfumes, ... }
+// username: benzersiz kullanıcı adı (@ olmadan saklanır, gösterimde @username)
+// avatar: ismin ilk harfi büyük (ör: "M")
+// photoURL: yüklenmiş profil fotoğrafı data URL veya null
 
 // loading: true → Firebase auth durumu henüz bilinmiyor (spinner göster)
 // isAdmin: user.role === 'admin'
 // isMod: user.role === 'moderator' || 'admin'
 ```
+
+`loginWithEmail` e-posta veya kullanıcı adı kabul eder. Kullanıcı adıyla giriş yapılırsa `usernames/{username}` koleksiyonundan e-posta bulunur.
 
 ### DataContext (`src/contexts/DataContext.jsx`)
 
@@ -409,7 +438,7 @@ const {
   addBrand, updateBrand, deleteBrand,
   addPerfume, updatePerfume, deletePerfume,
   addMuadil, updateMuadil, deleteMuadil,
-  addComment, approveComment, rejectComment,
+  addComment, approveComment, rejectComment, deleteComment,
   updateUser, deleteUser,
 
   // Favoriler (Firestore'dan real-time)
@@ -424,6 +453,11 @@ const {
   MAX_SIZE_MB,  // 2
 } = useData();
 ```
+
+**Önemli notlar:**
+- `users` koleksiyonu herkese açık olarak dinlenir (giriş yapılmamış kullanıcılar dahil). Firestore kuralları zaten herkese okuma izni veriyor. Bu sayede yorum kartlarında yorum sahibinin güncel profil verisi (fotoğraf, kullanıcı adı, rol) gösterilebilir.
+- `addComment` çağrılırken tüm kullanıcı alanları (`userRole`, `userName`, `userAvatar`, `userPhotoURL`) DataContext içinde `user` context'inden otomatik doldurulur; çağıran sayfanın bu alanları geçmesi gerekmez.
+- `deleteComment` sadece kendi yorumunu silmek için kullanılır; `muadils/{id}.reviewCount` alanını da günceller.
 
 ---
 
@@ -469,22 +503,47 @@ Rol ataması: Firebase Console → Firestore → `users/{uid}` → `role` alanı
 | `/#/karsilastir` | ComparisonPage | Orijinal vs muadil karşılaştırma + yorumlar |
 | `/#/en-iyiler` | LeaderboardPage | Top 10 muadil parfüm ve marka |
 | `/#/profil` | ProfilePage | Bilgiler, favoriler, yorumlarım |
-| `/#/giris` | LoginPage | Email + Google girişi |
-| `/#/kayit` | RegisterPage | Kayıt |
-| `/#/sifre-sifirla` | ForgotPasswordPage | Şifre sıfırlama e-postası |
+| `/#/giris` | LoginPage | Email/kullanıcı adı + Google girişi |
+| `/#/kayit` | RegisterPage | Kayıt (kullanıcı adı + e-posta + şifre, TermsModal içerir) |
+| `/#/sifre-sifirla` | ForgotPasswordPage | Şifre sıfırlama e-postası gönder |
+| `/#/sifre-yenile` | ResetPasswordPage | E-postadaki link ile şifre yenile (`?oobCode=...`) |
 | `/#/moderasyon` | ModerationPage | Bekleyen yorumları onayla/reddet |
 | `/#/admin` | AdminPanel | Tam yönetim paneli |
 
 ---
 
-## 11. Kodlama Kuralları
+## 11. Yorum Görüntüleme Davranışı (ComparisonPage)
+
+Yorumlar (`reviews` koleksiyonu) oluşturulurken kullanıcı bilgileri snapshot olarak kaydedilir. Ancak görüntüleme sırasında `users` dizisinden **güncel** veriler çekilir:
+
+```js
+const commentUser = users.find((u) => u.uid === c.userId);
+const liveName    = commentUser?.username ? `@${commentUser.username}` : commentUser?.name;
+const livePhoto   = commentUser?.photoURL || null;
+const liveAvatar  = commentUser?.avatar || c.userAvatar;
+const liveRole    = commentUser?.role || c.userRole;
+```
+
+### Kullanıcı Adı / Badge Görünümü
+
+| Rol | Görünüm |
+|-----|---------|
+| `admin` | faCrown ikonu + @kullanıcıadı — koyu altın badge (`#1a1205` arka plan, `C.gold` kenarlık) |
+| `moderator` | faShield ikonu + @kullanıcıadı — mor badge (`#ede9fe` arka plan, `#a78bfa` kenarlık) |
+| `user` | @kullanıcıadı — düz metin, badge yok |
+
+Profil fotoğrafı varsa (`livePhoto`) tüm roller için fotoğraf gösterilir. Fotoğraf yoksa admin için faCrown ikonu, diğerleri için avatar harfi gösterilir.
+
+---
+
+## 12. Kodlama Kuralları
 
 ### Genel
 - **TypeScript yok** — saf JavaScript/JSX
 - Harici CSS kütüphanesi yok — tüm stiller inline `style={{}}`
 - Harici UI kütüphanesi yok (MUI, Chakra, Tailwind yok)
 - Hiç yorum satırı ekleme (kod kendini açıklar)
-- Emoji kullanma (kullanıcı istemediği sürece)
+- **Emoji kullanma** — ikonlar için yalnızca FontAwesome (`@fortawesome/react-fontawesome` + `@fortawesome/free-solid-svg-icons`) kullanılır. Kod içinde, UI'da ve dokümanda emoji yasaktır.
 
 ### Import Alias
 ```js
@@ -526,7 +585,7 @@ import { setDoc } from 'firebase/firestore'; // ❌
 
 ---
 
-## 12. Ortam Değişkenleri (`.env`)
+## 13. Ortam Değişkenleri (`.env`)
 
 ```env
 VITE_FIREBASE_API_KEY=...
@@ -542,7 +601,7 @@ VITE_FIREBASE_MEASUREMENT_ID=...
 
 ---
 
-## 13. Geliştirme Komutları
+## 14. Geliştirme Komutları
 
 ```bash
 npm run dev      # localhost:5174 (5173 doluysa)
@@ -557,7 +616,7 @@ firebase deploy                           # Tüm servisleri deploy et
 
 ---
 
-## 14. Önemli Notlar
+## 15. Önemli Notlar
 
 1. **Routing hash-based** — URL'ler `/#/path` formatında. Sunucu tarafı routing gerekmez, Firebase Hosting ile uyumlu.
 
