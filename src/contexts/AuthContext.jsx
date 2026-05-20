@@ -77,8 +77,8 @@ export function AuthProvider({ children }) {
 
   const register = async (name, username, email, password) => {
     const usernameKey = username.toLowerCase().trim();
-    // "admin" ile başlayan kullanıcı adları yasak
-    if (usernameKey.startsWith('admin')) {
+    // Rezerve kullanıcı adları yasak
+    if (usernameKey.startsWith('admin') || usernameKey.startsWith('mod')) {
       const err = new Error('Bu kullanıcı adı kullanılamaz.');
       err.code = 'username-reserved';
       throw err;
@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
   const checkUsername = async (username) => {
     if (!username || username.length < 3) return null;
     const key = username.toLowerCase().trim();
-    if (key.startsWith('admin')) return false;
+    if (key.startsWith('admin') || key.startsWith('mod')) return false;
     const snap = await getDoc(doc(db, 'usernames', key));
     return !snap.exists(); // true = müsait
   };

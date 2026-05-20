@@ -82,6 +82,44 @@ export function DataProvider({ children }) {
   const updateMuadil = async (id, d) => updateDoc(docRef('muadils', id), d);
   const deleteMuadil = async (id) => deleteDoc(docRef('muadils', id));
 
+  const incrementCompareCount = async (muadilId) => {
+    if (!muadilId) return;
+    await updateDoc(docRef('muadils', muadilId), { compareCount: increment(1) });
+  };
+
+  const toggleMuadilRecommend = async (userId, muadilId, isRecommend) => {
+    if (!userId || !muadilId) return;
+    const ref = docRef('muadils', muadilId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const recBy    = data.recommendedBy    ?? [];
+    const notRecBy = data.notRecommendedBy ?? [];
+    const uid = String(userId);
+    const alreadyRec    = recBy.includes(uid);
+    const alreadyNotRec = notRecBy.includes(uid);
+    let newRec    = recBy;
+    let newNotRec = notRecBy;
+    if (isRecommend) {
+      newRec    = alreadyRec    ? recBy.filter(u => u !== uid) : [...recBy, uid];
+      newNotRec = notRecBy.filter(u => u !== uid);
+    } else {
+      newNotRec = alreadyNotRec ? notRecBy.filter(u => u !== uid) : [...notRecBy, uid];
+      newRec    = recBy.filter(u => u !== uid);
+    }
+    await updateDoc(ref, { recommendedBy: newRec, notRecommendedBy: newNotRec });
+  };
+
+  const getMuadilRecommendStatus = (userId, muadilId) => {
+    if (!userId) return null;
+    const m = muadilPerfumes.find(x => String(x.id) === String(muadilId));
+    if (!m) return null;
+    const uid = String(userId);
+    if ((m.recommendedBy    ?? []).includes(uid)) return true;
+    if ((m.notRecommendedBy ?? []).includes(uid)) return false;
+    return null;
+  };
+
   // ─── Reviews / Comments ───────────────────────────────────────────────────
   const addComment = async (c) => {
     const ref = doc(col('reviews'));
@@ -90,7 +128,7 @@ export function DataProvider({ children }) {
       id: ref.id,
       muadilId: String(c.muadilPerfumeId ?? c.muadilId),
       userId: user?.uid,
-      userName: user?.username ? `@${user.username}` : user?.name,
+      userName: user?.role === 'moderator' ? '@moderatör' : (user?.username ? `@${user.username}` : user?.name),
       userAvatar: user?.avatar,
       userPhotoURL: user?.photoURL || null,
       userRole: user?.role ?? 'user',
@@ -229,6 +267,7 @@ export function DataProvider({ children }) {
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
       addComment, approveComment, rejectComment, deleteComment,
+      incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus,
       updateUser, deleteUser,
       brandFavorites, toggleBrandFavorite, isBrandFavorite, getUserFavoriteBrands,
       togglePerfumeFavorite, isPerfumeFavorite, getUserFavoritePerfumes,

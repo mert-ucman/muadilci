@@ -99,7 +99,8 @@ export function RegisterPage() {
   useEffect(() => {
     if (!username) { setUsernameStatus(''); return; }
     if (!USERNAME_RE.test(username.toLowerCase())) { setUsernameStatus('invalid'); return; }
-    if (username.toLowerCase().startsWith('admin')) { setUsernameStatus('reserved'); return; }
+    const ukey = username.toLowerCase();
+    if (ukey.startsWith('admin') || ukey.startsWith('mod')) { setUsernameStatus('reserved'); return; }
     setUsernameStatus('checking');
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {

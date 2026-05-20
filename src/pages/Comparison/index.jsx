@@ -1,20 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
+import { containsProfanity } from '@/utils/profanity';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { Badge } from '@/components/ui/Badge';
 import { C, F } from '@/constants/theme';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
 export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, users, addComment, deleteComment, toggleCompFavorite, isCompFavorite } = useData();
+  const { perfumes, muadilPerfumes, comments, users, addComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
   const { user, isMod } = useAuth();
   const { w, sm, md, xs } = useW();
 
@@ -35,6 +36,8 @@ export function ComparisonPage({ queryParams }) {
   const [cLon, setCLon] = useState(5);
   const [cText, setCText] = useState('');
   const [cRecommend, setCRecommend] = useState(null);
+  const [profanityError, setProfanityError] = useState(false);
+
 
   const origBrands = [...new Set(perfumes.map((p) => p.brandName))];
   const origFiltered = selOrigBrand ? perfumes.filter((p) => p.brandName === selOrigBrand) : perfumes;
@@ -50,14 +53,26 @@ export function ComparisonPage({ queryParams }) {
     : [];
   const scores = selMuadil ? calcScores(selMuadil.id, comments) : { scent: null, projection: null, longevity: null, overall: null, count: 0 };
 
+  // Tavsiye sayıları: onaylanmış yorumlardan hesapla
+  const approvedMuadilComments = selMuadil
+    ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && c.status === 'approved')
+    : [];
+  const recCount = approvedMuadilComments.filter((c) => c.recommend === true).length;
+  const notRecCount = approvedMuadilComments.filter((c) => c.recommend === false).length;
+
   const submitC = () => {
     if (!cText.trim() || !user || !selMuadil) return;
+    if (containsProfanity(cText)) {
+      setProfanityError(true);
+      return;
+    }
+    setProfanityError(false);
     addComment({ muadilPerfumeId: selMuadil.id, similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend, status: isMod ? 'approved' : 'pending' });
     setCText(''); setCSim(5); setCProj(5); setCLon(5); setCRecommend(null); setShowCForm(false);
   };
 
-  const origBrandOpts = [{ value: '', label: 'Parfüm Evi Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
-  const origPerfOpts = [{ value: '', label: 'Parfüm Seçin' }, ...origFiltered.map((p) => ({ value: String(p.id), label: p.name }))];
+  const origBrandOpts = [{ value: '', label: 'Orijinal Marka Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
+  const origPerfOpts = [{ value: '', label: 'Orijinal Parfüm Seçin' }, ...origFiltered.map((p) => ({ value: String(p.id), label: p.name }))];
   const mBrandOpts = [{ value: '', label: 'Muadil Marka Seçin' }, ...(selOrig ? mBrands : origBrands).map((b) => ({ value: b, label: b }))];
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
@@ -102,9 +117,14 @@ export function ComparisonPage({ queryParams }) {
                   </div>
                 </div>
               </Card>
-              <Card style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
+              <Card style={{ padding: '0', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
                   <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button
+                    onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }}
+                    style={{ position: 'absolute', top: '10px', right: '10px', background: isMuadilFavorite(user?.uid, selMuadil.id) ? C.redBg : 'rgba(255,255,255,.9)', border: `1px solid ${isMuadilFavorite(user?.uid, selMuadil.id) ? C.redBorder : 'rgba(255,255,255,.6)'}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,.15)', backdropFilter: 'blur(4px)' }}>
+                    {isMuadilFavorite(user?.uid, selMuadil.id) ? '❤️' : '🤍'}
+                  </button>
                 </div>
                 <div style={{ padding: sm ? '8px 10px' : '14px 16px' }}>
                   <div style={{ fontSize: sm ? '13px' : '16px', fontWeight: 900, color: C.navy, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selMuadil.name}</div>
@@ -215,6 +235,31 @@ export function ComparisonPage({ queryParams }) {
               </Card>
             </div>
 
+            {/* Stats panel */}
+            <Card style={{ padding: sm ? '16px' : '22px', marginBottom: '14px' }}>
+              <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${C.border}` }}>
+                Muadil İstatistikleri
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr 1fr' : 'repeat(4,1fr)', gap: sm ? '10px' : '14px' }}>
+                {[
+                  { icon: faMagnifyingGlass, value: approvedMuadilComments.length, label: 'kullanıcı karşılaştırdı', bg: C.blueBg, border: '#bfdbfe', iconBg: '#dbeafe', color: C.blue },
+                  { icon: faHeart,           value: selMuadil.likes ?? 0,           label: 'favoriye ekledi',       bg: C.goldBg, border: C.goldBorder, iconBg: 'rgba(184,150,90,.15)', color: C.gold },
+                  { icon: faThumbsUp,        value: recCount,                        label: 'tavsiye ediyor',        bg: C.greenBg, border: C.greenBorder, iconBg: '#dcfce7', color: C.green },
+                  { icon: faThumbsDown,      value: notRecCount,                     label: 'tavsiye etmiyor',       bg: C.redBg, border: C.redBorder, iconBg: '#fee2e2', color: C.red },
+                ].map(({ icon, value, label, bg, border, iconBg, color }) => (
+                  <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: sm ? '12px' : '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <FontAwesomeIcon icon={icon} style={{ fontSize: '17px', color }} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: sm ? '20px' : '22px', fontWeight: 900, color, lineHeight: 1.1 }}>{value.toLocaleString('tr-TR')}</div>
+                      <div style={{ fontSize: '11px', color: C.textMid, fontWeight: 600, marginTop: '2px' }}>{label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
             {/* Comments */}
             <Card style={{ padding: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
@@ -235,8 +280,19 @@ export function ComparisonPage({ queryParams }) {
                       </div>
                     ))}
                   </div>
-                  <textarea value={cText} onChange={(e) => setCText(e.target.value)} placeholder="Deneyiminizi paylaşın..." rows={3}
-                    style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: '12px', boxSizing: 'border-box' }} />
+                  <textarea
+                    value={cText}
+                    onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); }}
+                    placeholder="Deneyiminizi paylaşın..."
+                    rows={3}
+                    style={{ width: '100%', border: `1px solid ${profanityError ? C.red : C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: profanityError ? '6px' : '12px', boxSizing: 'border-box', transition: 'border-color .2s' }}
+                  />
+                  {profanityError && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', fontSize: '13px', color: C.red, fontWeight: 600 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
                     <span style={{ fontSize: '13px', color: C.textMid, fontWeight: 600 }}>Bu muadili tavsiye eder misiniz?</span>
                     <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
@@ -248,10 +304,13 @@ export function ComparisonPage({ queryParams }) {
                       <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
                     </button>
                   </div>
+                  <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
+                    ℹ️ Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
+                  </div>
                   {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <Btn variant="secondary" size="sm" onClick={() => setShowCForm(false)}>İptal</Btn>
-                    <Btn size="sm" onClick={submitC} disabled={!cText.trim()}>Gönder</Btn>
+                    <Btn variant="secondary" size="sm" onClick={() => { setShowCForm(false); setProfanityError(false); }}>İptal</Btn>
+                    <Btn size="sm" onClick={submitC} disabled={!cText.trim() || profanityError}>Gönder</Btn>
                   </div>
                 </div>
               )}
@@ -268,11 +327,15 @@ export function ComparisonPage({ queryParams }) {
                 {muadilComments.map((c) => {
                   const commentUser = users.find((u) => u.uid === c.userId);
                   const liveRole = commentUser?.role || c.userRole;
-                  const liveName = commentUser ? (commentUser.username ? `@${commentUser.username}` : commentUser.name) : c.userName;
-                  const livePhoto = commentUser?.photoURL || null;
-                  const liveAvatar = commentUser?.avatar || c.userAvatar;
                   const isAdmin = liveRole === 'admin';
                   const isModerator = liveRole === 'moderator';
+                  const liveName = isModerator
+                    ? '@moderatör'
+                    : commentUser
+                      ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
+                      : c.userName;
+                  const livePhoto = commentUser?.photoURL || null;
+                  const liveAvatar = commentUser?.avatar || c.userAvatar;
                   const avatarBg = isAdmin
                     ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
                     : isModerator
@@ -357,7 +420,9 @@ export function ComparisonPage({ queryParams }) {
           </div>
         ) : (
           <Card style={{ padding: sm ? '40px 20px' : '60px', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '14px' }}>🔍</div>
+            <div style={{ fontSize: '48px', marginBottom: '14px', color: C.textLight }}>
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+            </div>
             <div style={{ fontSize: sm ? '16px' : '20px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Karşılaştırmak istediğiniz parfümü seçin</div>
             <div style={{ color: C.textLight, fontSize: '14px' }}>Orijinal parfümü ve muadilini seçin.</div>
           </Card>

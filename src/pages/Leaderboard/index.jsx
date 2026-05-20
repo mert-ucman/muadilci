@@ -49,7 +49,7 @@ function PerfumeTable({ rows, navigate }) {
       {rows.map((row, i) => (
         <div
           key={row.muadil.id}
-          onClick={() => navigate(`/${row.muadil.brandSlug}/${row.muadil.slug}`)}
+          onClick={() => navigate(`/karsilastir?orijinal=${row.muadil.targetPerfumeId}&muadil=${row.muadil.id}`)}
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '11px 14px', borderRadius: '12px', cursor: 'pointer',
