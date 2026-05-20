@@ -36,3 +36,4 @@ export const C = {
 };
 
 export const F = "'Nunito', sans-serif";
+export const FH = "'Playfair Display', Georgia, serif";

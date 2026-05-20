@@ -1,6 +1,7 @@
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
+import logoDark from '@/img/logos/logo-dark-minified.png';
 
 export function Footer() {
   const { navigate } = useRouter();
@@ -24,11 +25,8 @@ export function Footer() {
 
           {/* Logo + Tagline */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '14px' }} onClick={() => navigate('/')}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ color: '#fff', fontSize: '16px', fontWeight: 900 }}>M</span>
-              </div>
-              <span style={{ fontSize: '20px', fontWeight: 900, color: '#fff', letterSpacing: '-.01em' }}>muadilci</span>
+            <div style={{ cursor: 'pointer', marginBottom: '14px' }} onClick={() => navigate('/')}>
+              <img src={logoDark} alt="muadilci" style={{ height: '48px', width: 'auto', display: 'block' }} />
             </div>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.45)', lineHeight: 1.7, margin: 0, maxWidth: '260px' }}>
               Türkiye'nin lüks parfüm muadillerini keşfet, karşılaştır ve en iyisini bul.

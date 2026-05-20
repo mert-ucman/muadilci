@@ -5,7 +5,8 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
-import { C, F } from '@/constants/theme';
+import { C, F, FH } from '@/constants/theme';
+import noImage from '@/img/no-image.jpg';
 
 function getCroppedImg(src, pixelCrop, outputSize = 240) {
   return new Promise((resolve, reject) => {
@@ -366,9 +367,11 @@ export function ProfilePage({ queryParams }) {
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.gold, flexShrink: 0 }}>{b.logo}</div>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.gold, flexShrink: 0, overflow: 'hidden' }}>
+                            <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
                           <div style={{ paddingRight: '24px', minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</div>
+                            <div style={{ fontWeight: 600, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FH }}>{b.name}</div>
                             <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
                           </div>
                         </div>
@@ -386,9 +389,11 @@ export function ProfilePage({ queryParams }) {
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.green, flexShrink: 0 }}>{b.logo}</div>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.green, flexShrink: 0, overflow: 'hidden' }}>
+                            <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
                           <div style={{ paddingRight: '24px', minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.name}</div>
+                            <div style={{ fontWeight: 600, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FH }}>{b.name}</div>
                             <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
                           </div>
                         </div>

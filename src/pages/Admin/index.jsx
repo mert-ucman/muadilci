@@ -557,7 +557,7 @@ export function AdminPanel() {
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
-                <Btn onClick={() => setShowBM(true)}>+ Marka Ekle</Btn>
+                <Btn onClick={() => { setBf({ name: '', slug: '', type: isOrig ? 'original' : 'muadil', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' }); setShowBM(true); }}>+ Marka Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span></div>
@@ -831,14 +831,13 @@ export function AdminPanel() {
       </Modal>
 
       {/* Marka Modal */}
-      <Modal open={showBM} onClose={() => setShowBM(false)} title="Yeni Marka Ekle" width="540px">
+      <Modal open={showBM} onClose={() => setShowBM(false)} title={`Yeni ${bf.type === 'original' ? 'Orijinal' : 'Muadil'} Marka Ekle`} width="540px">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <Input label="Marka Adı *" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} placeholder="Örn: Dior" />
-          <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value })} placeholder="oto" />
-          <Select label="Tür" value={bf.type} onChange={(e) => setBf({ ...bf, type: e.target.value })} options={[{ value: 'original', label: 'Orijinal' }, { value: 'muadil', label: 'Muadil' }]} />
-          <Input label="Logo Kısaltma" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} placeholder="CH" />
-          <Input label="Köken" value={bf.origin} onChange={(e) => setBf({ ...bf, origin: e.target.value })} placeholder="Fransa" />
-          <Input label="Kuruluş Yılı" type="number" value={bf.founded} onChange={(e) => setBf({ ...bf, founded: e.target.value })} placeholder="1947" />
+          <Input label="Marka Adı *" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} />
+          <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value })} />
+          <Input label="Logo Kısaltma" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} />
+          <Input label="Köken" value={bf.origin} onChange={(e) => setBf({ ...bf, origin: e.target.value })} />
+          <Input label="Kuruluş Yılı" type="number" value={bf.founded} onChange={(e) => setBf({ ...bf, founded: e.target.value })} />
         </div>
         {bf.type === 'original' && (
           <div style={{ marginTop: '8px' }}>
@@ -858,7 +857,7 @@ export function AdminPanel() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <div
               onClick={() => document.getElementById('brand-logo-add').click()}
-              style={{ width: '64px', height: '64px', borderRadius: '12px', border: `2px dashed ${bf.logoImage ? C.gold : C.border}`, background: bf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
+              style={{ width: '64px', height: '64px', borderRadius: '50%', border: `2px dashed ${bf.logoImage ? C.gold : C.border}`, background: bf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
               {bf.logoImage
                 ? <img src={bf.logoImage} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <span style={{ fontSize: '22px' }}>🖼️</span>}
