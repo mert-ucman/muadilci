@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
+import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { slugify } from '@/utils/strings';
 import { Card, Badge, Btn, Modal, Input, Select, Textarea } from '@/components/ui';
@@ -272,6 +273,7 @@ export function AdminPanel() {
   const { navigate } = useRouter();
   const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, sliderImages, addSliderImage, removeSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
 
+  const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
   const [sort, setSort] = useState({ key: '', dir: 'asc' });
   const [search, setSearch] = useState('');
@@ -422,22 +424,32 @@ export function AdminPanel() {
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg }}>
-      <div style={{ background: C.navy, padding: '22px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: C.navy, padding: sm ? '16px' : '22px 32px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
           <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#fff' }}>Admin Paneli</h1>
+            <h1 style={{ fontSize: sm ? '18px' : '22px', fontWeight: 900, color: '#fff' }}>Admin Paneli</h1>
             <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '13px' }}>muadilci.com yönetim merkezi</p>
           </div>
-          <Btn variant="ghost" style={{ borderColor: 'rgba(255,255,255,.3)', color: '#fff' }} onClick={() => navigate('/')}>← Siteye Dön</Btn>
+          <Btn variant="ghost" style={{ borderColor: 'rgba(255,255,255,.3)', color: '#fff', flexShrink: 0 }} onClick={() => navigate('/')}>← Siteye Dön</Btn>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '26px 32px' }}>
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '26px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px', width: 'fit-content' }}>
-          {TABS.map(({ k, l }) => (
-            <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', background: tab === k ? C.navy : 'transparent', color: tab === k ? '#fff' : C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>{l}</button>
-          ))}
-        </div>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: sm ? '16px' : xs ? '16px' : '26px 32px' }}>
+        {/* Tabs — desktop: buton grubu, tablet/mobil: dropdown */}
+        {sm ? (
+          <select
+            value={tab}
+            onChange={(e) => setTab(e.target.value)}
+            style={{ width: '100%', marginBottom: '18px', height: '42px', padding: '0 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: C.card, color: C.navy, fontSize: '14px', fontWeight: 700, fontFamily: F, cursor: 'pointer', outline: 'none' }}>
+            {TABS.map(({ k, l }) => <option key={k} value={k}>{l}</option>)}
+          </select>
+        ) : (
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '26px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px', overflowX: 'auto', width: 'fit-content', maxWidth: '100%' }}>
+            {TABS.map(({ k, l }) => (
+              <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', background: tab === k ? C.navy : 'transparent', color: tab === k ? '#fff' : C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>{l}</button>
+            ))}
+          </div>
+        )}
 
         {/* Dashboard */}
         {tab === 'dashboard' && (
@@ -454,7 +466,7 @@ export function AdminPanel() {
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '18px' }}>
               <Card style={{ padding: '20px' }}>
                 <h3 style={{ fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Son Kullanıcılar</h3>
                 {users.slice(-4).reverse().map((u) => (

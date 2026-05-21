@@ -315,7 +315,8 @@ export function BrandPage({ params }) {
 
           return (
           <Card style={{ overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '520px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: C.bg }}>
                   {LIST_COLS.map(({ key, label }) => {
@@ -396,6 +397,7 @@ export function BrandPage({ params }) {
                 })}
               </tbody>
             </table>
+            </div>
             {!listItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Seçilen filtreye uygun parfüm bulunamadı.</div>}
           </Card>
           );

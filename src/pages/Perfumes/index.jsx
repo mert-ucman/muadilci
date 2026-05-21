@@ -351,7 +351,8 @@ export function PerfumesPage() {
         {/* List View */}
         {view === 'list' && (
           <Card style={{ overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: C.bg }}>
                   {cols.map(({ key, label }) => {
@@ -423,6 +424,7 @@ export function PerfumesPage() {
                 })}
               </tbody>
             </table>
+            </div>
             {!listSortedItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
           </Card>
         )}

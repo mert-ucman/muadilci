@@ -202,7 +202,8 @@ export function PerfumeDetailPage({ params }) {
         {/* List View */}
         {view === 'list' && (
           <Card style={{ overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '560px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: C.bg }}>
                   {COLS.map(({ key, label }) => {
@@ -261,6 +262,7 @@ export function PerfumeDetailPage({ params }) {
                 })}
               </tbody>
             </table>
+            </div>
             {!sorted.length && <div style={{ textAlign: 'center', padding: '40px', color: C.textLight }}>Henüz muadil eklenmemiş.</div>}
           </Card>
         )}

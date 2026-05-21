@@ -1,12 +1,29 @@
 import { useState, useEffect } from 'react';
 
+// ResizeObserver document.documentElement üzerinde izleme yapar.
+// window.resize eventi Chrome DevTools responsive modunda tetiklenmeyebilir,
+// ancak ResizeObserver viewport boyutu ne şekilde değişirse değişsin çalışır.
+const getW = () => document.documentElement.clientWidth || window.innerWidth;
+
 export function useW() {
-  const [w, setW] = useState(() => window.innerWidth);
+  const [w, setW] = useState(getW);
+
   useEffect(() => {
-    const h = () => setW(window.innerWidth);
+    const h = () => setW(getW());
+
+    // ResizeObserver — DevTools dahil tüm viewport değişikliklerini yakalar
+    const ro = new ResizeObserver(h);
+    ro.observe(document.documentElement);
+
+    // Fallback: klasik resize eventi
     window.addEventListener('resize', h);
-    return () => window.removeEventListener('resize', h);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', h);
+    };
   }, []);
+
   return {
     w,
     xs: w < 480,   // küçük mobil
