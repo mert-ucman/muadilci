@@ -51,7 +51,7 @@ const TABS = [
   { k: 'slider', l: 'Ana Sayfa Slider' },
 ];
 
-function SliderTab({ sliderImages, addSliderImage, removeSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB }) {
+function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB }) {
   const [dragOver, setDragOver] = useState(false);
   const [dragIdx, setDragIdx] = useState(null);
   const [error, setError] = useState('');
@@ -119,6 +119,23 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, reorderSli
               <div style={{ padding: '8px 12px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{img.name}</span>
                 <button onClick={() => removeSliderImage(img.id)} style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '3px 9px', fontSize: '11px', color: C.red, cursor: 'pointer', fontFamily: F, fontWeight: 700, flexShrink: 0 }}>Sil</button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '7px 12px', background: '#f8f9fb', borderTop: `1px solid ${C.border}` }}>
+                {[
+                  { key: 'showMobile', label: 'Mobil' },
+                  { key: 'showTablet', label: 'Tablet' },
+                  { key: 'showDesktop', label: 'PC' },
+                ].map(({ key, label }) => (
+                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', userSelect: 'none', flex: 1, padding: '3px 6px', borderRadius: '6px', background: img[key] !== false ? '#eef2ff' : 'transparent', border: `1px solid ${img[key] !== false ? '#c7d2fe' : C.border}`, transition: 'all .15s' }}>
+                    <input
+                      type="checkbox"
+                      checked={img[key] !== false}
+                      onChange={() => updateSliderImage(img.id, { [key]: img[key] === false })}
+                      style={{ width: '13px', height: '13px', accentColor: C.navy, cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    <span style={{ fontSize: '11px', fontWeight: img[key] !== false ? 700 : 400, color: img[key] !== false ? C.navy : C.textLight, whiteSpace: 'nowrap' }}>{label}</span>
+                  </label>
+                ))}
               </div>
             </div>
           ))}
@@ -271,10 +288,13 @@ function compressToDataURL(file, maxW, quality, maxH = null) {
 export function AdminPanel() {
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, sliderImages, addSliderImage, removeSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
+  const [openActionId, setOpenActionId] = useState(null);
+  const [uam, setUam] = useState({ open: false, user: null, step: 'actions', action: null, password: '', loading: false, error: '' });
+  const [iam, setIam] = useState({ open: false, item: null, itemType: null, step: 'actions', password: '', loading: false, error: '' });
   const [sort, setSort] = useState({ key: '', dir: 'asc' });
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -303,6 +323,29 @@ export function AdminPanel() {
     closeBulkDel();
   };
 
+  const closeIam = () => setIam({ open: false, item: null, itemType: null, step: 'actions', password: '', loading: false, error: '' });
+  const openIam = (item, itemType) => setIam({ open: true, item, itemType, step: 'actions', password: '', loading: false, error: '' });
+  const handleIamDelete = async () => {
+    setIam((s) => ({ ...s, loading: true, error: '' }));
+    try { await reauthenticate(iam.password); } catch { setIam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+    if (iam.itemType === 'brand') await deleteBrand(iam.item.id, iam.item.type);
+    else if (iam.itemType === 'perfume') await deletePerfume(iam.item.id);
+    else if (iam.itemType === 'muadil') await deleteMuadil(iam.item.id);
+    closeIam();
+  };
+
+  const closeUam = () => setUam({ open: false, user: null, step: 'actions', action: null, password: '', loading: false, error: '' });
+  const openUamConfirm = (action) => setUam((s) => ({ ...s, step: 'confirm', action, password: '', error: '' }));
+  const handleUamSubmit = async () => {
+    const { user: u, action, password } = uam;
+    setUam((s) => ({ ...s, loading: true, error: '' }));
+    try { await reauthenticate(password); } catch { setUam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+    if (action === 'mod') await updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' });
+    else if (action === 'freeze') await updateUser(u.id, { active: !u.active });
+    else if (action === 'delete') await deleteUser(u.id);
+    closeUam();
+  };
+
   const toggleSort = (key) => setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' });
 
   const applySort = (arr, keyFn) => {
@@ -323,6 +366,7 @@ export function AdminPanel() {
   const [selPerf, setSelPerf] = useState(null);
   const [selMuadil, setSelMuadil] = useState(null);
   const [delTarget, setDelTarget] = useState(null);
+  const [delBrandPw, setDelBrandPw] = useState({ password: '', loading: false, error: '' });
   const [selBrand, setSelBrand] = useState(null);
   const [ebf, setEbf] = useState(null);
   const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' });
@@ -508,8 +552,8 @@ export function AdminPanel() {
             <Card style={{ overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center' }}><span style={{ fontWeight: 700, color: C.navy }}>Kullanıcılar</span></div>
               <SearchBar value={search} onChange={setSearch} placeholder="İsim, e-posta veya rol ara…" count={sorted.length} total={users.length} />
-              <div style={{ overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
                     <SortTh label="Kullanıcı" sortKey="name" sort={sort} onSort={toggleSort} />
                     <SortTh label="E-posta" sortKey="email" sort={sort} onSort={toggleSort} />
@@ -536,11 +580,15 @@ export function AdminPanel() {
                         <td style={tdStyle}><Badge color={u.role === 'admin' || u.active ? 'green' : 'red'}>{u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'}</Badge></td>
                         <td style={tdStyle}>
                           {u.role !== 'admin' && (
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                              <Btn size="sm" variant={u.role === 'moderator' ? 'orange' : 'navy'} onClick={() => updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' })}>{u.role === 'moderator' ? 'Mod. Al' : 'Mod. Ver'}</Btn>
-                              <Btn size="sm" variant={u.active ? 'danger' : 'success'} onClick={() => updateUser(u.id, { active: !u.active })}>{u.active ? 'Dondur' : 'Aktif Et'}</Btn>
-                              <Btn size="sm" variant="danger" onClick={() => deleteUser(u.id)}>Sil</Btn>
-                            </div>
+                            sm ? (
+                              <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => setUam({ open: true, user: u, step: 'actions', action: null, password: '', loading: false, error: '' })}>İşlem Yap</Btn>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                <Btn size="sm" variant={u.role === 'moderator' ? 'orange' : 'navy'} onClick={() => updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' })}>{u.role === 'moderator' ? 'Mod. Al' : 'Mod. Ver'}</Btn>
+                                <Btn size="sm" variant={u.active ? 'danger' : 'success'} onClick={() => updateUser(u.id, { active: !u.active })}>{u.active ? 'Dondur' : 'Aktif Et'}</Btn>
+                                <Btn size="sm" variant="danger" onClick={() => deleteUser(u.id)}>Sil</Btn>
+                              </div>
+                            )
                           )}
                         </td>
                       </tr>
@@ -574,7 +622,8 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span></div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Marka adı veya köken ara…" count={sorted.length} total={baseBrands.length} />
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', minWidth: '580px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((b) => selectedIds.has(b.id))} onChange={() => toggleAll(sorted.map((b) => b.id))} />
@@ -604,23 +653,28 @@ export function AdminPanel() {
                         <td style={tdStyle}><span style={{ fontSize: '15px', fontWeight: 700, color: b.perfumeCount > 0 ? C.gold : C.textLight }}>{b.perfumeCount}</span></td>
                         <td style={tdStyle}><Badge color={b.active ? 'green' : 'red'}>{b.active ? 'Aktif' : 'Pasif'}</Badge></td>
                         <td style={tdStyle}>
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            <button onClick={() => updateBrand(b.id, { active: !b.active })} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>{b.active ? 'Pasif Et' : 'Aktif Et'}</button>
-                            <button onClick={() => openEditBrand(b)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                              Düzenle
-                            </button>
-                            <button onClick={() => setDelTarget({ id: b.id, name: b.name, type: 'brand', brandType: b.type })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: '1px solid #fecaca', background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                              Sil
-                            </button>
-                          </div>
+                          {sm ? (
+                            <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam({ ...b, type: b.type }, 'brand')}>İşlem Yap</Btn>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              <button onClick={() => updateBrand(b.id, { active: !b.active })} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>{b.active ? 'Pasif Et' : 'Aktif Et'}</button>
+                              <button onClick={() => openEditBrand(b)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                Düzenle
+                              </button>
+                              <button onClick={() => setDelTarget({ id: b.id, name: b.name, type: 'brand', brandType: b.type })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: '1px solid #fecaca', background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Sil
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
                     {!sorted.length && <tr><td colSpan={isOrig ? 7 : 6} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
+                </div>
               </Card>
             </div>
           );
@@ -643,7 +697,8 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Orijinal Parfümler</span></div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((p) => selectedIds.has(p.id))} onChange={() => toggleAll(sorted.map((p) => p.id))} />
@@ -665,22 +720,27 @@ export function AdminPanel() {
                         <td style={tdStyle}><GenderBadge gender={p.gender} /></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.green, fontWeight: 600 }}>{p.muadilCount}</td>
                         <td style={tdStyle}>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button onClick={() => openEditPerf(p)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                              Düzenle
-                            </button>
-                            <button onClick={() => setDelTarget({ id: p.id, name: p.name, type: 'perfume' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                              Sil
-                            </button>
-                          </div>
+                          {sm ? (
+                            <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam(p, 'perfume')}>İşlem Yap</Btn>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button onClick={() => openEditPerf(p)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                Düzenle
+                              </button>
+                              <button onClick={() => setDelTarget({ id: p.id, name: p.name, type: 'perfume' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Sil
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
                     {!sorted.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
+                </div>
               </Card>
             </div>
           );
@@ -703,7 +763,8 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Muadil Parfümler</span></div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((m) => selectedIds.has(m.id))} onChange={() => toggleAll(sorted.map((m) => m.id))} />
@@ -725,22 +786,27 @@ export function AdminPanel() {
                         <td style={tdStyle}>{m.overall >= 0 ? <Badge color="gold">{m.overall}/10</Badge> : <span style={{ fontSize: '12px', color: C.textLight }}>—</span>}</td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.commentCount}</td>
                         <td style={tdStyle}>
-                          <div style={{ display: 'flex', gap: '6px' }}>
-                            <button onClick={() => openEditMuadil(m)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                              Düzenle
-                            </button>
-                            <button onClick={() => setDelTarget({ id: m.id, name: m.name, type: 'muadil' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-                              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                              Sil
-                            </button>
-                          </div>
+                          {sm ? (
+                            <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam(m, 'muadil')}>İşlem Yap</Btn>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button onClick={() => openEditMuadil(m)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
+                                Düzenle
+                              </button>
+                              <button onClick={() => setDelTarget({ id: m.id, name: m.name, type: 'muadil' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Sil
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
                     {!sorted.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
+                </div>
               </Card>
             </div>
           );
@@ -752,12 +818,98 @@ export function AdminPanel() {
             sliderImages={sliderImages}
             addSliderImage={addSliderImage}
             removeSliderImage={removeSliderImage}
+            updateSliderImage={updateSliderImage}
             reorderSliderImages={reorderSliderImages}
             MAX_SLIDER={MAX_SLIDER}
             MAX_SIZE_MB={MAX_SIZE_MB}
           />
         )}
       </div>
+
+      {/* Kayıt İşlem Modalı (mobil) */}
+      <Modal open={iam.open} onClose={closeIam} title={iam.item ? `${iam.item.name} için işlem yap` : ''} width="360px">
+        {iam.item && iam.step === 'actions' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {iam.itemType === 'brand' && (
+              <Btn variant="secondary" onClick={() => { updateBrand(iam.item.id, { active: !iam.item.active }); closeIam(); }}>
+                {iam.item.active ? 'Pasif Et' : 'Aktif Et'}
+              </Btn>
+            )}
+            <Btn variant="navy" onClick={() => {
+              if (iam.itemType === 'brand') openEditBrand(iam.item);
+              else if (iam.itemType === 'perfume') openEditPerf(iam.item);
+              else if (iam.itemType === 'muadil') openEditMuadil(iam.item);
+              closeIam();
+            }}>Düzenle</Btn>
+            <Btn variant="danger" onClick={() => setIam((s) => ({ ...s, step: 'confirm', password: '', error: '' }))}>Sil</Btn>
+          </div>
+        )}
+        {iam.item && iam.step === 'confirm' && (
+          <div>
+            <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+              <strong>"{iam.item.name}"</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+            </div>
+            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <input
+              type="password"
+              value={iam.password}
+              onChange={(e) => setIam((s) => ({ ...s, password: e.target.value, error: '' }))}
+              onKeyDown={(e) => e.key === 'Enter' && !iam.loading && iam.password && handleIamDelete()}
+              placeholder="Şifrenizi girin"
+              autoFocus
+              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${iam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+            />
+            {iam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{iam.error}</div>}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+              <Btn variant="ghost" onClick={() => setIam((s) => ({ ...s, step: 'actions', password: '', error: '' }))} disabled={iam.loading}>Geri</Btn>
+              <Btn variant="danger" onClick={handleIamDelete} disabled={!iam.password || iam.loading}>
+                {iam.loading ? 'Siliniyor…' : 'Evet, Sil'}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Kullanıcı İşlem Modalı (mobil) */}
+      <Modal open={uam.open} onClose={closeUam} title={uam.user ? `${uam.user.name} için işlem yap` : ''} width="360px">
+        {uam.user && uam.step === 'actions' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <Btn variant={uam.user.role === 'moderator' ? 'orange' : 'navy'} onClick={() => openUamConfirm('mod')}>
+              {uam.user.role === 'moderator' ? 'Moderatörlüğü Al' : 'Moderatör Yap'}
+            </Btn>
+            <Btn variant={uam.user.active ? 'danger' : 'success'} onClick={() => openUamConfirm('freeze')}>
+              {uam.user.active ? 'Hesabı Dondur' : 'Hesabı Aktif Et'}
+            </Btn>
+            <Btn variant="danger" onClick={() => openUamConfirm('delete')}>Kullanıcıyı Sil</Btn>
+          </div>
+        )}
+        {uam.user && uam.step === 'confirm' && (
+          <div>
+            <div style={{ marginBottom: '16px', padding: '12px 16px', background: uam.action === 'delete' ? '#fff5f5' : '#fffbeb', border: `1px solid ${uam.action === 'delete' ? '#fecaca' : '#fde68a'}`, borderRadius: '10px', fontSize: '13px', color: uam.action === 'delete' ? C.red : C.orange, lineHeight: 1.6 }}>
+              {uam.action === 'mod' && `${uam.user.name} kullanıcısının moderatör rolü ${uam.user.role === 'moderator' ? 'alınacak' : 'verilecek'}.`}
+              {uam.action === 'freeze' && `${uam.user.name} hesabı ${uam.user.active ? 'dondurulacak' : 'aktif edilecek'}.`}
+              {uam.action === 'delete' && `${uam.user.name} kalıcı olarak silinecek. Bu işlem geri alınamaz.`}
+            </div>
+            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <input
+              type="password"
+              value={uam.password}
+              onChange={(e) => setUam((s) => ({ ...s, password: e.target.value, error: '' }))}
+              onKeyDown={(e) => e.key === 'Enter' && !uam.loading && uam.password && handleUamSubmit()}
+              placeholder="Şifrenizi girin"
+              autoFocus
+              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${uam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+            />
+            {uam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{uam.error}</div>}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+              <Btn variant="ghost" onClick={() => setUam((s) => ({ ...s, step: 'actions', action: null, password: '', error: '' }))} disabled={uam.loading}>Geri</Btn>
+              <Btn variant={uam.action === 'delete' ? 'danger' : 'primary'} onClick={handleUamSubmit} disabled={!uam.password || uam.loading}>
+                {uam.loading ? 'İşleniyor…' : 'Onayla'}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Toplu Silme Şifre Modalı */}
       <Modal open={bulkDel.open} onClose={closeBulkDel} title="Toplu Silme Onayı" width="420px">
@@ -1043,20 +1195,53 @@ export function AdminPanel() {
       </Modal>
 
       {/* Silme Onay Modal */}
-      <Modal open={!!delTarget} onClose={() => setDelTarget(null)} title="Silme Onayı" width="400px">
+      <Modal open={!!delTarget} onClose={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} title="Silme Onayı" width="400px">
         {delTarget && (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fff5f5', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="24" height="24" fill="none" stroke={C.red} strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fff5f5', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                <svg width="24" height="24" fill="none" stroke={C.red} strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: C.navy, marginBottom: '6px', textAlign: 'center' }}>Emin misiniz?</div>
+              <div style={{ fontSize: '14px', color: C.textMid, textAlign: 'center' }}>
+                <span style={{ fontWeight: 600, color: C.text }}>"{delTarget.name}"</span> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+              </div>
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Emin misiniz?</div>
-            <div style={{ fontSize: '14px', color: C.textMid, marginBottom: '24px' }}>
-              <span style={{ fontWeight: 600, color: C.text }}>"{delTarget.name}"</span> kalıcı olarak silinecek. Bu işlem geri alınamaz.
-            </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <Btn variant="secondary" onClick={() => setDelTarget(null)}>Vazgeç</Btn>
-              <Btn variant="danger" onClick={() => { if (delTarget.type === 'perfume') deletePerfume(delTarget.id); else if (delTarget.type === 'muadil') deleteMuadil(delTarget.id); else deleteBrand(delTarget.id, delTarget.brandType); setDelTarget(null); }}>Evet, Sil</Btn>
-            </div>
+            {delTarget.type === 'brand' ? (
+              <>
+                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+                <input
+                  type="password"
+                  value={delBrandPw.password}
+                  onChange={(e) => setDelBrandPw((s) => ({ ...s, password: e.target.value, error: '' }))}
+                  onKeyDown={async (e) => {
+                    if (e.key !== 'Enter' || delBrandPw.loading || !delBrandPw.password) return;
+                    setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
+                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    await deleteBrand(delTarget.id, delTarget.brandType);
+                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                  }}
+                  placeholder="Şifrenizi girin"
+                  autoFocus
+                  style={{ width: '100%', padding: '10px 14px', border: `1px solid ${delBrandPw.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+                />
+                {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
+                  <Btn variant="danger" disabled={!delBrandPw.password || delBrandPw.loading} onClick={async () => {
+                    setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
+                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    await deleteBrand(delTarget.id, delTarget.brandType);
+                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                  }}>{delBrandPw.loading ? 'Siliniyor…' : 'Evet, Sil'}</Btn>
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <Btn variant="secondary" onClick={() => setDelTarget(null)}>Vazgeç</Btn>
+                <Btn variant="danger" onClick={() => { if (delTarget.type === 'perfume') deletePerfume(delTarget.id); else if (delTarget.type === 'muadil') deleteMuadil(delTarget.id); setDelTarget(null); }}>Evet, Sil</Btn>
+              </div>
+            )}
           </div>
         )}
       </Modal>

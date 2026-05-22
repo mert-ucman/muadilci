@@ -43,13 +43,22 @@ export function BrandsPage() {
   const { user } = useAuth();
   const { sm, xs } = useW();
 
-  const [tab, setTab]   = useState(() => localStorage.getItem('brands_tab')  || 'original');
-  const [sort, setSort] = useState(() => localStorage.getItem('brands_sort') || 'az');
-  const [view, setView] = useState(() => localStorage.getItem('brands_view') || 'grid');
+  const [tab, setTab]       = useState(() => localStorage.getItem('brands_tab')  || 'original');
+  const [sort, setSort]     = useState(() => localStorage.getItem('brands_sort') || 'az');
+  const [view, setView]     = useState(() => localStorage.getItem('brands_view') || 'grid');
+  const [perPage, setPerPage] = useState(() => Number(localStorage.getItem('brands_pp')) || 20);
+  const [page, setPage]     = useState(1);
 
   useEffect(() => { localStorage.setItem('brands_tab',  tab);  }, [tab]);
   useEffect(() => { localStorage.setItem('brands_sort', sort); }, [sort]);
   useEffect(() => { localStorage.setItem('brands_view', view); }, [view]);
+  useEffect(() => { localStorage.setItem('brands_pp',   String(perPage)); }, [perPage]);
+
+  const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
+
+  const switchTab  = (v) => { setTab(v);  setPage(1); };
+  const switchSort = (v) => { setSort(v); setPage(1); };
+  const switchPerPage = (n) => { setPerPage(n); setPage(1); };
 
   const isOrig = tab === 'original';
 
@@ -87,6 +96,10 @@ export function BrandsPage() {
     });
   }, [brands, tab, sort, perfumeCountMap, muadilCountMap]);
 
+  const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
+  const safePage   = Math.min(page, totalPages);
+  const pageItems  = sorted.slice((safePage - 1) * perPage, safePage * perPage);
+
   const btnStyle = (active) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     width: '34px', height: '34px', borderRadius: '8px', border: `1px solid ${C.border}`,
@@ -105,19 +118,28 @@ export function BrandsPage() {
           {/* Tabs */}
           <div style={{ display: 'flex', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px' }}>
             {[['original', 'Orijinal Markalar'], ['muadil', 'Muadil Markalar']].map(([v, l]) => (
-              <button key={v} onClick={() => setTab(v)} style={{ padding: sm ? '8px 14px' : '8px 22px', borderRadius: '9px', border: 'none', background: tab === v ? C.navy : 'transparent', color: tab === v ? '#fff' : C.textMid, fontSize: sm ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .2s' }}>{l}</button>
+              <button key={v} onClick={() => switchTab(v)} style={{ padding: sm ? '8px 14px' : '8px 22px', borderRadius: '9px', border: 'none', background: tab === v ? C.navy : 'transparent', color: tab === v ? '#fff' : C.textMid, fontSize: sm ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .2s' }}>{l}</button>
             ))}
           </div>
 
-          {/* Sort + View */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Sort + Per-page + View */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <select
               value={sort}
-              onChange={e => setSort(e.target.value)}
+              onChange={e => switchSort(e.target.value)}
               style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none' }}
             >
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '0 6px', height: '34px' }}>
+              {PER_PAGE_OPTS.map(n => (
+                <button key={n} onClick={() => switchPerPage(n)}
+                  style={{ padding: '3px 7px', borderRadius: '6px', border: 'none', background: perPage === n ? C.navy : 'transparent', color: perPage === n ? '#fff' : C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .15s' }}>
+                  {n}
+                </button>
+              ))}
+            </div>
 
             <button style={btnStyle(view === 'grid')} onClick={() => setView('grid')} title="Izgara görünümü">
               <IconGrid />
@@ -128,10 +150,16 @@ export function BrandsPage() {
           </div>
         </div>
 
+        {/* Toplam + sayfa bilgisi */}
+        <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+          <span>Toplam <strong style={{ color: C.navy }}>{sorted.length}</strong> marka</span>
+          {sorted.length > 0 && <span style={{ color: C.textLight }}>{(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, sorted.length)} gösteriliyor · Sayfa {safePage}/{totalPages}</span>}
+        </div>
+
         {/* Grid View */}
         {view === 'grid' && (
           <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))', gap: '14px' }}>
-            {sorted.map(b => (
+            {pageItems.map(b => (
               <Card key={b.id} hover style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
                 <button
                   onClick={e => { e.stopPropagation(); toggleBrandFavorite(user?.uid || user?.id, b.id); }}
@@ -159,6 +187,24 @@ export function BrandsPage() {
             {!sorted.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: C.textLight }}>Bu kategoride marka bulunmuyor.</div>}
           </div>
         )}
+        {view === 'grid' && totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '28px', flexWrap: 'wrap' }}>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
+              style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => {
+              if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
+              acc.push(n);
+              return acc;
+            }, []).map((n, i) => n === '…' ? (
+              <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight }}>…</span>
+            ) : (
+              <button key={n} onClick={() => setPage(n)}
+                style={{ padding: '6px 11px', borderRadius: '8px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+            ))}
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
+              style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+          </div>
+        )}
 
         {/* List View */}
         {view === 'list' && (() => {
@@ -168,7 +214,7 @@ export function BrandsPage() {
             'Kuruluş': ['founded_asc',  'founded_desc'],
             'Parfüm':  ['perfumes_desc','perfumes_asc'],
             'Muadil':  ['muadils_desc', 'muadils_asc'],
-            'Beğeni':  ['likes_desc',   'likes_asc'],
+            'Favori':  ['likes_desc',   'likes_asc'],
           };
           const handleColSort = (col) => {
             const pair = COL_SORT[col];
@@ -188,14 +234,12 @@ export function BrandsPage() {
             if (sort === pair[1]) return '↓';
             return null;
           };
-          const columns = ['Marka', 'Köken', 'Kuruluş', 'Parfüm', isOrig ? 'Muadil' : null, 'Beğeni', 'Favori'].filter(Boolean);
+          const columns = ['Marka', 'Köken', 'Kuruluş', 'Parfüm', isOrig ? 'Muadil' : null, 'Favori', ''].filter(v => v !== null);
           return (
           <>
-          <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '10px' }}>
-            Toplam <strong style={{ color: C.navy }}>{sorted.length}</strong> marka
-          </div>
           <Card style={{ overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: C.bg }}>
                   {columns.map(h => {
@@ -221,7 +265,7 @@ export function BrandsPage() {
                 </tr>
               </thead>
               <tbody>
-                {sorted.map((b, i) => (
+                {pageItems.map((b, i) => (
                   <tr key={b.id} onClick={() => navigate(`/marka/${b.slug}`)}
                     style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background .1s' }}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg}
@@ -253,8 +297,27 @@ export function BrandsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
             {!sorted.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Bu kategoride marka bulunmuyor.</div>}
           </Card>
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '20px', flexWrap: 'wrap' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
+                style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => {
+                if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
+                acc.push(n);
+                return acc;
+              }, []).map((n, i) => n === '…' ? (
+                <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight }}>…</span>
+              ) : (
+                <button key={n} onClick={() => setPage(n)}
+                  style={{ padding: '6px 11px', borderRadius: '8px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+              ))}
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
+                style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+            </div>
+          )}
           </>
           );
         })()}

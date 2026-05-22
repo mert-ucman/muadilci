@@ -79,7 +79,7 @@ export function PerfumeDetailPage({ params }) {
     cursor: 'pointer', transition: 'all .15s', flexShrink: 0,
   });
 
-  const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v <= 6 ? C.orange : C.green;
+  const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>

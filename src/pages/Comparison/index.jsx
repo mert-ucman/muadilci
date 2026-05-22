@@ -174,7 +174,7 @@ export function ComparisonPage({ queryParams }) {
                     <div style={{ flex: 1, height: sm ? '6px' : '8px', background: C.borderLight, borderRadius: '4px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: scores.overall !== null ? `${(scores.overall / 10) * 100}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)', borderRadius: '4px' }} />
                     </div>
-                    <span style={{ fontWeight: 900, color: scores.overall !== null ? (scores.overall <= 4 ? C.red : scores.overall <= 6 ? C.orange : C.green) : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
+                    <span style={{ fontWeight: 900, color: scores.overall !== null ? (scores.overall <= 4 ? C.red : scores.overall < 7 ? C.orange : C.green) : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
                   </div>
                   {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight, marginTop: '4px' }}>{scores.count} yorumun ortalaması</div>}
                 </div>

@@ -4,8 +4,9 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
 import noImage from '@/img/no-image.jpg';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft, faChevronRight, faMagnifyingGlass, faCommentDots, faTrophy, faUsers } from '@fortawesome/free-solid-svg-icons';
 
-const STATS = [['25+', 'Orijinal Parfüm Markası'], ['200+', 'Orijinal Parfüm'], ['15+', 'Muadil Parfüm Markası'], ['150+', 'Muadil Parfüm']];
 const INTERVAL = 5000;
 
 function ScoreRow({ label, value, color }) {
@@ -68,17 +69,17 @@ function DefaultVisual({ perfumes, muadilPerfumes }) {
       </div>
 
       <div style={{ position: 'absolute', top: '-18px', left: '-30px', background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.18)', borderRadius: '18px 18px 18px 4px', padding: '8px 14px', backdropFilter: 'blur(8px)', maxWidth: '180px', boxShadow: '0 8px 24px rgba(0,0,0,.2)' }}>
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.8)', fontStyle: 'italic', lineHeight: 1.4 }}>💭 Acaba en yakın muadil hangisi?</span>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.8)', fontStyle: 'italic', lineHeight: 1.4 }}><FontAwesomeIcon icon={faCommentDots} style={{ marginRight: '6px', opacity: 0.7 }} />Acaba en yakın muadil hangisi?</span>
       </div>
       <div style={{ position: 'absolute', bottom: '-16px', right: '-18px', background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.18)', borderRadius: '18px 18px 4px 18px', padding: '8px 14px', backdropFilter: 'blur(8px)', maxWidth: '190px', boxShadow: '0 8px 24px rgba(0,0,0,.2)' }}>
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.8)', fontStyle: 'italic', lineHeight: 1.4 }}>💭 Bu parfümü en iyi kim yapıyor?</span>
+        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,.8)', fontStyle: 'italic', lineHeight: 1.4 }}><FontAwesomeIcon icon={faCommentDots} style={{ marginRight: '6px', opacity: 0.7 }} />Bu parfümü en iyi kim yapıyor?</span>
       </div>
       <div style={{ position: 'absolute', top: '18px', right: '-10px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.18)', borderRadius: '30px', padding: '6px 12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 8px 24px rgba(0,0,0,.2)' }}>
-        <span style={{ fontSize: '13px' }}>💬</span>
+        <FontAwesomeIcon icon={faCommentDots} style={{ fontSize: '13px', color: '#fff' }} />
         <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff' }}>2.4K+ Yorum</span>
       </div>
       <div style={{ position: 'absolute', bottom: '28px', left: '-14px', background: `linear-gradient(135deg,rgba(184,150,90,.25),rgba(184,150,90,.1))`, border: `1px solid rgba(184,150,90,.35)`, borderRadius: '30px', padding: '6px 12px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 8px 24px rgba(0,0,0,.2)' }}>
-        <span style={{ fontSize: '13px' }}>🏆</span>
+        <FontAwesomeIcon icon={faTrophy} style={{ fontSize: '13px', color: C.goldLight }} />
         <span style={{ fontSize: '11px', fontWeight: 700, color: C.goldLight }}>En İyi Eşleşme</span>
       </div>
       <div style={{ position: 'absolute', top: '50%', right: '-24px', transform: 'translateY(-50%)', background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '30px', padding: '5px 10px', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -93,7 +94,15 @@ function DefaultVisual({ perfumes, muadilPerfumes }) {
   );
 }
 
-function HeroContent({ navigate, isMobile, perfumes, muadilPerfumes }) {
+function HeroContent({ navigate, isMobile, brands, perfumes, muadilPerfumes }) {
+  const origBrands  = brands.filter(b => b.type === 'original' && b.active !== false).length;
+  const muadilBrands = brands.filter(b => b.type === 'muadil'  && b.active !== false).length;
+  const stats = [
+    [origBrands,          'Orijinal Parfüm Markası'],
+    [perfumes.length,     'Orijinal Parfüm'],
+    [muadilBrands,        'Muadil Parfüm Markası'],
+    [muadilPerfumes.length,'Muadil Parfüm'],
+  ];
   return (
     <div style={{
       maxWidth: '1100px', margin: '0 auto',
@@ -106,8 +115,7 @@ function HeroContent({ navigate, isMobile, perfumes, muadilPerfumes }) {
       <div>
         <div style={{ display: 'flex', justifyContent: isMobile ? 'center' : 'center', marginBottom: '24px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(184,150,90,.15)', border: '1px solid rgba(184,150,90,.3)', borderRadius: '30px', padding: '6px 16px' }}>
-            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: C.goldLight, animation: 'pulse 2s infinite' }} />
-            <span style={{ color: C.goldLight, fontSize: isMobile ? '10px' : '12px', fontWeight: 700, letterSpacing: '.08em', textAlign: 'center' }}>TÜRKİYE'NİN İLK ORJİNAL / MUADİL PARFÜM KIYASLAMA SİTESİ</span>
+<span style={{ color: C.goldLight, fontSize: isMobile ? '10px' : '12px', fontWeight: 700, letterSpacing: '.08em', textAlign: 'center' }}>TÜRKİYE'NİN İLK ORJİNAL / MUADİL PARFÜM KIYASLAMA SİTESİ</span>
           </div>
         </div>
         <h1 style={{ fontSize: isMobile ? '30px' : 'clamp(32px,4.5vw,58px)', fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '20px', textAlign: isMobile ? 'center' : 'left' }}>
@@ -118,16 +126,16 @@ function HeroContent({ navigate, isMobile, perfumes, muadilPerfumes }) {
         </p>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '36px', justifyContent: isMobile ? 'center' : 'flex-start' }}>
           <button onClick={() => navigate('/karsilastir')} style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, border: 'none', borderRadius: '12px', padding: '14px 24px', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: F, boxShadow: '0 4px 20px rgba(184,150,90,.4)' }}>
-            🔍 Karşılaştırmaya Başla
+            <FontAwesomeIcon icon={faMagnifyingGlass} style={{ marginRight: '8px' }} />Karşılaştırmaya Başla
           </button>
           <button onClick={() => navigate('/kayit')} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,.3)', borderRadius: '12px', padding: '14px 24px', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
             Ücretsiz Üye Ol →
           </button>
         </div>
         <div style={{ display: 'flex', gap: isMobile ? '20px' : '32px', flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-          {STATS.map(([n, l]) => (
+          {stats.map(([n, l]) => (
             <div key={l} style={{ textAlign: isMobile ? 'center' : 'left' }}>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,.4)' }}>{n}</div>
+              <div style={{ fontSize: '24px', fontWeight: 900, color: '#fff', textShadow: '0 2px 8px rgba(0,0,0,.4)' }}>{n}+</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,.5)', marginTop: '2px' }}>{l}</div>
             </div>
           ))}
@@ -140,16 +148,21 @@ function HeroContent({ navigate, isMobile, perfumes, muadilPerfumes }) {
 
 export function HeroSection() {
   const { navigate } = useRouter();
-  const { sliderImages, perfumes, muadilPerfumes } = useData();
+  const { sliderImages, brands, perfumes, muadilPerfumes } = useData();
   const { w, md, xs, lg } = useW();
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const total = sliderImages.length;
+  const visibleSlides = sliderImages.filter((img) => {
+    if (w < 640)  return img.showMobile  !== false;
+    if (w < 1024) return img.showTablet  !== false;
+    return               img.showDesktop !== false;
+  });
+  const total = visibleSlides.length;
   const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
   const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
 
-  useEffect(() => { setCurrent(0); }, [total]);
+  useEffect(() => { setCurrent(0); }, [total, lg]);
   useEffect(() => {
     if (total < 2 || paused) return;
     const t = setInterval(next, INTERVAL);
@@ -160,38 +173,38 @@ export function HeroSection() {
     return (
       <div style={{ background: `linear-gradient(135deg,${C.navy} 0%,#0f1c38 100%)`, padding: xs ? '40px 16px 36px' : md ? '56px 24px 48px' : w >= 1280 ? '100px 48px 100px' : '80px 32px 80px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 20% 50%,rgba(184,150,90,.1) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(184,150,90,.07) 0%,transparent 40%)' }} />
-        <HeroContent navigate={navigate} isMobile={lg} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
+        <HeroContent navigate={navigate} isMobile={lg} brands={brands} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
       </div>
     );
   }
 
   return (
     <div
-      style={{ position: 'relative', overflow: 'hidden', height: lg ? '60vh' : '75vh', minHeight: '500px' }}
+      style={{ position: 'relative', overflow: 'hidden', height: lg ? '60vh' : '75vh', minHeight: '500px', width: '100vw', maxWidth: '100vw', marginLeft: 'calc(50% - 50vw)' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}>
-      <div style={{ display: 'flex', height: '100%', transform: `translateX(-${current * 100}%)`, transition: 'transform .55s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}>
-        {sliderImages.map((img, i) => (
-          <div key={img.id} style={{ position: 'relative', flexShrink: 0, width: '100%', height: '100%' }}>
+      <div style={{ display: 'flex', width: '100%', height: '100%', transform: `translateX(-${current * 100}%)`, transition: 'transform .55s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}>
+        {visibleSlides.map((img, i) => (
+          <div key={img.id} style={{ position: 'relative', flexShrink: 0, width: '100vw', minWidth: '100vw', height: '100%', overflow: 'hidden' }}>
             <img src={img.src} alt={img.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             {i === 0 && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg,rgba(13,27,56,.82) 0%,rgba(13,27,56,.55) 60%,rgba(13,27,56,.2) 100%)' }} />}
             {i === 0 && (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: lg ? '0 16px' : '0 32px' }}>
-                <div style={{ width: '100%' }}><HeroContent navigate={navigate} isMobile={lg} perfumes={perfumes} muadilPerfumes={muadilPerfumes} /></div>
+                <div style={{ width: '100%' }}><HeroContent navigate={navigate} isMobile={lg} brands={brands} perfumes={perfumes} muadilPerfumes={muadilPerfumes} /></div>
               </div>
             )}
           </div>
         ))}
       </div>
       {total > 1 && (
-        <button onClick={prev} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 4, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.25)', color: '#fff', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>‹</button>
+        <button onClick={prev} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 4, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.25)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}><FontAwesomeIcon icon={faChevronLeft} style={{ fontSize: '16px' }} /></button>
       )}
       {total > 1 && (
-        <button onClick={next} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 4, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.25)', color: '#fff', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>›</button>
+        <button onClick={next} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', zIndex: 4, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,.15)', border: '1px solid rgba(255,255,255,.25)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}><FontAwesomeIcon icon={faChevronRight} style={{ fontSize: '16px' }} /></button>
       )}
       {total > 1 && (
         <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 4, display: 'flex', gap: '8px' }}>
-          {sliderImages.map((_, i) => (
+          {visibleSlides.map((_, i) => (
             <button key={i} onClick={() => setCurrent(i)} style={{ width: i === current ? '24px' : '8px', height: '8px', borderRadius: '4px', border: 'none', background: i === current ? C.gold : 'rgba(255,255,255,.4)', cursor: 'pointer', padding: 0, transition: 'all .3s' }} />
           ))}
         </div>

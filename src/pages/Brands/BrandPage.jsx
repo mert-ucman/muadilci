@@ -93,7 +93,7 @@ export function BrandPage({ params }) {
 
   const favActive = isBrandFavorite(user?.uid, brand.id);
 
-  const scoreColor = (v) => v === null || v === undefined ? C.textLight : v <= 4 ? C.red : v <= 6 ? C.orange : C.green;
+  const scoreColor = (v) => v === null || v === undefined ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
   const btnStyle = (active) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -184,7 +184,7 @@ export function BrandPage({ params }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <div style={{ background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '12px', width: sm ? '60px' : '72px', height: sm ? '60px' : '72px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
                           <div style={{ fontSize: sm ? '16px' : '18px', fontWeight: 900, color: brandOverall !== null ? C.goldLight : 'rgba(255,255,255,.4)', letterSpacing: '-0.02em', lineHeight: 1.1, fontFamily: F }}>{brandOverall !== null ? `${brandOverall}/10` : '—'}</div>
-                          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,.45)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: '3px' }}>marka puanı</div>
+                          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,.45)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: '3px', textAlign: 'center' }}>marka puanı</div>
                         </div>
                         <button onMouseEnter={() => setShowTooltip(true)} onMouseLeave={() => setShowTooltip(false)}
                           style={{ width: '18px', height: '18px', borderRadius: '50%', border: '1px solid rgba(255,255,255,.35)', background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.7)', fontSize: '11px', fontWeight: 700, cursor: 'default', fontFamily: F, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>?</button>

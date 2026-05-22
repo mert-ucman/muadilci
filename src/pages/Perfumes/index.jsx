@@ -41,12 +41,15 @@ const ORIG_SORT_OPTS = [
   { value: 'muadil_asc', label: 'Muadil (En Az)' },
 ];
 const MUADIL_SORT_OPTS = [
-  { value: 'name_asc',    label: 'A → Z' },
-  { value: 'name_desc',   label: 'Z → A' },
-  { value: 'score_desc',  label: 'Puan (En Yüksek)' },
-  { value: 'score_asc',   label: 'Puan (En Düşük)' },
-  { value: 'brand_asc',   label: 'Marka A → Z' },
-  { value: 'brand_desc',  label: 'Marka Z → A' },
+  { value: 'name_asc',        label: 'A → Z' },
+  { value: 'name_desc',       label: 'Z → A' },
+  { value: 'score_desc',      label: 'Puan (En Yüksek)' },
+  { value: 'score_asc',       label: 'Puan (En Düşük)' },
+  { value: 'brand_asc',       label: 'Marka A → Z' },
+  { value: 'brand_desc',      label: 'Marka Z → A' },
+  { value: 'scent_desc',      label: 'Benzerlik (En Yüksek)' },
+  { value: 'projection_desc', label: 'Yayılım (En Yüksek)' },
+  { value: 'longevity_desc',  label: 'Kalıcılık (En Yüksek)' },
 ];
 
 const ORIG_COLS  = [
@@ -55,13 +58,16 @@ const ORIG_COLS  = [
   { key: 'gender', label: 'Cinsiyet' },
   { key: 'year',   label: 'Yıl' },
   { key: 'muadil', label: 'Muadil' },
-  { key: 'likes',  label: 'Beğeni' },
+  { key: 'likes',  label: 'Favori' },
 ];
 const MUADIL_COLS = [
   { key: 'name',        label: 'Muadil Adı' },
   { key: 'brand',       label: 'Marka' },
   { key: 'targetPerf',  label: 'Hedef Parfüm' },
   { key: 'targetBrand', label: 'Hedef Marka' },
+  { key: 'scent',       label: 'Benzerlik' },
+  { key: 'projection',  label: 'Yayılım' },
+  { key: 'longevity',   label: 'Kalıcılık' },
   { key: 'score',       label: 'Genel Puan' },
 ];
 
@@ -127,8 +133,11 @@ export function PerfumesPage() {
       case 'name_desc':   return b.name.localeCompare(a.name, 'tr');
       case 'brand_asc':   return (a.brandName || '').localeCompare(b.brandName || '', 'tr');
       case 'brand_desc':  return (b.brandName || '').localeCompare(a.brandName || '', 'tr');
-      case 'score_desc':  return ((muadilScores[b.id]?.overall) ?? -1) - ((muadilScores[a.id]?.overall) ?? -1);
-      case 'score_asc':   return ((muadilScores[a.id]?.overall) ?? -1) - ((muadilScores[b.id]?.overall) ?? -1);
+      case 'score_desc':      return ((muadilScores[b.id]?.overall) ?? -1) - ((muadilScores[a.id]?.overall) ?? -1);
+      case 'score_asc':       return ((muadilScores[a.id]?.overall) ?? -1) - ((muadilScores[b.id]?.overall) ?? -1);
+      case 'scent_desc':      return ((muadilScores[b.id]?.scent) ?? -1) - ((muadilScores[a.id]?.scent) ?? -1);
+      case 'projection_desc': return ((muadilScores[b.id]?.projection) ?? -1) - ((muadilScores[a.id]?.projection) ?? -1);
+      case 'longevity_desc':  return ((muadilScores[b.id]?.longevity) ?? -1) - ((muadilScores[a.id]?.longevity) ?? -1);
       default: return 0;
     }
   });
@@ -178,13 +187,16 @@ export function PerfumesPage() {
         if (listSortKey === 'brand')       { av = a.brandName || ''; bv = b.brandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetPerf')  { av = a.targetPerfumeName || ''; bv = b.targetPerfumeName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetBrand') { av = a.targetBrandName || ''; bv = b.targetBrandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
-        if (listSortKey === 'score')       { av = muadilScores[a.id]?.overall ?? -1; bv = muadilScores[b.id]?.overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
+        if (listSortKey === 'score')      { av = muadilScores[a.id]?.overall ?? -1; bv = muadilScores[b.id]?.overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
+        if (listSortKey === 'scent')      { av = muadilScores[a.id]?.scent ?? -1; bv = muadilScores[b.id]?.scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
+        if (listSortKey === 'projection') { av = muadilScores[a.id]?.projection ?? -1; bv = muadilScores[b.id]?.projection ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
+        if (listSortKey === 'longevity')  { av = muadilScores[a.id]?.longevity ?? -1; bv = muadilScores[b.id]?.longevity ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
       }
       return 0;
     });
   }, [pageItems, view, listSortKey, listSortDir, pTab, muadilCountMap, muadilScores]);
 
-  const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v <= 6 ? C.orange : C.green;
+  const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
 
   const btnStyle = (active) => ({
@@ -336,6 +348,19 @@ export function PerfumesPage() {
                     <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 800, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{m.name}</div>
                     <div style={{ fontSize: '13px', color: C.green, fontWeight: 600, marginBottom: '2px' }}>{m.brandName}</div>
                     <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>→ {m.targetBrandName} {m.targetPerfumeName}</div>
+                    <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {[['Benzerlik', ms?.scent], ['Yayılım', ms?.projection], ['Kalıcılık', ms?.longevity]].map(([label, val]) => (
+                        <div key={label}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '10px', color: C.textLight }}>{label}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: scoreColor(val ?? null) }}>{val != null ? `${val}/10` : '—'}</span>
+                          </div>
+                          <div style={{ height: '3px', background: C.borderLight, borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: val != null ? `${val * 10}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)', borderRadius: '2px', transition: 'width .3s' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${C.borderLight}` }}>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
                       <Btn size="sm" variant="ghost">Karşılaştır →</Btn>
@@ -368,7 +393,7 @@ export function PerfumesPage() {
                       </th>
                     );
                   })}
-                  <th style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}` }} />
+                  <th style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, fontSize: '11px', fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: 'center' }}>Favori</th>
                 </tr>
               </thead>
               <tbody>
@@ -408,14 +433,23 @@ export function PerfumesPage() {
                           <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetPerfumeName || '—'}</td>
                           <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetBrandName || '—'}</td>
                           <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.projection ?? null) }}>{ms?.projection != null ? `${ms.projection}/10` : '—'}</span>
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.longevity ?? null) }}>{ms?.longevity != null ? `${ms.longevity}/10` : '—'}</span>
+                          </td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
                             <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
                           </td>
                         </>
                       )}
                       {/* Aksiyon */}
-                      <td style={{ padding: '10px 14px' }} onClick={(e) => e.stopPropagation()}>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <button onClick={() => isOrig ? togglePerfumeFavorite(uid, item.id) : toggleMuadilFavorite(uid, item.id)}
-                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${(isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBorder : C.border}`, background: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${(isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBorder : C.border}`, background: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', margin: '0 auto' }}>
                           <FontAwesomeIcon icon={faHeart} style={{ fontSize: '12px', color: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.gold : C.textLight }} />
                         </button>
                       </td>

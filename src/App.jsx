@@ -74,7 +74,7 @@ export function App() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
       {!noLayout && <Navbar />}
       <div style={{ flex: 1 }}>
         <Page params={params} queryParams={query} />

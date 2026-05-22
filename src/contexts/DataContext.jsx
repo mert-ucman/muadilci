@@ -253,6 +253,7 @@ export function DataProvider({ children }) {
     await setDoc(ref, { ...img, id: ref.id, order: sliderImages.length, createdAt: serverTimestamp() });
   };
   const removeSliderImage = async (id) => deleteDoc(docRef('sliderImages', id));
+  const updateSliderImage = async (id, data) => updateDoc(docRef('sliderImages', id), data);
   const reorderSliderImages = async (imgs) => {
     const batch = writeBatch(db);
     imgs.forEach((img, i) => batch.update(docRef('sliderImages', img.id), { order: i }));
@@ -273,7 +274,7 @@ export function DataProvider({ children }) {
       togglePerfumeFavorite, isPerfumeFavorite, getUserFavoritePerfumes,
       toggleMuadilFavorite, isMuadilFavorite, getUserFavoriteMuadils,
       toggleCompFavorite, isCompFavorite, getUserFavoriteComps,
-      addSliderImage, removeSliderImage, reorderSliderImages,
+      addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
     }}>
       {children}

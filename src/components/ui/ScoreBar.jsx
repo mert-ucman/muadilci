@@ -2,7 +2,7 @@ import { C } from '@/constants/theme';
 
 function scoreColor(value) {
   if (value <= 4) return C.red;
-  if (value <= 6) return C.orange;
+  if (value < 7) return C.orange;
   return C.green;
 }
 
