@@ -35,6 +35,7 @@ const COLS = [
   { key: 'projection', label: 'Yayılım' },
   { key: 'longevity',  label: 'Kalıcılık' },
   { key: 'overall',    label: 'Genel Puan' },
+  { key: 'count',      label: 'Değerlendirme' },
 ];
 
 export function PerfumeDetailPage({ params }) {
@@ -184,11 +185,15 @@ export function PerfumeDetailPage({ params }) {
                     <ScoreBar label="Koku Yakınlığı" value={ms.scent} empty={ms.scent === null} />
                     <ScoreBar label="Yayılım" value={ms.projection} empty={ms.projection === null} />
                     <ScoreBar label="Kalıcılık" value={ms.longevity} empty={ms.longevity === null} />
-                    {!ms.count && <div style={{ fontSize: '11px', color: C.textLight, fontStyle: 'italic', textAlign: 'center', marginBottom: '6px' }}>Henüz yorum yok</div>}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${C.borderLight}` }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor(ms.overall) }}>
-                        {ms.overall !== null ? `${ms.overall}/10` : '—'}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor(ms.overall) }}>
+                          {ms.overall !== null ? `${ms.overall}/10` : '—'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: C.textLight }}>
+                          {ms.count ? `${ms.count} değerlendirme` : 'Henüz yorum yok'}
+                        </span>
+                      </div>
                       <Btn size="sm" variant="ghost">Karşılaştır</Btn>
                     </div>
                   </div>
@@ -247,6 +252,12 @@ export function PerfumeDetailPage({ params }) {
                           </span>
                         </td>
                       ))}
+                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        {ms.count
+                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '20px', padding: '2px 10px', fontSize: '12px', fontWeight: 700, color: C.gold }}>{ms.count} kişi</span>
+                          : <span style={{ fontSize: '12px', color: C.textLight, fontStyle: 'italic' }}>—</span>
+                        }
+                      </td>
                       <td style={{ padding: '12px 14px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                           <button
