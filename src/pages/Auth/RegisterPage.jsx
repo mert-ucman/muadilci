@@ -2,12 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { EMAIL_RE } from '@/utils/strings';
+import { containsProfanity } from '@/utils/profanity';
 import { Btn } from '@/components/ui';
 import { AuthLayout, GoogleBtn, Divider, EyeIcon } from './AuthLayout';
 import { TermsModal } from './TermsModal';
 import { C } from '@/constants/theme';
 
 const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
+
+// Her kelimenin ilk harfini Türkçe uyumlu büyütür
+function toTitleCase(str) {
+  return str.replace(/\S+/g, (w) =>
+    w.replace(/^./,  (c) => c.toLocaleUpperCase('tr-TR'))
+  );
+}
+const RESERVED_WORDS = [
+  'admin', 'mod', 'moderator', 'moderatör', 'muadilci',
+  'support', 'destek', 'official', 'resmi', 'sistem',
+  'yonetim', 'yönetim', 'staff', 'ekip', 'team', 'root', 'superuser',
+];
+const isReserved = (key) => RESERVED_WORDS.some((w) => key.includes(w)) || containsProfanity(key);
 
 const PASS_RULES = [
   { key: 'length',  label: 'En az 8 karakter',       test: (p) => p.length >= 8 },
@@ -100,7 +114,7 @@ export function RegisterPage() {
     if (!username) { setUsernameStatus(''); return; }
     if (!USERNAME_RE.test(username.toLowerCase())) { setUsernameStatus('invalid'); return; }
     const ukey = username.toLowerCase();
-    if (ukey.startsWith('admin') || ukey.startsWith('mod')) { setUsernameStatus('reserved'); return; }
+    if (isReserved(ukey)) { setUsernameStatus('reserved'); return; }
     setUsernameStatus('checking');
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -181,7 +195,14 @@ export function RegisterPage() {
         {/* Ad Soyad */}
         <div style={{ marginBottom: '14px' }}>
           <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Ad Soyad</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} onFocus={() => setFN(true)} onBlur={() => setFN(false)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fN, false)} />
+          <input value={name} onChange={(e) => setName(toTitleCase(e.target.value))} onFocus={() => setFN(true)} onBlur={() => setFN(false)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fN, false)} />
+        </div>
+
+        {/* E-posta */}
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>E-posta</label>
+          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }} onFocus={() => setFE(true)} onBlur={(e) => { setFE(false); validateEmail(e.target.value); }} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fE, !!emailErr)} />
+          {emailErr && <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>⚠ {emailErr}</div>}
         </div>
 
         {/* Kullanıcı Adı */}
@@ -204,13 +225,6 @@ export function RegisterPage() {
             />
           </div>
           <UsernameStatus status={usernameStatus} />
-        </div>
-
-        {/* E-posta */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>E-posta</label>
-          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }} onFocus={() => setFE(true)} onBlur={(e) => { setFE(false); validateEmail(e.target.value); }} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fE, !!emailErr)} />
-          {emailErr && <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>⚠ {emailErr}</div>}
         </div>
 
         {/* Şifre */}

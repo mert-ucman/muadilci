@@ -43,7 +43,7 @@ export function DataProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s)));
+    const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s).filter((u) => !u.deleted)));
     return () => unsub();
   }, []);
 
@@ -170,9 +170,78 @@ export function DataProvider({ children }) {
     }
   };
 
+  // ─── Admin: tarih aralığına göre yorum getir + silme ──────────────────────
+  // Sunucuyu yormamak için tüm yorumlar değil, yalnızca seçilen aralık çekilir.
+  const fetchReviewsByDateRange = async (startDate, endDate) => {
+    const start = new Date(startDate); start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate); end.setHours(23, 59, 59, 999);
+    const snap = await getDocs(query(
+      col('reviews'),
+      where('createdAt', '>=', start),
+      where('createdAt', '<=', end),
+      orderBy('createdAt', 'desc'),
+    ));
+    return snap2arr(snap);
+  };
+
+  // Admin: tek yorum sil (sahiplik kontrolü yok) + muadil istatistiğini düşür
+  const adminDeleteReview = async (id) => {
+    const ref = docRef('reviews', id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const c = snap.data();
+    await deleteDoc(ref);
+    const muadilId = c.muadilId || String(c.muadilPerfumeId ?? '');
+    if (muadilId) {
+      const mSnap = await getDoc(docRef('muadils', muadilId));
+      if (mSnap.exists()) {
+        await updateDoc(docRef('muadils', muadilId), { reviewCount: Math.max(0, (mSnap.data().reviewCount ?? 1) - 1) });
+      }
+    }
+  };
+
+  // Admin: çoklu yorum sil
+  const adminDeleteReviews = async (ids) => {
+    for (const id of ids) await adminDeleteReview(id);
+  };
+
   // ─── Users ────────────────────────────────────────────────────────────────
   const updateUser = async (id, d) => updateDoc(docRef('users', id), d);
-  const deleteUser = async (id) => deleteDoc(docRef('users', id));
+  const deleteUser = async (id) => {
+    // 1. Kullanıcı verisini al (kullanıcı adı için)
+    const userSnap = await getDoc(docRef('users', id));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+
+    // 2. Kullanıcıya ait tüm yorumları bul
+    const reviewsSnap = await getDocs(
+      query(col('reviews'), where('userId', '==', id))
+    );
+
+    // 3. Yorumları anonimleştir (Firestore batch limiti 500 → 490'lık parçalar)
+    const anonymize = {
+      userName: 'Silinmiş Kullanıcı',
+      userPhotoURL: null,
+      userAvatar: '?',
+      userId: 'deleted',
+      userRole: 'user',
+    };
+    const reviewDocs = reviewsSnap.docs;
+    for (let i = 0; i < reviewDocs.length; i += 490) {
+      const chunk = reviewDocs.slice(i, i + 490);
+      const b = writeBatch(db);
+      chunk.forEach((d) => b.update(d.ref, anonymize));
+      await b.commit();
+    }
+
+    // 4. users belgesine deleted flag ekle + usernames belgesini sil
+    // (deleted flag: aynı e-postayla tekrar giriş yapılırsa oturum otomatik kapatılır)
+    const b2 = writeBatch(db);
+    b2.set(docRef('users', id), { deleted: true }, { merge: true });
+    if (userData.username) {
+      b2.delete(doc(db, 'usernames', userData.username));
+    }
+    await b2.commit();
+  };
 
   // ─── Favorites ────────────────────────────────────────────────────────────
   // Favori state'leri kullanıcı uid'si ile takip et
@@ -268,6 +337,7 @@ export function DataProvider({ children }) {
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
       addComment, approveComment, rejectComment, deleteComment,
+      fetchReviewsByDateRange, adminDeleteReview, adminDeleteReviews,
       incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus,
       updateUser, deleteUser,
       brandFavorites, toggleBrandFavorite, isBrandFavorite, getUserFavoriteBrands,

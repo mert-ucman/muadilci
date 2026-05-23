@@ -4,12 +4,15 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { Card } from '@/components/ui';
+import { calcScores } from '@/utils/scoring';
 import { C, F, FH } from '@/constants/theme';
 import noImage from '@/img/no-image.jpg';
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS_ORIG = [
   { value: 'az',            label: 'A → Z' },
   { value: 'za',            label: 'Z → A' },
+  { value: 'origin_asc',   label: 'Köken A → Z' },
+  { value: 'origin_desc',  label: 'Köken Z → A' },
   { value: 'founded_asc',   label: 'Kuruluş Yılı (En Erken)' },
   { value: 'founded_desc',  label: 'Kuruluş Yılı (En Geç)' },
   { value: 'perfumes_desc', label: 'Parfüm Sayısı (En Çok)' },
@@ -19,6 +22,20 @@ const SORT_OPTIONS = [
   { value: 'muadils_desc',  label: 'Muadil Sayısı (En Çok)' },
   { value: 'muadils_asc',   label: 'Muadil Sayısı (En Az)' },
 ];
+const SORT_OPTIONS_MUADIL = [
+  { value: 'az',            label: 'A → Z' },
+  { value: 'za',            label: 'Z → A' },
+  { value: 'founded_asc',   label: 'Kuruluş Yılı (En Erken)' },
+  { value: 'founded_desc',  label: 'Kuruluş Yılı (En Geç)' },
+  { value: 'perfumes_desc', label: 'Parfüm Sayısı (En Çok)' },
+  { value: 'perfumes_asc',  label: 'Parfüm Sayısı (En Az)' },
+  { value: 'likes_desc',    label: 'Beğeni Sayısı (En Çok)' },
+  { value: 'likes_asc',     label: 'Beğeni Sayısı (En Az)' },
+  { value: 'score_desc',    label: 'Marka Puanı (En Yüksek)' },
+  { value: 'score_asc',     label: 'Marka Puanı (En Düşük)' },
+];
+
+const scoreColor = (v) => v == null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
 function IconGrid() {
   return (
@@ -39,19 +56,19 @@ function IconList() {
 
 export function BrandsPage() {
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, toggleBrandFavorite, isBrandFavorite } = useData();
+  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
 
   const [tab, setTab]       = useState(() => localStorage.getItem('brands_tab')  || 'original');
-  const [sort, setSort]     = useState(() => localStorage.getItem('brands_sort') || 'az');
-  const [view, setView]     = useState(() => localStorage.getItem('brands_view') || 'grid');
-  const [perPage, setPerPage] = useState(() => Number(localStorage.getItem('brands_pp')) || 20);
+  const [sort, setSort]     = useState(() => localStorage.getItem('brands_sort_v2') || 'az');
+  const [view, setView]     = useState(() => localStorage.getItem('brands_view_v2') || 'list');
+  const [perPage, setPerPage] = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
   const [page, setPage]     = useState(1);
 
   useEffect(() => { localStorage.setItem('brands_tab',  tab);  }, [tab]);
-  useEffect(() => { localStorage.setItem('brands_sort', sort); }, [sort]);
-  useEffect(() => { localStorage.setItem('brands_view', view); }, [view]);
+  useEffect(() => { localStorage.setItem('brands_sort_v2', sort); }, [sort]);
+  useEffect(() => { localStorage.setItem('brands_view_v2', view); }, [view]);
   useEffect(() => { localStorage.setItem('brands_pp',   String(perPage)); }, [perPage]);
 
   const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
@@ -77,6 +94,21 @@ export function BrandsPage() {
     return map;
   }, [muadilPerfumes, perfumes]);
 
+  // Muadil marka puanı: markaya ait tüm muadil parfümlerin overall ortalaması
+  const brandScoreMap = useMemo(() => {
+    const map = {};
+    brands.filter(b => b.type === 'muadil').forEach(b => {
+      const brandMuadils = muadilPerfumes.filter(m => m.brandId === b.id);
+      const scored = brandMuadils
+        .map(m => calcScores(m.id, comments).overall)
+        .filter(v => v !== null);
+      map[b.id] = scored.length > 0
+        ? parseFloat((scored.reduce((s, v) => s + v, 0) / scored.length).toFixed(1))
+        : null;
+    });
+    return map;
+  }, [brands, muadilPerfumes, comments]);
+
   const sorted = useMemo(() => {
     const base = brands.filter(b => b.type === tab && b.active);
     return [...base].sort((a, b) => {
@@ -87,14 +119,18 @@ export function BrandsPage() {
         case 'founded_desc':  return (b.founded || 0) - (a.founded || 0);
         case 'perfumes_desc': return (perfumeCountMap[b.id] || 0) - (perfumeCountMap[a.id] || 0);
         case 'perfumes_asc':  return (perfumeCountMap[a.id] || 0) - (perfumeCountMap[b.id] || 0);
+        case 'origin_asc':    return (a.origin || '').localeCompare(b.origin || '', 'tr');
+        case 'origin_desc':   return (b.origin || '').localeCompare(a.origin || '', 'tr');
         case 'likes_desc':    return (b.likes || 0) - (a.likes || 0);
         case 'likes_asc':     return (a.likes || 0) - (b.likes || 0);
         case 'muadils_desc':  return (muadilCountMap[b.id] || 0) - (muadilCountMap[a.id] || 0);
         case 'muadils_asc':   return (muadilCountMap[a.id] || 0) - (muadilCountMap[b.id] || 0);
+        case 'score_desc':    return (brandScoreMap[b.id] ?? -1) - (brandScoreMap[a.id] ?? -1);
+        case 'score_asc':     return (brandScoreMap[a.id] ?? 11) - (brandScoreMap[b.id] ?? 11);
         default:              return 0;
       }
     });
-  }, [brands, tab, sort, perfumeCountMap, muadilCountMap]);
+  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage   = Math.min(page, totalPages);
@@ -129,7 +165,7 @@ export function BrandsPage() {
               onChange={e => switchSort(e.target.value)}
               style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none' }}
             >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {(isOrig ? SORT_OPTIONS_ORIG : SORT_OPTIONS_MUADIL).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '0 6px', height: '34px' }}>
@@ -176,11 +212,22 @@ export function BrandsPage() {
                     <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: '12px', color: C.textLight, paddingTop: '10px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', gap: '12px' }}>
+                <div style={{ fontSize: '12px', color: C.textLight, paddingTop: '10px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span>♥ {(b.likes || 0).toLocaleString()}</span>
                   {isOrig && <span>{perfumeCountMap[b.id] || 0} parfüm</span>}
                   {isOrig && <span>{muadilCountMap[b.id] || 0} muadil</span>}
                   {!isOrig && <span>{perfumeCountMap[b.id] || 0} parfüm</span>}
+                  {!isOrig && (() => {
+                    const sc = brandScoreMap[b.id];
+                    return (
+                      <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span style={{ fontSize: '11px', color: C.textLight }}>Puan</span>
+                        <span style={{ fontWeight: 800, fontSize: '13px', color: scoreColor(sc) }}>
+                          {sc != null ? `${sc}/10` : '—'}
+                        </span>
+                      </span>
+                    );
+                  })()}
                 </div>
               </Card>
             ))}
@@ -211,10 +258,12 @@ export function BrandsPage() {
           // Sütun → sıralama çiftleri (asc, desc)
           const COL_SORT = {
             'Marka':   ['az',           'za'],
+            'Köken':   ['origin_asc',   'origin_desc'],
             'Kuruluş': ['founded_asc',  'founded_desc'],
             'Parfüm':  ['perfumes_desc','perfumes_asc'],
             'Muadil':  ['muadils_desc', 'muadils_asc'],
             'Favori':  ['likes_desc',   'likes_asc'],
+            'Puan':    ['score_desc',   'score_asc'],
           };
           const handleColSort = (col) => {
             const pair = COL_SORT[col];
@@ -234,7 +283,7 @@ export function BrandsPage() {
             if (sort === pair[1]) return '↓';
             return null;
           };
-          const columns = ['Marka', 'Köken', 'Kuruluş', 'Parfüm', isOrig ? 'Muadil' : null, 'Favori', ''].filter(v => v !== null);
+          const columns = ['Marka', 'Köken', 'Kuruluş', 'Parfüm', isOrig ? 'Muadil' : null, !isOrig ? 'Puan' : null, 'Favori', ''].filter(v => v !== null);
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
@@ -282,6 +331,18 @@ export function BrandsPage() {
                     <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.founded || '—'}</td>
                     <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{perfumeCountMap[b.id] || 0}</td>
                     {isOrig && <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{muadilCountMap[b.id] || 0}</td>}
+                    {!isOrig && (() => {
+                      const sc = brandScoreMap[b.id];
+                      return (
+                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          {sc != null ? (
+                            <span style={{ fontWeight: 800, fontSize: '14px', color: scoreColor(sc) }}>{sc}/10</span>
+                          ) : (
+                            <span style={{ color: C.textLight, fontSize: '13px' }}>—</span>
+                          )}
+                        </td>
+                      );
+                    })()}
                     <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>♥ {(b.likes || 0).toLocaleString()}</td>
                     <td style={{ padding: '12px 14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'center' }}>

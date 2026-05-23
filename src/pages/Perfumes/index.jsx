@@ -77,23 +77,24 @@ export function PerfumesPage() {
   const { user } = useAuth();
   const { sm, xs } = useW();
 
-  const [pTab,    setPTab]    = useState(() => localStorage.getItem('perf_tab')  || 'original');
-  const [view,    setView]    = useState(() => localStorage.getItem('perf_view') || 'grid');
-  const [sort,    setSort]    = useState(() => localStorage.getItem('perf_sort') || 'name_asc');
-  const [perPage, setPerPage] = useState(() => Number(localStorage.getItem('perf_pp')) || 20);
-  const [page,    setPage]    = useState(1);
-  const [filter,  setFilter]  = useState('all');
-  const [search,  setSearch]  = useState('');
+  const [pTab,        setPTab]        = useState(() => localStorage.getItem('perf_tab')  || 'original');
+  const [view,        setView]        = useState(() => localStorage.getItem('perf_view_v2') || 'list');
+  const [sort,        setSort]        = useState(() => localStorage.getItem('perf_sort_v2') || 'name_asc');
+  const [perPage,     setPerPage]     = useState(() => Number(localStorage.getItem('perf_pp')) || 20);
+  const [page,        setPage]        = useState(1);
+  const [filter,      setFilter]      = useState('all');
+  const [scoreFilter, setScoreFilter] = useState('all');
+  const [search,      setSearch]      = useState('');
   const [listSortKey, setListSortKey] = useState('name');
   const [listSortDir, setListSortDir] = useState('asc');
 
   useEffect(() => { localStorage.setItem('perf_tab',  pTab);          }, [pTab]);
-  useEffect(() => { localStorage.setItem('perf_view', view);          }, [view]);
-  useEffect(() => { localStorage.setItem('perf_sort', sort);          }, [sort]);
+  useEffect(() => { localStorage.setItem('perf_view_v2', view);          }, [view]);
+  useEffect(() => { localStorage.setItem('perf_sort_v2', sort);          }, [sort]);
   useEffect(() => { localStorage.setItem('perf_pp',   String(perPage)); }, [perPage]);
 
   // Tab değişince sayfa sıfırla
-  const switchTab = (v) => { setPTab(v); setFilter('all'); setSearch(''); setPage(1); setSort('name_asc'); };
+  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setSearch(''); setPage(1); setSort('name_asc'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchFilter = (v) => { setFilter(v); setPage(1); };
   const switchSearch = (v) => { setSearch(v); setPage(1); };
@@ -151,13 +152,21 @@ export function PerfumesPage() {
   }, [perfumes, filter, search, sort, muadilCountMap]);
 
   const filtM = useMemo(() => {
-    const base = muadilPerfumes.filter((m) =>
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.brandName.toLowerCase().includes(search.toLowerCase()) ||
-      (m.targetPerfumeName || '').toLowerCase().includes(search.toLowerCase())
-    );
+    const minScore = scoreFilter === 'all' ? null : Number(scoreFilter);
+    const base = muadilPerfumes.filter((m) => {
+      const matchText =
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        m.brandName.toLowerCase().includes(search.toLowerCase()) ||
+        (m.targetPerfumeName || '').toLowerCase().includes(search.toLowerCase());
+      if (!matchText) return false;
+      if (minScore !== null) {
+        const overall = muadilScores[m.id]?.overall;
+        if (overall == null || overall < minScore) return false;
+      }
+      return true;
+    });
     return applyMuadilSort(base, sort);
-  }, [muadilPerfumes, search, sort, muadilScores]);
+  }, [muadilPerfumes, search, sort, muadilScores, scoreFilter]);
 
   const activeList = pTab === 'original' ? filtO : filtM;
   const totalPages = Math.max(1, Math.ceil(activeList.length / perPage));
@@ -278,7 +287,7 @@ export function PerfumesPage() {
           </div>
         </div>
 
-        {/* Arama + Cinsiyet filtresi */}
+        {/* Arama + Filtreler */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '18px', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '160px', position: 'relative' }}>
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textLight }} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
@@ -293,6 +302,20 @@ export function PerfumesPage() {
                 </button>
               ))}
             </div>
+          )}
+          {pTab === 'muadil' && (
+            <select
+              value={scoreFilter}
+              onChange={(e) => { setScoreFilter(e.target.value); setPage(1); }}
+              style={{ height: '42px', padding: '0 12px', borderRadius: '10px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
+            >
+              <option value="all">Tüm Puanlar</option>
+              {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                <option key={n} value={String(n)}>
+                  {n === 10 ? '10/10' : `En az ${n}/10`}
+                </option>
+              ))}
+            </select>
           )}
         </div>
 

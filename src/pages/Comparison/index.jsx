@@ -43,10 +43,11 @@ export function ComparisonPage({ queryParams }) {
   const origFiltered = selOrigBrand ? perfumes.filter((p) => p.brandName === selOrigBrand) : perfumes;
   const selOrig = perfumes.find((p) => String(p.id) === String(selOrigId));
 
-  const matching = selOrig ? muadilPerfumes.filter((m) => m.targetPerfumeId === selOrig.id) : muadilPerfumes;
+  const matching = selOrig ? muadilPerfumes.filter((m) => String(m.targetPerfumeId) === String(selOrig.id)) : [];
   const mBrands = [...new Set(matching.map((m) => m.brandName))];
   const mFiltered = selMuadilBrand ? matching.filter((m) => m.brandName === selMuadilBrand) : matching;
-  const selMuadil = muadilPerfumes.find((m) => String(m.id) === String(selMuadilId));
+  // selMuadil yalnızca seçili orijinale ait muadiller arasında aranır
+  const selMuadil = selMuadilId ? matching.find((m) => String(m.id) === String(selMuadilId)) : undefined;
 
   const muadilComments = selMuadil
     ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && (isMod || c.status === 'approved'))
@@ -73,7 +74,7 @@ export function ComparisonPage({ queryParams }) {
 
   const origBrandOpts = [{ value: '', label: 'Orijinal Marka Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
   const origPerfOpts = [{ value: '', label: 'Orijinal Parfüm Seçin' }, ...origFiltered.map((p) => ({ value: String(p.id), label: p.name }))];
-  const mBrandOpts = [{ value: '', label: 'Muadil Marka Seçin' }, ...(selOrig ? mBrands : origBrands).map((b) => ({ value: b, label: b }))];
+  const mBrandOpts = [{ value: '', label: 'Muadil Marka Seçin' }, ...mBrands.map((b) => ({ value: b, label: b }))];
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
   return (
@@ -87,8 +88,8 @@ export function ComparisonPage({ queryParams }) {
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
-              <div style={{ flex: 1 }}><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); }} options={origBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => setSelOrigId(e.target.value)} options={origPerfOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => { setSelOrigId(e.target.value); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
@@ -325,18 +326,23 @@ export function ComparisonPage({ queryParams }) {
               {muadilComments.length === 0 && <div style={{ textAlign: 'center', color: C.textLight, fontSize: '14px', padding: '32px' }}>Henüz yorum yok.</div>}
               <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
                 {muadilComments.map((c) => {
-                  const commentUser = users.find((u) => u.uid === c.userId);
+                  const isDeleted = c.userId === 'deleted';
+                  const commentUser = isDeleted ? null : users.find((u) => u.uid === c.userId);
                   const liveRole = commentUser?.role || c.userRole;
                   const isAdmin = liveRole === 'admin';
                   const isModerator = liveRole === 'moderator';
-                  const liveName = isModerator
-                    ? '@moderatör'
-                    : commentUser
-                      ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
-                      : c.userName;
-                  const livePhoto = commentUser?.photoURL || null;
-                  const liveAvatar = commentUser?.avatar || c.userAvatar;
-                  const avatarBg = isAdmin
+                  const liveName = isDeleted
+                    ? 'Silinmiş Kullanıcı'
+                    : isModerator
+                      ? '@moderatör'
+                      : commentUser
+                        ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
+                        : c.userName;
+                  const livePhoto = isDeleted ? null : (commentUser?.photoURL || null);
+                  const liveAvatar = isDeleted ? '×' : (commentUser?.avatar || c.userAvatar);
+                  const avatarBg = isDeleted
+                    ? '#e2e8f0'
+                    : isAdmin
                     ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
                     : isModerator
                     ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
@@ -369,6 +375,8 @@ export function ComparisonPage({ queryParams }) {
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#ede9fe', border: '1px solid #a78bfa', borderRadius: '6px', padding: '2px 9px', fontSize: '12px', fontWeight: 700, color: '#5b21b6' }}>
                                   <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} />{liveName}
                                 </span>
+                              ) : isDeleted ? (
+                                <span style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>{liveName}</span>
                               ) : (
                                 <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{liveName}</span>
                               )}
@@ -376,7 +384,7 @@ export function ComparisonPage({ queryParams }) {
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                               {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
                               <span style={{ fontSize: '11px', color: C.textLight }}>{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
-                              {user?.uid === c.userId && (
+                              {!isDeleted && user?.uid === c.userId && (
                                 confirmDeleteId === c.id
                                   ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                                       <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); }}

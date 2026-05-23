@@ -11,8 +11,9 @@ import { BrandPage }         from '@/pages/Brands/BrandPage';
 import { PerfumeDetailPage } from '@/pages/PerfumeDetail';
 import { LoginPage }         from '@/pages/Auth/LoginPage';
 import { RegisterPage }      from '@/pages/Auth/RegisterPage';
-import { ForgotPasswordPage } from '@/pages/Auth/ForgotPasswordPage';
-import { ResetPasswordPage }  from '@/pages/Auth/ResetPasswordPage';
+import { ForgotPasswordPage }        from '@/pages/Auth/ForgotPasswordPage';
+import { ResetPasswordPage }         from '@/pages/Auth/ResetPasswordPage';
+import { EmailVerificationPage }     from '@/pages/Auth/EmailVerificationPage';
 import { ProfilePage }       from '@/pages/Profile';
 import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
@@ -46,6 +47,11 @@ export function App() {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
+
+  // E-posta doğrulama gate — admin, şifre sıfırlama sayfası hariç
+  if (user && !user.emailVerified && !isAdmin && basePath !== '/sifre-yenile') {
+    return <EmailVerificationPage />;
+  }
 
   // Route korumaları
   if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) {

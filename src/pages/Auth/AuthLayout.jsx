@@ -1,16 +1,14 @@
 import { useRouter } from '@/contexts/RouterContext';
 import { Card } from '@/components/ui';
 import { C } from '@/constants/theme';
+import logoDark from '@/img/logos/logo-dark-minified.png';
 
 export function AuthLayout({ title, subtitle, children }) {
   const { navigate } = useRouter();
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-      <div onClick={() => navigate('/')} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginBottom: '32px' }}>
-        <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ color: '#fff', fontSize: '16px', fontWeight: 900 }}>M</span>
-        </div>
-        <span style={{ fontSize: '22px', fontWeight: 900, color: C.navy }}>muadilci</span>
+      <div onClick={() => navigate('/')} style={{ cursor: 'pointer', marginBottom: '32px' }}>
+        <img src={logoDark} alt="muadilci" style={{ height: '120px', objectFit: 'contain', display: 'block' }} />
       </div>
       <Card style={{ width: '100%', maxWidth: '420px', padding: '32px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 900, color: C.navy, marginBottom: '6px', textAlign: 'center' }}>{title}</h1>

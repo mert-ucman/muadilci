@@ -48,6 +48,7 @@ const TABS = [
   { k: 'muadil-brands', l: 'Muadil Markalar' },
   { k: 'perfumes', l: 'Orijinal Parfümler' },
   { k: 'muadil', l: 'Muadil Parfümler' },
+  { k: 'reviews', l: 'Tüm Yorumlar' },
   { k: 'slider', l: 'Ana Sayfa Slider' },
 ];
 
@@ -288,7 +289,7 @@ function compressToDataURL(file, maxW, quality, maxH = null) {
 export function AdminPanel() {
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -299,6 +300,43 @@ export function AdminPanel() {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDel, setBulkDel] = useState({ open: false, password: '', loading: false, error: '' });
+
+  // ─── Tüm Yorumlar sekmesi ───────────────────────────────────────────────
+  const _today = new Date().toISOString().slice(0, 10);
+  const _weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const [revRange, setRevRange] = useState({ start: _weekAgo, end: _today });
+  const [revList, setRevList] = useState([]);
+  const [revLoading, setRevLoading] = useState(false);
+  const [revLoaded, setRevLoaded] = useState(false);
+  const [revError, setRevError] = useState('');
+  const [revDel, setRevDel] = useState({ open: false, ids: [], password: '', loading: false, error: '' });
+
+  const loadReviews = async () => {
+    setRevLoading(true); setRevError('');
+    try {
+      const list = await fetchReviewsByDateRange(revRange.start, revRange.end);
+      setRevList(list);
+      setRevLoaded(true);
+      setSelectedIds(new Set());
+    } catch (e) {
+      setRevError('Yorumlar getirilemedi: ' + (e?.message || 'bilinmeyen hata'));
+    } finally {
+      setRevLoading(false);
+    }
+  };
+
+  const openRevDel = (ids) => setRevDel({ open: true, ids, password: '', loading: false, error: '' });
+  const closeRevDel = () => setRevDel({ open: false, ids: [], password: '', loading: false, error: '' });
+  const handleRevDelete = async () => {
+    setRevDel((s) => ({ ...s, loading: true, error: '' }));
+    try { await reauthenticate(revDel.password); }
+    catch { setRevDel((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+    await adminDeleteReviews(revDel.ids);
+    const removed = new Set(revDel.ids);
+    setRevList((prev) => prev.filter((r) => !removed.has(r.id)));
+    setSelectedIds(new Set());
+    closeRevDel();
+  };
 
   const setTab = (t) => { setTabRaw(t); setSort({ key: '', dir: 'asc' }); setSearch(''); setSelectedIds(new Set()); };
 
@@ -342,7 +380,11 @@ export function AdminPanel() {
     try { await reauthenticate(password); } catch { setUam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
     if (action === 'mod') await updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' });
     else if (action === 'freeze') await updateUser(u.id, { active: !u.active });
-    else if (action === 'delete') await deleteUser(u.id);
+    else if (action === 'delete') {
+      await deleteUser(u.id);
+      setUam((s) => ({ ...s, loading: false, step: 'deleted', deletedEmail: u.email }));
+      return;
+    }
     closeUam();
   };
 
@@ -586,7 +628,7 @@ export function AdminPanel() {
                               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                 <Btn size="sm" variant={u.role === 'moderator' ? 'orange' : 'navy'} onClick={() => updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' })}>{u.role === 'moderator' ? 'Mod. Al' : 'Mod. Ver'}</Btn>
                                 <Btn size="sm" variant={u.active ? 'danger' : 'success'} onClick={() => updateUser(u.id, { active: !u.active })}>{u.active ? 'Dondur' : 'Aktif Et'}</Btn>
-                                <Btn size="sm" variant="danger" onClick={() => deleteUser(u.id)}>Sil</Btn>
+                                <Btn size="sm" variant="danger" onClick={() => setUam({ open: true, user: u, step: 'confirm', action: 'delete', password: '', loading: false, error: '' })}>Sil</Btn>
                               </div>
                             )
                           )}
@@ -812,6 +854,91 @@ export function AdminPanel() {
           );
         })()}
 
+        {/* Tüm Yorumlar */}
+        {tab === 'reviews' && (() => {
+          const dateInputStyle = { padding: '9px 12px', border: `1px solid ${C.border}`, borderRadius: '9px', fontSize: '13px', fontFamily: F, color: C.text, background: '#fff', outline: 'none' };
+          const q = search.toLowerCase();
+          const filtered = revList.filter((r) => !q || (r.userName || '').toLowerCase().includes(q) || (r.text || '').toLowerCase().includes(q));
+          const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+          const muadilName = (r) => {
+            const mid = r.muadilId || String(r.muadilPerfumeId ?? '');
+            const m = muadilPerfumes.find((x) => String(x.id) === String(mid));
+            return m ? `${m.brandName} — ${m.name}` : '—';
+          };
+          const allSel = filtered.length > 0 && filtered.every((r) => selectedIds.has(r.id));
+          return (
+            <div>
+              {/* Tarih aralığı seçici */}
+              <Card style={{ padding: '16px 18px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Başlangıç Tarihi</div>
+                    <input type="date" value={revRange.start} max={revRange.end} onChange={(e) => setRevRange((s) => ({ ...s, start: e.target.value }))} style={dateInputStyle} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Bitiş Tarihi</div>
+                    <input type="date" value={revRange.end} min={revRange.start} max={_today} onChange={(e) => setRevRange((s) => ({ ...s, end: e.target.value }))} style={dateInputStyle} />
+                  </div>
+                  <Btn variant="primary" onClick={loadReviews} disabled={revLoading}>{revLoading ? 'Getiriliyor…' : 'Yorumları Getir'}</Btn>
+                  {revLoaded && !revLoading && <span style={{ fontSize: '12px', color: C.textLight }}>Bu aralıkta {revList.length} yorum bulundu.</span>}
+                </div>
+                <p style={{ fontSize: '12px', color: C.textLight, marginTop: '12px', lineHeight: 1.5 }}>
+                  💡 Sunucuyu yormamak için yalnızca seçtiğiniz tarih aralığındaki yorumlar getirilir. Kapatılmış/silinmiş hesapların yorumları da bu listede görünür ve silinebilir.
+                </p>
+                {revError && <div style={{ fontSize: '12px', color: C.red, marginTop: '8px' }}>{revError}</div>}
+              </Card>
+
+              {revLoaded && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    {selectedIds.size > 0 ? (
+                      <Btn variant="danger" onClick={() => openRevDel([...selectedIds])}>Seçilenleri Sil ({selectedIds.size})</Btn>
+                    ) : <div />}
+                  </div>
+                  <Card style={{ overflow: 'hidden' }}>
+                    <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Yorumlar</span></div>
+                    <SearchBar value={search} onChange={setSearch} placeholder="Kullanıcı adı veya yorum içeriği ara…" count={filtered.length} total={revList.length} />
+                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse' }}>
+                      <thead><tr style={{ background: '#f9f9fb' }}>
+                        <th style={{ ...thBase, width: '40px' }}>
+                          <input type="checkbox" checked={allSel} onChange={() => toggleAll(filtered.map((r) => r.id))} />
+                        </th>
+                        <th style={thBase}>Tarih</th>
+                        <th style={thBase}>Kullanıcı</th>
+                        <th style={thBase}>Muadil</th>
+                        <th style={thBase}>Yorum İçeriği</th>
+                        <th style={thBase}>Durum</th>
+                        <th style={thStyle}>İşlem</th>
+                      </tr></thead>
+                      <tbody>
+                        {filtered.map((r) => (
+                          <tr key={r.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(r.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(r.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(r.id) ? '#fffbeb' : 'transparent'; }}>
+                            <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} /></td>
+                            <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid, whiteSpace: 'nowrap' }}>{fmtDate(r.createdAt)}</td>
+                            <td style={{ ...tdStyle, fontSize: '13px', color: C.text, fontWeight: 600, whiteSpace: 'nowrap' }}>{r.userName || '—'}</td>
+                            <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid }}>{muadilName(r)}</td>
+                            <td style={{ ...tdStyle, fontSize: '13px', color: C.text, maxWidth: '340px', lineHeight: 1.5 }}>{r.text || <span style={{ color: C.textLight }}>—</span>}</td>
+                            <td style={tdStyle}><Badge color={r.status === 'approved' ? 'green' : 'orange'}>{r.status === 'approved' ? 'Onaylı' : 'Beklemede'}</Badge></td>
+                            <td style={tdStyle}>
+                              <button onClick={() => openRevDel([r.id])} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>
+                                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                Sil
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {!filtered.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>{revList.length ? 'Aramayla eşleşen yorum yok.' : 'Bu tarih aralığında yorum bulunamadı.'}</td></tr>}
+                      </tbody>
+                    </table>
+                    </div>
+                  </Card>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Slider */}
         {tab === 'slider' && (
           <SliderTab
@@ -871,7 +998,7 @@ export function AdminPanel() {
       </Modal>
 
       {/* Kullanıcı İşlem Modalı (mobil) */}
-      <Modal open={uam.open} onClose={closeUam} title={uam.user ? `${uam.user.name} için işlem yap` : ''} width="360px">
+      <Modal open={uam.open} onClose={closeUam} title={uam.step === 'deleted' ? 'Kullanıcı Silindi' : (uam.user ? `${uam.user.name} için işlem yap` : '')} width="400px">
         {uam.user && uam.step === 'actions' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <Btn variant={uam.user.role === 'moderator' ? 'orange' : 'navy'} onClick={() => openUamConfirm('mod')}>
@@ -902,11 +1029,20 @@ export function AdminPanel() {
             />
             {uam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{uam.error}</div>}
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-              <Btn variant="ghost" onClick={() => setUam((s) => ({ ...s, step: 'actions', action: null, password: '', error: '' }))} disabled={uam.loading}>Geri</Btn>
               <Btn variant={uam.action === 'delete' ? 'danger' : 'primary'} onClick={handleUamSubmit} disabled={!uam.password || uam.loading}>
                 {uam.loading ? 'İşleniyor…' : 'Onayla'}
               </Btn>
             </div>
+          </div>
+        )}
+        {uam.step === 'deleted' && (
+          <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
+            <p style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Kullanıcı silindi</p>
+            <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.6, marginBottom: '20px' }}>
+              Hesap, yorumlar ve tüm veriler başarıyla temizlendi.
+            </p>
+            <Btn variant="primary" onClick={closeUam} style={{ width: '100%', justifyContent: 'center' }}>Tamam</Btn>
           </div>
         )}
       </Modal>
@@ -931,6 +1067,30 @@ export function AdminPanel() {
           <Btn variant="ghost" onClick={closeBulkDel} disabled={bulkDel.loading}>İptal</Btn>
           <Btn variant="danger" onClick={handleBulkDelete} disabled={!bulkDel.password || bulkDel.loading}>
             {bulkDel.loading ? 'Siliniyor…' : `${selectedIds.size} Kaydı Sil`}
+          </Btn>
+        </div>
+      </Modal>
+
+      {/* Yorum Silme Şifre Modalı (tekli + çoklu) */}
+      <Modal open={revDel.open} onClose={closeRevDel} title={revDel.ids.length > 1 ? 'Yorumları Sil' : 'Yorumu Sil'} width="420px">
+        <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+          <strong>{revDel.ids.length} yorum</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için admin şifrenizi girin.
+        </div>
+        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+        <input
+          type="password"
+          value={revDel.password}
+          onChange={(e) => setRevDel((s) => ({ ...s, password: e.target.value, error: '' }))}
+          onKeyDown={(e) => e.key === 'Enter' && !revDel.loading && revDel.password && handleRevDelete()}
+          placeholder="Şifrenizi girin"
+          autoFocus
+          style={{ width: '100%', padding: '10px 14px', border: `1px solid ${revDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
+        />
+        {revDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{revDel.error}</div>}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+          <Btn variant="ghost" onClick={closeRevDel} disabled={revDel.loading}>İptal</Btn>
+          <Btn variant="danger" onClick={handleRevDelete} disabled={!revDel.password || revDel.loading}>
+            {revDel.loading ? 'Siliniyor…' : `${revDel.ids.length} Yorumu Sil`}
           </Btn>
         </div>
       </Modal>

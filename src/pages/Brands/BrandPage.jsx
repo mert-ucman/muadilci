@@ -34,7 +34,7 @@ export function BrandPage({ params }) {
   const { user } = useAuth();
   const { sm, xs } = useW();
   const [showTooltip, setShowTooltip] = useState(false);
-  const [view, setView] = useState('grid');
+  const [view, setView] = useState('list');
   const [genderFilter, setGenderFilter] = useState(null); // null = hepsi, 'erkek'|'kadin'|'unisex' = filtreli
   const [sortDir, setSortDir] = useState('az');
   const [listSortKey, setListSortKey] = useState('name');

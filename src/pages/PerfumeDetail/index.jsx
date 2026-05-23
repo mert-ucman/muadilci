@@ -43,9 +43,9 @@ export function PerfumeDetailPage({ params }) {
   const { perfumes, muadilPerfumes, comments, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
-  const [view, setView] = useState('grid');
-  const [sortKey, setSortKey] = useState('overall');
-  const [sortDir, setSortDir] = useState('desc');
+  const [view, setView] = useState('list');
+  const [sortKey, setSortKey] = useState('name');
+  const [sortDir, setSortDir] = useState('asc');
 
   const perfume = perfumes.find((p) => p.brandSlug === params?.brandSlug && p.slug === params?.perfumeSlug);
   if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;

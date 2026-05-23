@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
+import { containsProfanity } from '@/utils/profanity';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
@@ -36,8 +37,39 @@ function getCroppedImg(src, pixelCrop, outputSize = 240) {
 const ROLE_LABEL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const ROLE_COLOR = { admin: 'red', moderator: 'blue', user: 'gold' };
 
+const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
+
+// Her kelimenin ilk harfini Türkçe uyumlu büyütür
+function toTitleCase(str) {
+  return str.replace(/\S+/g, (w) =>
+    w.replace(/^./, (c) => c.toLocaleUpperCase('tr-TR'))
+  );
+}
+const RESERVED_WORDS = [
+  'admin', 'mod', 'moderator', 'moderatör', 'muadilci',
+  'support', 'destek', 'official', 'resmi', 'sistem',
+  'yonetim', 'yönetim', 'staff', 'ekip', 'team', 'root', 'superuser',
+];
+const isReserved = (key) => RESERVED_WORDS.some((w) => key.includes(w)) || containsProfanity(key);
+
+function UsernameStatus({ status }) {
+  if (status === 'checking') return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
+      <div style={{ width: '10px', height: '10px', border: '2px solid #e2e8f0', borderTop: '2px solid #b8973a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <span style={{ fontSize: '12px', color: '#718096' }}>Kontrol ediliyor...</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+  if (status === 'available') return <div style={{ fontSize: '12px', color: '#38a169', marginTop: '4px', fontWeight: 600 }}>✓ Kullanıcı adı müsait</div>;
+  if (status === 'taken') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>✗ Bu kullanıcı adı alınmış</div>;
+  if (status === 'invalid') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>3–20 karakter, yalnızca harf, rakam, _ ve -</div>;
+  if (status === 'reserved') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>✗ Bu kullanıcı adı kullanılamaz</div>;
+  if (status === 'same') return <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>Mevcut kullanıcı adınızla aynı</div>;
+  return null;
+}
+
 export function ProfilePage({ queryParams }) {
-  const { user, logout, deleteAccount, updateProfilePhoto, deleteProfilePhoto } = useAuth();
+  const { user, logout, deleteAccount, updateProfilePhoto, deleteProfilePhoto, checkUsername, updateUsername } = useAuth();
 
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
@@ -50,10 +82,20 @@ export function ProfilePage({ queryParams }) {
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveErr, setSaveErr] = useState('');
+
+  // Kullanıcı adı düzenleme state'leri
+  const [usernameEdit, setUsernameEdit] = useState(false);
+  const [newUsername, setNewUsername] = useState(user?.username || '');
+  const [unStatus, setUnStatus] = useState('');
+  const [unLoading, setUnLoading] = useState(false);
+  const [unErr, setUnErr] = useState('');
+  const [unSaved, setUnSaved] = useState(false);
+  const unDebounce = useRef(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
+  const [deletePass, setDeletePass] = useState('');
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoErr, setPhotoErr] = useState('');
   const [avatarHover, setAvatarHover] = useState(false);
@@ -64,6 +106,23 @@ export function ProfilePage({ queryParams }) {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [cropLoading, setCropLoading] = useState(false);
   const [cropErr, setCropErr] = useState('');
+
+  // Kullanıcı adı real-time kontrol
+  useEffect(() => {
+    if (!usernameEdit) return;
+    const key = newUsername.toLowerCase();
+    if (!newUsername) { setUnStatus(''); return; }
+    if (key === user?.username) { setUnStatus('same'); return; }
+    if (!USERNAME_RE.test(key)) { setUnStatus('invalid'); return; }
+    if (isReserved(key)) { setUnStatus('reserved'); return; }
+    setUnStatus('checking');
+    clearTimeout(unDebounce.current);
+    unDebounce.current = setTimeout(async () => {
+      const available = await checkUsername(newUsername);
+      setUnStatus(available ? 'available' : 'taken');
+    }, 600);
+    return () => clearTimeout(unDebounce.current);
+  }, [newUsername, usernameEdit]);
 
   if (!user) return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
@@ -87,6 +146,26 @@ export function ProfilePage({ queryParams }) {
       setSaveErr('Kaydedilemedi. Lütfen tekrar deneyin.');
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const saveUsername = async () => {
+    if (unStatus === 'same') { setUsernameEdit(false); return; }
+    if (unStatus !== 'available') return;
+    setUnLoading(true);
+    setUnErr('');
+    try {
+      await updateUsername(newUsername.toLowerCase().trim());
+      setUnSaved(true);
+      setUsernameEdit(false);
+      setTimeout(() => setUnSaved(false), 3000);
+    } catch (e) {
+      if (e.code === 'username-taken') setUnErr('Bu kullanıcı adı zaten alınmış.');
+      else if (e.code === 'username-reserved') setUnErr('Bu kullanıcı adı kullanılamaz.');
+      else if (e.code === 'username-invalid') setUnErr('Geçersiz kullanıcı adı formatı.');
+      else setUnErr('Kaydedilemedi. Tekrar deneyin.');
+    } finally {
+      setUnLoading(false);
     }
   };
 
@@ -139,15 +218,22 @@ export function ProfilePage({ queryParams }) {
     finally { setPhotoLoading(false); }
   };
 
+  const isGoogleUser = user?.provider === 'google.com';
+
   const handleDeleteAccount = async () => {
+    if (!isGoogleUser && !deletePass) { setDeleteErr('Lütfen şifrenizi girin.'); return; }
     setDeleteLoading(true);
     setDeleteErr('');
     try {
-      await deleteAccount();
+      await deleteAccount(deletePass);
       navigate('/');
     } catch (e) {
-      if (e.code === 'auth/requires-recent-login') {
-        setDeleteErr('Güvenlik nedeniyle hesabı silmeden önce çıkış yapıp tekrar giriş yapmanız gerekiyor.');
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setDeleteErr('Şifre hatalı. Lütfen tekrar deneyin.');
+      } else if (e.code === 'auth/requires-recent-login') {
+        setDeleteErr('Güvenlik nedeniyle çıkış yapıp tekrar giriş yapın, sonra tekrar deneyin.');
+      } else if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        setDeleteErr('Google doğrulama penceresi kapatıldı. Tekrar deneyin.');
       } else {
         setDeleteErr('Hesap silinemedi. Tekrar deneyin.');
       }
@@ -211,22 +297,45 @@ export function ProfilePage({ queryParams }) {
       )}
 
       {/* Hesap silme onay modalı */}
-      <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
+      <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); setDeletePass(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff5f5', border: '2px solid #fc8181', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '24px' }}>⚠</div>
           <p style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Emin misiniz?</p>
-          <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.7, marginBottom: '8px' }}>
-            <strong style={{ color: C.text }}>{user.email}</strong> hesabı kalıcı olarak silinecek.<br />
-            Bu işlem geri alınamaz. Yorumlarınız anonim olarak kalabilir.
+          <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.7, marginBottom: '16px' }}>
+            <strong style={{ color: C.text }}>{user.email}</strong> hesabı ve tüm verileriniz kalıcı olarak silinecek. Yorumlarınız <strong>"Silinmiş Kullanıcı"</strong> adıyla anonim kalır. Bu işlem geri alınamaz.
           </p>
+
+          {/* Şifreli kullanıcılar için şifre doğrulama */}
+          {!isGoogleUser && (
+            <div style={{ textAlign: 'left', marginBottom: '14px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.navy, marginBottom: '6px' }}>Onaylamak için şifrenizi girin</label>
+              <input
+                type="password"
+                value={deletePass}
+                onChange={(e) => { setDeletePass(e.target.value); setDeleteErr(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && !deleteLoading && deletePass && handleDeleteAccount()}
+                placeholder="Şifreniz"
+                autoFocus
+                style={{ width: '100%', padding: '10px 14px', border: `1px solid ${deleteErr ? '#fc8181' : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          )}
+
+          {/* Google kullanıcıları için bilgi */}
+          {isGoogleUser && (
+            <div style={{ background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '10px 14px', fontSize: '12px', color: C.textLight, lineHeight: 1.6, marginBottom: '14px', textAlign: 'left' }}>
+              🔒 Güvenlik için, silme işleminden önce Google ile kimliğinizi doğrulamanız istenecek.
+            </div>
+          )}
+
           {deleteErr && (
             <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '10px 14px', color: '#c53030', fontSize: '13px', marginBottom: '14px', textAlign: 'left' }}>
               ⚠ {deleteErr}
             </div>
           )}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '6px' }}>
-            <Btn variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteErr(''); }}>Vazgeç</Btn>
-            <Btn variant="danger" onClick={handleDeleteAccount} disabled={deleteLoading}>
+            <Btn variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteErr(''); setDeletePass(''); }}>Vazgeç</Btn>
+            <Btn variant="danger" onClick={handleDeleteAccount} disabled={deleteLoading || (!isGoogleUser && !deletePass)}>
               {deleteLoading ? 'Siliniyor...' : 'Evet, Hesabımı Sil'}
             </Btn>
           </div>
@@ -302,7 +411,7 @@ export function ProfilePage({ queryParams }) {
               <h3 style={{ fontSize: '20px', fontWeight: 800, color: C.navy }}>Kişisel Bilgiler</h3>
               {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
             </div>
-            <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} disabled={!edit} />
+            <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm({ ...form, name: toTitleCase(e.target.value) })} disabled={!edit} />
             <Input label="E-posta" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={true} />
             <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} disabled={!edit} />
             {edit && (
@@ -311,7 +420,58 @@ export function ProfilePage({ queryParams }) {
                 <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', email: user?.email || '', bio: user?.bio || '' }); }}>İptal</Btn>
               </div>
             )}
-            <div style={{ marginTop: '40px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
+
+            {/* Kullanıcı Adı Bölümü */}
+            <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy }}>Kullanıcı Adı</h3>
+                {!usernameEdit && (
+                  <Btn variant="ghost" size="sm" onClick={() => { setUnErr(''); setNewUsername(user?.username || ''); setUnStatus(''); setUsernameEdit(true); }}>Değiştir</Btn>
+                )}
+              </div>
+              {unSaved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.green, marginBottom: '12px', fontSize: '13px' }}>Kullanıcı adı güncellendi. Tüm yorumlarınız yeni adınızla görünecek.</div>}
+              {unErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, marginBottom: '12px', fontSize: '13px' }}>⚠ {unErr}</div>}
+              {!usernameEdit ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '15px', color: C.textLight }}>@</span>
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{user?.username || <span style={{ color: C.textLight, fontStyle: 'italic', fontWeight: 400 }}>Henüz belirlenmedi</span>}</span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ position: 'relative', marginBottom: '4px' }}>
+                    <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#718096', pointerEvents: 'none' }}>@</span>
+                    <input
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
+                      maxLength={20}
+                      placeholder={user?.username || ''}
+                      style={{
+                        width: '100%', boxSizing: 'border-box',
+                        border: `1px solid ${unStatus === 'available' ? '#38a169' : unStatus === 'taken' || unStatus === 'invalid' || unStatus === 'reserved' ? '#fc8181' : '#e2e8f0'}`,
+                        borderRadius: '10px', padding: '10px 14px 10px 28px', fontSize: '14px',
+                        color: '#2d3748', outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <UsernameStatus status={unStatus} />
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    <Btn
+                      size="sm"
+                      onClick={saveUsername}
+                      disabled={unLoading || (unStatus !== 'available' && unStatus !== 'same')}
+                    >
+                      {unLoading ? 'Kaydediliyor...' : 'Kaydet'}
+                    </Btn>
+                    <Btn variant="secondary" size="sm" onClick={() => { setUsernameEdit(false); setUnErr(''); setUnStatus(''); }}>İptal</Btn>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#718096', marginTop: '8px', lineHeight: 1.5 }}>
+                    Kullanıcı adınızı değiştirirseniz tüm yorumlarınız otomatik olarak yeni adınızla güncellenir.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
               <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Şifre Değiştir</h3>
               <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>
             </div>

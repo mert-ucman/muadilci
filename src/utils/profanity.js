@@ -12,9 +12,10 @@
 
 // ─── Substring olarak taranan kelimeler ────────────────────────────────────
 const BANNED_SUBSTR = [
+  // Hakaret / küfür
   'amina', 'amcik', 'amcuk', 'amkafa', 'orospu', 'orospucocugu',
   'pic',
-  'sik', 'sikerim', 'sikeyim', 'sikim', 'siktir',
+  'sik', 'sikerim', 'sikeyim', 'sikim', 'siktir', 'sikis',
   'yarrak', 'yarak',
   'got', 'gotlek', 'gotveren',
   'ibne',
@@ -30,6 +31,19 @@ const BANNED_SUBSTR = [
   'haysiyetsiz',
   'gerizekali',
   'dangalak',
+  // Cinsel içerik
+  'sex', 'seks',
+  'penis', 'peniz',
+  'vajina', 'vagina',
+  'vujna',
+  'porno', 'porn',
+  'erotik',
+  'orgazm', 'orgasm',
+  'masturbas', 'masturbat',
+  'fetis',
+  'meme',
+  'kalca',
+  'amcig', 'amcık',
 ];
 
 // ─── Yalnızca TAM KELİME olarak taranan kelimeler ───────────────────────────
@@ -39,6 +53,8 @@ const BANNED_WHOLE = [
   'salak', 'aptal', 'mal', 'mallik',
   'it', 'kopek',
   'piçler', 'picler',
+  // Tek başına kullanıldığında cinsel anlam taşıyan kısa kelimeler
+  'am', 'got',
 ];
 
 // ─── Sesli harfler ──────────────────────────────────────────────────────────
