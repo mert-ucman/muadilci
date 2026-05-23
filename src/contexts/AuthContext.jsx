@@ -21,6 +21,7 @@ import {
   serverTimestamp, collection, query, where, getDocs, onSnapshot,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
 
 const RESERVED_WORDS = [
@@ -299,15 +300,22 @@ export function AuthProvider({ children }) {
   const updateProfilePhoto = async (dataUrl) => {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Oturum açık değil.');
-    await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: dataUrl });
-    setUser((prev) => ({ ...prev, photoURL: dataUrl }));
+    // Görseli Storage'a yükle, yalnızca URL'yi Firestore'da sakla
+    const url = await uploadDataURL(dataUrl, `users/${currentUser.uid}`);
+    const oldUrl = user?.photoURL;
+    await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: url });
+    setUser((prev) => ({ ...prev, photoURL: url }));
+    // Eski fotoğrafı Storage'dan temizle (best-effort)
+    if (oldUrl && oldUrl !== url) deleteImageByUrl(oldUrl);
   };
 
   const deleteProfilePhoto = async () => {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Oturum açık değil.');
+    const oldUrl = user?.photoURL;
     await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: null });
     setUser((prev) => ({ ...prev, photoURL: null }));
+    if (oldUrl) deleteImageByUrl(oldUrl);
   };
 
   const reauthenticate = async (password) => {

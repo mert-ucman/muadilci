@@ -5,7 +5,16 @@ import {
   increment, writeBatch, where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { deleteImageByUrl } from '@/lib/storage';
 import { useAuth } from './AuthContext';
+
+// Bir belge verisindeki tüm görsel URL'lerini toplar (logoImage + images[].src)
+const collectImageUrls = (data) => {
+  const urls = [];
+  if (data?.logoImage) urls.push(data.logoImage);
+  if (Array.isArray(data?.images)) data.images.forEach((im) => { if (im?.src) urls.push(im.src); });
+  return urls;
+};
 
 const DataCtx = createContext(null);
 export function useData() { return useContext(DataCtx); }
@@ -57,9 +66,13 @@ export function DataProvider({ children }) {
     const batch = writeBatch(db);
     const childCol = type === 'muadil' ? 'muadils' : 'perfumes';
     const childSnap = await getDocs(query(col(childCol), where('brandId', '==', id)));
-    childSnap.docs.forEach((d) => batch.delete(d.ref));
+    // Silinecek görselleri topla (marka logosu + alt parfüm görselleri)
+    const brandSnap = await getDoc(docRef('brands', id));
+    const urls = collectImageUrls(brandSnap.exists() ? brandSnap.data() : {});
+    childSnap.docs.forEach((d) => { urls.push(...collectImageUrls(d.data())); batch.delete(d.ref); });
     batch.delete(docRef('brands', id));
     await batch.commit();
+    urls.forEach(deleteImageByUrl); // Storage temizliği (best-effort)
   };
 
   // ─── Perfumes ─────────────────────────────────────────────────────────────
@@ -68,7 +81,12 @@ export function DataProvider({ children }) {
     await setDoc(ref, { ...p, id: ref.id, active: true, likes: 0, commentCount: 0, createdAt: serverTimestamp() });
   };
   const updatePerfume = async (id, d) => updateDoc(docRef('perfumes', id), d);
-  const deletePerfume = async (id) => deleteDoc(docRef('perfumes', id));
+  const deletePerfume = async (id) => {
+    const snap = await getDoc(docRef('perfumes', id));
+    const urls = collectImageUrls(snap.exists() ? snap.data() : {});
+    await deleteDoc(docRef('perfumes', id));
+    urls.forEach(deleteImageByUrl);
+  };
 
   // ─── Muadils ─────────────────────────────────────────────────────────────
   const addMuadil = async (m) => {
@@ -80,7 +98,12 @@ export function DataProvider({ children }) {
     });
   };
   const updateMuadil = async (id, d) => updateDoc(docRef('muadils', id), d);
-  const deleteMuadil = async (id) => deleteDoc(docRef('muadils', id));
+  const deleteMuadil = async (id) => {
+    const snap = await getDoc(docRef('muadils', id));
+    const urls = collectImageUrls(snap.exists() ? snap.data() : {});
+    await deleteDoc(docRef('muadils', id));
+    urls.forEach(deleteImageByUrl);
+  };
 
   const incrementCompareCount = async (muadilId) => {
     if (!muadilId) return;
@@ -321,7 +344,11 @@ export function DataProvider({ children }) {
     const ref = doc(col('sliderImages'));
     await setDoc(ref, { ...img, id: ref.id, order: sliderImages.length, createdAt: serverTimestamp() });
   };
-  const removeSliderImage = async (id) => deleteDoc(docRef('sliderImages', id));
+  const removeSliderImage = async (id) => {
+    const img = sliderImages.find((i) => i.id === id);
+    await deleteDoc(docRef('sliderImages', id));
+    if (img?.src) deleteImageByUrl(img.src);
+  };
   const updateSliderImage = async (id, data) => updateDoc(docRef('sliderImages', id), data);
   const reorderSliderImages = async (imgs) => {
     const batch = writeBatch(db);

@@ -8,6 +8,7 @@ import { slugify } from '@/utils/strings';
 import { Card, Badge, Btn, Modal, Input, Select, Textarea } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F } from '@/constants/theme';
+import { uploadDataURL } from '@/lib/storage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFlask, faStar, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 
@@ -65,7 +66,10 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
     arr.slice(0, remaining).forEach((file) => {
       if (!file.type.startsWith('image/')) { setError('Sadece görsel dosyaları (JPG, PNG, WebP) kabul edilir.'); return; }
       if (file.size > MAX_SIZE_MB * 1024 * 1024) { setError(`"${file.name}" ${MAX_SIZE_MB}MB sınırını aşıyor.`); return; }
-      compressToDataURL(file, 1920, 0.82, 800).then((src) => addSliderImage({ src, name: file.name })).catch(() => setError(`"${file.name}" işlenirken hata oluştu.`));
+      compressToDataURL(file, 1920, 0.82, 800)
+        .then((src) => uploadDataURL(src, 'slider'))
+        .then((url) => addSliderImage({ src: url, name: file.name }))
+        .catch(() => setError(`"${file.name}" yüklenirken hata oluştu.`));
     });
   };
 
@@ -154,17 +158,23 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
   const [dragSrcIdx, setDragSrcIdx] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const [sizeErr, setSizeErr] = useState('');
+  const [uploadingIdx, setUploadingIdx] = useState(null);
 
   const readFile = (idx, file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { setSizeErr('Sadece JPG, PNG veya WebP görseli yüklenebilir.'); return; }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) { setSizeErr(`"${file.name}" ${MAX_SIZE_MB}MB sınırını aşıyor.`); return; }
     setSizeErr('');
-    compressToDataURL(file, 800, 0.8).then((src) => {
-      const next = [...images];
-      next[idx] = { src, name: file.name };
-      onChange(next);
-    }).catch(() => setSizeErr(`"${file.name}" işlenirken hata oluştu.`));
+    setUploadingIdx(idx);
+    compressToDataURL(file, 800, 0.8)
+      .then((src) => uploadDataURL(src, 'perfumes'))
+      .then((url) => {
+        const next = [...images];
+        next[idx] = { src: url, name: file.name };
+        onChange(next);
+      })
+      .catch(() => setSizeErr(`"${file.name}" yüklenirken hata oluştu.`))
+      .finally(() => setUploadingIdx(null));
   };
 
   return (
@@ -222,7 +232,13 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
               style={{ display: 'none' }}
               onChange={(e) => { readFile(idx, e.target.files[0]); e.target.value = ''; }}
             />
-            {img ? (
+            {uploadingIdx === idx ? (
+              <div style={{ textAlign: 'center', padding: '10px', pointerEvents: 'none' }}>
+                <div style={{ width: '26px', height: '26px', margin: '0 auto 8px', border: `3px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div style={{ fontSize: '11px', color: C.textLight }}>Yükleniyor…</div>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            ) : img ? (
               <>
                 <img src={img.src} alt={img.name} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                 <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,.6)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 800, color: '#fff' }}>{idx + 1}</div>
@@ -436,7 +452,8 @@ export function AdminPanel() {
     const dup = brands.find((b) => b.type === bf.type && b.name.trim().toLowerCase() === norm);
     if (dup) { setBrandErr(`"${bf.name}" adında bir ${bf.type === 'original' ? 'orijinal' : 'muadil'} marka zaten mevcut.`); return; }
     setBrandErr('');
-    addBrand({ ...bf, slug: bf.slug || slugify(bf.name), founded: Number(bf.founded) || 2000 });
+    const { _logoErr, _logoUploading, ...cleanBf } = bf;
+    addBrand({ ...cleanBf, slug: bf.slug || slugify(bf.name), founded: Number(bf.founded) || 2000 });
     setBf({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Lüks', bio: '' });
     setShowBM(false);
   };
@@ -448,7 +465,8 @@ export function AdminPanel() {
     if (dup) { setPerfErr(`"${pf.name}" adında bir orijinal parfüm zaten mevcut.`); return; }
     setPerfErr('');
     const b = brands.find((x) => x.id === Number(pf.brandId));
-    addPerfume({ ...pf, brandId: Number(pf.brandId), slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: 'floral', images: pf.images });
+    const pPrimary = pf.images.find(Boolean)?.src || '';
+    addPerfume({ ...pf, brandId: Number(pf.brandId), slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: pPrimary, images: pf.images });
     setPf({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '', images: [null, null, null] });
     setShowPM(false);
   };
@@ -461,7 +479,8 @@ export function AdminPanel() {
     setMuadilErr('');
     const b = brands.find((x) => x.id === Number(mf.brandId));
     const t = perfumes.find((x) => x.id === Number(mf.targetPerfumeId));
-    addMuadil({ ...mf, brandId: Number(mf.brandId), targetPerfumeId: Number(mf.targetPerfumeId), slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '', images: mf.images });
+    const mPrimary = mf.images.find(Boolean)?.src || '';
+    addMuadil({ ...mf, brandId: Number(mf.brandId), targetPerfumeId: Number(mf.targetPerfumeId), slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '', image: mPrimary, images: mf.images });
     setMf({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '', images: [null, null, null] });
     setShowMM(false);
   };
@@ -473,7 +492,8 @@ export function AdminPanel() {
 
   const saveBrand = () => {
     if (!ebf.name) return;
-    updateBrand(selBrand.id, { ...ebf, founded: Number(ebf.founded) || selBrand.founded });
+    const { _logoErr, _logoUploading, ...cleanEbf } = ebf;
+    updateBrand(selBrand.id, { ...cleanEbf, founded: Number(ebf.founded) || selBrand.founded });
     setSelBrand(null);
     setEbf(null);
   };
@@ -1193,7 +1213,8 @@ export function AdminPanel() {
                 if (!file) return;
                 if (!file.type.startsWith('image/')) { setBf((s) => ({ ...s, _logoErr: 'Sadece JPG, PNG veya WebP yüklenebilir.' })); return; }
                 if (file.size > 2 * 1024 * 1024) { setBf((s) => ({ ...s, _logoErr: `Dosya boyutu 2MB sınırını aşıyor (${(file.size / 1024 / 1024).toFixed(1)}MB).` })); return; }
-                compressToDataURL(file, 300, 0.85).then((src) => setBf((s) => ({ ...s, logoImage: src, _logoErr: '' }))).catch(() => setBf((s) => ({ ...s, _logoErr: 'Görsel işlenirken hata oluştu.' })));
+                setBf((s) => ({ ...s, _logoErr: '', _logoUploading: true }));
+                compressToDataURL(file, 300, 0.85).then((src) => uploadDataURL(src, 'brands')).then((url) => setBf((s) => ({ ...s, logoImage: url, _logoErr: '', _logoUploading: false }))).catch(() => setBf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false })));
               }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
@@ -1333,7 +1354,8 @@ export function AdminPanel() {
                     if (!file) return;
                     if (!file.type.startsWith('image/')) { setEbf((s) => ({ ...s, _logoErr: 'Sadece JPG, PNG veya WebP yüklenebilir.' })); return; }
                     if (file.size > 2 * 1024 * 1024) { setEbf((s) => ({ ...s, _logoErr: `Dosya boyutu 2MB sınırını aşıyor (${(file.size / 1024 / 1024).toFixed(1)}MB).` })); return; }
-                    compressToDataURL(file, 300, 0.85).then((src) => setEbf((s) => ({ ...s, logoImage: src, _logoErr: '' }))).catch(() => setEbf((s) => ({ ...s, _logoErr: 'Görsel işlenirken hata oluştu.' })));
+                    setEbf((s) => ({ ...s, _logoErr: '', _logoUploading: true }));
+                    compressToDataURL(file, 300, 0.85).then((src) => uploadDataURL(src, 'brands')).then((url) => setEbf((s) => ({ ...s, logoImage: url, _logoErr: '', _logoUploading: false }))).catch(() => setEbf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false })));
                   }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
