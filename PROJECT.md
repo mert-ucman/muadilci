@@ -11,7 +11,10 @@
 | Framework | React 18 (Vite) |
 | Backend / DB | Firebase Firestore (real-time) |
 | Auth | Firebase Authentication |
-| Routing | Custom SPA router (`RouterContext`) |
+| Depolama | Firebase Storage (görseller) |
+| Hosting | Firebase Hosting |
+| Cloud Functions | Firebase Functions v2 (Gen 2) |
+| Routing | History API tabanlı custom SPA router (`RouterContext`) |
 | Stil | Inline CSS — tema sabitleri: `src/constants/theme.js` |
 | İkonlar | FontAwesome (`@fortawesome/free-solid-svg-icons`) |
 | Fontlar | Nunito (UI — `F`), Playfair Display (parfüm adları — `FH`) |
@@ -32,13 +35,15 @@ src/
 ├── contexts/
 │   ├── AuthContext.jsx             # Kullanıcı auth, rol yönetimi (admin/moderator)
 │   ├── DataContext.jsx             # Firestore real-time listeners, veri fonksiyonları
-│   └── RouterContext.jsx           # Hash-based SPA router
+│   └── RouterContext.jsx           # History API tabanlı custom SPA router
 │
 ├── hooks/
 │   └── useW.js                     # Responsive breakpoint hook (xs/sm/md/w)
 │
 ├── lib/
 │   ├── firebase.js                 # Firebase init
+│   ├── storage.js                  # uploadDataURL / deleteImageByUrl yardımcıları
+│   ├── seo.js                      # useSeo hook (title, meta, OG, JSON-LD, canonical)
 │   └── seed.js                     # Firestore seed script
 │
 ├── utils/
@@ -82,7 +87,8 @@ src/
     ├── Leaderboard/index.jsx       # En İyiler (top muadil parfümler + markalar)
     ├── Profile/index.jsx           # Kullanıcı profili
     ├── Moderation/index.jsx        # Yorum moderasyon paneli
-    ├── Admin/index.jsx             # Yönetim paneli (parfüm/marka CRUD)
+    ├── Admin/index.jsx             # Yönetim paneli (parfüm/marka CRUD + Tüm Yorumlar)
+    ├── NotFound.jsx                # 404 sayfası (noindex, ana sayfaya yönlendirme)
     └── Auth/
         ├── LoginPage.jsx
         ├── RegisterPage.jsx
@@ -90,6 +96,19 @@ src/
         ├── ResetPasswordPage.jsx
         ├── AuthLayout.jsx
         └── TermsModal.jsx
+
+scripts/
+├── generate-sitemap.mjs            # Firestore'dan sitemap.xml üretir
+├── migrate-images-to-storage.mjs  # Base64 görselleri Firebase Storage'a taşır
+├── fix-brand-ids.mjs               # Numerik marka ID'lerini auto-ID'ye çevirdi (bir kez çalıştırıldı)
+└── fix-pm-ids.mjs                  # Numerik parfüm/muadil ID'lerini auto-ID'ye çevirdi (bir kez çalıştırıldı)
+
+functions/
+└── index.js                        # Cloud Functions: deleteUser (Auth + Firestore birlikte siler)
+
+public/
+├── robots.txt                      # Crawler yönlendirme, sitemap referansı
+└── sitemap.xml                     # 83 URL (statik + markalar + parfümler)
 ```
 
 ---
@@ -110,6 +129,9 @@ src/
 | `/admin` | Yönetim | Admin rolü gerekli |
 | `/giris` | Giriş | Giriş yapılmışsa `/`'e yönlendir |
 | `/kayit` | Kayıt | Giriş yapılmışsa `/`'e yönlendir |
+| `*` | 404 Sayfa Bulunamadı | — |
+
+> Routing, History API (`pushState` / `popstate`) ile çalışır. Firebase Hosting'de `rewrites` tüm yolları `index.html`'e yönlendirir.
 
 ---
 
@@ -129,11 +151,16 @@ src/
 
 | Koleksiyon | Açıklama | Önemli Alanlar |
 |------------|----------|----------------|
-| `brands` | Markalar | `type: 'original'\|'muadil'`, `active`, `likes`, `slug`, `founded`, `origin` |
-| `perfumes` | Orijinal parfümler | `brandId`, `brandSlug`, `slug`, `gender`, `year`, `notes{top,heart,base}`, `likes` |
-| `muadilPerfumes` | Muadil parfümler | `brandId`, `targetPerfumeId`, `targetPerfumeName`, `targetBrandName`, `likes` |
-| `comments` | Kullanıcı yorumları | `muadilPerfumeId`, `userId`, `similarity`, `projection`, `longevity`, `recommend`, `status` |
-| `users` | Kullanıcı profilleri | `uid`, `username`, `role`, `avatar`, `photoURL`, `favorites` |
+| `brands` | Markalar | `type: 'original'\|'muadil'`, `active`, `likes`, `slug`, `founded`, `origin`, `logoImage` (Storage URL) |
+| `perfumes` | Orijinal parfümler | `brandId`, `brandSlug`, `slug`, `gender`, `year`, `notes{top,heart,base}`, `likes`, `images[]` (Storage URL) |
+| `muadils` | Muadil parfümler | `brandId`, `targetPerfumeId`, `targetPerfumeName`, `targetBrandName`, `likes`, `reviewCount` |
+| `reviews` | Kullanıcı yorumları | `muadilId`, `userId`, `similarity`, `projection`, `longevity`, `recommend`, `status`, `userRole` |
+| `users` | Kullanıcı profilleri | `uid`, `username`, `role`, `photoURL`, `active`, `deleted` |
+| `users/{uid}/favorites` | Favori alt-koleksiyon | `type: 'brand'\|'perfume'\|'muadil'`, `refId` |
+| `usernames` | Kullanıcı adı benzersizliği | `uid` |
+| `sliderImages` | Ana sayfa slider | `url` (Storage URL), `order` |
+
+**Tüm görseller** Firestore'da base64 yerine **Firebase Storage** URL'si olarak saklanır.
 
 **Yorum `status` değerleri:** `pending` (moderatör bekliyor) · `approved` · `rejected`
 
@@ -173,6 +200,45 @@ Sesli harf kontrolü yanlış pozitifi önlemek için **yalnızca 3+ ünsüz** k
 
 ---
 
+## Güvenlik Mimarisi
+
+### Firestore Rules
+| Kural | Açıklama |
+|-------|----------|
+| `isAdmin()` / `isMod()` | Firestore `users` belgesinden rol okunur (custom claim yok) |
+| `users` write | `role`, `active`, `deleted` alanları sahip tarafından değiştirilemez |
+| `users` read | Yalnızca sahip veya mod/admin okuyabilir (PII koruması) |
+| `usernames` | `get` herkese açık; `list` yalnızca mod (e-posta enumeration engeli) |
+| `reviews` create | `status == 'pending'`, `userRole` Firestore'daki role ile eşleşmeli, `email_verified == true` |
+| `reviews` update (owner) | Yalnızca `pending` yorumlar düzenlenebilir; status değiştirilemez |
+
+### Storage Rules
+| Yol | Okuma | Yazma |
+|-----|-------|-------|
+| `perfumes/**` | Herkese açık | Yalnızca admin |
+| `brands/**` | Herkese açık | Yalnızca admin |
+| `slider/**` | Herkese açık | Yalnızca admin |
+| `users/{userId}/**` | Herkese açık | Yalnızca sahip |
+
+> Admin rolü Storage kurallarında da Firestore `users` belgesi üzerinden doğrulanır (`firestore.get()`).
+
+### DataContext — Kullanıcı Listesi
+`users` koleksiyonu real-time listener'ı yalnızca `admin` veya `moderator` rolündeki kullanıcılar için aktif olur; diğerleri için boş array döner.
+
+---
+
+## SEO Mimarisi
+
+| Bileşen | Açıklama |
+|---------|----------|
+| `src/lib/seo.js` — `useSeo()` | `document.title`, `<meta description>`, OG/Twitter tag'leri, `canonical`, `robots`, JSON-LD |
+| `public/robots.txt` | `/admin`, `/profil` vb. private yollar `Disallow` |
+| `public/sitemap.xml` | `scripts/generate-sitemap.mjs` ile üretilir; güncellenince yeniden çalıştır |
+| `index.html` | Varsayılan OG/Twitter meta, `theme-color`, `canonical` |
+| Tüm detay sayfaları | `useSeo` + `Product` JSON-LD (parfüm/muadil detay sayfaları) |
+
+---
+
 ## UI Kuralları & Kararlar
 
 - **Emoji yok** — tüm ikonlar `@fortawesome/free-solid-svg-icons`'dan gelir (`free-regular-svg-icons` yüklü değil)
@@ -180,7 +246,8 @@ Sesli harf kontrolü yanlış pozitifi önlemek için **yalnızca 3+ ünsüz** k
 - **UI metinleri, sayılar** → `F` (Nunito)
 - **Favori rengi** → altın (`C.gold`, `C.goldBg`, `C.goldBorder`) — kırmızı kullanılmaz
 - **Düzenleme/silme** yalnızca `/admin` panelinden; diğer sayfalarda edit butonu yoktur
-- **`localStorage` anahtarları:** `perf_tab`, `perf_view`, `perf_sort`, `perf_pp`
+- **Varsayılan görünüm:** tüm liste sayfaları `liste` modunda, `A-Z` sıralı açılır
+- **`localStorage` anahtarları:** `perf_tab`, `perf_view_v2`, `perf_sort_v2`, `perf_pp`, `brands_view_v2`, `brands_sort_v2`
 
 ---
 
@@ -190,9 +257,12 @@ Sesli harf kontrolü yanlış pozitifi önlemek için **yalnızca 3+ ünsüz** k
 - Onaylanmamış yorumlar (`pending`/`rejected`) puan hesaplamalarına dahil edilmez.
 - Moderatör yorumları Firestore'da gerçek ad ile saklanır, UI'da `@moderatör` gösterilir.
 - `BrandsBandSection`: CSS keyframe ile sonsuz marquee — orijinal markalar LTR (soldan sağa), muadil markalar RTL (sağdan sola), 80s döngü süresi.
-- Karşılaştırma sayfasında `isModerator` değişkeni `.map()` içinde kullanılmadan önce tanımlanmalıdır (TDZ hatası).
 - `@fortawesome/free-regular-svg-icons` paketi **yüklü değil**; outline ikon gerektiğinde solid ikon farklı renkle (`C.textLight`) kullanılır.
+- Görsel yükleme pipeline: `compressToDataURL()` → `uploadDataURL(folder)` → Storage URL → Firestore'a yaz.
+- `useSeo` hook'u her sayfada kullanılmalı; `noindex: true` admin/profil gibi özel sayfalara eklenir.
+- Sitemap'i güncellemek için: `node scripts/generate-sitemap.mjs` (Firebase Admin SDK gerekir).
+- Silinmiş kullanıcıların fotoğrafları Comparison sayfasında `null` olarak gösterilir (veri sızıntısı yok).
 
 ---
 
-*Son güncelleme: 2026-05-20*
+*Son güncelleme: 2026-05-23*
