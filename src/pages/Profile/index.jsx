@@ -7,6 +7,7 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 
 function getCroppedImg(src, pixelCrop, outputSize = 240) {
@@ -69,6 +70,7 @@ function UsernameStatus({ status }) {
 }
 
 export function ProfilePage({ queryParams }) {
+  useSeo({ title: 'Profilim', noindex: true });
   const { user, logout, deleteAccount, updateProfilePhoto, deleteProfilePhoto, checkUsername, updateUsername } = useAuth();
 
   const { navigate } = useRouter();

@@ -9,6 +9,7 @@ import { Card, Badge, Btn, Modal, Input, Select, Textarea } from '@/components/u
 import { GenderBadge } from '@/components/shared';
 import { C, F } from '@/constants/theme';
 import { uploadDataURL } from '@/lib/storage';
+import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFlask, faStar, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 
@@ -303,6 +304,7 @@ function compressToDataURL(file, maxW, quality, maxH = null) {
 }
 
 export function AdminPanel() {
+  useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
   const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();

@@ -2,8 +2,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Card, Badge, Btn } from '@/components/ui';
 import { C } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 
 export function ModerationPage() {
+  useSeo({ title: 'Moderasyon', noindex: true });
   const { isMod } = useAuth();
   const { comments, approveComment, rejectComment, muadilPerfumes } = useData();
 

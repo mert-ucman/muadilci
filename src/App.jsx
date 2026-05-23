@@ -18,6 +18,7 @@ import { ProfilePage }       from '@/pages/Profile';
 import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
 import { LeaderboardPage }   from '@/pages/Leaderboard';
+import { NotFoundPage }      from '@/pages/NotFound';
 
 const ROUTES = [
   { pat: '/',                       C: LandingPage },
@@ -72,7 +73,7 @@ export function App() {
     return null;
   }
 
-  let Page = LandingPage;
+  let Page = NotFoundPage;
   let params = {};
   for (const r of ROUTES) {
     const p = matchRoute(r.pat, basePath);

@@ -9,11 +9,16 @@ import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { Badge } from '@/components/ui/Badge';
 import { C, F } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
 export function ComparisonPage({ queryParams }) {
+  useSeo({
+    title: 'Karşılaştır',
+    description: 'Orijinal parfüm ile muadilini yan yana karşılaştır; koku benzerliği, kalıcılık ve yayılım puanlarını topluluk yorumlarıyla incele.',
+  });
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments, users, addComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
   const { user, isMod } = useAuth();

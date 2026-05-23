@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /moderasyon
+Disallow: /profil
+Disallow: /giris
+Disallow: /kayit
+Disallow: /sifre-sifirla
+Disallow: /sifre-yenile
+
+Sitemap: https://muadilci.com/sitemap.xml

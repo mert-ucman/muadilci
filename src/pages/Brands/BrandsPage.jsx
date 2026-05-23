@@ -6,6 +6,7 @@ import { useW } from '@/hooks/useW';
 import { Card } from '@/components/ui';
 import { calcScores } from '@/utils/scoring';
 import { C, F, FH } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 
 const SORT_OPTIONS_ORIG = [
@@ -55,6 +56,10 @@ function IconList() {
 }
 
 export function BrandsPage() {
+  useSeo({
+    title: 'Markalar',
+    description: 'Orijinal ve muadil parfüm markalarını keşfet. Her markanın parfüm sayısı, kökeni ve topluluk puanlarıyla birlikte incele.',
+  });
   const { navigate } = useRouter();
   const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite } = useData();
   const { user } = useAuth();

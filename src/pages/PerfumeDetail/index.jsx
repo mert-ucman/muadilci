@@ -7,6 +7,7 @@ import { calcScores } from '@/utils/scoring';
 import { Card, Badge, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import { faArrowUp, faHeart, faArrowDown, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
@@ -48,9 +49,27 @@ export function PerfumeDetailPage({ params }) {
   const [sortDir, setSortDir] = useState('asc');
 
   const perfume = perfumes.find((p) => p.brandSlug === params?.brandSlug && p.slug === params?.perfumeSlug);
-  if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;
 
-  const muadiller = muadilPerfumes.filter((m) => m.targetPerfumeId === perfume.id);
+  useSeo({
+    title: perfume ? `${perfume.name} — ${perfume.brandName}` : 'Parfüm',
+    description: perfume
+      ? (perfume.description || `${perfume.brandName} ${perfume.name} parfümünün notalarını incele ve en yakın muadillerini topluluk puanlarıyla karşılaştır.`)
+      : undefined,
+    image: perfume?.image || undefined,
+    type: 'product',
+    noindex: !perfume,
+    jsonLd: perfume ? {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: perfume.name,
+      category: 'Parfüm',
+      brand: { '@type': 'Brand', name: perfume.brandName },
+      ...(perfume.image ? { image: perfume.image } : {}),
+      ...(perfume.description ? { description: perfume.description } : {}),
+    } : null,
+  });
+
+  const muadiller = perfume ? muadilPerfumes.filter((m) => m.targetPerfumeId === perfume.id) : [];
 
   const muadillerWithScores = useMemo(() =>
     muadiller.map((m) => ({ m, ms: calcScores(m.id, comments) })),
@@ -67,6 +86,8 @@ export function PerfumeDetailPage({ params }) {
       return sortDir === 'asc' ? av - bv : bv - av;
     });
   }, [muadillerWithScores, sortKey, sortDir]);
+
+  if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => d === 'desc' ? 'asc' : 'desc');

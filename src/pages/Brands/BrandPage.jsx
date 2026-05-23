@@ -9,6 +9,7 @@ import { faShirt, faGem, faArrowLeft, faHeart } from '@fortawesome/free-solid-sv
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 
 function IconGrid() {
@@ -40,12 +41,21 @@ export function BrandPage({ params }) {
   const [listSortKey, setListSortKey] = useState('name');
   const [listSortDir, setListSortDir] = useState('asc');
 
+  const brand = brands.find((b) => b.slug === params?.brandSlug);
+  useSeo({
+    title: brand ? brand.name : 'Marka',
+    description: brand
+      ? (brand.bio || `${brand.name} markasının orijinal ve muadil parfümlerini, kökenini ve topluluk puanlarını keşfet.`)
+      : undefined,
+    image: brand?.logoImage || undefined,
+    noindex: !brand,
+  });
+
   const handleListSort = (key) => {
     if (listSortKey === key) setListSortDir((d) => d === 'asc' ? 'desc' : 'asc');
     else { setListSortKey(key); setListSortDir('asc'); }
   };
 
-  const brand = brands.find((b) => b.slug === params?.brandSlug);
   if (!brand) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Marka bulunamadı.</div>;
 
   const isOrig = brand.type === 'original';

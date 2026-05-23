@@ -1,10 +1,12 @@
 import { useRouter } from '@/contexts/RouterContext';
 import { Card } from '@/components/ui';
 import { C } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import logoDark from '@/img/logos/logo-dark-minified.png';
 
 export function AuthLayout({ title, subtitle, children }) {
   const { navigate } = useRouter();
+  useSeo({ title: title || 'Hesap', noindex: true });
   return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
       <div onClick={() => navigate('/')} style={{ cursor: 'pointer', marginBottom: '32px' }}>

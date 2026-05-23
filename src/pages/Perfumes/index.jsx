@@ -7,6 +7,7 @@ import { calcScores } from '@/utils/scoring';
 import { Card, Btn } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -72,6 +73,10 @@ const MUADIL_COLS = [
 ];
 
 export function PerfumesPage() {
+  useSeo({
+    title: 'Parfümler',
+    description: 'Tüm orijinal parfümleri ve muadillerini incele; marka, cinsiyet ve nota bazında filtrele, koku ve kalıcılık puanlarına göre sırala.',
+  });
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { user } = useAuth();

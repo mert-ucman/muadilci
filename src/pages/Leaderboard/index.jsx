@@ -2,6 +2,7 @@ import { useData } from '@/contexts/DataContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
+import { useSeo } from '@/lib/seo';
 import { faTrophy, faMedal } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -120,6 +121,10 @@ function BrandTable({ rows, navigate }) {
 }
 
 export function LeaderboardPage() {
+  useSeo({
+    title: 'En İyiler',
+    description: 'En yüksek puan alan muadil parfümler ve markalar. Topluluğun en beğendiği orijinal-muadil eşleşmelerini keşfet.',
+  });
   const { muadilPerfumes, comments, brands } = useData();
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
