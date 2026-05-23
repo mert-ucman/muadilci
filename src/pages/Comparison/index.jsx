@@ -343,7 +343,7 @@ export function ComparisonPage({ queryParams }) {
                       : commentUser
                         ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
                         : c.userName;
-                  const livePhoto = isDeleted ? null : (commentUser?.photoURL || null);
+                  const livePhoto = isDeleted ? null : (commentUser?.photoURL || c.userPhotoURL || null);
                   const liveAvatar = isDeleted ? '×' : (commentUser?.avatar || c.userAvatar);
                   const avatarBg = isDeleted
                     ? '#e2e8f0'

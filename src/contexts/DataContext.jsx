@@ -51,10 +51,14 @@ export function DataProvider({ children }) {
     return () => unsubs.forEach((u) => u());
   }, []);
 
+  // Tüm kullanıcı listesi yalnızca moderatör/admin için yüklenir (e-posta gibi
+  // PII'nin her ziyaretçiye inmesini engeller; kurallar da bunu zorunlu kılar)
   useEffect(() => {
+    const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
+    if (!isStaff) { setUsers([]); return; }
     const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s).filter((u) => !u.deleted)));
     return () => unsub();
-  }, []);
+  }, [user?.uid, user?.role]);
 
   // ─── Brands ──────────────────────────────────────────────────────────────
   const addBrand = async (b) => {

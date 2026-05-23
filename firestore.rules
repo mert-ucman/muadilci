@@ -10,9 +10,18 @@ service cloud.firestore {
 
     // ── Users ────────────────────────────────────────────────────────────
     match /users/{uid} {
-      allow read: if true;
-      allow create: if isOwner(uid);
-      allow update: if isOwner(uid) || isAdmin();
+      // Okuma: e-posta gibi PII sızmasın diye yalnızca sahip + moderatör/admin
+      // (yorum yazarı bilgisi review belgesinde denormalize tutulur)
+      allow read: if isOwner(uid) || isMod();
+      // Kayıt: kullanıcı kendi belgesini yalnızca 'user' rolüyle oluşturabilir
+      allow create: if isOwner(uid) && request.resource.data.role == 'user';
+      // Güncelleme: admin her şeyi; sahip ise role/active/deleted alanlarını DEĞİŞTİREMEZ
+      // (yetki yükseltme ve kendini-aktif-etmeyi engeller)
+      allow update: if isAdmin()
+                     || (isOwner(uid)
+                         && request.resource.data.role == resource.data.role
+                         && request.resource.data.active == resource.data.active
+                         && request.resource.data.get('deleted', false) == resource.data.get('deleted', false));
       allow delete: if isOwner(uid) || isAdmin();
 
       // Favoriler alt-koleksiyonu
@@ -23,7 +32,8 @@ service cloud.firestore {
 
     // ── Usernames (benzersizlik için) ─────────────────────────────────────
     match /usernames/{username} {
-      allow read: if true;
+      allow get: if true;        // giriş ve kullanıcı adı benzersizlik kontrolü
+      allow list: if isMod();    // toplu e-posta hasadı (enumeration) engellendi
       allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
       allow delete: if isAdmin() || (isAuth() && resource.data.uid == request.auth.uid);
     }
@@ -49,9 +59,19 @@ service cloud.firestore {
     // ── Reviews ───────────────────────────────────────────────────────────
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isAdmin() || (isAuth() && request.resource.data.userId == request.auth.uid);
+      // Oluşturma: yalnızca kendi adına, 'pending' durumla, gerçek rolüyle ve
+      // doğrulanmış e-posta ile (moderasyon atlatma + rol taklidini engeller)
+      allow create: if isAdmin() || (isAuth()
+                     && request.resource.data.userId == request.auth.uid
+                     && request.resource.data.status == 'pending'
+                     && request.resource.data.userRole == userDoc().role
+                     && request.auth.token.email_verified == true);
+      // Güncelleme: mod her şeyi; sahip yalnızca bekleyen yorumunu (durumu 'pending' kalmak
+      // şartıyla) düzenleyebilir; ya da hesap silinince anonimleştirme
       allow update: if isMod()
-                     || (isOwner(resource.data.userId) && resource.data.status == 'pending')
+                     || (isOwner(resource.data.userId)
+                         && resource.data.status == 'pending'
+                         && request.resource.data.status == 'pending')
                      || (isAuth() && resource.data.userId == request.auth.uid && request.resource.data.userId == 'deleted');
       allow delete: if isMod();
     }
