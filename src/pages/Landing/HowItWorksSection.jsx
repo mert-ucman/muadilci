@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import bgBotanical from '@/img/bg-botanical.png';
+import howItWorksBg from '@/img/how-it-works-bg.png';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -33,7 +33,7 @@ export function HowItWorksSection() {
 
       {/* Background image */}
       <img
-        src={bgBotanical}
+        src={howItWorksBg}
         alt=""
         aria-hidden="true"
         style={{
@@ -47,7 +47,7 @@ export function HowItWorksSection() {
       {/* Warm overlay to keep text readable */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(to right, rgba(255,251,245,0.97) 0%, rgba(255,251,245,0.92) 50%, rgba(255,251,245,0.80) 100%)',
+        background: 'linear-gradient(to right, rgba(255,251,245,0.90) 0%, rgba(255,251,245,0.75) 50%, rgba(255,251,245,0.55) 100%)',
       }} />
       <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
