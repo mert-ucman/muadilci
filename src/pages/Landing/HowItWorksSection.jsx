@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import bgBotanical from '@/img/bg-botanical.png';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -32,7 +33,7 @@ export function HowItWorksSection() {
 
       {/* Background image */}
       <img
-        src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80"
+        src={bgBotanical}
         alt=""
         aria-hidden="true"
         style={{
