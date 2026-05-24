@@ -3,11 +3,6 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 
-const STATS = [
-  { value: '9.1', label: 'Benzerlik Puanı', sub: 'Kullanıcı ortalaması' },
-  { value: '4.8k', label: 'Aktif Üye', sub: 'Topluluk büyüyor' },
-  { value: '12k+', label: 'Karşılaştırma', sub: 'Yapılan eşleşme' },
-];
 
 export function ComparisonSection() {
   const { navigate } = useRouter();
@@ -132,31 +127,6 @@ export function ComparisonSection() {
               Her karşılaştırma gerçek kullanıcıların benzerlik, yayılım ve kalıcılık
               puanlarıyla desteklenir. Moderatör onaylı içerik, doğrulanmış yorumlar.
             </p>
-          </div>
-
-          {/* Stats row */}
-          <div className="sr sr-d2" style={{
-            display: 'flex',
-            gap: xs ? '24px' : '40px',
-            marginTop: xs || sm ? '48px' : '64px',
-            flexWrap: 'wrap',
-          }}>
-            {STATS.map((s, i) => (
-              <div key={i}>
-                <div style={{
-                  fontFamily: FH,
-                  fontSize: xs ? '36px' : '48px',
-                  fontWeight: 300,
-                  color: '#fff',
-                  lineHeight: 1,
-                  letterSpacing: '-0.02em',
-                }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.06em', marginTop: '6px', fontFamily: F }}>{s.label}</div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.3)', fontFamily: F, marginTop: '2px' }}>{s.sub}</div>
-              </div>
-            ))}
           </div>
 
           {/* CTA */}
