@@ -202,7 +202,8 @@ export function ComparisonSection() {
             }}>
               MUADILCI — 2026
             </div>
-
+          </div>
+        )}
       </div>
     </section>
   );
