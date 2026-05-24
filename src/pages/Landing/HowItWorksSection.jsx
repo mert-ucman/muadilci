@@ -64,7 +64,7 @@ export function HowItWorksSection() {
               <div style={{
                 position: 'absolute', top: '-8px', right: '20px',
                 fontFamily: FH, fontSize: '80px', fontWeight: 300,
-                color: 'rgba(0,0,0,.04)', lineHeight: 1, userSelect: 'none',
+                color: 'rgba(0,0,0,.10)', lineHeight: 1, userSelect: 'none',
                 letterSpacing: '-0.02em',
               }}>
                 {step.n}
