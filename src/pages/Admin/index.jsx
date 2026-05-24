@@ -35,11 +35,13 @@ function SearchBar({ value, onChange, placeholder, count, total }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: `1px solid ${C.border}`, background: '#fafafa' }}>
       <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
-        <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: C.textLight, fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', paddingLeft: '32px', paddingRight: '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }} />
+        <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textLight }} width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', paddingLeft: '32px', paddingRight: value ? '60px' : '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }} />
+        {value && (
+          <button onClick={() => onChange('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 6px', borderRadius: '4px' }}>Temizle</button>
+        )}
       </div>
-      {value && <button onClick={() => onChange('')} style={{ fontSize: '12px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F }}>Temizle</button>}
-      <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto' }}>{count} / {total} kayıt</span>
+      <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{count} / {total} kayıt</span>
     </div>
   );
 }
@@ -53,6 +55,7 @@ const TABS = [
   { k: 'muadil', l: 'Muadil Parfümler' },
   { k: 'reviews', l: 'Tüm Yorumlar' },
   { k: 'slider', l: 'Ana Sayfa Slider' },
+  { k: 'favicon', l: 'Favicon' },
 ];
 
 function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB }) {
@@ -152,6 +155,86 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
           Henüz görsel eklenmedi. Görsel eklenene kadar landing page varsayılan görünümünü gösterir.
         </div>
       )}
+    </div>
+  );
+}
+
+function FaviconTab({ faviconUrl, updateFavicon }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview]     = useState(null);
+  const [error, setError]         = useState('');
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setError('Sadece görsel dosyaları desteklenir.'); return; }
+    if (file.size > 1 * 1024 * 1024) { setError('Dosya boyutu maks. 1 MB olmalıdır.'); return; }
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!preview) return;
+    setUploading(true);
+    try {
+      const url = await uploadDataURL(preview, 'favicon');
+      await updateFavicon(url);
+      setPreview(null);
+    } catch (e) {
+      setError('Yükleme başarısız: ' + (e?.message || 'bilinmeyen hata'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '520px' }}>
+      <Card style={{ padding: '28px' }}>
+        <div style={{ fontWeight: 700, fontSize: '16px', color: C.navy, marginBottom: '20px' }}>Favicon Yönetimi</div>
+
+        {/* Mevcut favicon */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: C.textLight, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Mevcut Favicon</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '12px', border: `1px solid ${C.border}`, background: '#f9f9fb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {faviconUrl
+                ? <img src={faviconUrl} alt="favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <span style={{ fontSize: '11px', color: C.textLight }}>Yok</span>
+              }
+            </div>
+            <div style={{ fontSize: '13px', color: C.textMid }}>
+              {faviconUrl ? <a href={faviconUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.gold, textDecoration: 'none', wordBreak: 'break-all' }}>Mevcut favicon görüntüle</a> : 'Henüz favicon yüklenmedi.'}
+            </div>
+          </div>
+        </div>
+
+        {/* Yeni favicon yükle */}
+        <div style={{ fontSize: '12px', fontWeight: 600, color: C.textLight, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Yeni Favicon Yükle</div>
+        <div
+          onClick={() => document.getElementById('favicon-file-input').click()}
+          style={{ border: `2px dashed ${preview ? C.gold : C.border}`, borderRadius: '12px', padding: '28px', textAlign: 'center', cursor: 'pointer', background: preview ? C.goldBg : '#fafafa', transition: 'all .2s', marginBottom: '14px' }}>
+          <input id="favicon-file-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
+          {preview ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <img src={preview} alt="preview" style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '8px', border: `1px solid ${C.goldBorder}` }} />
+              <span style={{ fontSize: '12px', color: C.gold, fontWeight: 600 }}>Önizleme — kaydetmek için aşağıdaki butona tıkla</span>
+            </div>
+          ) : (
+            <div>
+              <svg width="28" height="28" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '8px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div style={{ fontSize: '13px', color: C.textMid }}>Tıkla veya sürükle · PNG, ICO, SVG · Maks. 1 MB</div>
+            </div>
+          )}
+        </div>
+
+        {error && <div style={{ padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red, marginBottom: '14px' }}>{error}</div>}
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {preview && <Btn variant="secondary" onClick={() => { setPreview(null); setError(''); }}>İptal</Btn>}
+          <Btn onClick={handleSave} disabled={!preview || uploading}>{uploading ? 'Yükleniyor…' : 'Favicon Kaydet'}</Btn>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -393,7 +476,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -1075,6 +1158,9 @@ export function AdminPanel() {
             MAX_SIZE_MB={MAX_SIZE_MB}
           />
         )}
+        {tab === 'favicon' && (
+          <FaviconTab faviconUrl={faviconUrl} updateFavicon={updateFavicon} />
+        )}
       </div>
 
       {/* Kayıt İşlem Modalı (mobil) */}
@@ -1566,10 +1652,38 @@ export function AdminPanel() {
                 </div>
               </>
             ) : (
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                <Btn variant="secondary" onClick={() => setDelTarget(null)}>Vazgeç</Btn>
-                <Btn variant="danger" onClick={() => { if (delTarget.type === 'perfume') deletePerfume(delTarget.id); else if (delTarget.type === 'muadil') deleteMuadil(delTarget.id); setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; }); setDelTarget(null); }}>Evet, Sil</Btn>
-              </div>
+              <>
+                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+                <input
+                  type="password"
+                  value={delBrandPw.password}
+                  onChange={(e) => setDelBrandPw((s) => ({ ...s, password: e.target.value, error: '' }))}
+                  onKeyDown={async (e) => {
+                    if (e.key !== 'Enter' || delBrandPw.loading || !delBrandPw.password) return;
+                    setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
+                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id);
+                    else if (delTarget.type === 'muadil') await deleteMuadil(delTarget.id);
+                    setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
+                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                  }}
+                  placeholder="Şifrenizi girin"
+                  autoFocus
+                  style={{ width: '100%', padding: '10px 14px', border: `1px solid ${delBrandPw.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+                />
+                {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
+                  <Btn variant="danger" disabled={!delBrandPw.password || delBrandPw.loading} onClick={async () => {
+                    setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
+                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id);
+                    else if (delTarget.type === 'muadil') await deleteMuadil(delTarget.id);
+                    setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
+                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                  }}>{delBrandPw.loading ? 'Siliniyor…' : 'Evet, Sil'}</Btn>
+                </div>
+              </>
             )}
           </div>
         )}

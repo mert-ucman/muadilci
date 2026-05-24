@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { matchRoute, NO_LAYOUT_PATHS } from '@/constants/routes';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -40,6 +42,14 @@ const ROUTES = [
 export function App() {
   const { basePath, query, navigate } = useRouter();
   const { loading, user, isAdmin, isMod } = useAuth();
+  const { faviconUrl } = useData();
+
+  useEffect(() => {
+    if (!faviconUrl) return;
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.href = faviconUrl;
+  }, [faviconUrl]);
   const noLayout = NO_LAYOUT_PATHS.includes(basePath);
 
   if (loading) return (

@@ -33,6 +33,7 @@ export function DataProvider({ children }) {
   const [comments, setComments] = useState([]);
   const [users, setUsers] = useState([]);
   const [sliderImages, setSliderImages] = useState([]);
+  const [faviconUrl, setFaviconUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
   // ─── Real-time listeners ─────────────────────────────────────────────────
@@ -47,6 +48,7 @@ export function DataProvider({ children }) {
     unsubs.push(onSnapshot(query(col('muadils'), orderBy('name')), (s) => { setMuadil(snap2arr(s)); tryDone(); }));
     unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc')), (s) => { setComments(snap2arr(s)); tryDone(); }));
     unsubs.push(onSnapshot(col('sliderImages'), (s) => setSliderImages(snap2arr(s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)))));
+    unsubs.push(onSnapshot(doc(db, 'settings', 'site'), (s) => { if (s.exists()) setFaviconUrl(s.data().faviconUrl || ''); }));
 
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -339,6 +341,11 @@ export function DataProvider({ children }) {
   const getUserFavoriteComps = (uid) =>
     (compFavorites[uid] ?? []).map((k) => { const [oId, mId] = k.split('_'); return { origId: oId, muadilId: mId }; });
 
+  // ─── Site settings ───────────────────────────────────────────────────────
+  const updateFavicon = async (url) => {
+    await setDoc(doc(db, 'settings', 'site'), { faviconUrl: url }, { merge: true });
+  };
+
   // ─── Slider images ────────────────────────────────────────────────────────
   const MAX_SLIDER = 10;
   const MAX_SIZE_MB = 2;
@@ -377,6 +384,7 @@ export function DataProvider({ children }) {
       toggleCompFavorite, isCompFavorite, getUserFavoriteComps,
       addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
+      faviconUrl, updateFavicon,
     }}>
       {children}
     </DataCtx.Provider>
