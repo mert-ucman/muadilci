@@ -12,6 +12,7 @@ import { uploadDataURL } from '@/lib/storage';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFlask, faStar, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const RC = { admin: 'red', moderator: 'blue', user: 'gold' };
@@ -160,22 +161,32 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const [sizeErr, setSizeErr] = useState('');
   const [uploadingIdx, setUploadingIdx] = useState(null);
+  const [cropModal, setCropModal] = useState({ open: false, src: '', slotIdx: null });
 
   const readFile = (idx, file) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) { setSizeErr('Sadece JPG, PNG veya WebP görseli yüklenebilir.'); return; }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) { setSizeErr(`"${file.name}" ${MAX_SIZE_MB}MB sınırını aşıyor.`); return; }
     setSizeErr('');
+    const reader = new FileReader();
+    reader.onload = (e) => setCropModal({ open: true, src: e.target.result, slotIdx: idx });
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropConfirm = async (dataURL) => {
+    const idx = cropModal.slotIdx;
+    setCropModal({ open: false, src: '', slotIdx: null });
     setUploadingIdx(idx);
-    compressToDataURL(file, 800, 0.8)
-      .then((src) => uploadDataURL(src, 'perfumes'))
-      .then((url) => {
-        const next = [...images];
-        next[idx] = { src: url, name: file.name };
-        onChange(next);
-      })
-      .catch(() => setSizeErr(`"${file.name}" yüklenirken hata oluştu.`))
-      .finally(() => setUploadingIdx(null));
+    try {
+      const url = await uploadDataURL(dataURL, 'perfumes');
+      const next = [...images];
+      next[idx] = { src: url, name: 'gorsel' };
+      onChange(next);
+    } catch {
+      setSizeErr('Görsel yüklenirken hata oluştu.');
+    } finally {
+      setUploadingIdx(null);
+    }
   };
 
   return (
@@ -266,7 +277,82 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
       {sizeErr && (
         <div style={{ marginTop: '8px', fontSize: '12px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '7px 12px' }}>{sizeErr}</div>
       )}
+      {cropModal.open && (
+        <ImageCropModal
+          src={cropModal.src}
+          aspect={4 / 3}
+          outputW={800}
+          outputH={600}
+          title="Parfüm Görselini Kırp"
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropModal({ open: false, src: '', slotIdx: null })}
+        />
+      )}
     </div>
+  );
+}
+
+async function getCroppedImg(imageSrc, pixelCrop, outputW, outputH) {
+  const image = await new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = imageSrc;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = outputW;
+  canvas.height = outputH;
+  canvas.getContext('2d').drawImage(
+    image,
+    pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
+    0, 0, outputW, outputH,
+  );
+  return canvas.toDataURL('image/jpeg', 0.88);
+}
+
+function ImageCropModal({ src, aspect, outputW, outputH, title, onConfirm, onCancel }) {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!croppedAreaPixels) return;
+    setLoading(true);
+    try {
+      const dataURL = await getCroppedImg(src, croppedAreaPixels, outputW, outputH);
+      onConfirm(dataURL);
+    } catch {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal open onClose={onCancel} title={title || 'Görseli Kırp'} width="560px">
+      <div style={{ position: 'relative', width: '100%', height: '320px', background: '#111', borderRadius: '10px', overflow: 'hidden' }}>
+        <Cropper
+          image={src}
+          crop={crop}
+          zoom={zoom}
+          aspect={aspect}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
+        />
+      </div>
+      <div style={{ paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '12px', color: C.textLight, flexShrink: 0 }}>Yakınlaştır</span>
+          <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ flex: 1, accentColor: C.navy, cursor: 'pointer' }} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <Btn variant="secondary" onClick={onCancel} disabled={loading}>İptal</Btn>
+          <Btn onClick={handleConfirm} disabled={loading || !croppedAreaPixels}>
+            {loading ? 'İşleniyor…' : 'Kırp ve Kullan'}
+          </Btn>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -429,9 +515,23 @@ export function AdminPanel() {
   const [delBrandPw, setDelBrandPw] = useState({ password: '', loading: false, error: '' });
   const [selBrand, setSelBrand] = useState(null);
   const [ebf, setEbf] = useState(null);
-  const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' });
+  const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '', instagram: '', website: '' });
+  const [brandCropModal, setBrandCropModal] = useState({ open: false, src: '', target: null });
+
+  const handleBrandCropConfirm = async (dataURL) => {
+    const { target } = brandCropModal;
+    setBrandCropModal({ open: false, src: '', target: null });
+    const setter = target === 'add' ? setBf : setEbf;
+    setter((s) => ({ ...s, _logoUploading: true, _logoErr: '' }));
+    try {
+      const url = await uploadDataURL(dataURL, 'brands');
+      setter((s) => ({ ...s, logoImage: url, _logoUploading: false }));
+    } catch {
+      setter((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false }));
+    }
+  };
   const [pf, setPf] = useState({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '', images: [null, null, null] });
-  const [mf, setMf] = useState({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '', images: [null, null, null] });
+  const [mf, setMf] = useState({ name: '', slug: '', brandId: '', targetPerfumeId: '', gender: '', description: '', images: [null, null, null] });
   const [ef, setEf] = useState(null);
   const [emf, setEmf] = useState(null);
 
@@ -456,7 +556,7 @@ export function AdminPanel() {
     setBrandErr('');
     const { _logoErr, _logoUploading, ...cleanBf } = bf;
     addBrand({ ...cleanBf, slug: bf.slug || slugify(bf.name), founded: Number(bf.founded) || 2000 });
-    setBf({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Lüks', bio: '' });
+    setBf({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Lüks', bio: '', instagram: '', website: '' });
     setShowBM(false);
   };
 
@@ -466,9 +566,9 @@ export function AdminPanel() {
     const dup = perfumes.find((p) => p.name.trim().toLowerCase() === norm);
     if (dup) { setPerfErr(`"${pf.name}" adında bir orijinal parfüm zaten mevcut.`); return; }
     setPerfErr('');
-    const b = brands.find((x) => x.id === Number(pf.brandId));
+    const b = brands.find((x) => String(x.id) === pf.brandId);
     const pPrimary = pf.images.find(Boolean)?.src || '';
-    addPerfume({ ...pf, brandId: Number(pf.brandId), slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: pPrimary, images: pf.images });
+    addPerfume({ ...pf, brandId: pf.brandId, slug: pf.slug || slugify(pf.name), brandSlug: b?.slug || '', brandName: b?.name || '', year: Number(pf.year) || 2020, notes: { top: (pf.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (pf.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (pf.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) }, image: pPrimary, images: pf.images });
     setPf({ name: '', slug: '', brandId: '', gender: 'Erkek', year: '', description: '', topNotes: '', heartNotes: '', baseNotes: '', images: [null, null, null] });
     setShowPM(false);
   };
@@ -479,17 +579,17 @@ export function AdminPanel() {
     const dup = muadilPerfumes.find((m) => m.name.trim().toLowerCase() === norm);
     if (dup) { setMuadilErr(`"${mf.name}" adında bir muadil parfüm zaten mevcut.`); return; }
     setMuadilErr('');
-    const b = brands.find((x) => x.id === Number(mf.brandId));
-    const t = perfumes.find((x) => x.id === Number(mf.targetPerfumeId));
+    const b = brands.find((x) => String(x.id) === mf.brandId);
+    const t = perfumes.find((x) => String(x.id) === mf.targetPerfumeId);
     const mPrimary = mf.images.find(Boolean)?.src || '';
-    addMuadil({ ...mf, brandId: Number(mf.brandId), targetPerfumeId: Number(mf.targetPerfumeId), slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '', image: mPrimary, images: mf.images });
-    setMf({ name: '', slug: '', brandId: '', targetPerfumeId: '', description: '', images: [null, null, null] });
+    addMuadil({ ...mf, brandId: mf.brandId, targetPerfumeId: mf.targetPerfumeId, slug: mf.slug || slugify(mf.name), brandSlug: b?.slug || '', brandName: b?.name || '', targetPerfumeName: t?.name || '', targetBrandName: t?.brandName || '', gender: t?.gender || mf.gender || '', image: mPrimary, images: mf.images });
+    setMf({ name: '', slug: '', brandId: '', targetPerfumeId: '', gender: '', description: '', images: [null, null, null] });
     setShowMM(false);
   };
 
   const openEditBrand = (b) => {
     setSelBrand(b);
-    setEbf({ name: b.name, slug: b.slug, type: b.type, origin: b.origin || '', founded: String(b.founded || ''), logo: b.logo || '', logoImage: b.logoImage || '', category: b.category || 'Lüks', bio: b.bio || '' });
+    setEbf({ name: b.name, slug: b.slug, type: b.type, origin: b.origin || '', founded: String(b.founded || ''), logo: b.logo || '', logoImage: b.logoImage || '', category: b.category || 'Lüks', bio: b.bio || '', instagram: b.instagram || '', website: b.website || '' });
   };
 
   const saveBrand = () => {
@@ -507,22 +607,24 @@ export function AdminPanel() {
 
   const savePerf = () => {
     if (!ef.name || !ef.brandId) return;
-    const b = brands.find((x) => x.id === Number(ef.brandId));
-    updatePerfume(selPerf.id, { ...ef, brandId: Number(ef.brandId), brandSlug: b?.slug || selPerf.brandSlug, brandName: b?.name || selPerf.brandName, year: Number(ef.year) || selPerf.year, notes: { top: (ef.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (ef.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (ef.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) } });
+    const b = brands.find((x) => String(x.id) === ef.brandId);
+    updatePerfume(selPerf.id, { ...ef, brandId: ef.brandId, brandSlug: b?.slug || selPerf.brandSlug, brandName: b?.name || selPerf.brandName, year: Number(ef.year) || selPerf.year, notes: { top: (ef.topNotes || '').split(',').map((s) => s.trim()).filter(Boolean), heart: (ef.heartNotes || '').split(',').map((s) => s.trim()).filter(Boolean), base: (ef.baseNotes || '').split(',').map((s) => s.trim()).filter(Boolean) } });
     setSelPerf(null);
     setEf(null);
   };
 
   const openEditMuadil = (m) => {
     setSelMuadil(m);
-    setEmf({ name: m.name, slug: m.slug, brandId: String(m.brandId), targetPerfumeId: String(m.targetPerfumeId), description: m.description || '' });
+    setEmf({ name: m.name, slug: m.slug, brandId: String(m.brandId ?? ''), targetPerfumeId: String(m.targetPerfumeId ?? ''), gender: m.gender || '', description: m.description || '' });
   };
 
   const saveMuadil = () => {
     if (!emf.name || !emf.brandId || !emf.targetPerfumeId) return;
-    const b = brands.find((x) => x.id === Number(emf.brandId));
-    const t = perfumes.find((x) => x.id === Number(emf.targetPerfumeId));
-    updateMuadil(selMuadil.id, { ...emf, brandId: Number(emf.brandId), targetPerfumeId: Number(emf.targetPerfumeId), brandSlug: b?.slug || selMuadil.brandSlug, brandName: b?.name || selMuadil.brandName, targetPerfumeName: t?.name || selMuadil.targetPerfumeName, targetBrandName: t?.brandName || selMuadil.targetBrandName });
+    const bid = emf.brandId;
+    const tid = emf.targetPerfumeId;
+    const b = brands.find((x) => String(x.id) === bid);
+    const t = perfumes.find((x) => String(x.id) === tid);
+    updateMuadil(selMuadil.id, { ...emf, brandId: bid, targetPerfumeId: tid, gender: t?.gender || emf.gender || '', brandSlug: b?.slug || selMuadil.brandSlug, brandName: b?.name || selMuadil.brandName, targetPerfumeName: t?.name || selMuadil.targetPerfumeName, targetBrandName: t?.brandName || selMuadil.targetBrandName });
     setSelMuadil(null);
     setEmf(null);
   };
@@ -703,7 +805,7 @@ export function AdminPanel() {
                     {sorted.map((b) => (
                       <tr key={b.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(b.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(b.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(b.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(b.id)} onChange={() => toggleSelect(b.id)} /></td>
-                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><div style={{ fontWeight: 600, fontSize: '14px', color: C.text }}>{b.name}</div><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
+                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><a onClick={(e) => { e.stopPropagation(); navigate(`/marka/${b.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{b.name}</a><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{b.origin}</td>
                         {isOrig && (
                           <td style={tdStyle}>
@@ -778,8 +880,8 @@ export function AdminPanel() {
                     {sorted.map((p) => (
                       <tr key={p.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(p.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(p.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(p.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px', color: C.text }}>{p.name}</td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{p.brandName}</td>
+                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a onClick={(e) => { e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px' }}><a onClick={(e) => { e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{p.brandName}</a></td>
                         <td style={{ ...tdStyle, fontSize: '12px', color: C.gold }}>/{p.brandSlug}/{p.slug}</td>
                         <td style={tdStyle}><GenderBadge gender={p.gender} /></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.green, fontWeight: 600 }}>{p.muadilCount}</td>
@@ -844,9 +946,9 @@ export function AdminPanel() {
                     {sorted.map((m) => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(m.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(m.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(m.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelect(m.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px', color: C.text }}>{m.name}</td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.brandName}</td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.targetBrandName} — {m.targetPerfumeName}</td>
+                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a onClick={(e) => { e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{m.name}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px' }}><a onClick={(e) => { e.stopPropagation(); navigate(`/marka/${m.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.brandName}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{(() => { const tp = perfumes.find((x) => String(x.id) === String(m.targetPerfumeId)); return tp ? <a onClick={(e) => { e.stopPropagation(); navigate(`/${tp.brandSlug}/${tp.slug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.targetBrandName} — {m.targetPerfumeName}</a> : <span>{m.targetBrandName} — {m.targetPerfumeName}</span>; })()}</td>
                         <td style={tdStyle}>{m.overall >= 0 ? <Badge color="gold">{m.overall}/10</Badge> : <span style={{ fontSize: '12px', color: C.textLight }}>—</span>}</td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.commentCount}</td>
                         <td style={tdStyle}>
@@ -1215,8 +1317,10 @@ export function AdminPanel() {
                 if (!file) return;
                 if (!file.type.startsWith('image/')) { setBf((s) => ({ ...s, _logoErr: 'Sadece JPG, PNG veya WebP yüklenebilir.' })); return; }
                 if (file.size > 2 * 1024 * 1024) { setBf((s) => ({ ...s, _logoErr: `Dosya boyutu 2MB sınırını aşıyor (${(file.size / 1024 / 1024).toFixed(1)}MB).` })); return; }
-                setBf((s) => ({ ...s, _logoErr: '', _logoUploading: true }));
-                compressToDataURL(file, 300, 0.85).then((src) => uploadDataURL(src, 'brands')).then((url) => setBf((s) => ({ ...s, logoImage: url, _logoErr: '', _logoUploading: false }))).catch(() => setBf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false })));
+                setBf((s) => ({ ...s, _logoErr: '' }));
+                const reader = new FileReader();
+                reader.onload = (ev) => setBrandCropModal({ open: true, src: ev.target.result, target: 'add' });
+                reader.readAsDataURL(file);
               }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
@@ -1224,6 +1328,10 @@ export function AdminPanel() {
               {bf.logoImage && <button onClick={() => setBf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
             </div>
           </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
+          <Input label="Web Sitesi" placeholder="https://marka.com" value={bf.website} onChange={(e) => setBf({ ...bf, website: e.target.value })} />
+          <Input label="Instagram" placeholder="https://instagram.com/..." value={bf.instagram} onChange={(e) => setBf({ ...bf, instagram: e.target.value })} />
         </div>
         <Textarea label="Açıklama" value={bf.bio} onChange={(e) => setBf({ ...bf, bio: e.target.value })} rows={3} />
         {brandErr && <div style={{ marginBottom: '10px', padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red }}>{brandErr}</div>}
@@ -1253,9 +1361,16 @@ export function AdminPanel() {
           <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf({ ...mf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
           <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => {
             const p = perfumes.find((x) => String(x.id) === e.target.value);
-            setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.name} Benzeri` : '' });
+            setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.name} Benzeri` : '', gender: p?.gender || '' });
           }} options={[{ value: '', label: 'Parfüm seçin' }, ...perfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
         </div>
+        {mf.gender && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.textMid }}>
+            <span style={{ fontWeight: 600, color: C.textLight, letterSpacing: '.03em', textTransform: 'uppercase', fontSize: '11px' }}>Cinsiyet</span>
+            <span style={{ fontWeight: 700, color: C.navy }}>{mf.gender}</span>
+            <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.textLight }}>Hedef parfümden alındı</span>
+          </div>
+        )}
         {mf.name && (
           <div style={{ marginTop: '2px', padding: '8px 12px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '8px', fontSize: '13px', color: C.navy, fontWeight: 600 }}>
             Muadil adı: <span style={{ color: C.gold }}>{mf.name}</span>
@@ -1301,8 +1416,18 @@ export function AdminPanel() {
               <Input label="Muadil Adı *" value={emf.name} onChange={(e) => setEmf({ ...emf, name: e.target.value })} />
               <Input label="Slug" value={emf.slug} onChange={(e) => setEmf({ ...emf, slug: e.target.value })} />
               <Select label="Muadil Marka *" value={emf.brandId} onChange={(e) => setEmf({ ...emf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
-              <Select label="Hedef Orijinal *" value={emf.targetPerfumeId} onChange={(e) => setEmf({ ...emf, targetPerfumeId: e.target.value })} options={[{ value: '', label: 'Parfüm seçin' }, ...perfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
+              <Select label="Hedef Orijinal *" value={emf.targetPerfumeId} onChange={(e) => {
+                const p = perfumes.find((x) => String(x.id) === e.target.value);
+                setEmf({ ...emf, targetPerfumeId: e.target.value, gender: p?.gender || emf.gender || '' });
+              }} options={[{ value: '', label: 'Parfüm seçin' }, ...perfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
             </div>
+            {emf.gender && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.textMid }}>
+                <span style={{ fontWeight: 600, color: C.textLight, letterSpacing: '.03em', textTransform: 'uppercase', fontSize: '11px' }}>Cinsiyet</span>
+                <span style={{ fontWeight: 700, color: C.navy }}>{emf.gender}</span>
+                <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.textLight }}>Hedef parfümden alındı</span>
+              </div>
+            )}
             <Textarea label="Açıklama" value={emf.description} onChange={(e) => setEmf({ ...emf, description: e.target.value })} rows={3} />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
               <Btn variant="danger" onClick={() => { setDelTarget({ id: selMuadil.id, name: selMuadil.name, type: 'muadil' }); setSelMuadil(null); setEmf(null); }}>Sil</Btn>
@@ -1356,8 +1481,10 @@ export function AdminPanel() {
                     if (!file) return;
                     if (!file.type.startsWith('image/')) { setEbf((s) => ({ ...s, _logoErr: 'Sadece JPG, PNG veya WebP yüklenebilir.' })); return; }
                     if (file.size > 2 * 1024 * 1024) { setEbf((s) => ({ ...s, _logoErr: `Dosya boyutu 2MB sınırını aşıyor (${(file.size / 1024 / 1024).toFixed(1)}MB).` })); return; }
-                    setEbf((s) => ({ ...s, _logoErr: '', _logoUploading: true }));
-                    compressToDataURL(file, 300, 0.85).then((src) => uploadDataURL(src, 'brands')).then((url) => setEbf((s) => ({ ...s, logoImage: url, _logoErr: '', _logoUploading: false }))).catch(() => setEbf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false })));
+                    setEbf((s) => ({ ...s, _logoErr: '' }));
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setBrandCropModal({ open: true, src: ev.target.result, target: 'edit' });
+                    reader.readAsDataURL(file);
                   }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
@@ -1365,6 +1492,10 @@ export function AdminPanel() {
                   {ebf.logoImage && <button onClick={() => setEbf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
                 </div>
               </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
+              <Input label="Web Sitesi" placeholder="https://marka.com" value={ebf.website} onChange={(e) => setEbf({ ...ebf, website: e.target.value })} />
+              <Input label="Instagram" placeholder="https://instagram.com/..." value={ebf.instagram} onChange={(e) => setEbf({ ...ebf, instagram: e.target.value })} />
             </div>
             <Textarea label="Açıklama" value={ebf.bio} onChange={(e) => setEbf({ ...ebf, bio: e.target.value })} rows={3} />
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
@@ -1377,6 +1508,18 @@ export function AdminPanel() {
           </>
         )}
       </Modal>
+
+      {brandCropModal.open && (
+        <ImageCropModal
+          src={brandCropModal.src}
+          aspect={1}
+          outputW={300}
+          outputH={300}
+          title="Logo Görselini Kırp"
+          onConfirm={handleBrandCropConfirm}
+          onCancel={() => setBrandCropModal({ open: false, src: '', target: null })}
+        />
+      )}
 
       {/* Silme Onay Modal */}
       <Modal open={!!delTarget} onClose={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} title="Silme Onayı" width="400px">
@@ -1403,6 +1546,7 @@ export function AdminPanel() {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
                     try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
                     await deleteBrand(delTarget.id, delTarget.brandType);
+                    setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
                     setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
                   }}
                   placeholder="Şifrenizi girin"
@@ -1416,6 +1560,7 @@ export function AdminPanel() {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
                     try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
                     await deleteBrand(delTarget.id, delTarget.brandType);
+                    setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
                     setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
                   }}>{delBrandPw.loading ? 'Siliniyor…' : 'Evet, Sil'}</Btn>
                 </div>
@@ -1423,7 +1568,7 @@ export function AdminPanel() {
             ) : (
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                 <Btn variant="secondary" onClick={() => setDelTarget(null)}>Vazgeç</Btn>
-                <Btn variant="danger" onClick={() => { if (delTarget.type === 'perfume') deletePerfume(delTarget.id); else if (delTarget.type === 'muadil') deleteMuadil(delTarget.id); setDelTarget(null); }}>Evet, Sil</Btn>
+                <Btn variant="danger" onClick={() => { if (delTarget.type === 'perfume') deletePerfume(delTarget.id); else if (delTarget.type === 'muadil') deleteMuadil(delTarget.id); setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; }); setDelTarget(null); }}>Evet, Sil</Btn>
               </div>
             )}
           </div>

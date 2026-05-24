@@ -5,13 +5,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { Card, Badge, ScoreBar } from '@/components/ui';
-import { faShirt, faGem, faArrowLeft, faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faShirt, faGem, faArrowLeft, faHeart, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 
+function IconInstagram() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+    </svg>
+  );
+}
 function IconGrid() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -171,6 +178,45 @@ export function BrandPage({ params }) {
               </div>
               <h1 style={{ fontSize: sm ? '24px' : 'clamp(24px,4vw,42px)', fontWeight: 600, color: '#fff', marginBottom: '8px', fontFamily: FH, letterSpacing: '0.01em' }}>{brand.name}</h1>
               <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '14px', lineHeight: 1.6 }}>{brand.bio}</p>
+
+              {/* Sosyal medya / web sitesi bağlantıları */}
+              {(brand.instagram || brand.website) && (
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {/* Web sitesi — her iki marka türü için */}
+                  {brand.website && brand.website !== 'website yok' && (
+                    <a
+                      href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`}
+                      target="_blank" rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.85)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', fontFamily: F, transition: 'background .15s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.2)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}>
+                      <FontAwesomeIcon icon={faGlobe} style={{ fontSize: '13px' }} />
+                      Web Sitesi
+                    </a>
+                  )}
+                  {/* "Website yok" etiketi — sadece muadil markalar için */}
+                  {!isOrig && brand.website === 'website yok' && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.4)', fontSize: '13px', fontWeight: 600, fontFamily: F }}>
+                      <FontAwesomeIcon icon={faGlobe} style={{ fontSize: '13px' }} />
+                      Web Sitesi Yok
+                    </span>
+                  )}
+                  {/* Instagram */}
+                  {brand.instagram && (
+                    <a
+                      href={brand.instagram.startsWith('http') ? brand.instagram : `https://instagram.com/${brand.instagram.replace(/^@/, '')}`}
+                      target="_blank" rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', color: 'rgba(255,255,255,.85)', fontSize: '13px', fontWeight: 600, textDecoration: 'none', fontFamily: F, transition: 'background .15s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.2)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}>
+                      <IconInstagram />
+                      Instagram
+                    </a>
+                  )}
+                </div>
+              )}
 
               {/* İstatistik kutucukları */}
               <div style={{ display: 'flex', gap: '10px', marginTop: '18px', flexWrap: 'wrap', alignItems: 'center' }}>

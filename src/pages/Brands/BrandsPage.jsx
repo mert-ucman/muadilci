@@ -65,11 +65,12 @@ export function BrandsPage() {
   const { user } = useAuth();
   const { sm, xs } = useW();
 
-  const [tab, setTab]       = useState(() => localStorage.getItem('brands_tab')  || 'original');
-  const [sort, setSort]     = useState(() => localStorage.getItem('brands_sort_v2') || 'az');
-  const [view, setView]     = useState(() => localStorage.getItem('brands_view_v2') || 'list');
-  const [perPage, setPerPage] = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
-  const [page, setPage]     = useState(1);
+  const [tab, setTab]           = useState(() => localStorage.getItem('brands_tab')  || 'original');
+  const [sort, setSort]         = useState(() => localStorage.getItem('brands_sort_v2') || 'az');
+  const [view, setView]         = useState(() => localStorage.getItem('brands_view_v2') || 'list');
+  const [perPage, setPerPage]   = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
+  const [page, setPage]         = useState(1);
+  const [scoreFilter, setScoreFilter] = useState('all');
 
   useEffect(() => { localStorage.setItem('brands_tab',  tab);  }, [tab]);
   useEffect(() => { localStorage.setItem('brands_sort_v2', sort); }, [sort]);
@@ -78,7 +79,7 @@ export function BrandsPage() {
 
   const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
 
-  const switchTab  = (v) => { setTab(v);  setPage(1); };
+  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchPerPage = (n) => { setPerPage(n); setPage(1); };
 
@@ -115,7 +116,18 @@ export function BrandsPage() {
   }, [brands, muadilPerfumes, comments]);
 
   const sorted = useMemo(() => {
-    const base = brands.filter(b => b.type === tab && b.active);
+    const [sfType, sfVal] = scoreFilter === 'all' ? ['all', null] : scoreFilter.split('_');
+    const sfNum = sfVal != null ? Number(sfVal) : null;
+    const base = brands.filter(b => {
+      if (b.type !== tab || !b.active) return false;
+      if (sfType !== 'all' && tab === 'muadil') {
+        const sc = brandScoreMap[b.id];
+        if (sc == null) return false;
+        if (sfType === 'min' && sc < sfNum) return false;
+        if (sfType === 'exact' && Math.floor(sc) !== sfNum) return false;
+      }
+      return true;
+    });
     return [...base].sort((a, b) => {
       switch (sort) {
         case 'az':            return a.name.localeCompare(b.name, 'tr');
@@ -135,7 +147,7 @@ export function BrandsPage() {
         default:              return 0;
       }
     });
-  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap]);
+  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap, scoreFilter]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage   = Math.min(page, totalPages);
@@ -165,6 +177,26 @@ export function BrandsPage() {
 
           {/* Sort + Per-page + View */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {!isOrig && (
+              <select
+                value={scoreFilter}
+                onChange={e => { setScoreFilter(e.target.value); setPage(1); }}
+                style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
+              >
+                <option value="all">Tüm Puanlar</option>
+                <optgroup label="Sadece">
+                  {[1,2,3,4,5,6,7,8,9].map(n => (
+                    <option key={`exact_${n}`} value={`exact_${n}`}>Sadece {n}/10</option>
+                  ))}
+                  <option value="exact_10">Sadece 10/10</option>
+                </optgroup>
+                <optgroup label="En az">
+                  {[1,2,3,4,5,6,7,8,9].map(n => (
+                    <option key={`min_${n}`} value={`min_${n}`}>En az {n}/10</option>
+                  ))}
+                </optgroup>
+              </select>
+            )}
             <select
               value={sort}
               onChange={e => switchSort(e.target.value)}

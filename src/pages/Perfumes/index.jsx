@@ -66,6 +66,7 @@ const MUADIL_COLS = [
   { key: 'brand',       label: 'Marka' },
   { key: 'targetPerf',  label: 'Hedef Parfüm' },
   { key: 'targetBrand', label: 'Hedef Marka' },
+  { key: 'gender',      label: 'Cinsiyet' },
   { key: 'scent',       label: 'Benzerlik' },
   { key: 'projection',  label: 'Yayılım' },
   { key: 'longevity',   label: 'Kalıcılık' },
@@ -87,8 +88,9 @@ export function PerfumesPage() {
   const [sort,        setSort]        = useState(() => localStorage.getItem('perf_sort_v2') || 'name_asc');
   const [perPage,     setPerPage]     = useState(() => Number(localStorage.getItem('perf_pp')) || 20);
   const [page,        setPage]        = useState(1);
-  const [filter,      setFilter]      = useState('all');
-  const [scoreFilter, setScoreFilter] = useState('all');
+  const [filter,        setFilter]        = useState('all');
+  const [scoreFilter,   setScoreFilter]   = useState('all');
+  const [genderFilterM, setGenderFilterM] = useState('all');
   const [search,      setSearch]      = useState('');
   const [listSortKey, setListSortKey] = useState('name');
   const [listSortDir, setListSortDir] = useState('asc');
@@ -99,7 +101,7 @@ export function PerfumesPage() {
   useEffect(() => { localStorage.setItem('perf_pp',   String(perPage)); }, [perPage]);
 
   // Tab değişince sayfa sıfırla
-  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setSearch(''); setPage(1); setSort('name_asc'); };
+  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchFilter = (v) => { setFilter(v); setPage(1); };
   const switchSearch = (v) => { setSearch(v); setPage(1); };
@@ -157,21 +159,25 @@ export function PerfumesPage() {
   }, [perfumes, filter, search, sort, muadilCountMap]);
 
   const filtM = useMemo(() => {
-    const minScore = scoreFilter === 'all' ? null : Number(scoreFilter);
+    const [sfType, sfVal] = scoreFilter === 'all' ? ['all', null] : scoreFilter.split('_');
+    const sfNum = sfVal != null ? Number(sfVal) : null;
     const base = muadilPerfumes.filter((m) => {
+      if (genderFilterM !== 'all' && m.gender !== genderFilterM) return false;
       const matchText =
         m.name.toLowerCase().includes(search.toLowerCase()) ||
         m.brandName.toLowerCase().includes(search.toLowerCase()) ||
         (m.targetPerfumeName || '').toLowerCase().includes(search.toLowerCase());
       if (!matchText) return false;
-      if (minScore !== null) {
+      if (sfType !== 'all') {
         const overall = muadilScores[m.id]?.overall;
-        if (overall == null || overall < minScore) return false;
+        if (overall == null) return false;
+        if (sfType === 'min' && overall < sfNum) return false;
+        if (sfType === 'exact' && Math.floor(overall) !== sfNum) return false;
       }
       return true;
     });
     return applyMuadilSort(base, sort);
-  }, [muadilPerfumes, search, sort, muadilScores, scoreFilter]);
+  }, [muadilPerfumes, search, sort, muadilScores, scoreFilter, genderFilterM]);
 
   const activeList = pTab === 'original' ? filtO : filtM;
   const totalPages = Math.max(1, Math.ceil(activeList.length / perPage));
@@ -201,6 +207,7 @@ export function PerfumesPage() {
         if (listSortKey === 'brand')       { av = a.brandName || ''; bv = b.brandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetPerf')  { av = a.targetPerfumeName || ''; bv = b.targetPerfumeName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetBrand') { av = a.targetBrandName || ''; bv = b.targetBrandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
+        if (listSortKey === 'gender')      { av = a.gender || ''; bv = b.gender || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'score')      { av = muadilScores[a.id]?.overall ?? -1; bv = muadilScores[b.id]?.overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'scent')      { av = muadilScores[a.id]?.scent ?? -1; bv = muadilScores[b.id]?.scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'projection') { av = muadilScores[a.id]?.projection ?? -1; bv = muadilScores[b.id]?.projection ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
@@ -309,18 +316,34 @@ export function PerfumesPage() {
             </div>
           )}
           {pTab === 'muadil' && (
-            <select
-              value={scoreFilter}
-              onChange={(e) => { setScoreFilter(e.target.value); setPage(1); }}
-              style={{ height: '42px', padding: '0 12px', borderRadius: '10px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
-            >
-              <option value="all">Tüm Puanlar</option>
-              {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                <option key={n} value={String(n)}>
-                  {n === 10 ? '10/10' : `En az ${n}/10`}
-                </option>
-              ))}
-            </select>
+            <>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['all', 'Erkek', 'Kadın', 'Unisex'].map((g) => (
+                  <button key={g} onClick={() => { setGenderFilterM(g); setPage(1); }}
+                    style={{ padding: '9px 12px', border: `1px solid ${genderFilterM === g ? C.gold : C.border}`, borderRadius: '10px', background: genderFilterM === g ? C.goldBg : 'transparent', color: genderFilterM === g ? C.gold : C.textMid, fontSize: '13px', fontWeight: genderFilterM === g ? 700 : 400, cursor: 'pointer', fontFamily: F }}>
+                    {g === 'all' ? 'Tümü' : g}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={scoreFilter}
+                onChange={(e) => { setScoreFilter(e.target.value); setPage(1); }}
+                style={{ height: '42px', padding: '0 12px', borderRadius: '10px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
+              >
+                <option value="all">Tüm Puanlar</option>
+                <optgroup label="Sadece">
+                  {[1,2,3,4,5,6,7,8,9].map((n) => (
+                    <option key={`exact_${n}`} value={`exact_${n}`}>Sadece {n}/10</option>
+                  ))}
+                  <option value="exact_10">Sadece 10/10</option>
+                </optgroup>
+                <optgroup label="En az">
+                  {[1,2,3,4,5,6,7,8,9].map((n) => (
+                    <option key={`min_${n}`} value={`min_${n}`}>En az {n}/10</option>
+                  ))}
+                </optgroup>
+              </select>
+            </>
           )}
         </div>
 
@@ -460,6 +483,7 @@ export function PerfumesPage() {
                         <>
                           <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetPerfumeName || '—'}</td>
                           <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetBrandName || '—'}</td>
+                          <td style={{ padding: '10px 14px', textAlign: 'center' }}><GenderBadge gender={item.gender} /></td>
                           <td style={{ padding: '10px 14px', textAlign: 'center' }}>
                             <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
                           </td>
