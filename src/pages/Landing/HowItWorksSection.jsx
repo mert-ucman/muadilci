@@ -28,8 +28,27 @@ export function HowItWorksSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} style={{ background: '#fff', padding: sm ? '72px 20px' : '100px 48px', borderBottom: `1px solid ${C.borderLight}` }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <section ref={sectionRef} style={{ position: 'relative', padding: sm ? '72px 20px' : '100px 48px', borderBottom: `1px solid ${C.borderLight}`, overflow: 'hidden' }}>
+
+      {/* Background image */}
+      <img
+        src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+        }}
+        onError={e => (e.target.style.display = 'none')}
+      />
+      {/* Warm overlay to keep text readable */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to right, rgba(255,251,245,0.97) 0%, rgba(255,251,245,0.92) 50%, rgba(255,251,245,0.80) 100%)',
+      }} />
+      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
 
         {/* Section header */}
         <div className="sr" style={{ marginBottom: '64px' }}>
