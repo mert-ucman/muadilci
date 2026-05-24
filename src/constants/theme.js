@@ -1,39 +1,49 @@
 export const C = {
-  bg: '#f7f8fc',
-  card: '#fff',
-  border: '#e8e4dc',
-  borderLight: '#f0ede8',
+  /* Backgrounds */
+  bg:          '#FAFAF8',
+  card:        '#FFFFFF',
+  surface:     '#F5F2EE',
 
-  gold: '#b8965a',
-  goldLight: '#d4aa6a',
-  goldBg: '#fdf8f0',
-  goldBorder: '#e8d5b0',
+  /* Borders — very restrained */
+  border:      '#E5E2DC',
+  borderLight: '#EFECE7',
 
-  navy: '#1a2744',
-  navyLight: '#253563',
+  /* Gold — the ONLY accent */
+  gold:        '#B8935A',
+  goldLight:   '#C9A46B',
+  goldBg:      '#FBF7F1',
+  goldBorder:  '#E8D5B3',
+  goldDeep:    '#9A7840',
 
-  text: '#1a1a2e',
-  textMid: '#4a4a6a',
-  textLight: '#8a8aaa',
+  /* Neutral text scale — near black, no navy */
+  text:        '#0F0F0F',
+  textMid:     '#4A4A4A',
+  textLight:   '#8A8A8A',
+  textMuted:   '#B8B8B8',
 
-  green: '#2d8a4e',
-  greenBg: '#edf7f1',
+  /* Legacy nav alias */
+  navy:        '#0F0F0F',
+  navyLight:   '#2A2A2A',
+
+  /* Semantic — functional only */
+  green:       '#2d8a4e',
+  greenBg:     '#edf7f1',
   greenBorder: '#a8dbb8',
+  red:         '#c0392b',
+  redBg:       '#fdf0ee',
+  redBorder:   '#f0b8b0',
+  orange:      '#d47c20',
+  orangeBg:    '#fdf5e8',
+  blue:        '#2563eb',
+  blueBg:      '#eff6ff',
 
-  red: '#c0392b',
-  redBg: '#fdf0ee',
-  redBorder: '#f0b8b0',
-
-  orange: '#d47c20',
-  orangeBg: '#fdf5e8',
-
-  blue: '#2563eb',
-  blueBg: '#eff6ff',
-
-  shadow: '0 2px 12px rgba(0,0,0,.08)',
-  shadowMd: '0 4px 24px rgba(0,0,0,.12)',
-  shadowLg: '0 8px 40px rgba(0,0,0,.15)',
+  /* Shadows — barely there */
+  shadow:   '0 1px 3px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04)',
+  shadowMd: '0 4px 24px rgba(0,0,0,.07)',
+  shadowLg: '0 12px 48px rgba(0,0,0,.09)',
 };
 
-export const F = "'Nunito', sans-serif";
-export const FH = "'Playfair Display', Georgia, serif";
+/* Body: DM Sans — clean, geometric, not Inter */
+export const F  = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
+/* Display: Cormorant Garamond — editorial luxury serif */
+export const FH = "'Cormorant Garamond', Georgia, serif";

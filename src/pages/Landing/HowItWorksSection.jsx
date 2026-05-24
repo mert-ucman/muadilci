@@ -1,43 +1,92 @@
+import { useEffect, useRef } from 'react';
 import { useW } from '@/hooks/useW';
-import { C } from '@/constants/theme';
+import { C, F, FH } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagnifyingGlass, faScaleBalanced, faStar, faBullseye } from '@fortawesome/free-solid-svg-icons';
 
 const STEPS = [
-  { icon: faMagnifyingGlass, n: '1', title: 'Orijinalini Seç', desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
-  { icon: faScaleBalanced, n: '2', title: 'Muadilleri Gör', desc: 'Aynı koku profiline sahip muadilleri yan yana gör.' },
-  { icon: faStar, n: '3', title: 'Yorumları Oku', desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
-  { icon: faBullseye, n: '4', title: 'En Yakını Bul', desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
+  { icon: faMagnifyingGlass, n: '01', title: 'Orijinalini Seç',  desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
+  { icon: faScaleBalanced,   n: '02', title: 'Muadilleri Gör',   desc: 'Aynı koku profiline sahip muadilleri yan yana gör.' },
+  { icon: faStar,            n: '03', title: 'Yorumları Oku',    desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
+  { icon: faBullseye,        n: '04', title: 'En Yakını Bul',    desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
 ];
 
 export function HowItWorksSection() {
   const { sm } = useW();
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const items = section.querySelectorAll('.sr');
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+    items.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div style={{ background: '#f7f8fc', padding: sm ? '48px 16px' : '72px 32px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <span style={{ display: 'inline-block', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '20px', padding: '5px 16px', fontSize: '12px', fontWeight: 700, color: C.gold, marginBottom: '14px' }}>NASIL ÇALIŞIR?</span>
-          <h2 style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 900, color: C.navy, marginBottom: '10px' }}>4 adımda muadil keşfi</h2>
-          <p style={{ color: C.textLight, fontSize: '15px', maxWidth: '460px', margin: '0 auto', lineHeight: 1.7 }}>Orijinaline en yakın muadili bulmak hiç bu kadar kolay olmamıştı.</p>
+    <section ref={sectionRef} style={{ background: '#fff', padding: sm ? '72px 20px' : '100px 48px', borderBottom: `1px solid ${C.borderLight}` }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+        {/* Section header */}
+        <div className="sr" style={{ marginBottom: '64px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ width: '20px', height: '1px', background: C.gold }} />
+            <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Nasıl Çalışır?</span>
+          </div>
+          <h2 style={{ fontFamily: FH, fontSize: 'clamp(32px, 4vw, 56px)', fontWeight: 400, color: C.text, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+            4 adımda<br /><em style={{ fontStyle: 'italic', color: C.gold }}>muadil keşfi.</em>
+          </h2>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '18px' }}>
-          {STEPS.map((s) => (
+
+        {/* Steps grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(4, 1fr)', gap: sm ? '1px' : '0', border: `1px solid ${C.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+          {STEPS.map((step, i) => (
             <div
-              key={s.n}
-              style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: '18px', padding: '26px 22px', position: 'relative', boxShadow: C.shadow, transition: 'transform .2s,box-shadow .2s' }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = C.shadowMd; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = C.shadow; }}
+              key={step.n}
+              className={`sr sr-d${i + 1}`}
+              style={{
+                padding: '36px 32px',
+                borderRight: !sm && i < 3 ? `1px solid ${C.border}` : 'none',
+                borderBottom: sm && i < 3  ? `1px solid ${C.border}` : 'none',
+                background: '#fff',
+                transition: 'background 0.2s',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.goldBg; }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
             >
-              <div style={{ position: 'absolute', top: '18px', right: '18px', width: '26px', height: '26px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: C.gold }}>{s.n}</div>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '14px' }}>
-                <FontAwesomeIcon icon={s.icon} style={{ fontSize: '20px', color: C.gold }} />
+              {/* Large decorative number */}
+              <div style={{
+                position: 'absolute', top: '-8px', right: '20px',
+                fontFamily: FH, fontSize: '80px', fontWeight: 300,
+                color: 'rgba(0,0,0,.04)', lineHeight: 1, userSelect: 'none',
+                letterSpacing: '-0.02em',
+              }}>
+                {step.n}
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: C.navy, marginBottom: '8px' }}>{s.title}</h3>
-              <p style={{ fontSize: '14px', color: C.textLight, lineHeight: 1.6 }}>{s.desc}</p>
+
+              {/* Icon */}
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                <FontAwesomeIcon icon={step.icon} style={{ fontSize: '16px', color: C.gold }} />
+              </div>
+
+              {/* Step number label */}
+              <div style={{ fontSize: '10px', fontWeight: 700, color: C.gold, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px', fontFamily: F }}>Adım {step.n}</div>
+
+              {/* Title */}
+              <h3 style={{ fontFamily: FH, fontSize: '22px', fontWeight: 500, color: C.text, marginBottom: '10px', lineHeight: 1.2 }}>{step.title}</h3>
+
+              {/* Desc */}
+              <p style={{ fontSize: '14px', color: C.textLight, lineHeight: 1.7, fontFamily: F, fontWeight: 400 }}>{step.desc}</p>
             </div>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

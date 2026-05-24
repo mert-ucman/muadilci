@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
-import { C, F } from '@/constants/theme';
+import { C, F, FH } from '@/constants/theme';
 import { Modal } from '@/components/ui';
-import logoLight from '@/img/logos/muadilci-light-minified.png';
+import logoDark from '@/img/logos/logo-dark-minified.png';
 
 function Section({ title, children }) {
   return (
@@ -34,74 +34,67 @@ export function Footer() {
   ];
 
   return (
-    <footer style={{ background: C.navy, fontFamily: F }}>
-      <div style={{ height: '3px', background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />
+    <footer style={{ background: '#fff', borderTop: `1px solid ${C.border}`, fontFamily: F }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: xs ? '48px 20px 32px' : sm ? '56px 24px 36px' : '64px 48px 40px' }}>
 
-      <div style={{ maxWidth: '1320px', margin: '0 auto', padding: xs ? '40px 16px 32px' : sm ? '48px 20px 32px' : '56px 32px 36px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : '1.8fr 1fr 1fr', gap: xs ? '36px' : '48px', marginBottom: '48px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : '2fr 1fr 1fr', gap: xs ? '40px' : '56px', marginBottom: '56px' }}>
 
-          {/* Logo + Tagline */}
+          {/* Logo + tagline */}
           <div>
-            <div style={{ cursor: 'pointer', marginBottom: '14px' }} onClick={() => navigate('/')}>
-              <img src={logoLight} alt="muadilci" style={{ height: '70px', width: 'auto', display: 'block' }} />
+            <div style={{ cursor: 'pointer', marginBottom: '16px' }} onClick={() => navigate('/')}>
+              <img src={logoDark} alt="muadilci" style={{ height: '56px', width: 'auto' }} />
             </div>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,.45)', lineHeight: 1.7, margin: 0, maxWidth: '260px' }}>
+            <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.75, maxWidth: '240px', fontWeight: 400 }}>
               Türkiye'nin lüks parfüm muadillerini keşfet, karşılaştır ve en iyisini bul.
             </p>
             <a
               href="https://www.instagram.com/muadilciapp"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                marginTop: '20px', padding: '8px 16px', borderRadius: '10px',
-                background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)',
-                textDecoration: 'none', transition: 'all .15s',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)'; e.currentTarget.style.borderColor = 'transparent'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.1)'; }}
+              target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '20px', padding: '8px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, textDecoration: 'none', transition: 'border-color 0.2s, background 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = C.goldBg; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = 'transparent'; }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.textMid} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                 <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="1" fill="rgba(255,255,255,.8)" stroke="none" />
+                <circle cx="17.5" cy="6.5" r="1" fill={C.textMid} stroke="none" />
               </svg>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,.75)' }}>@muadilciapp</span>
+              <span style={{ fontSize: '12px', fontWeight: 500, color: C.textMid }}>@muadilciapp</span>
             </a>
           </div>
 
-          {/* Navigasyon */}
+          {/* Keşfet */}
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: C.gold, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Keşfet</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: C.textMuted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '18px' }}>Keşfet</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {navLinks.map(({ label, path }) => (
                 <span key={path} onClick={() => navigate(path)}
-                  style={{ fontSize: '13px', color: 'rgba(255,255,255,.5)', cursor: 'pointer', transition: 'color .15s', width: 'fit-content' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,.5)'}>
+                  style={{ fontSize: '13px', color: C.textLight, cursor: 'pointer', transition: 'color 0.15s', width: 'fit-content', fontWeight: 400 }}
+                  onMouseEnter={e => e.currentTarget.style.color = C.gold}
+                  onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
                   {label}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* Yasal */}
+          {/* Bilgi */}
           <div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: C.gold, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Bilgi</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: C.textMuted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '18px' }}>Bilgi</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {legalLinks.map(({ label, href, onClick }) => (
                 href ? (
                   <a key={label} href={href}
-                    style={{ fontSize: '13px', color: 'rgba(255,255,255,.5)', cursor: 'pointer', transition: 'color .15s', width: 'fit-content', textDecoration: 'none' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,.5)'}>
+                    style={{ fontSize: '13px', color: C.textLight, cursor: 'pointer', transition: 'color 0.15s', width: 'fit-content', textDecoration: 'none', fontWeight: 400 }}
+                    onMouseEnter={e => e.currentTarget.style.color = C.gold}
+                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
                     {label}
                   </a>
                 ) : (
                   <span key={label} onClick={onClick || undefined}
-                    style={{ fontSize: '13px', color: 'rgba(255,255,255,.5)', cursor: onClick ? 'pointer' : 'default', transition: 'color .15s', width: 'fit-content' }}
-                    onMouseEnter={(e) => { if (onClick) e.currentTarget.style.color = '#fff'; }}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,.5)'}>
+                    style={{ fontSize: '13px', color: C.textLight, cursor: onClick ? 'pointer' : 'default', transition: 'color 0.15s', width: 'fit-content', fontWeight: 400 }}
+                    onMouseEnter={e => { if (onClick) e.currentTarget.style.color = C.gold; }}
+                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
                     {label}
                   </span>
                 )
@@ -110,10 +103,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Alt çizgi + copyright */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,.08)', paddingTop: '24px', display: 'flex', flexDirection: xs ? 'column' : 'row', justifyContent: 'space-between', alignItems: xs ? 'flex-start' : 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.25)' }}>© 2026 muadilci.com — Tüm hakları saklıdır.</span>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.2)' }}>Parfüm dünyasını demokratikleştiriyoruz.</span>
+        {/* Bottom bar */}
+        <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: '24px', display: 'flex', flexDirection: xs ? 'column' : 'row', justifyContent: 'space-between', alignItems: xs ? 'flex-start' : 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', color: C.textMuted }}>© 2026 muadilci.com — Tüm hakları saklıdır.</span>
+          <span style={{ fontSize: '12px', color: C.textMuted }}>Parfüm dünyasını demokratikleştiriyoruz.</span>
         </div>
       </div>
 
