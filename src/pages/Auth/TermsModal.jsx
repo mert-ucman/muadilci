@@ -1,7 +1,7 @@
 import { Modal } from '@/components/ui';
 import { C } from '@/constants/theme';
 
-const LAST_UPDATED = '19 Mayıs 2025';
+const LAST_UPDATED = '24 Mayıs 2026';
 
 function Section({ title, children }) {
   return (
@@ -33,7 +33,7 @@ export function TermsModal({ open, onClose }) {
         <div style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '12px 16px', marginBottom: '24px' }}>
           <div style={{ fontSize: '13px', color: C.gold, fontWeight: 700, marginBottom: '2px' }}>muadilci.com</div>
           <div style={{ fontSize: '12px', color: C.textMid }}>
-            Son güncelleme: {LAST_UPDATED} · Bu sözleşme Türkiye'de yerleşik kullanıcılar için geçerlidir.
+            Son güncelleme: {LAST_UPDATED}
           </div>
         </div>
 
@@ -94,7 +94,7 @@ export function TermsModal({ open, onClose }) {
 
         <Section title="8. Hesap Silme">
           <p>
-            Hesabınızı silmek istediğinizde profil sayfanızdan veya <strong>iletisim@muadilci.com</strong> adresine e-posta göndererek talepte bulunabilirsiniz. Hesap silme işlemiyle birlikte e-posta adresiniz sistemden kalıcı olarak kaldırılır. Daha önce onaylanmış yorumlarınız anonim olarak kalabilir.
+            Hesabınızı silmek istediğinizde profil sayfanızdan veya <strong>info@muadilci.com</strong> adresine e-posta göndererek talepte bulunabilirsiniz. Hesap silme işlemiyle birlikte e-posta adresiniz sistemden kalıcı olarak kaldırılır. Daha önce onaylanmış yorumlarınız anonim olarak kalabilir.
           </p>
         </Section>
 
@@ -106,7 +106,7 @@ export function TermsModal({ open, onClose }) {
 
         <Section title="10. İletişim">
           <p>
-            Sorularınız ve talepleriniz için: <strong style={{ color: C.gold }}>iletisim@muadilci.com</strong>
+            Sorularınız ve talepleriniz için: <strong style={{ color: C.gold }}>info@muadilci.com</strong>
           </p>
         </Section>
 

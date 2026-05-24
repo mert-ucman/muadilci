@@ -16,16 +16,12 @@ const MARQUEE_STYLE = `
   .marquee-ltr {
     display: flex;
     width: max-content;
-    animation: marquee-ltr 80s linear infinite;
+    animation: marquee-ltr var(--marquee-duration, 80s) linear infinite;
   }
   .marquee-rtl {
     display: flex;
     width: max-content;
-    animation: marquee-rtl 80s linear infinite;
-  }
-  .marquee-ltr:hover,
-  .marquee-rtl:hover {
-    animation-play-state: paused;
+    animation: marquee-rtl var(--marquee-duration, 80s) linear infinite;
   }
 `;
 
@@ -41,15 +37,13 @@ function BrandChip({ b, navigate }) {
         cursor: 'pointer',
         flexShrink: 0,
         boxShadow: '0 1px 4px rgba(184,150,90,.08)',
-        transition: 'transform .15s, box-shadow .15s, border-color .15s',
+        transition: 'box-shadow .15s, border-color .15s',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 6px 20px rgba(184,150,90,.18)';
+        e.currentTarget.style.boxShadow = '0 4px 14px rgba(184,150,90,.22)';
         e.currentTarget.style.borderColor = C.goldBorder;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'none';
         e.currentTarget.style.boxShadow = '0 1px 4px rgba(184,150,90,.08)';
         e.currentTarget.style.borderColor = C.border;
       }}
@@ -69,11 +63,12 @@ function BrandChip({ b, navigate }) {
 
 function MarqueeRow({ items, direction, navigate }) {
   const doubled = [...items, ...items];
+  const duration = Math.max(30, items.length * 2.5);
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '120px', zIndex: 2, background: 'linear-gradient(to right, #faf9f7 0%, transparent 100%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '120px', zIndex: 2, background: 'linear-gradient(to left, #faf9f7 0%, transparent 100%)', pointerEvents: 'none' }} />
-      <div className={direction === 'ltr' ? 'marquee-ltr' : 'marquee-rtl'} style={{ gap: '10px', paddingLeft: '10px' }}>
+      <div className={direction === 'ltr' ? 'marquee-ltr' : 'marquee-rtl'} style={{ gap: '10px', paddingLeft: '10px', '--marquee-duration': `${duration}s` }}>
         {doubled.map((b, i) => (
           <BrandChip key={`${b.id}-${i}`} b={b} navigate={navigate} />
         ))}
