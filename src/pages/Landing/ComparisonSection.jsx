@@ -3,7 +3,6 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 
-
 export function ComparisonSection() {
   const { navigate } = useRouter();
   const { sm, xs } = useW();
@@ -25,16 +24,17 @@ export function ComparisonSection() {
     <section
       ref={sectionRef}
       style={{
-        background: C.text,
+        background: '#fff',
         position: 'relative',
         overflow: 'hidden',
         padding: xs ? '80px 20px 72px' : sm ? '100px 24px 88px' : '0',
+        borderBottom: `1px solid ${C.borderLight}`,
       }}
     >
-      {/* Decorative grain texture overlay */}
+      {/* Subtle warm radial glow */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 80% 60% at 70% 50%, rgba(184,147,90,.07) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse 70% 60% at 65% 50%, rgba(184,147,90,.05) 0%, transparent 70%)',
       }} />
 
       <div style={{
@@ -52,8 +52,7 @@ export function ComparisonSection() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRight: '1px solid rgba(255,255,255,.08)',
-            padding: '0',
+            borderRight: `1px solid ${C.borderLight}`,
             position: 'relative',
           }}>
             <div style={{
@@ -61,7 +60,7 @@ export function ComparisonSection() {
               whiteSpace: 'nowrap',
               fontSize: '10px',
               fontWeight: 700,
-              color: 'rgba(255,255,255,.25)',
+              color: C.textMuted,
               letterSpacing: '.25em',
               textTransform: 'uppercase',
               fontFamily: F,
@@ -78,10 +77,10 @@ export function ComparisonSection() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          borderRight: xs || sm ? 'none' : '1px solid rgba(255,255,255,.08)',
+          borderRight: xs || sm ? 'none' : `1px solid ${C.borderLight}`,
         }}>
-          {/* Eyebrow */}
           <div className="sr" style={{ marginBottom: xs || sm ? '36px' : '0' }}>
+            {/* Eyebrow */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '40px',
             }}>
@@ -99,7 +98,7 @@ export function ComparisonSection() {
               fontFamily: FH,
               fontSize: xs ? '54px' : sm ? '72px' : 'clamp(72px, 6.5vw, 108px)',
               fontWeight: 300,
-              color: '#fff',
+              color: C.text,
               lineHeight: 1.0,
               letterSpacing: '-0.02em',
               marginBottom: '32px',
@@ -113,16 +112,16 @@ export function ComparisonSection() {
               }}>en yakın<br />muadil.</em>
             </h2>
 
-            {/* Thin divider line */}
-            <div style={{ width: '48px', height: '1px', background: 'rgba(255,255,255,.2)', marginBottom: '28px' }} />
+            {/* Thin divider */}
+            <div style={{ width: '48px', height: '1px', background: C.border, marginBottom: '28px' }} />
 
             <p style={{
               fontSize: '14px',
-              color: 'rgba(255,255,255,.5)',
+              color: C.textLight,
               lineHeight: 1.85,
               maxWidth: '340px',
               fontFamily: F,
-              fontWeight: 300,
+              fontWeight: 400,
             }}>
               Her karşılaştırma gerçek kullanıcıların benzerlik, yayılım ve kalıcılık
               puanlarıyla desteklenir. Moderatör onaylı içerik, doğrulanmış yorumlar.
@@ -130,7 +129,7 @@ export function ComparisonSection() {
           </div>
 
           {/* CTA */}
-          <div className="sr sr-d3" style={{ marginTop: xs || sm ? '48px' : '56px' }}>
+          <div className="sr sr-d2" style={{ marginTop: xs || sm ? '48px' : '56px' }}>
             <button
               onClick={() => navigate('/karsilastir')}
               style={{
@@ -160,6 +159,7 @@ export function ComparisonSection() {
           <div className="sr sr-d1" style={{
             position: 'relative',
             overflow: 'hidden',
+            background: C.surface,
           }}>
             {/* Background image */}
             <img
@@ -169,20 +169,23 @@ export function ComparisonSection() {
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%',
                 objectFit: 'cover',
-                opacity: 0.35,
-                filter: 'grayscale(30%)',
+                opacity: 0.18,
+                filter: 'grayscale(20%)',
+                mixBlendMode: 'multiply',
               }}
               onError={e => (e.target.style.display = 'none')}
             />
 
-            {/* Dark gradient on left edge to blend into text column */}
+            {/* Light gradient left edge blend */}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(to right, rgba(15,15,15,1) 0%, rgba(15,15,15,.3) 40%, transparent 100%)',
+              background: 'linear-gradient(to right, #ffffff 0%, rgba(255,255,255,.4) 30%, transparent 100%)',
             }} />
+
+            {/* Bottom gradient */}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(15,15,15,.9) 0%, transparent 60%)',
+              background: `linear-gradient(to top, ${C.surface} 0%, transparent 50%)`,
             }} />
 
             {/* Vertical editorial label — right side */}
@@ -193,7 +196,7 @@ export function ComparisonSection() {
               transform: 'translateY(-50%) rotate(90deg)',
               fontSize: '9px',
               fontWeight: 700,
-              color: 'rgba(255,255,255,.2)',
+              color: C.textMuted,
               letterSpacing: '.3em',
               textTransform: 'uppercase',
               fontFamily: F,
@@ -201,6 +204,23 @@ export function ComparisonSection() {
               userSelect: 'none',
             }}>
               MUADILCI — 2026
+            </div>
+
+            {/* Large decorative number */}
+            <div style={{
+              position: 'absolute',
+              top: '40px',
+              left: '40px',
+              fontFamily: FH,
+              fontSize: '160px',
+              fontWeight: 200,
+              color: C.gold,
+              opacity: 0.07,
+              lineHeight: 1,
+              letterSpacing: '-0.04em',
+              userSelect: 'none',
+            }}>
+              01
             </div>
           </div>
         )}
