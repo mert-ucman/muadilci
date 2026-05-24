@@ -27,6 +27,13 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // Favicon
+    match /favicon/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && validImage();
+      allow delete: if isAdmin();
+    }
+
     // Ana sayfa slider görselleri
     match /slider/{allPaths=**} {
       allow read: if true;
