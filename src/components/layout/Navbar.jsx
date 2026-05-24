@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Btn } from '@/components/ui/Btn';
 import { C, F } from '@/constants/theme';
 import logoDark from '@/img/logos/logo-dark-minified.png';
+import noImage from '@/img/no-image.jpg';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
@@ -28,8 +29,8 @@ export function Navbar() {
   if (isAdmin) navLinks.push({ l: 'Yönetim', u: '/admin' });
 
   const searchItems = [
-    ...perfumes.map((p) => ({ label: `${p.name} — ${p.brandName}`, url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm' })),
-    ...brands.map((b) => ({ label: b.name, url: `/marka/${b.slug}`, type: 'Marka' })),
+    ...perfumes.map((p) => ({ label: `${p.name} — ${p.brandName}`, url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
+    ...brands.map((b) => ({ label: b.name, url: `/marka/${b.slug}`, type: 'Marka', image: b.logoImage || '' })),
   ];
   const filtered = searchQ.length > 1
     ? searchItems.filter((i) => i.label.toLowerCase().includes(searchQ.toLowerCase())).slice(0, 6)
@@ -121,7 +122,9 @@ export function Navbar() {
                           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                            <span style={{ fontSize: '14px', flexShrink: 0 }}>{item.type === 'Parfüm' ? '🧴' : '🏷️'}</span>
+                            <div style={{ width: '32px', height: '32px', borderRadius: item.type === 'Marka' ? '50%' : '6px', overflow: 'hidden', flexShrink: 0, background: '#f0f0f0', border: `1px solid ${C.border}` }}>
+                              <img src={item.image || noImage} alt={item.label} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
                             <span style={{ fontSize: '13px', color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
                           </div>
                           <Badge color={item.type === 'Parfüm' ? 'gold' : 'blue'}>{item.type}</Badge>
@@ -130,7 +133,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <div style={{ padding: '20px', textAlign: 'center', color: C.textLight, fontSize: '13px' }}>
-                      <div style={{ fontSize: '24px', marginBottom: '6px' }}>🔍</div>
+                      <svg width="24" height="24" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '6px' }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                       "<strong>{searchQ}</strong>" için sonuç bulunamadı
                     </div>
                   )}
