@@ -111,8 +111,8 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
         <div style={{ width: '20px', height: '1px', background: C.gold }} />
         <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>
-          Türkiye'nin Parfüm Karşılaştırma Platformu
-        </span>
+          Muadilci
+</span>
       </div>
 
       {/* Headline — Cormorant Garamond, editorial weight */}
@@ -235,10 +235,43 @@ export function HeroSection() {
   /* Has slider images → full-bleed with overlay */
   return (
     <section
-      style={{ position: 'relative', overflow: 'hidden', height: lg ? '65vh' : '80vh', minHeight: '520px' }}
+      style={{ position: 'relative', overflow: 'hidden', height: lg ? '65vh' : 'calc(100vh - 192px)', minHeight: '520px' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
+      {/* Top horizontal marquee strip */}
+      <div style={{
+        position: 'absolute',
+        top: 0, left: 0, right: 0,
+        zIndex: 6,
+        padding: '10px 0',
+        borderBottom: '1px solid rgba(184,147,90,0.2)',
+        background: 'rgba(0,0,0,0.25)',
+        backdropFilter: 'blur(6px)',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+      }}>
+        <div style={{
+          display: 'inline-block',
+          animation: 'heroMarquee 22s linear infinite',
+        }}>
+          {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
+            <span key={i} style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: 'rgba(255,255,255,0.55)',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontFamily: F,
+              marginRight: '64px',
+            }}>
+              <span style={{ color: C.gold, marginRight: '64px' }}>✦</span>
+              {t}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Slides */}
       <div style={{ display: 'flex', width: '100%', height: '100%', transform: `translateX(-${current * 100}%)`, transition: 'transform .6s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}>
         {visibleSlides.map((img, i) => (
@@ -247,12 +280,12 @@ export function HeroSection() {
             {/* Overlay — editorial: gradient from left dark, right lighter */}
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, rgba(10,8,6,.88) 0%, rgba(10,8,6,.55) 55%, rgba(10,8,6,.15) 100%)' }} />
             {i === 0 && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: lg ? '0 20px' : '0 80px' }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: lg ? '52px 28px' : '52px 80px' }}>
                 <div style={{ width: '100%', maxWidth: '600px' }}>
                   {/* Eyebrow */}
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
                     <div style={{ width: '20px', height: '1px', background: C.gold }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Türkiye'nin Parfüm Karşılaştırma Platformu</span>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Muadilci</span>
                   </div>
                   <h1 style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '20px' }}>
                     Lüks kokuyu,<br /><em style={{ color: C.gold, fontStyle: 'italic' }}>en yakın</em><br />muadiliyle keşfet.
@@ -268,11 +301,45 @@ export function HeroSection() {
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}>Ücretsiz Üye Ol</button>
                   </div>
+
                 </div>
               </div>
             )}
           </div>
         ))}
+      </div>
+
+      {/* Bottom horizontal marquee strip */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0, left: 0, right: 0,
+        zIndex: 6,
+        padding: '10px 0',
+        borderTop: '1px solid rgba(184,147,90,0.2)',
+        background: 'rgba(0,0,0,0.25)',
+        backdropFilter: 'blur(6px)',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+      }}>
+        <div style={{
+          display: 'inline-block',
+          animation: 'heroMarqueeReverse 22s linear infinite',
+        }}>
+          {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
+            <span key={i} style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: 'rgba(255,255,255,0.55)',
+              letterSpacing: '0.18em',
+              textTransform: 'uppercase',
+              fontFamily: F,
+              marginRight: '64px',
+            }}>
+              <span style={{ color: C.gold, marginRight: '64px' }}>✦</span>
+              {t}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Arrows */}
@@ -292,6 +359,59 @@ export function HeroSection() {
           ))}
         </div>
       )}
+
+      {/* Luxury frame overlay */}
+      <div style={{ position: 'absolute', inset: '18px', zIndex: 5, pointerEvents: 'none' }}>
+        {/* Inner border */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          border: '1px solid rgba(184,147,90,0.25)',
+          borderRadius: '2px',
+        }} />
+
+        {/* Corner TL */}
+        <div style={{ position: 'absolute', top: -1, left: -1 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '40px', height: '1.5px', background: C.gold }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        </div>
+        {/* Corner TR */}
+        <div style={{ position: 'absolute', top: -1, right: -1 }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '40px', height: '1.5px', background: C.gold }} />
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        </div>
+        {/* Corner BL */}
+        <div style={{ position: 'absolute', bottom: -1, left: -1 }}>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '40px', height: '1.5px', background: C.gold }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        </div>
+        {/* Corner BR */}
+        <div style={{ position: 'absolute', bottom: -1, right: -1 }}>
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '40px', height: '1.5px', background: C.gold }} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        </div>
+
+        {/* Mid-side ornaments */}
+        <div style={{ position: 'absolute', top: '50%', left: -1, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
+          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        </div>
+        <div style={{ position: 'absolute', top: '50%', right: -1, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
+          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        </div>
+        <div style={{ position: 'absolute', left: '50%', top: -1, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
+          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        </div>
+        <div style={{ position: 'absolute', left: '50%', bottom: -1, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
+          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        </div>
+      </div>
     </section>
   );
 }

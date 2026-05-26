@@ -1,3 +1,17 @@
+@media (max-width: 1024px) {
+  .page-nav { display: none !important; }
+}
+
+@keyframes heroMarquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes heroMarqueeReverse {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
 *,
 *::before,
 *::after {

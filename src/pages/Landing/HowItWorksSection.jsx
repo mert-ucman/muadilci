@@ -13,7 +13,7 @@ const STEPS = [
 ];
 
 export function HowItWorksSection() {
-  const { sm } = useW();
+  const { sm, xs } = useW();
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -63,15 +63,17 @@ export function HowItWorksSection() {
         </div>
 
         {/* Steps grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(4, 1fr)', gap: sm ? '1px' : '0', border: `1px solid ${C.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: xs ? 'repeat(2, 1fr)' : sm ? '1fr' : 'repeat(4, 1fr)', gap: xs ? '12px' : sm ? '1px' : '0', border: xs ? 'none' : `1px solid ${C.border}`, borderRadius: '16px', overflow: xs ? 'visible' : 'hidden' }}>
           {STEPS.map((step, i) => (
             <div
               key={step.n}
               className={`sr sr-d${i + 1}`}
               style={{
-                padding: '36px 32px',
-                borderRight: !sm && i < 3 ? `1px solid ${C.border}` : 'none',
-                borderBottom: sm && i < 3  ? `1px solid ${C.border}` : 'none',
+                padding: xs ? '24px 20px' : '36px 32px',
+                border: xs ? `1px solid ${C.border}` : 'none',
+                borderRadius: xs ? '16px' : '0',
+                borderRight: !sm && !xs && i < 3 ? `1px solid ${C.border}` : xs ? undefined : 'none',
+                borderBottom: sm && !xs && i < 3  ? `1px solid ${C.border}` : xs ? undefined : 'none',
                 background: '#fff',
                 transition: 'background 0.2s',
                 position: 'relative',

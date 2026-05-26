@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function CTASection() {
   const { navigate } = useRouter();
@@ -11,13 +15,40 @@ export function CTASection() {
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-    const items = section.querySelectorAll('.sr');
+
+    // Banner sr elements — IntersectionObserver
+    const srItems = section.querySelectorAll('.sr');
     const observer = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
       { threshold: 0.2 }
     );
-    items.forEach(el => observer.observe(el));
-    return () => observer.disconnect();
+    srItems.forEach(el => observer.observe(el));
+
+    // CTA block — GSAP soldan sağa
+    const ctaItems = section.querySelectorAll('.cta-anim');
+    ctaItems.forEach((el, i) => {
+      gsap.fromTo(
+        el,
+        { x: -60, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          duration: 0.8,
+          delay: i * 0.12,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            once: true,
+          },
+        }
+      );
+    });
+
+    return () => {
+      observer.disconnect();
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
   }, []);
 
   return (
@@ -37,7 +68,7 @@ export function CTASection() {
           <div className="sr">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '18px' }}>
               <div style={{ width: '20px', height: '1px', background: C.gold }} />
-              <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Platformumuz</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Muadilci</span>
             </div>
             <h2 style={{ fontFamily: FH, fontSize: 'clamp(28px, 3.5vw, 52px)', fontWeight: 400, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.01em', marginBottom: '16px' }}>
               Koku dünyasını<br /><em style={{ fontStyle: 'italic', color: C.gold }}>demokratize ediyoruz.</em>
@@ -56,22 +87,22 @@ export function CTASection() {
         padding: sm ? '64px 20px' : '88px 48px',
         textAlign: 'center',
       }}>
-        <div className="sr" style={{ maxWidth: '560px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <div className="cta-anim" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
             <div style={{ width: '20px', height: '1px', background: C.gold }} />
             <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Ücretsiz</span>
             <div style={{ width: '20px', height: '1px', background: C.gold }} />
           </div>
 
-          <h2 style={{ fontFamily: FH, fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 400, color: C.text, lineHeight: 1.1, letterSpacing: '-0.01em', marginBottom: '16px' }}>
+          <h2 className="cta-anim" style={{ fontFamily: FH, fontSize: 'clamp(28px, 4vw, 52px)', fontWeight: 400, color: C.text, lineHeight: 1.1, letterSpacing: '-0.01em', marginBottom: '16px' }}>
             Koku yolculuğuna<br /><em style={{ fontStyle: 'italic', color: C.gold }}>bugün başla.</em>
           </h2>
 
-          <p style={{ color: C.textMid, fontSize: '15px', lineHeight: 1.75, marginBottom: '36px', fontFamily: F }}>
-            Ücretsiz üye ol, binlerce muadil eşleşmesine eriş, yorum yap.
+          <p className="cta-anim" style={{ color: C.textMid, fontSize: '15px', lineHeight: 1.75, marginBottom: '36px', fontFamily: F }}>
+            Ücretsiz üye ol, yüzlerce muadil eşleşmesine eriş, yorum yap, en iyi ve en yüksek puanlı markaları ve muadil parfümü bul.
           </p>
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="cta-anim" style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => navigate('/kayit')}
               style={{ background: C.text, border: 'none', borderRadius: '8px', padding: '14px 36px', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'background 0.2s, transform 0.15s' }}

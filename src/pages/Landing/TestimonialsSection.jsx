@@ -3,6 +3,7 @@ import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import leafBg from '@/img/real-person-real-experience.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -42,6 +43,7 @@ function TestimonialCard({ t, i }) {
   const [hovered, setHovered] = useState(false);
   const cardRef = useRef(null);
   const lineRef = useRef(null);
+  const { xs } = useW();
 
   return (
     <div
@@ -53,8 +55,8 @@ function TestimonialCard({ t, i }) {
         position: 'relative',
         background: hovered ? 'rgba(184,147,90,.06)' : 'rgba(255,255,255,.03)',
         border: `1px solid ${hovered ? 'rgba(184,147,90,.35)' : 'rgba(255,255,255,.08)'}`,
-        borderRadius: '0',
-        padding: '48px 40px 40px',
+        borderRadius: '20px',
+        padding: xs ? '24px 20px 20px' : '48px 40px 40px',
         display: 'flex',
         flexDirection: 'column',
         gap: '0',
@@ -69,47 +71,53 @@ function TestimonialCard({ t, i }) {
         top: '-12px',
         right: '24px',
         fontFamily: FH,
-        fontSize: hovered ? '56px' : '100px',
+        fontSize: '100px',
         fontWeight: 200,
         color: hovered ? 'rgba(184,147,90,.2)' : 'rgba(255,255,255,.06)',
         lineHeight: 1,
         userSelect: 'none',
         letterSpacing: '-0.04em',
-        transition: 'font-size 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
+        transform: hovered ? 'scale(0.56)' : 'scale(1)',
+        transformOrigin: 'top right',
+        transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
         pointerEvents: 'none',
       }}>
         {t.index}
       </div>
 
       {/* Stars */}
-      <div style={{ marginBottom: '28px' }}>
+      <div style={{ marginBottom: xs ? '12px' : '28px' }}>
         <Stars rating={t.rating} />
       </div>
 
       {/* Decorative quote — large on idle, smaller on hover */}
-      <div style={{
-        fontFamily: FH,
-        fontSize: hovered ? '48px' : '80px',
-        color: hovered ? C.gold : 'rgba(255,255,255,.08)',
-        lineHeight: 0.7,
-        userSelect: 'none',
-        marginBottom: '20px',
-        transition: 'font-size 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
-      }}>
-        "
-      </div>
+      {!xs && (
+        <div style={{
+          fontFamily: FH,
+          fontSize: '80px',
+          color: hovered ? C.gold : 'rgba(255,255,255,.08)',
+          lineHeight: 0.7,
+          userSelect: 'none',
+          marginBottom: '20px',
+          transform: hovered ? 'scale(0.6)' : 'scale(1)',
+          transformOrigin: 'left center',
+          transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
+        }}>
+          "
+        </div>
+      )}
 
       {/* Text */}
       <p style={{
-        fontSize: hovered ? '15px' : '14px',
+        fontSize: xs ? '13px' : '14px',
         color: hovered ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.45)',
-        lineHeight: 1.8,
+        lineHeight: 1.7,
         fontFamily: F,
         fontWeight: 300,
         fontStyle: 'italic',
         flexGrow: 1,
-        transition: 'color 0.4s, font-size 0.4s',
-        marginBottom: '32px',
+        transition: 'color 0.4s',
+        marginBottom: xs ? '16px' : '32px',
       }}>
         {t.text}
       </p>
@@ -118,7 +126,7 @@ function TestimonialCard({ t, i }) {
       <div style={{
         height: '1px',
         background: hovered ? `linear-gradient(to right, ${C.gold}, transparent)` : 'rgba(255,255,255,.08)',
-        marginBottom: '24px',
+        marginBottom: xs ? '12px' : '24px',
         transition: 'background 0.5s',
       }} />
 
@@ -149,9 +157,10 @@ function TestimonialCard({ t, i }) {
       <div style={{
         position: 'absolute',
         bottom: 0, right: 0,
-        width: hovered ? '120px' : '0px',
-        height: hovered ? '120px' : '0px',
-        background: 'radial-gradient(circle, rgba(184,147,90,.12) 0%, transparent 70%)',
+        width: hovered ? '140px' : '0px',
+        height: hovered ? '140px' : '0px',
+        borderRadius: '0 0 20px 0',
+        background: 'radial-gradient(circle at bottom right, rgba(184,147,90,.15) 0%, transparent 70%)',
         transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1), height 0.6s cubic-bezier(0.16,1,0.3,1)',
         pointerEvents: 'none',
       }} />
@@ -220,11 +229,32 @@ export function TestimonialsSection() {
         background: C.text,
         overflow: 'hidden',
         borderBottom: '1px solid rgba(255,255,255,.06)',
+        position: 'relative',
       }}
     >
+      {/* Full-section leaf background */}
+      <img
+        src={leafBg}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: 'center',
+          opacity: 0.08,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          filter: 'grayscale(30%)',
+          zIndex: 0,
+        }}
+      />
+
       {/* Atmospheric glow */}
       <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
         background: 'radial-gradient(ellipse 60% 40% at 20% 60%, rgba(184,147,90,.05) 0%, transparent 70%)',
       }} />
 
@@ -234,6 +264,8 @@ export function TestimonialsSection() {
         padding: '14px 0',
         overflow: 'hidden',
         whiteSpace: 'nowrap',
+        position: 'relative',
+        zIndex: 2,
       }}>
         <div ref={marqueeRef} style={{ display: 'inline-block' }}>
           {marqueeText.map((txt, i) => (
@@ -241,7 +273,7 @@ export function TestimonialsSection() {
               fontFamily: F,
               fontSize: '11px',
               fontWeight: 700,
-              color: 'rgba(255,255,255,.12)',
+              color: 'rgba(255,255,255,.45)',
               letterSpacing: '.22em',
               textTransform: 'uppercase',
               marginRight: '0',
@@ -255,7 +287,7 @@ export function TestimonialsSection() {
               fontFamily: F,
               fontSize: '11px',
               fontWeight: 700,
-              color: 'rgba(255,255,255,.12)',
+              color: 'rgba(255,255,255,.45)',
               letterSpacing: '.22em',
               textTransform: 'uppercase',
             }}>
@@ -270,6 +302,8 @@ export function TestimonialsSection() {
         maxWidth: '1400px',
         margin: '0 auto',
         display: 'grid',
+        position: 'relative',
+        zIndex: 2,
         gridTemplateColumns: xs || sm ? '1fr' : '80px 1fr',
         position: 'relative',
       }}>
@@ -334,8 +368,7 @@ export function TestimonialsSection() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(3, 1fr)',
-            gap: '0',
-            border: '1px solid rgba(255,255,255,.08)',
+            gap: '16px',
           }}>
             {TESTIMONIALS.map((t, i) => (
               <TestimonialCard key={t.name} t={t} i={i} />

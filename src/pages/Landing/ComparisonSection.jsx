@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
+import similarImg from '@/img/similar-scent-best-equvalient.png';
 
 
 export function ComparisonSection() {
@@ -31,6 +32,31 @@ export function ComparisonSection() {
         padding: xs ? '80px 20px 72px' : sm ? '100px 24px 88px' : '0',
       }}
     >
+      {/* Mobile background image */}
+      {(xs || sm) && (
+        <>
+          <img
+            src="https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=900&q=85"
+            alt=""
+            style={{
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              opacity: 0.18,
+              filter: 'grayscale(20%)',
+              pointerEvents: 'none',
+            }}
+            onError={e => (e.target.style.display = 'none')}
+          />
+          {/* Gradient overlay so text stays readable */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: 'linear-gradient(to bottom, rgba(15,12,8,.75) 0%, rgba(15,12,8,.6) 60%, rgba(15,12,8,.85) 100%)',
+          }} />
+        </>
+      )}
+
       {/* Decorative grain texture overlay */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
@@ -90,7 +116,7 @@ export function ComparisonSection() {
                 fontSize: '10px', fontWeight: 700, color: C.gold,
                 letterSpacing: '.2em', textTransform: 'uppercase', fontFamily: F,
               }}>
-                Platform
+                Muadilci
               </span>
             </div>
 
@@ -104,7 +130,7 @@ export function ComparisonSection() {
               letterSpacing: '-0.02em',
               marginBottom: '32px',
             }}>
-              Aynı<br />
+              Benzer<br />
               koku,<br />
               <em style={{
                 fontStyle: 'italic',
@@ -157,22 +183,22 @@ export function ComparisonSection() {
 
         {/* ── Right: visual composition ── */}
         {!xs && !sm && (
-          <div className="sr sr-d1" style={{
+          <div style={{
             position: 'relative',
             overflow: 'hidden',
           }}>
             {/* Background image */}
             <img
-              src="https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=900&q=85"
+              src={similarImg}
               alt=""
               style={{
                 position: 'absolute', inset: 0,
                 width: '100%', height: '100%',
                 objectFit: 'cover',
-                opacity: 0.35,
-                filter: 'grayscale(30%)',
+                objectPosition: 'center',
+                opacity: 0.65,
+                filter: 'grayscale(10%)',
               }}
-              onError={e => (e.target.style.display = 'none')}
             />
 
             {/* Dark gradient on left edge to blend into text column */}
@@ -185,23 +211,6 @@ export function ComparisonSection() {
               background: 'linear-gradient(to top, rgba(15,15,15,.9) 0%, transparent 60%)',
             }} />
 
-            {/* Vertical editorial label — right side */}
-            <div style={{
-              position: 'absolute',
-              right: '28px',
-              top: '50%',
-              transform: 'translateY(-50%) rotate(90deg)',
-              fontSize: '9px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,.2)',
-              letterSpacing: '.3em',
-              textTransform: 'uppercase',
-              fontFamily: F,
-              whiteSpace: 'nowrap',
-              userSelect: 'none',
-            }}>
-              MUADILCI — 2026
-            </div>
           </div>
         )}
       </div>

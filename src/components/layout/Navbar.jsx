@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/Badge';
 import { C, F, FH } from '@/constants/theme';
 import logoDark from '@/img/logos/logo-dark-minified.png';
 import noImage from '@/img/no-image.jpg';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRightToBracket, faUserPlus, faBars } from '@fortawesome/free-solid-svg-icons';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
@@ -17,6 +19,7 @@ export function Navbar() {
   const [scrolled,    setScrolled]    = useState(false);
   const [menuOpen,    setMenuOpen]    = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchOpen,  setSearchOpen]  = useState(false);
   const [searchQ,     setSearchQ]     = useState('');
 
@@ -44,7 +47,10 @@ export function Navbar() {
     : [];
 
   const roleLabel = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
-  const handleNav = (u) => { navigate(u); setMobileOpen(false); setMenuOpen(false); };
+
+  const openDrawer  = () => { setMobileOpen(true);  setTimeout(() => setDrawerVisible(true),  16); };
+  const closeDrawer = () => { setDrawerVisible(false); setTimeout(() => setMobileOpen(false), 480); };
+  const handleNav   = (u) => { navigate(u); closeDrawer(); setMenuOpen(false); };
 
   return (
     <>
@@ -59,7 +65,7 @@ export function Navbar() {
         <div style={{
           maxWidth: '1280px', margin: '0 auto',
           padding: lg ? '0 20px' : '0 48px',
-          height: '64px',
+          height: '96px',
           display: 'flex', alignItems: 'center', gap: '32px',
         }}>
 
@@ -69,7 +75,7 @@ export function Navbar() {
             onClick={e => { e.preventDefault(); navigate('/'); }}
             style={{ flexShrink: 0, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
           >
-            <img src={logoDark} alt="muadilci" style={{ height: '56px', width: 'auto' }} />
+            <img src={logoDark} alt="muadilci" style={{ height: '68px', width: 'auto' }} />
           </a>
 
           {/* Desktop nav links */}
@@ -218,31 +224,64 @@ export function Navbar() {
 
           {/* Desktop auth buttons */}
           {!lg && !user && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <button
                 onClick={() => navigate('/giris')}
-                style={{ background: 'none', border: 'none', padding: '6px 14px', fontSize: '13px', fontWeight: 500, color: C.textMid, cursor: 'pointer', fontFamily: F, transition: 'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = C.text}
-                onMouseLeave={e => e.currentTarget.style.color = C.textMid}
-              >Giriş Yap</button>
+                style={{
+                  background: 'none',
+                  border: `1px solid ${C.border}`,
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  color: C.textMid,
+                  cursor: 'pointer',
+                  fontFamily: F,
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  transition: 'color 0.2s, border-color 0.2s',
+                  letterSpacing: '0.02em',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = C.gold; e.currentTarget.style.borderColor = C.gold; }}
+                onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
+              >
+                <FontAwesomeIcon icon={faRightToBracket} style={{ fontSize: '12px' }} />
+                Giriş Yap
+              </button>
               <button
                 onClick={() => navigate('/kayit')}
-                style={{ background: C.text, border: 'none', padding: '7px 18px', borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: '#fff', cursor: 'pointer', fontFamily: F, transition: 'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.gold}
-                onMouseLeave={e => e.currentTarget.style.background = C.text}
-              >Üye Ol</button>
+                style={{
+                  background: `linear-gradient(135deg, ${C.text} 0%, #2a2218 100%)`,
+                  border: 'none',
+                  padding: '8px 20px',
+                  borderRadius: '10px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontFamily: F,
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  transition: 'background 0.2s, transform 0.15s, box-shadow 0.2s',
+                  letterSpacing: '0.02em',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${C.gold} 0%, ${C.goldLight} 100%)`; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(184,147,90,0.3)`; }}
+                onMouseLeave={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${C.text} 0%, #2a2218 100%)`; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
+              >
+                <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '12px' }} />
+                Üye Ol
+              </button>
             </div>
           )}
 
           {/* Mobile hamburger */}
           {lg && (
             <button
-              onClick={() => setMobileOpen(true)}
-              style={{ width: '38px', height: '38px', borderRadius: '8px', background: 'none', border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer', flexShrink: 0 }}
+              onClick={() => openDrawer()}
+              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'none', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: C.text, transition: 'border-color 0.2s, color 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.text; }}
             >
-              <span style={{ width: '16px', height: '1.5px', background: C.text, display: 'block', borderRadius: '1px' }} />
-              <span style={{ width: '16px', height: '1.5px', background: C.text, display: 'block', borderRadius: '1px' }} />
-              <span style={{ width: '10px', height: '1.5px', background: C.text, display: 'block', borderRadius: '1px', alignSelf: 'flex-start', marginLeft: '3px' }} />
+              <FontAwesomeIcon icon={faBars} style={{ fontSize: '15px' }} />
             </button>
           )}
         </div>
@@ -251,17 +290,24 @@ export function Navbar() {
       {/* ── Mobile drawer ────────────────────────────────────────────── */}
       {lg && mobileOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,.3)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setMobileOpen(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 500, background: drawerVisible ? 'rgba(0,0,0,.35)' : 'rgba(0,0,0,0)', backdropFilter: drawerVisible ? 'blur(4px)' : 'none', transition: 'background 0.3s, backdrop-filter 0.3s' }}
+          onClick={() => closeDrawer()}
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '100%', background: C.card, boxShadow: C.shadowLg, display: 'flex', flexDirection: 'column' }}
+            style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '100%', background: C.card, boxShadow: C.shadowLg, display: 'flex', flexDirection: 'column', transform: drawerVisible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.48s cubic-bezier(0.22,1,0.36,1)' }}
           >
             {/* Drawer header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.border}` }}>
               <img src={logoDark} alt="muadilci" style={{ height: '32px', width: 'auto' }} />
-              <button onClick={() => setMobileOpen(false)} style={{ width: '30px', height: '30px', borderRadius: '6px', background: C.surface, border: 'none', fontSize: '18px', cursor: 'pointer', color: C.textMid, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+              <button onClick={() => closeDrawer()} style={{ width: '34px', height: '34px', borderRadius: '8px', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', color: C.textMid, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, transition: 'color 0.2s, border-color 0.2s' }}
+                onMouseEnter={e => { e.currentTarget.style.color = C.text; e.currentTarget.style.borderColor = C.text; }}
+                onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L11 11M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
 
             {/* Mobile search */}
@@ -314,6 +360,23 @@ export function Navbar() {
                   <button onClick={() => handleNav('/kayit')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: C.text, color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>Üye Ol</button>
                 </div>
               )}
+            </div>
+
+            {/* Instagram */}
+            <div style={{ padding: '12px 20px 20px', borderTop: `1px solid ${C.border}` }}>
+              <a
+                href="https://www.instagram.com/muadilciapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: C.textLight, fontSize: '13px', fontFamily: F, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = C.gold}
+                onMouseLeave={e => e.currentTarget.style.color = C.textLight}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+                @muadilciapp
+              </a>
             </div>
           </div>
         </div>
