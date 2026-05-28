@@ -87,6 +87,7 @@ function BrandTable({ rows, navigate }) {
         <div
           key={row.brand.id}
           onClick={() => navigate(`/marka/${row.brand.slug}`)}
+          onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${row.brand.slug}`, '_blank'); } }}
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '11px 14px', borderRadius: '12px', cursor: 'pointer',

@@ -71,6 +71,7 @@ export function BrandsPage() {
   const [perPage, setPerPage]   = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
   const [page, setPage]         = useState(1);
   const [scoreFilter, setScoreFilter] = useState('all');
+  const [searchQ, setSearchQ]   = useState('');
 
   useEffect(() => { localStorage.setItem('brands_tab',  tab);  }, [tab]);
   useEffect(() => { localStorage.setItem('brands_sort_v2', sort); }, [sort]);
@@ -79,9 +80,10 @@ export function BrandsPage() {
 
   const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
 
-  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); };
+  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); setSearchQ(''); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchPerPage = (n) => { setPerPage(n); setPage(1); };
+  const handleSearch = (v) => { setSearchQ(v); setPage(1); };
 
   const isOrig = tab === 'original';
 
@@ -118,8 +120,10 @@ export function BrandsPage() {
   const sorted = useMemo(() => {
     const [sfType, sfVal] = scoreFilter === 'all' ? ['all', null] : scoreFilter.split('_');
     const sfNum = sfVal != null ? Number(sfVal) : null;
+    const q = searchQ.trim().toLowerCase();
     const base = brands.filter(b => {
       if (b.type !== tab || !b.active) return false;
+      if (q && !b.name.toLowerCase().includes(q) && !(b.origin || '').toLowerCase().includes(q)) return false;
       if (sfType !== 'all' && tab === 'muadil') {
         const sc = brandScoreMap[b.id];
         if (sc == null) return false;
@@ -147,7 +151,7 @@ export function BrandsPage() {
         default:              return 0;
       }
     });
-  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap, scoreFilter]);
+  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap, scoreFilter, searchQ]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage   = Math.min(page, totalPages);
@@ -167,7 +171,7 @@ export function BrandsPage() {
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '22px' }}>Orijinal ve muadil parfüm evleri</p>
 
         {/* Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
           {/* Tabs */}
           <div style={{ display: 'flex', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px' }}>
             {[['original', 'Orijinal Markalar'], ['muadil', 'Muadil Markalar']].map(([v, l]) => (
@@ -223,6 +227,31 @@ export function BrandsPage() {
           </div>
         </div>
 
+        {/* Search */}
+        <div style={{ marginBottom: '14px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: C.card, border: `1px solid ${searchQ ? C.gold : C.border}`,
+            borderRadius: '10px', padding: '0 14px', height: '40px',
+            maxWidth: '400px',
+            boxShadow: searchQ ? `0 0 0 3px ${C.goldBg}` : 'none',
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+          }}>
+            <svg width="13" height="13" fill="none" stroke={searchQ ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              value={searchQ}
+              onChange={e => handleSearch(e.target.value)}
+              placeholder="Marka adı veya köken ara..."
+              style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', color: C.text, background: 'transparent', fontFamily: F }}
+            />
+            {searchQ && (
+              <button onClick={() => handleSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+            )}
+          </div>
+        </div>
+
         {/* Toplam + sayfa bilgisi */}
         <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
           <span>Toplam <strong style={{ color: C.navy }}>{sorted.length}</strong> marka</span>
@@ -233,7 +262,7 @@ export function BrandsPage() {
         {view === 'grid' && (
           <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))', gap: '14px' }}>
             {pageItems.map(b => (
-              <Card key={b.id} hover style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
+              <Card key={b.id} hover style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                 <button
                   onClick={e => { e.stopPropagation(); toggleBrandFavorite(user?.uid || user?.id, b.id); }}
                   style={{ position: 'absolute', top: '10px', right: '10px', width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBorder : C.border}`, background: isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px', transition: 'all .15s' }}
@@ -352,7 +381,7 @@ export function BrandsPage() {
               </thead>
               <tbody>
                 {pageItems.map((b, i) => (
-                  <tr key={b.id} onClick={() => navigate(`/marka/${b.slug}`)}
+                  <tr key={b.id} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
                     style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background .1s' }}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

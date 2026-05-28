@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 const RouterCtx = createContext(null);
 
@@ -27,9 +27,24 @@ export function RouterProvider({ children }) {
   };
 
   const [path, setPath] = useState(getPath);
+  const scrollPositions = useRef(new Map());
+  const currentPathRef = useRef(getPath());
 
   useEffect(() => {
-    const handler = () => { setPath(getPath()); window.scrollTo(0, 0); };
+    const handler = () => {
+      // Gitmeden önce mevcut scroll pozisyonunu kaydet
+      scrollPositions.current.set(currentPathRef.current, window.scrollY);
+
+      const newPath = getPath();
+      currentPathRef.current = newPath;
+      setPath(newPath);
+
+      // Kaydedilmiş pozisyona geri dön, yoksa en üste git
+      const saved = scrollPositions.current.get(newPath);
+      requestAnimationFrame(() => {
+        window.scrollTo(0, saved ?? 0);
+      });
+    };
     // History API: geri/ileri tuşları popstate tetikler
     window.addEventListener('popstate', handler);
     return () => window.removeEventListener('popstate', handler);
@@ -38,7 +53,10 @@ export function RouterProvider({ children }) {
   const navigate = useCallback((to) => {
     if (!to) return;
     if (to === path) { window.scrollTo(0, 0); return; }
+    // Mevcut sayfanın scroll pozisyonunu kaydet
+    scrollPositions.current.set(path, window.scrollY);
     window.history.pushState(null, '', to);
+    currentPathRef.current = to;
     setPath(to);
     window.scrollTo(0, 0);
   }, [path]);

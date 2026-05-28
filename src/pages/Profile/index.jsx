@@ -526,7 +526,7 @@ export function ProfilePage({ queryParams }) {
                   <SectionTitle title="Orijinal Markalar" color={C.gold} count={origFavBrands.length} />
                   <div style={grid}>
                     {origFavBrands.map((b) => (
-                      <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
+                      <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.gold, flexShrink: 0, overflow: 'hidden' }}>
@@ -548,7 +548,7 @@ export function ProfilePage({ queryParams }) {
                   <SectionTitle title="Muadil Markalar" color={C.green} count={muadilFavBrands.length} />
                   <div style={grid}>
                     {muadilFavBrands.map((b) => (
-                      <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)}>
+                      <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.green, flexShrink: 0, overflow: 'hidden' }}>

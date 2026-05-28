@@ -109,7 +109,7 @@ export function PerfumeDetailPage({ params }) {
 
         {/* Üst bar: Geri Dön + Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '22px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate(`/marka/${perfume.brandSlug}`)}
+          <button onClick={() => navigate(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '7px 14px', color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, flexShrink: 0, transition: 'all .15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bg; e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.color = C.navy; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}>
@@ -119,7 +119,7 @@ export function PerfumeDetailPage({ params }) {
           <div style={{ display: 'flex', gap: '6px', fontSize: '13px', color: C.textLight, alignItems: 'center', flexWrap: 'wrap' }}>
             <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: C.gold }}>Ana Sayfa</span>
             <span>/</span>
-            <span onClick={() => navigate(`/marka/${perfume.brandSlug}`)} style={{ cursor: 'pointer', color: C.gold }}>{perfume.brandName}</span>
+            <span onClick={() => navigate(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }} style={{ cursor: 'pointer', color: C.gold }}>{perfume.brandName}</span>
             <span>/</span>
             <span style={{ color: C.text, fontWeight: 600 }}>{perfume.name}</span>
           </div>

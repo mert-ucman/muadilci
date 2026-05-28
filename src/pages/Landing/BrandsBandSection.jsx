@@ -29,6 +29,7 @@ function BrandChip({ b, navigate }) {
   return (
     <div
       onClick={() => navigate(`/marka/${b.slug}`)}
+      onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
       style={{
         display: 'flex', alignItems: 'center', gap: '8px',
         background: '#fff',

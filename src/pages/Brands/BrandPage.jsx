@@ -63,14 +63,15 @@ export function BrandPage({ params }) {
     else { setListSortKey(key); setListSortDir('asc'); }
   };
 
-  if (!brand) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Marka bulunamadı.</div>;
+  // Tüm hook'lar erken return'den ÖNCE — Rules of Hooks
+  const isOrig = brand?.type === 'original';
+  const allItems = useMemo(() => {
+    if (!brand) return [];
+    return isOrig
+      ? perfumes.filter((p) => p.brandId === brand.id)
+      : muadilPerfumes.filter((m) => m.brandId === brand.id);
+  }, [brand, isOrig, perfumes, muadilPerfumes]);
 
-  const isOrig = brand.type === 'original';
-  const allItems = isOrig
-    ? perfumes.filter((p) => p.brandId === brand.id)
-    : muadilPerfumes.filter((m) => m.brandId === brand.id);
-
-  // Orijinal marka: cinsiyet filtresi + sıralama
   const items = useMemo(() => {
     if (!isOrig) return allItems;
     let filtered = genderFilter
@@ -87,7 +88,6 @@ export function BrandPage({ params }) {
     );
   }, [allItems, isOrig, genderFilter, sortDir]);
 
-  // Her orijinal parfüme ait muadil sayısı
   const perfumeMuadilCount = useMemo(() => {
     const map = {};
     muadilPerfumes.forEach((m) => {
@@ -95,6 +95,8 @@ export function BrandPage({ params }) {
     });
     return map;
   }, [muadilPerfumes]);
+
+  if (!brand) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Marka bulunamadı.</div>;
 
   const brandPerfumeIds = new Set(allItems.map((p) => p.id));
   const muadilCount = isOrig
