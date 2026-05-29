@@ -232,7 +232,7 @@ export function ComparisonPage({ queryParams }) {
                     Puan {muadilSortDir === 'desc' ? '↓' : '↑'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '500px', overflowY: 'auto', paddingRight: '2px' }}>
                   {[...matching]
                     .map((m) => ({ m, ms: calcScores(m.id, comments) }))
                     .sort((a, b) => {
