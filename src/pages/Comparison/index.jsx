@@ -115,14 +115,14 @@ export function ComparisonPage({ queryParams }) {
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => { setSelOrigId(e.target.value); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => { const id = e.target.value; setSelOrigId(id); if (id) { const p = perfumes.find((p) => String(p.id) === String(id)); if (p) setSelOrigBrand(p.brandName); } setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Muadil Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => setSelMuadilId(e.target.value)} options={mPerfOpts} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); } }} options={mPerfOpts} /></div>
             </div>
           </Card>
         </div>
