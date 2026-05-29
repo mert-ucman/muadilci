@@ -221,7 +221,6 @@ export function ComparisonPage({ queryParams }) {
                     </div>
                   </div>
                 ))}
-                <div style={{ marginTop: '12px', fontSize: '13px', color: C.textMid, lineHeight: 1.6, fontStyle: 'italic', textAlign: 'center' }}>"{selOrig.description}"</div>
               </Card>
 
               <Card style={{ padding: '22px' }}>
