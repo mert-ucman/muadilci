@@ -45,7 +45,7 @@ export function ComparisonPage({ queryParams }) {
   const [profanityError, setProfanityError] = useState(false);
 
 
-  const origBrands = [...new Set(perfumes.map((p) => p.brandName))];
+  const origBrands = [...new Set(perfumes.map((p) => p.brandName))].sort((a, b) => a.localeCompare(b, 'tr'));
   const origFiltered = selOrigBrand ? perfumes.filter((p) => p.brandName === selOrigBrand) : perfumes;
   const selOrig = perfumes.find((p) => String(p.id) === String(selOrigId));
 
