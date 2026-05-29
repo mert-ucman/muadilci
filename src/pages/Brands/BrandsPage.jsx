@@ -26,8 +26,6 @@ const SORT_OPTIONS_ORIG = [
 const SORT_OPTIONS_MUADIL = [
   { value: 'az',            label: 'A → Z' },
   { value: 'za',            label: 'Z → A' },
-  { value: 'founded_asc',   label: 'Kuruluş Yılı (En Erken)' },
-  { value: 'founded_desc',  label: 'Kuruluş Yılı (En Geç)' },
   { value: 'perfumes_desc', label: 'Parfüm Sayısı (En Çok)' },
   { value: 'perfumes_asc',  label: 'Parfüm Sayısı (En Az)' },
   { value: 'likes_desc',    label: 'Beğeni Sayısı (En Çok)' },
@@ -93,6 +91,7 @@ export function BrandsPage() {
     return map;
   }, [perfumes]);
 
+  // Orijinal marka başına kaç muadil var (muadil tab'ında değil, orijinal tab'ında gösterilir)
   const muadilCountMap = useMemo(() => {
     const map = {};
     muadilPerfumes.forEach(m => {
@@ -101,6 +100,15 @@ export function BrandsPage() {
     });
     return map;
   }, [muadilPerfumes, perfumes]);
+
+  // Muadil marka başına kaç muadil ürün var (muadils koleksiyonundan)
+  const muadilBrandProductCount = useMemo(() => {
+    const map = {};
+    muadilPerfumes.forEach(m => {
+      if (m.brandId) map[m.brandId] = (map[m.brandId] || 0) + 1;
+    });
+    return map;
+  }, [muadilPerfumes]);
 
   // Muadil marka puanı: markaya ait tüm muadil parfümlerin overall ortalaması
   const brandScoreMap = useMemo(() => {
@@ -138,8 +146,12 @@ export function BrandsPage() {
         case 'za':            return b.name.localeCompare(a.name, 'tr');
         case 'founded_asc':   return (a.founded || 9999) - (b.founded || 9999);
         case 'founded_desc':  return (b.founded || 0) - (a.founded || 0);
-        case 'perfumes_desc': return (perfumeCountMap[b.id] || 0) - (perfumeCountMap[a.id] || 0);
-        case 'perfumes_asc':  return (perfumeCountMap[a.id] || 0) - (perfumeCountMap[b.id] || 0);
+        case 'perfumes_desc': return isOrig
+          ? (perfumeCountMap[b.id] || 0) - (perfumeCountMap[a.id] || 0)
+          : (muadilBrandProductCount[b.id] || 0) - (muadilBrandProductCount[a.id] || 0);
+        case 'perfumes_asc':  return isOrig
+          ? (perfumeCountMap[a.id] || 0) - (perfumeCountMap[b.id] || 0)
+          : (muadilBrandProductCount[a.id] || 0) - (muadilBrandProductCount[b.id] || 0);
         case 'origin_asc':    return (a.origin || '').localeCompare(b.origin || '', 'tr');
         case 'origin_desc':   return (b.origin || '').localeCompare(a.origin || '', 'tr');
         case 'likes_desc':    return (b.likes || 0) - (a.likes || 0);
@@ -151,7 +163,7 @@ export function BrandsPage() {
         default:              return 0;
       }
     });
-  }, [brands, tab, sort, perfumeCountMap, muadilCountMap, brandScoreMap, scoreFilter, searchQ]);
+  }, [brands, tab, sort, isOrig, perfumeCountMap, muadilCountMap, muadilBrandProductCount, brandScoreMap, scoreFilter, searchQ]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage   = Math.min(page, totalPages);
@@ -275,14 +287,14 @@ export function BrandsPage() {
                   </div>
                   <div style={{ paddingRight: '24px', minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: sm ? '14px' : '16px', color: C.navy, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{b.name}</div>
-                    <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
+                    <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin}{isOrig && b.founded ? ` · ${b.founded}` : ''}</div>
                   </div>
                 </div>
                 <div style={{ fontSize: '12px', color: C.textLight, paddingTop: '10px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span>♥ {(b.likes || 0).toLocaleString()}</span>
                   {isOrig && <span>{perfumeCountMap[b.id] || 0} parfüm</span>}
                   {isOrig && <span>{muadilCountMap[b.id] || 0} muadil</span>}
-                  {!isOrig && <span>{perfumeCountMap[b.id] || 0} parfüm</span>}
+                  {!isOrig && <span>{muadilBrandProductCount[b.id] || 0} parfüm</span>}
                   {!isOrig && (() => {
                     const sc = brandScoreMap[b.id];
                     return (
@@ -349,7 +361,7 @@ export function BrandsPage() {
             if (sort === pair[1]) return '↓';
             return null;
           };
-          const columns = ['Marka', 'Köken', 'Kuruluş', 'Parfüm', isOrig ? 'Muadil' : null, !isOrig ? 'Puan' : null, 'Favori', ''].filter(v => v !== null);
+          const columns = ['Marka', 'Köken', isOrig ? 'Kuruluş' : null, 'Parfüm', isOrig ? 'Muadil' : null, !isOrig ? 'Puan' : null, 'Favori', ''].filter(v => v !== null);
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
@@ -394,8 +406,8 @@ export function BrandsPage() {
                       </div>
                     </td>
                     <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.origin || '—'}</td>
-                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.founded || '—'}</td>
-                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{perfumeCountMap[b.id] || 0}</td>
+                    {isOrig && <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.founded || '—'}</td>}
+                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{isOrig ? (perfumeCountMap[b.id] || 0) : (muadilBrandProductCount[b.id] || 0)}</td>
                     {isOrig && <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{muadilCountMap[b.id] || 0}</td>}
                     {!isOrig && (() => {
                       const sc = brandScoreMap[b.id];

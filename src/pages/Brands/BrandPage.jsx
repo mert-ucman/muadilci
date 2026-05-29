@@ -19,6 +19,32 @@ function IconInstagram() {
     </svg>
   );
 }
+function PaginationBar({ page, totalPages, onPage, sm }) {
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1);
+
+  const withEllipsis = pages.reduce((acc, n, idx, arr) => {
+    if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
+    acc.push(n);
+    return acc;
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '20px', flexWrap: 'wrap' }}>
+      <button onClick={() => onPage(Math.max(1, page - 1))} disabled={page === 1}
+        style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: page === 1 ? C.textLight : C.text, cursor: page === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+      {withEllipsis.map((n, i) => n === '…' ? (
+        <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight }}>…</span>
+      ) : (
+        <button key={n} onClick={() => onPage(n)}
+          style={{ padding: '6px 11px', borderRadius: '8px', border: `1px solid ${n === page ? C.navy : C.border}`, background: n === page ? C.navy : C.card, color: n === page ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === page ? 700 : 400, fontFamily: F }}>{n}</button>
+      ))}
+      <button onClick={() => onPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
+        style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: page === totalPages ? C.textLight : C.text, cursor: page === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+    </div>
+  );
+}
+
 function IconGrid() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -47,6 +73,9 @@ export function BrandPage({ params }) {
   const [sortDir, setSortDir] = useState('az');
   const [listSortKey, setListSortKey] = useState('name');
   const [listSortDir, setListSortDir] = useState('asc');
+  const [searchQ, setSearchQ] = useState('');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 25;
 
   const brand = brands.find((b) => b.slug === params?.brandSlug);
   useSeo({
@@ -73,20 +102,29 @@ export function BrandPage({ params }) {
   }, [brand, isOrig, perfumes, muadilPerfumes]);
 
   const items = useMemo(() => {
-    if (!isOrig) return allItems;
-    let filtered = genderFilter
+    const q = searchQ.trim().toLowerCase();
+    let base = q
       ? allItems.filter((p) => {
+          const haystack = isOrig
+            ? (p.name || '').toLowerCase()
+            : [(p.name || ''), (p.targetPerfumeName || ''), (p.targetBrandName || '')].join(' ').toLowerCase();
+          return haystack.includes(q);
+        })
+      : allItems;
+    if (!isOrig) return base;
+    let filtered = genderFilter
+      ? base.filter((p) => {
           const g = (p.gender || '').toLowerCase();
           if (genderFilter === 'erkek') return g === 'erkek';
           if (genderFilter === 'kadin') return g === 'kadın';
           if (genderFilter === 'unisex') return g === 'unisex';
           return true;
         })
-      : allItems;
+      : base;
     return [...filtered].sort((a, b) =>
       sortDir === 'az' ? a.name.localeCompare(b.name, 'tr') : b.name.localeCompare(a.name, 'tr')
     );
-  }, [allItems, isOrig, genderFilter, sortDir]);
+  }, [allItems, isOrig, genderFilter, sortDir, searchQ]);
 
   const perfumeMuadilCount = useMemo(() => {
     const map = {};
@@ -125,7 +163,7 @@ export function BrandPage({ params }) {
     const active = genderFilter === field;
     return (
       <button
-        onClick={() => setGenderFilter(active ? null : field)}
+        onClick={() => { setGenderFilter(active ? null : field); setPage(1); }}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
@@ -170,7 +208,7 @@ export function BrandPage({ params }) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>{brand.origin} · {brand.founded}</span>
+                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>{brand.origin}{isOrig && brand.founded ? ` · ${brand.founded}` : ''}</span>
                 <Badge color={isOrig ? 'gold' : 'green'}>{isOrig ? 'Orijinal Marka' : 'Muadil Marka'}</Badge>
                 {isOrig && brand.category && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: brand.category === 'Niche' ? 'rgba(167,139,250,.25)' : 'rgba(147,197,253,.2)', color: brand.category === 'Niche' ? '#c4b5fd' : '#93c5fd', border: `1px solid ${brand.category === 'Niche' ? 'rgba(167,139,250,.4)' : 'rgba(147,197,253,.3)'}` }}>
@@ -268,13 +306,34 @@ export function BrandPage({ params }) {
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: sm ? '24px 16px' : '36px 32px' }}>
 
         {/* Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: C.navy, margin: 0 }}>
-            Parfümler
-            <span style={{ fontSize: '13px', fontWeight: 500, color: C.textLight, marginLeft: '8px' }}>({items.length})</span>
-          </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '18px' }}>
+          {/* Üst satır: başlık + görünüm toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: C.navy, margin: 0 }}>
+              Parfümler
+              <span style={{ fontSize: '13px', fontWeight: 500, color: C.textLight, marginLeft: '8px' }}>({items.length})</span>
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button style={btnStyle(view === 'grid')} onClick={() => setView('grid')} title="Izgara görünümü"><IconGrid /></button>
+              <button style={btnStyle(view === 'list')} onClick={() => setView('list')} title="Liste görünümü"><IconList /></button>
+            </div>
+          </div>
 
+          {/* Alt satır: arama + filtreler */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Arama kutusu */}
+            <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '320px' }}>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke={C.textLight} strokeWidth="2" strokeLinecap="round" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <circle cx="9" cy="9" r="7"/><line x1="16" y1="16" x2="12.5" y2="12.5"/>
+              </svg>
+              <input
+                value={searchQ}
+                onChange={(e) => { setSearchQ(e.target.value); setPage(1); }}
+                placeholder={isOrig ? 'Parfüm ara...' : 'Parfüm veya hedef ara...'}
+                style={{ width: '100%', boxSizing: 'border-box', height: '34px', paddingLeft: '32px', paddingRight: '10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, outline: 'none' }}
+              />
+            </div>
+
             {/* Cinsiyet filtresi — sadece orijinal markada */}
             {isOrig && (
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -284,25 +343,26 @@ export function BrandPage({ params }) {
               </div>
             )}
 
-            {/* Sıralama */}
+            {/* Sıralama — sadece orijinal */}
             {isOrig && (
-              <select value={sortDir} onChange={(e) => setSortDir(e.target.value)}
+              <select value={sortDir} onChange={(e) => { setSortDir(e.target.value); setPage(1); }}
                 style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none' }}>
                 <option value="az">A → Z</option>
                 <option value="za">Z → A</option>
               </select>
             )}
-
-            {/* Grid / Liste toggle */}
-            <button style={btnStyle(view === 'grid')} onClick={() => setView('grid')} title="Izgara görünümü"><IconGrid /></button>
-            <button style={btnStyle(view === 'list')} onClick={() => setView('list')} title="Liste görünümü"><IconList /></button>
           </div>
         </div>
 
         {/* Grid View */}
-        {view === 'grid' && (
+        {view === 'grid' && (() => {
+          const totalPages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+          const safePage = Math.min(page, totalPages);
+          const pageItems = items.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+          return (
+          <>
           <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(240px,1fr))', gap: '16px' }}>
-            {items.map((item) => {
+            {pageItems.map((item) => {
               const ms = !isOrig ? calcScores(item.id, comments) : null;
               const mCount = isOrig ? (perfumeMuadilCount[item.id] || 0) : null;
               const uid = user?.uid || user?.id;
@@ -351,7 +411,10 @@ export function BrandPage({ params }) {
             })}
             {!items.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: C.textLight }}>Seçilen filtreye uygun parfüm bulunamadı.</div>}
           </div>
-        )}
+          {totalPages > 1 && <PaginationBar page={safePage} totalPages={totalPages} onPage={(p) => { setPage(p); window.scrollTo({top:0,behavior:'smooth'}); }} sm={sm} />}
+          </>
+          );
+        })()}
 
         {/* List View */}
         {view === 'list' && (() => {
@@ -359,7 +422,7 @@ export function BrandPage({ params }) {
             ? [{ key: 'name', label: 'Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'muadil', label: 'Muadil' }]
             : [{ key: 'name', label: 'Parfüm' }, { key: 'target', label: 'Hedef Parfüm' }, { key: 'scent', label: 'Koku' }, { key: 'projection', label: 'Yayılım' }, { key: 'longevity', label: 'Kalıcılık' }, { key: 'score', label: 'Genel Puan' }];
 
-          const listItems = [...items].sort((a, b) => {
+          const allListItems = [...items].sort((a, b) => {
             let av, bv;
             if (listSortKey === 'name')       { av = a.name || ''; bv = b.name || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
             if (listSortKey === 'gender')     { av = a.gender || ''; bv = b.gender || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
@@ -371,7 +434,12 @@ export function BrandPage({ params }) {
             return 0;
           });
 
+          const totalPages = Math.max(1, Math.ceil(allListItems.length / PER_PAGE));
+          const safePage = Math.min(page, totalPages);
+          const listItems = allListItems.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
           return (
+          <>
           <Card style={{ overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <table style={{ width: '100%', minWidth: '520px', borderCollapse: 'collapse' }}>
@@ -456,8 +524,10 @@ export function BrandPage({ params }) {
               </tbody>
             </table>
             </div>
-            {!listItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Seçilen filtreye uygun parfüm bulunamadı.</div>}
+            {!allListItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Seçilen filtreye uygun parfüm bulunamadı.</div>}
           </Card>
+          {totalPages > 1 && <PaginationBar page={safePage} totalPages={totalPages} onPage={(p) => { setPage(p); window.scrollTo({top:0,behavior:'smooth'}); }} sm={sm} />}
+          </>
           );
         })()}
       </div>
