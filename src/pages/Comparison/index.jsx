@@ -106,8 +106,11 @@ export function ComparisonPage({ queryParams }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
       <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px', gap: '12px', flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, margin: 0 }}>Parfüm Karşılaştır</h1>
+        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
+        <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
+
+        {/* Selectors */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', minHeight: '30px' }}>
           {(selOrigBrand || selOrigId || selMuadilBrand || selMuadilId) && (
             <button
               onClick={() => { setSelOrigBrand(''); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }}
@@ -119,9 +122,6 @@ export function ComparisonPage({ queryParams }) {
             </button>
           )}
         </div>
-        <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
-
-        {/* Selectors */}
         <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
           <Card style={{ padding: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
