@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import {
   collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDoc, getDocs,
-  increment, writeBatch, where,
+  increment, writeBatch, where, arrayUnion, limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { deleteImageByUrl } from '@/lib/storage';
@@ -35,6 +35,7 @@ export function DataProvider({ children }) {
   const [sliderImages, setSliderImages] = useState([]);
   const [faviconUrl, setFaviconUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
 
   // ─── Real-time listeners ─────────────────────────────────────────────────
   useEffect(() => {
@@ -58,7 +59,7 @@ export function DataProvider({ children }) {
   useEffect(() => {
     const isStaff = user && (user.role === 'admin' || user.role === 'moderator');
     if (!isStaff) { setUsers([]); return; }
-    const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s).filter((u) => !u.deleted)));
+    const unsub = onSnapshot(col('users'), (s) => setUsers(snap2arr(s)));
     return () => unsub();
   }, [user?.uid, user?.role]);
 
@@ -165,8 +166,27 @@ export function DataProvider({ children }) {
       createdAt: serverTimestamp(),
     });
 
-    // muadil istatistiklerini güncelle
+    // Moderatör/admin'e anlık bildirim
     const muadilId = String(c.muadilPerfumeId ?? c.muadilId);
+    const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
+    try {
+      await addDoc(col('notifications'), {
+        type: 'new_review',
+        forStaff: true,
+        userId: null,
+        reviewId: ref.id,
+        muadilId,
+        muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+        authorName: user?.username ? `@${user.username}` : (user?.name ?? ''),
+        readBy: [],
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch (e) {
+      // bildirim hatası yorum gönderimini engellemesin
+    }
+
+    // muadil istatistiklerini güncelle
     const muadilSnap = await getDoc(docRef('muadils', muadilId));
     if (muadilSnap.exists()) {
       const data = muadilSnap.data();
@@ -180,8 +200,135 @@ export function DataProvider({ children }) {
     }
   };
 
-  const approveComment = async (id) => updateDoc(docRef('reviews', id), { status: 'approved' });
-  const rejectComment = async (id) => deleteDoc(docRef('reviews', id));
+  const approveComment = async (id) => {
+    const reviewSnap = await getDoc(docRef('reviews', id));
+    if (!reviewSnap.exists()) return;
+    const review = reviewSnap.data();
+
+    if (review.status === 'pending_update' && review.pendingUpdate) {
+      const { text, similarity, projection, longevity, recommend, submittedAt } = review.pendingUpdate;
+      await updateDoc(docRef('reviews', id), {
+        status: 'approved',
+        text, similarity, projection, longevity,
+        recommend: recommend ?? null,
+        pendingUpdate: null,
+        updatedAt: submittedAt ?? serverTimestamp(),
+      });
+    } else {
+      await updateDoc(docRef('reviews', id), { status: 'approved' });
+      if (review.userId && review.userId !== 'deleted') {
+        try {
+          const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          await addDoc(col('notifications'), {
+            type: 'review_approved',
+            forStaff: false,
+            userId: review.userId,
+            reviewId: id,
+            muadilId: review.muadilId || '',
+            muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            reviewCreatedAt: review.createdAt ?? null,
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+        } catch {
+          // bildirim hatası onayı engellemesin
+        }
+      }
+    }
+  };
+
+  const rejectComment = async (id) => {
+    const reviewSnap = await getDoc(docRef('reviews', id));
+    if (!reviewSnap.exists()) return;
+    const review = reviewSnap.data();
+    if (review.status === 'pending_update') {
+      await updateDoc(docRef('reviews', id), { status: 'approved', pendingUpdate: null });
+      if (review.userId && review.userId !== 'deleted') {
+        try {
+          const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          await addDoc(col('notifications'), {
+            type: 'review_rejected',
+            forStaff: false,
+            userId: review.userId,
+            reviewId: id,
+            muadilId: review.muadilId || '',
+            muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            reviewCreatedAt: review.createdAt ?? null,
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+        } catch {
+          // bildirim hatası reddi engellemesin
+        }
+      }
+    } else {
+      await deleteDoc(docRef('reviews', id));
+      if (review.userId && review.userId !== 'deleted') {
+        try {
+          const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          await addDoc(col('notifications'), {
+            type: 'review_rejected',
+            forStaff: false,
+            userId: review.userId,
+            reviewId: id,
+            muadilId: review.muadilId || '',
+            muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            reviewCreatedAt: review.createdAt ?? null,
+            read: false,
+            createdAt: serverTimestamp(),
+          });
+        } catch {
+          // bildirim hatası reddi engellemesin
+        }
+      }
+    }
+  };
+
+  const updateComment = async (id, data) => {
+    const reviewSnap = await getDoc(docRef('reviews', id));
+    if (!reviewSnap.exists()) return;
+    const review = reviewSnap.data();
+
+    if (review.status === 'pending') {
+      await updateDoc(docRef('reviews', id), {
+        text: data.text,
+        similarity: data.similarity,
+        projection: data.projection,
+        longevity: data.longevity,
+        recommend: data.recommend ?? null,
+      });
+    } else {
+      await updateDoc(docRef('reviews', id), {
+        status: 'pending_update',
+        pendingUpdate: {
+          text: data.text,
+          similarity: data.similarity,
+          projection: data.projection,
+          longevity: data.longevity,
+          recommend: data.recommend ?? null,
+          submittedAt: serverTimestamp(),
+        },
+      });
+      try {
+        const muadilId = review.muadilId || '';
+        const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
+        await addDoc(col('notifications'), {
+          type: 'review_updated',
+          forStaff: true,
+          userId: null,
+          reviewId: id,
+          muadilId,
+          muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+          authorName: user?.username ? `@${user.username}` : (user?.name ?? ''),
+          readBy: [],
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      } catch {
+        // bildirim hatası güncellemeyi engellemesin
+      }
+    }
+  };
 
   const deleteComment = async (id) => {
     const ref = docRef('reviews', id);
@@ -265,11 +412,90 @@ export function DataProvider({ children }) {
     // 4. users belgesine deleted flag ekle + usernames belgesini sil
     // (deleted flag: aynı e-postayla tekrar giriş yapılırsa oturum otomatik kapatılır)
     const b2 = writeBatch(db);
-    b2.set(docRef('users', id), { deleted: true }, { merge: true });
+    b2.set(docRef('users', id), { deleted: true, deletedAt: serverTimestamp() }, { merge: true });
     if (userData.username) {
       b2.delete(doc(db, 'usernames', userData.username));
     }
     await b2.commit();
+  };
+
+  // ─── Notifications ───────────────────────────────────────────────────────
+  const [notifPageSize, setNotifPageSize] = useState(20);
+  const [notifHasMore, setNotifHasMore] = useState(false);
+
+  useEffect(() => {
+    if (!user?.uid) { setNotifications([]); setNotifHasMore(false); return; }
+    const isStaff = user.role === 'admin' || user.role === 'moderator';
+    const unsubs = [];
+    let staffNotifs = [];
+    let userNotifs = [];
+    let staffMore = false;
+    let userMore = false;
+    const merge = () => {
+      const all = [...staffNotifs, ...userNotifs];
+      all.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+      setNotifications(all);
+      setNotifHasMore(staffMore || userMore);
+    };
+    if (isStaff) {
+      unsubs.push(onSnapshot(
+        query(col('notifications'), where('forStaff', '==', true), limit(notifPageSize)),
+        (s) => {
+          const raw = snap2arr(s);
+          staffMore = raw.length === notifPageSize;
+          staffNotifs = raw.filter((n) => !(n.clearedBy ?? []).includes(user.uid));
+          merge();
+        },
+        () => {}
+      ));
+    }
+    unsubs.push(onSnapshot(
+      query(col('notifications'), where('userId', '==', user.uid), limit(notifPageSize)),
+      (s) => {
+        userNotifs = snap2arr(s);
+        userMore = userNotifs.length === notifPageSize;
+        merge();
+      },
+      () => {}
+    ));
+    return () => unsubs.forEach((u) => u());
+  }, [user?.uid, user?.role, notifPageSize]);
+
+  const loadMoreNotifications = () => setNotifPageSize((p) => p + 20);
+
+  const unreadNotifCount = notifications.filter((n) => {
+    if (n.forStaff) return !(n.readBy ?? []).includes(user?.uid);
+    return !n.read;
+  }).length;
+
+  const markNotificationRead = async (id) => {
+    const notif = notifications.find((n) => n.id === id);
+    if (!notif) return;
+    if (notif.forStaff) {
+      await updateDoc(docRef('notifications', id), { readBy: arrayUnion(user.uid) });
+    } else {
+      await updateDoc(docRef('notifications', id), { read: true });
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    const unread = notifications.filter((n) => {
+      if (n.forStaff) return !(n.readBy ?? []).includes(user?.uid);
+      return !n.read;
+    });
+    await Promise.all(unread.map((n) => markNotificationRead(n.id)));
+  };
+
+  const clearAllNotifications = async () => {
+    const personal = notifications.filter((n) => !n.forStaff);
+    const staff    = notifications.filter((n) => n.forStaff);
+    await Promise.all([
+      ...personal.map((n) => deleteDoc(docRef('notifications', n.id))),
+      ...staff.map((n) => updateDoc(docRef('notifications', n.id), {
+        readBy: arrayUnion(user.uid),
+        clearedBy: arrayUnion(user.uid),
+      })),
+    ]);
   };
 
   // ─── Favorites ────────────────────────────────────────────────────────────
@@ -374,7 +600,10 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      addComment, approveComment, rejectComment, deleteComment,
+      notifications, unreadNotifCount, notifHasMore,
+      markNotificationRead, markAllNotificationsRead,
+      loadMoreNotifications, clearAllNotifications,
+      addComment, approveComment, rejectComment, deleteComment, updateComment,
       fetchReviewsByDateRange, adminDeleteReview, adminDeleteReviews,
       incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus,
       updateUser, deleteUser,

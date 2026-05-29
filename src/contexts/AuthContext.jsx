@@ -266,7 +266,13 @@ export function AuthProvider({ children }) {
   const loginWithGoogle = async () => {
     const cred = await signInWithPopup(auth, googleProvider);
     const userData = await fetchOrCreateUserDoc(cred.user);
-    setUser({ ...userData, uid: cred.user.uid });
+    if (!userData) { setUser(null); return; }
+    setUser({
+      ...userData,
+      uid: cred.user.uid,
+      emailVerified: true,
+      provider: 'google.com',
+    });
   };
 
   // E-posta doğrulama maili gönder

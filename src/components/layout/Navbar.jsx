@@ -8,20 +8,22 @@ import { C, F, FH } from '@/constants/theme';
 import logoDark from '@/img/logos/logo-dark-minified.png';
 import noImage from '@/img/no-image.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRightToBracket, faUserPlus, faBars } from '@fortawesome/free-solid-svg-icons';
+import { faRightToBracket, faUserPlus, faBars, faBell, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
-  const { perfumes, brands } = useData();
+  const { perfumes, brands, comments, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
   const { lg } = useW();
 
-  const [scrolled,    setScrolled]    = useState(false);
-  const [menuOpen,    setMenuOpen]    = useState(false);
-  const [mobileOpen,  setMobileOpen]  = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [searchOpen,  setSearchOpen]  = useState(false);
-  const [searchQ,     setSearchQ]     = useState('');
+  const [scrolled,       setScrolled]       = useState(false);
+  const [menuOpen,       setMenuOpen]       = useState(false);
+  const [mobileOpen,     setMobileOpen]     = useState(false);
+  const [drawerVisible,  setDrawerVisible]  = useState(false);
+  const [searchOpen,     setSearchOpen]     = useState(false);
+  const [searchQ,        setSearchQ]        = useState('');
+  const [notifOpen,      setNotifOpen]      = useState(false);
+  const [confirmClear,   setConfirmClear]   = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -29,13 +31,24 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!notifOpen) { setConfirmClear(false); return; }
+    const close = (e) => {
+      if (!e.target.closest('[data-notif-root]')) setNotifOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [notifOpen]);
+
+  const pendingCount = comments.filter((c) => c.status === 'pending' || c.status === 'pending_update').length;
+
   const navLinks = [
-    { l: 'Parfümler', u: '/parfumler' },
-    { l: 'Markalar',  u: '/markalar' },
+    { l: 'Parfümler',   u: '/parfumler' },
+    { l: 'Markalar',    u: '/markalar' },
     { l: 'Karşılaştır', u: '/karsilastir' },
-    { l: 'En İyiler', u: '/en-iyiler' },
+    { l: 'En İyiler',   u: '/en-iyiler' },
   ];
-  if (isMod)   navLinks.push({ l: 'Moderasyon', u: '/moderasyon' });
+  if (isMod)   navLinks.push({ l: 'Moderasyon', u: '/moderasyon', badge: pendingCount });
   if (isAdmin) navLinks.push({ l: 'Yönetim',    u: '/admin' });
 
   const searchItems = [
@@ -104,6 +117,18 @@ export function Navbar() {
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = C.textMid; }}
                   >
                     {link.l}
+                    {link.badge > 0 && (
+                      <span style={{
+                        position: 'absolute', top: '-2px', right: '2px',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        minWidth: '16px', height: '16px', borderRadius: '8px',
+                        background: C.gold, color: '#fff',
+                        fontSize: '9px', fontWeight: 700, padding: '0 4px',
+                        lineHeight: 1,
+                      }}>
+                        {link.badge > 99 ? '99+' : link.badge}
+                      </span>
+                    )}
                     {isActive && (
                       <span style={{
                         position: 'absolute', bottom: 0, left: '14px', right: '14px',
@@ -177,6 +202,151 @@ export function Navbar() {
                       "<strong>{searchQ}</strong>" için sonuç bulunamadı
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Desktop bildirim zili */}
+          {!lg && user && !isAdmin && (
+            <div data-notif-root style={{ position: 'relative' }}>
+              <button
+                onClick={() => { setNotifOpen(!notifOpen); setMenuOpen(false); if (!notifOpen && unreadNotifCount > 0) markAllNotificationsRead(); }}
+                style={{
+                  position: 'relative', background: 'none',
+                  border: `1px solid ${notifOpen ? C.gold : C.border}`,
+                  borderRadius: '8px', width: '36px', height: '36px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: notifOpen ? C.gold : C.textMid,
+                  transition: 'color 0.2s, border-color 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
+                onMouseLeave={e => { if (!notifOpen) { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; } }}
+              >
+                <FontAwesomeIcon icon={faBell} style={{ fontSize: '13px' }} />
+                {unreadNotifCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '-6px', right: '-6px',
+                    minWidth: '18px', height: '18px', borderRadius: '9px',
+                    background: C.gold, color: '#fff',
+                    fontSize: '11px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 4px', border: '2px solid #FAFAF8',
+                  }}>
+                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="fade-in" style={{
+                  position: 'absolute', right: 0, top: 'calc(100% + 6px)',
+                  background: C.card, border: `1px solid ${C.border}`,
+                  borderRadius: '12px', width: '320px',
+                  boxShadow: C.shadowMd, overflow: 'hidden', zIndex: 300,
+                  display: 'flex', flexDirection: 'column',
+                }}>
+                  <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '44px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: C.text, flexShrink: 0 }}>Bildirimler</span>
+                    {notifications.length > 0 && !confirmClear && (
+                      <button
+                        onClick={() => setConfirmClear(true)}
+                        style={{ background: 'none', border: 'none', fontSize: '11px', color: C.red, cursor: 'pointer', fontFamily: F, fontWeight: 600, flexShrink: 0 }}
+                      >
+                        Tümünü Temizle
+                      </button>
+                    )}
+                    {confirmClear && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end' }}>
+                        <span style={{ fontSize: '11px', color: C.red, fontWeight: 500 }}>Geri alınamaz!</span>
+                        <button
+                          onClick={() => { clearAllNotifications(); setConfirmClear(false); }}
+                          style={{ background: C.red, border: 'none', borderRadius: '5px', padding: '3px 8px', fontSize: '11px', fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}
+                        >
+                          Evet
+                        </button>
+                        <button
+                          onClick={() => setConfirmClear(false)}
+                          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '5px', padding: '3px 8px', fontSize: '11px', color: C.textMid, cursor: 'pointer', fontFamily: F }}
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    style={{ overflowY: 'auto', height: '280px' }}
+                    onScroll={(e) => {
+                      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                      if (scrollTop + clientHeight >= scrollHeight - 20 && notifHasMore) loadMoreNotifications();
+                    }}
+                  >
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '32px 16px', textAlign: 'center', color: C.textLight, fontSize: '13px' }}>
+                        Henüz bildirim yok
+                      </div>
+                    ) : notifications.map((n) => {
+                      const isUnread = n.forStaff ? !(n.readBy ?? []).includes(user.uid) : !n.read;
+                      return (
+                        <div
+                          key={n.id}
+                          onClick={() => { markNotificationRead(n.id); if (n.type === 'new_review') navigate('/moderasyon'); }}
+                          style={{
+                            padding: '11px 16px', cursor: 'pointer',
+                            borderBottom: `1px solid ${C.borderLight}`,
+                            background: isUnread ? C.goldBg : 'transparent',
+                            transition: 'background 0.15s',
+                            display: 'flex', alignItems: 'flex-start', gap: '10px',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
+                          onMouseLeave={e => e.currentTarget.style.background = isUnread ? C.goldBg : 'transparent'}
+                        >
+                          {n.type === 'review_approved' ? (
+                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <FontAwesomeIcon icon={faCheck} style={{ fontSize: '10px', color: C.green }} />
+                            </div>
+                          ) : n.type === 'review_rejected' ? (
+                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, background: C.redBg, border: `1px solid ${C.redBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <FontAwesomeIcon icon={faXmark} style={{ fontSize: '10px', color: C.red }} />
+                            </div>
+                          ) : (
+                            <div style={{
+                              width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0, marginTop: '5px',
+                              background: isUnread ? C.gold : 'transparent',
+                              border: isUnread ? 'none' : `1px solid ${C.border}`,
+                            }} />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '12px', fontWeight: isUnread ? 600 : 400, color: C.text, lineHeight: 1.5 }}>
+                              {n.type === 'new_review'
+                                ? `Yeni yorum: ${n.authorName}${n.muadilName ? ` — ${n.muadilName}` : ''}`
+                                : n.type === 'review_updated'
+                                ? `Yorum güncelleme: ${n.authorName}${n.muadilName ? ` — ${n.muadilName}` : ''}`
+                                : n.type === 'review_rejected'
+                                ? (() => {
+                                    const d = n.reviewCreatedAt?.seconds
+                                      ? new Date(n.reviewCreatedAt.seconds * 1000).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
+                                      : null;
+                                    return `${d ? `${d} tarihli` : ''} yorumunuz onaylanmadı${n.muadilName ? `: ${n.muadilName}` : ''}`.trim();
+                                  })()
+                                : (() => {
+                                    const d = n.reviewCreatedAt?.seconds
+                                      ? new Date(n.reviewCreatedAt.seconds * 1000).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })
+                                      : null;
+                                    return `${d ? `${d} tarihli` : ''} yorumunuz onaylandı${n.muadilName ? `: ${n.muadilName}` : ''}`.trim();
+                                  })()
+                              }
+                            </div>
+                            {n.createdAt?.seconds && (
+                              <div style={{ fontSize: '11px', color: C.textLight, marginTop: '2px' }}>
+                                {new Date(n.createdAt.seconds * 1000).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -332,8 +502,13 @@ export function Navbar() {
             <div style={{ flex: 1, padding: '10px 12px', overflowY: 'auto' }}>
               {navLinks.map(link => (
                 <button key={link.u} onClick={() => handleNav(link.u)}
-                  style={{ display: 'block', width: '100%', padding: '12px 14px', borderRadius: '8px', border: 'none', background: basePath === link.u ? C.goldBg : 'transparent', color: basePath === link.u ? C.gold : C.text, fontSize: '15px', fontWeight: basePath === link.u ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '2px' }}>
-                  {link.l}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '8px', border: 'none', background: basePath === link.u ? C.goldBg : 'transparent', color: basePath === link.u ? C.gold : C.text, fontSize: '15px', fontWeight: basePath === link.u ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '2px' }}>
+                  <span>{link.l}</span>
+                  {link.badge > 0 && (
+                    <span style={{ minWidth: '20px', height: '20px', borderRadius: '10px', background: C.gold, color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+                      {link.badge > 99 ? '99+' : link.badge}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

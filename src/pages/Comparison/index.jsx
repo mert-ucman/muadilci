@@ -20,7 +20,7 @@ export function ComparisonPage({ queryParams }) {
     description: 'Orijinal parfüm ile muadilini yan yana karşılaştır; koku benzerliği, kalıcılık ve yayılım puanlarını topluluk yorumlarıyla incele.',
   });
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, users, addComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
+  const { perfumes, muadilPerfumes, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
   const { user, isMod } = useAuth();
   const { w, sm, md, xs } = useW();
 
@@ -34,6 +34,7 @@ export function ComparisonPage({ queryParams }) {
   const [selMuadilId, setSelMuadilId] = useState(initMuadilId);
   const [muadilSortDir, setMuadilSortDir] = useState('desc');
   const [showCForm, setShowCForm] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [cSim, setCSim] = useState(5);
@@ -55,8 +56,11 @@ export function ComparisonPage({ queryParams }) {
   const selMuadil = selMuadilId ? matching.find((m) => String(m.id) === String(selMuadilId)) : undefined;
 
   const muadilComments = selMuadil
-    ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && (isMod || c.status === 'approved'))
+    ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && (isMod || c.status === 'approved' || c.status === 'pending_update' || (c.status === 'pending' && c.userId === user?.uid)))
     : [];
+  const userReview = selMuadil && user
+    ? comments.find((c) => c.muadilPerfumeId === selMuadil.id && c.userId === user.uid)
+    : null;
   const scores = selMuadil ? calcScores(selMuadil.id, comments) : { scent: null, projection: null, longevity: null, overall: null, count: 0 };
 
   // Tavsiye sayıları: onaylanmış yorumlardan hesapla
@@ -73,8 +77,25 @@ export function ComparisonPage({ queryParams }) {
       return;
     }
     setProfanityError(false);
-    addComment({ muadilPerfumeId: selMuadil.id, similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend, status: isMod ? 'approved' : 'pending' });
-    setCText(''); setCSim(5); setCProj(5); setCLon(5); setCRecommend(null); setShowCForm(false);
+    const data = { similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend };
+    if (isEditMode && userReview) {
+      updateComment(userReview.id, data);
+    } else {
+      addComment({ muadilPerfumeId: selMuadil.id, ...data, status: isMod ? 'approved' : 'pending' });
+    }
+    setCText(''); setCSim(5); setCProj(5); setCLon(5); setCRecommend(null);
+    setShowCForm(false); setIsEditMode(false);
+  };
+
+  const openEditForm = () => {
+    if (!userReview) return;
+    setCSim(userReview.similarity ?? 5);
+    setCProj(userReview.projection ?? 5);
+    setCLon(userReview.longevity ?? 5);
+    setCText(userReview.pendingUpdate?.text ?? userReview.text ?? '');
+    setCRecommend(userReview.recommend ?? null);
+    setIsEditMode(true);
+    setShowCForm(true);
   };
 
   const origBrandOpts = [{ value: '', label: 'Orijinal Marka Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
@@ -270,11 +291,13 @@ export function ComparisonPage({ queryParams }) {
             <Card style={{ padding: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
                 <span style={{ fontWeight: 700, fontSize: '16px', color: C.navy }}>Yorumlar ({muadilComments.length})</span>
-                {user && !showCForm && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
+                {user && !showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
+                {user && !showCForm && userReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
               </div>
 
               {showCForm && (
                 <div className="fade-in" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
+                  {isEditMode && <div style={{ fontSize: '13px', fontWeight: 700, color: C.gold, marginBottom: '12px' }}>Yorumunu Düzenle</div>}
                   <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                     {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
                       <div key={l}>
@@ -315,8 +338,8 @@ export function ComparisonPage({ queryParams }) {
                   </div>
                   {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <Btn variant="secondary" size="sm" onClick={() => { setShowCForm(false); setProfanityError(false); }}>İptal</Btn>
-                    <Btn size="sm" onClick={submitC} disabled={!cText.trim() || profanityError}>Gönder</Btn>
+                    <Btn variant="secondary" size="sm" onClick={() => { setShowCForm(false); setIsEditMode(false); setProfanityError(false); }}>İptal</Btn>
+                    <Btn size="sm" onClick={submitC} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
                   </div>
                 </div>
               )}
@@ -388,6 +411,7 @@ export function ComparisonPage({ queryParams }) {
                             </div>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                               {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
+                              {c.status === 'pending_update' && <Badge color="orange">Güncelleme Bekliyor</Badge>}
                               <span style={{ fontSize: '11px', color: C.textLight }}>{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
                               {!isDeleted && user?.uid === c.userId && (
                                 confirmDeleteId === c.id
@@ -424,7 +448,7 @@ export function ComparisonPage({ queryParams }) {
                           </div>
                         </div>
                       </div>
-                      <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{c.text}</p>
+                      <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text}</p>
                     </div>
                   );
                 })}

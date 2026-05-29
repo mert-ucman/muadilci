@@ -16,6 +16,7 @@ import { RegisterPage }      from '@/pages/Auth/RegisterPage';
 import { ForgotPasswordPage }        from '@/pages/Auth/ForgotPasswordPage';
 import { ResetPasswordPage }         from '@/pages/Auth/ResetPasswordPage';
 import { EmailVerificationPage }     from '@/pages/Auth/EmailVerificationPage';
+import { UsernameSetupPage }         from '@/pages/Auth/UsernameSetupPage';
 import { ProfilePage }       from '@/pages/Profile';
 import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
@@ -59,9 +60,14 @@ export function App() {
     </div>
   );
 
-  // E-posta doğrulama gate — admin, şifre sıfırlama sayfası hariç
-  if (user && !user.emailVerified && !isAdmin && basePath !== '/sifre-yenile') {
+  // E-posta doğrulama gate — Google kullanıcıları, admin ve şifre sıfırlama hariç
+  if (user && !user.emailVerified && user.provider !== 'google.com' && !isAdmin && basePath !== '/sifre-yenile') {
     return <EmailVerificationPage />;
+  }
+
+  // Google ile giriş yapan kullanıcılar için kullanıcı adı seçim ekranı
+  if (user && user.provider === 'google.com' && !user.username) {
+    return <UsernameSetupPage />;
   }
 
   // Route korumaları

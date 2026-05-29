@@ -486,6 +486,8 @@ export function AdminPanel() {
   const [sort, setSort] = useState({ key: '', dir: 'asc' });
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [userInput, setUserInput] = useState('');
+  const [userQuery, setUserQuery] = useState('');
   const [bulkDel, setBulkDel] = useState({ open: false, password: '', loading: false, error: '' });
 
   // ─── Tüm Yorumlar sekmesi ───────────────────────────────────────────────
@@ -747,6 +749,19 @@ export function AdminPanel() {
         {/* Dashboard */}
         {tab === 'dashboard' && (
           <div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+              <a
+                href="https://console.firebase.google.com/project/muadilci-890e4/analytics/overview"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '9px', background: '#FF6D00', color: '#fff', fontSize: '13px', fontWeight: 600, textDecoration: 'none', fontFamily: F, transition: 'opacity .15s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
+              >
+                <svg width="16" height="16" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 26L13.5 5l4.5 9.5L22 12l4 14H6z" fill="#fff" fillOpacity=".9"/></svg>
+                Firebase Analytics
+              </a>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '14px', marginBottom: '26px' }}>
               {stats.map((s) => (
                 <Card key={s.label} style={{ padding: '18px' }}>
@@ -758,6 +773,8 @@ export function AdminPanel() {
                 </Card>
               ))}
             </div>
+
+
 
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '18px' }}>
               <Card style={{ padding: '20px' }}>
@@ -775,44 +792,62 @@ export function AdminPanel() {
                   </div>
                 ))}
               </Card>
-              <Card style={{ padding: '20px' }}>
-                <h3 style={{ fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Bekleyen Yorumlar</h3>
-                {comments.filter((c) => c.status === 'pending').slice(0, 4).map((c) => (
-                  <div key={c.id} style={{ paddingBottom: '10px', marginBottom: '10px', borderBottom: `1px solid ${C.borderLight}` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>{c.userName}</span>
-                      <Badge color="orange">Bekliyor</Badge>
-                    </div>
-                    <p style={{ fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.text}</p>
-                  </div>
-                ))}
-                {!comments.filter((c) => c.status === 'pending').length && <div style={{ color: C.textLight, fontSize: '14px', textAlign: 'center', padding: '16px' }}>Bekleyen yorum yok ✓</div>}
-              </Card>
             </div>
           </div>
         )}
 
         {/* Users */}
         {tab === 'users' && (() => {
-          const q = search.toLowerCase();
-          const filtered = users.filter((u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || RL[u.role].toLowerCase().includes(q));
-          const sorted = applySort(filtered, (u, k) => ({ name: u.name, email: u.email, role: RL[u.role], active: u.active ? 'Aktif' : 'Dondurulmuş' })[k]);
+          const fmtTs = (ts) => ts?.toDate ? ts.toDate().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+          const allSorted = [...users].sort((a, b) => {
+            const ta = a.createdAt?.toDate?.() ?? new Date(0);
+            const tb = b.createdAt?.toDate?.() ?? new Date(0);
+            return tb - ta;
+          });
+          const q = userQuery.trim().toLowerCase();
+          const displayed = q
+            ? allSorted.filter((u) => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (RL[u.role] || '').toLowerCase().includes(q))
+            : allSorted.slice(0, 10);
+          const submitSearch = () => setUserQuery(userInput);
           return (
             <Card style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center' }}><span style={{ fontWeight: 700, color: C.navy }}>Kullanıcılar</span></div>
-              <SearchBar value={search} onChange={setSearch} placeholder="İsim, e-posta veya rol ara…" count={sorted.length} total={users.length} />
+              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <span style={{ fontWeight: 700, color: C.navy }}>
+                  Kullanıcılar
+                  <span style={{ fontWeight: 400, fontSize: '13px', color: C.textLight, marginLeft: '8px' }}>
+                    {q ? `${displayed.length} sonuç` : `Son ${displayed.length} üye`}
+                  </span>
+                </span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
+                      placeholder="İsim veya e-posta ara…"
+                      style={{ height: '34px', padding: '0 10px', paddingRight: userInput ? '60px' : '10px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, width: '220px' }}
+                    />
+                    {userInput && (
+                      <button onClick={() => { setUserInput(''); setUserQuery(''); }} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 4px' }}>Temizle</button>
+                    )}
+                  </div>
+                  <Btn size="sm" onClick={submitSearch}>Ara</Btn>
+                </div>
+              </div>
               <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
-                    <SortTh label="Kullanıcı" sortKey="name" sort={sort} onSort={toggleSort} />
-                    <SortTh label="E-posta" sortKey="email" sort={sort} onSort={toggleSort} />
-                    <SortTh label="Rol" sortKey="role" sort={sort} onSort={toggleSort} />
-                    <SortTh label="Durum" sortKey="active" sort={sort} onSort={toggleSort} />
+                    <th style={thBase}>Kullanıcı</th>
+                    <th style={thBase}>E-posta</th>
+                    <th style={thBase}>Rol</th>
+                    <th style={thBase}>Durum</th>
+                    <th style={thBase}>Üyelik Tarihi</th>
+                    <th style={thBase}>Silinme Tarihi</th>
                     <th style={thStyle}>İşlemler</th>
                   </tr></thead>
                   <tbody>
-                    {sorted.map((u) => (
-                      <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}` }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
+                    {displayed.map((u) => (
+                      <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, opacity: u.deleted ? 0.6 : 1 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                         <td style={tdStyle}>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
@@ -821,14 +856,21 @@ export function AdminPanel() {
                                 : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
                               }
                             </div>
-                            <button onClick={() => setSelUser(u)} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: F }}>{u.name}</button>
+                            <button onClick={() => setSelUser(u)} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: F }}>{u.name || '—'}</button>
                           </div>
                         </td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{u.email}</td>
-                        <td style={tdStyle}><Badge color={RC[u.role]}>{RL[u.role]}</Badge></td>
-                        <td style={tdStyle}><Badge color={u.role === 'admin' || u.active ? 'green' : 'red'}>{u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'}</Badge></td>
+                        <td style={tdStyle}><Badge color={RC[u.role] || 'gold'}>{RL[u.role] || u.role}</Badge></td>
                         <td style={tdStyle}>
-                          {u.role !== 'admin' && (
+                          {u.deleted
+                            ? <Badge color="gray">Silindi</Badge>
+                            : <Badge color={u.role === 'admin' || u.active ? 'green' : 'red'}>{u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'}</Badge>
+                          }
+                        </td>
+                        <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid, whiteSpace: 'nowrap' }}>{fmtTs(u.createdAt)}</td>
+                        <td style={{ ...tdStyle, fontSize: '12px', color: u.deletedAt ? '#e55' : C.textLight, whiteSpace: 'nowrap' }}>{fmtTs(u.deletedAt)}</td>
+                        <td style={tdStyle}>
+                          {u.role !== 'admin' && !u.deleted && (
                             sm ? (
                               <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => setUam({ open: true, user: u, step: 'actions', action: null, password: '', loading: false, error: '' })}>İşlem Yap</Btn>
                             ) : (
@@ -842,7 +884,7 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!sorted.length && <tr><td colSpan={5} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
+                    {!displayed.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
               </div>

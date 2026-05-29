@@ -66,14 +66,20 @@ service cloud.firestore {
                      && request.resource.data.status == 'pending'
                      && request.resource.data.userRole == userDoc().role
                      && request.auth.token.email_verified == true);
-      // Güncelleme: mod her şeyi; sahip yalnızca bekleyen yorumunu (durumu 'pending' kalmak
-      // şartıyla) düzenleyebilir; ya da hesap silinince anonimleştirme
+      // Güncelleme: mod her şeyi; sahip pending yorumunu düzenleyebilir ya da
+      // approved yorumunu pending_update'e geçirebilir; hesap silinince anonimleştirme
       allow update: if isMod()
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'pending'
                          && request.resource.data.status == 'pending')
+                     || (isOwner(resource.data.userId)
+                         && resource.data.status == 'approved'
+                         && request.resource.data.status == 'pending_update')
+                     || (isOwner(resource.data.userId)
+                         && resource.data.status == 'pending_update'
+                         && request.resource.data.status == 'pending_update')
                      || (isAuth() && resource.data.userId == request.auth.uid && request.resource.data.userId == 'deleted');
-      allow delete: if isMod();
+      allow delete: if isMod() || isOwner(resource.data.userId);
     }
 
     // ── Slider Images ─────────────────────────────────────────────────────
@@ -86,6 +92,27 @@ service cloud.firestore {
     match /settings/{docId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      // Okuma: kullanıcı kendi bildirimlerini; mod/admin staff bildirimlerini okur
+      allow read: if isAuth() && (
+        (resource.data.get('forStaff', false) == true && isMod()) ||
+        resource.data.userId == request.auth.uid
+      );
+      // Oluşturma: giriş yapmış herkes staff bildirimi oluşturabilir (yorum gönderimi);
+      // kullanıcıya özel bildirimi yalnızca mod/admin oluşturabilir
+      allow create: if isAuth() && (
+        request.resource.data.get('forStaff', false) == true || isMod()
+      );
+      // Güncelleme (okundu işareti / temizle): sahip veya mod/admin
+      allow update: if isAuth() && (
+        (resource.data.get('forStaff', false) == true && isMod()) ||
+        resource.data.userId == request.auth.uid
+      );
+      // Silme: yalnızca kişisel bildirim sahibi
+      allow delete: if isAuth() && resource.data.userId == request.auth.uid;
     }
   }
 }

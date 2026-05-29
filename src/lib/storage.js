@@ -1,5 +1,5 @@
 import { ref, uploadString, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from './firebase';
+import { storage, auth } from './firebase';
 
 const isRemoteUrl = (s) => typeof s === 'string' && (/^https?:\/\//.test(s) || s.startsWith('gs://'));
 
@@ -19,8 +19,66 @@ export async function uploadDataURL(dataURL, folder) {
   const ext = mime.split('/')[1].replace('jpeg', 'jpg').replace('svg+xml', 'svg');
   const path = `${folder}/${rand()}.${ext}`;
   const r = ref(storage, path);
-  await uploadString(r, dataURL, 'data_url');
+  await uploadString(r, dataURL, 'data_url', { contentType: mime, cacheControl: 'public, max-age=31536000' });
   return await getDownloadURL(r);
+}
+
+/**
+ * Firebase Storage download URL'inden dosya path'ini çıkarır.
+ * Örn: "https://firebasestorage.googleapis.com/v0/b/.../o/brands%2Fabc.jpg?..." → "brands/abc.jpg"
+ */
+function pathFromUrl(url) {
+  try {
+    const match = url.match(/\/o\/(.+?)(\?|$)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Verilen URL listesindeki Firebase Storage dosyalarının Cache-Control metadata'sını günceller.
+ * Firebase SDK yerine direkt fetch() kullanır — SDK'nın retry/backoff mantığı devre dışı kalır,
+ * arka plan sekmesinde de takılmaz. Tüm istekler paralel atılır, tek bir AbortController
+ * tüm istekleri 10 saniye sonra iptal eder.
+ * @param {string[]} urls
+ * @returns {Promise<number>} güncellenen dosya sayısı
+ */
+export async function fixCacheHeaders(urls) {
+  if (!auth.currentUser) return 0;
+  let idToken;
+  try { idToken = await auth.currentUser.getIdToken(); } catch { return 0; }
+
+  const bucket = storage.app.options.storageBucket;
+  const CACHE  = 'public, max-age=31536000';
+  const storageUrls = urls.filter((u) => u && u.includes('firebasestorage'));
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+
+  const results = await Promise.allSettled(
+    storageUrls.map(async (url) => {
+      const path = pathFromUrl(url);
+      if (!path) return false;
+      const encoded = path.split('/').map(encodeURIComponent).join('%2F');
+      const res = await fetch(
+        `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encoded}`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cacheControl: CACHE }),
+          signal: controller.signal,
+        },
+      );
+      return res.ok;
+    }),
+  );
+
+  clearTimeout(timer);
+  return results.filter((r) => r.status === 'fulfilled' && r.value === true).length;
 }
 
 /**

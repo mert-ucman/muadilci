@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { analytics } from '@/lib/firebase';
+import { logEvent } from 'firebase/analytics';
 
 const RouterCtx = createContext(null);
 
@@ -59,6 +61,10 @@ export function RouterProvider({ children }) {
     currentPathRef.current = to;
     setPath(to);
     window.scrollTo(0, 0);
+  }, [path]);
+
+  useEffect(() => {
+    try { logEvent(analytics, 'page_view', { page_path: path }); } catch { /* analytics devre dışı */ }
   }, [path]);
 
   const basePath = path.split('?')[0];

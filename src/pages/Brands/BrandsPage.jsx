@@ -270,7 +270,7 @@ export function BrandsPage() {
                   {isBrandFavorite(user?.uid || user?.id, b.id) ? '❤️' : '🤍'}
                 </button>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                  <div style={{ width: sm ? '38px' : '46px', height: sm ? '38px' : '46px', borderRadius: '50%', background: isOrig ? C.goldBg : C.greenBg, border: `1px solid ${isOrig ? C.goldBorder : C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: isOrig ? C.gold : C.green, flexShrink: 0, overflow: 'hidden' }}>
+                  <div style={{ width: sm ? '38px' : '46px', height: sm ? '38px' : '46px', borderRadius: '50%', background: isOrig ? C.goldBg : C.greenBg, border: `1px solid ${isOrig ? C.goldBorder : '#E2D088'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: isOrig ? C.gold : C.green, flexShrink: 0, overflow: 'hidden' }}>
                     <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ paddingRight: '24px', minWidth: 0 }}>
