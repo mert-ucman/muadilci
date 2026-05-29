@@ -132,7 +132,7 @@ export function PerfumeDetailPage({ params }) {
               <img src={perfume.images?.[0]?.src || noImage} alt={perfume.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ padding: '16px 18px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: C.navy, marginBottom: '3px', fontFamily: FH }}>{perfume.name}</div>
+              <div style={{ fontSize: '18px', fontWeight: 600, color: C.navy, marginBottom: '3px', fontFamily: "'Inter', sans-serif" }}>{perfume.name}</div>
               <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '12px' }}>{perfume.brandName}</div>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <GenderBadge gender={perfume.gender} />
@@ -145,7 +145,7 @@ export function PerfumeDetailPage({ params }) {
           </Card>
 
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: sm ? '18px' : '24px' }}>
-            <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 700, color: C.navy, marginBottom: '8px', fontFamily: FH, letterSpacing: '0.01em' }}>{perfume.name}</h1>
+            <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 600, color: C.navy, marginBottom: '8px', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}>{perfume.name}</h1>
             <div style={{ fontSize: '15px', color: C.textMid, marginBottom: '16px' }}>{perfume.brandName} · Est. {perfume.year}</div>
             <p style={{ fontSize: '15px', color: C.text, lineHeight: 1.7, marginBottom: '22px', fontStyle: 'italic' }}>"{perfume.description}"</p>
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Koku Notaları</h3>
@@ -201,7 +201,7 @@ export function PerfumeDetailPage({ params }) {
                     </button>
                   </div>
                   <div style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{m.name}</div>
+                    <div style={{ fontWeight: 400, fontSize: '15px', color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
                     <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '10px' }}>{m.brandName}</div>
                     <ScoreBar label="Koku Yakınlığı" value={ms.scent} empty={ms.scent === null} />
                     <ScoreBar label="Yayılım" value={ms.projection} empty={ms.projection === null} />
@@ -263,7 +263,7 @@ export function PerfumeDetailPage({ params }) {
                           <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0f0f0', overflow: 'hidden', flexShrink: 0 }}>
                             <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
-                          <span style={{ fontWeight: 700, fontSize: '14px', color: C.navy, fontFamily: FH }}>{m.name}</span>
+                          <span style={{ fontWeight: 400, fontSize: '14px', color: C.navy, fontFamily: "'Inter', sans-serif" }}>{m.name}</span>
                         </div>
                       </td>
                       {['scent', 'projection', 'longevity', 'overall'].map((k) => (

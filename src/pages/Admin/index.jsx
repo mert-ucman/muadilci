@@ -486,6 +486,9 @@ export function AdminPanel() {
   const [sort, setSort] = useState({ key: '', dir: 'asc' });
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [perfPage, setPerfPage] = useState(1);
+  const [muadilPage, setMuadilPage] = useState(1);
+  const PERF_PER_PAGE = 50;
   const [userInput, setUserInput] = useState('');
   const [userQuery, setUserQuery] = useState('');
   const [bulkDel, setBulkDel] = useState({ open: false, password: '', loading: false, error: '' });
@@ -527,7 +530,7 @@ export function AdminPanel() {
     closeRevDel();
   };
 
-  const setTab = (t) => { setTabRaw(t); setSort({ key: '', dir: 'asc' }); setSearch(''); setSelectedIds(new Set()); };
+  const setTab = (t) => { setTabRaw(t); setSort({ key: '', dir: 'asc' }); setSearch(''); setSelectedIds(new Set()); setPerfPage(1); setMuadilPage(1); };
 
   const toggleSelect = (id) => setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = (ids) => setSelectedIds((prev) => ids.every((id) => prev.has(id)) ? new Set() : new Set(ids));
@@ -977,6 +980,9 @@ export function AdminPanel() {
           const q = search.toLowerCase();
           const filtered = basePerfumes.filter((p) => !q || p.name.toLowerCase().includes(q) || p.brandName.toLowerCase().includes(q) || p.gender.toLowerCase().includes(q));
           const sorted = applySort(filtered, (p, k) => ({ name: p.name, brandName: p.brandName, gender: p.gender, muadilCount: p.muadilCount })[k]);
+          const totalPages = Math.ceil(sorted.length / PERF_PER_PAGE);
+          const safePage = Math.min(perfPage, totalPages || 1);
+          const pageItems = sorted.slice((safePage - 1) * PERF_PER_PAGE, safePage * PERF_PER_PAGE);
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -987,7 +993,7 @@ export function AdminPanel() {
               </div>
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Orijinal Parfümler</span></div>
-                <SearchBar value={search} onChange={setSearch} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
+                <SearchBar value={search} onChange={(v) => { setSearch(v); setPerfPage(1); }} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
@@ -1002,7 +1008,7 @@ export function AdminPanel() {
                     <th style={thStyle}>İşlem</th>
                   </tr></thead>
                   <tbody>
-                    {sorted.map((p) => (
+                    {pageItems.map((p) => (
                       <tr key={p.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(p.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(p.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(p.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
                         <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
@@ -1032,6 +1038,20 @@ export function AdminPanel() {
                   </tbody>
                 </table>
                 </div>
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${C.border}`, flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: C.textLight }}>{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <button onClick={() => setPerfPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => { if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…'); acc.push(n); return acc; }, []).map((n, i) => n === '…' ? (
+                        <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight, fontSize: '13px' }}>…</span>
+                      ) : (
+                        <button key={n} onClick={() => setPerfPage(n)} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+                      ))}
+                      <button onClick={() => setPerfPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+                    </div>
+                  </div>
+                )}
               </Card>
             </div>
           );
@@ -1043,6 +1063,9 @@ export function AdminPanel() {
           const q = search.toLowerCase();
           const filtered = baseMuadil.filter((m) => !q || m.name.toLowerCase().includes(q) || m.brandName.toLowerCase().includes(q) || m.targetPerfumeName.toLowerCase().includes(q) || m.targetBrandName.toLowerCase().includes(q));
           const sorted = applySort(filtered, (m, k) => ({ name: m.name, brandName: m.brandName, targetPerfumeName: `${m.targetBrandName} ${m.targetPerfumeName}`, overall: m.overall, commentCount: m.commentCount })[k]);
+          const totalPages = Math.ceil(sorted.length / PERF_PER_PAGE);
+          const safePage = Math.min(muadilPage, totalPages || 1);
+          const pageItems = sorted.slice((safePage - 1) * PERF_PER_PAGE, safePage * PERF_PER_PAGE);
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -1053,7 +1076,7 @@ export function AdminPanel() {
               </div>
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Muadil Parfümler</span></div>
-                <SearchBar value={search} onChange={setSearch} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
+                <SearchBar value={search} onChange={(v) => { setSearch(v); setMuadilPage(1); }} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse' }}>
                   <thead><tr style={{ background: '#f9f9fb' }}>
@@ -1068,7 +1091,7 @@ export function AdminPanel() {
                     <th style={thStyle}>İşlem</th>
                   </tr></thead>
                   <tbody>
-                    {sorted.map((m) => (
+                    {pageItems.map((m) => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(m.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(m.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(m.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelect(m.id)} /></td>
                         <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{m.name}</a></td>
@@ -1098,6 +1121,20 @@ export function AdminPanel() {
                   </tbody>
                 </table>
                 </div>
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${C.border}`, flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', color: C.textLight }}>{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
+                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <button onClick={() => setMuadilPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => { if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…'); acc.push(n); return acc; }, []).map((n, i) => n === '…' ? (
+                        <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight, fontSize: '13px' }}>…</span>
+                      ) : (
+                        <button key={n} onClick={() => setMuadilPage(n)} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+                      ))}
+                      <button onClick={() => setMuadilPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+                    </div>
+                  </div>
+                )}
               </Card>
             </div>
           );

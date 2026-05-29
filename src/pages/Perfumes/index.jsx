@@ -366,7 +366,7 @@ export function PerfumesPage() {
                     <img src={p.image || noImage} alt={p.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ padding: '12px 14px' }}>
-                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 800, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{p.name}</div>
+                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 400, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{p.name}</div>
                     <div style={{ fontSize: '12px', color: C.textMid, marginBottom: '8px' }}>{p.brandName} · {p.year}</div>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       <GenderBadge gender={p.gender} />
@@ -396,7 +396,7 @@ export function PerfumesPage() {
                     <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <div style={{ padding: '12px 14px' }}>
-                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 800, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{m.name}</div>
+                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 400, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
                     <div style={{ fontSize: '13px', color: C.green, fontWeight: 600, marginBottom: '2px' }}>{m.brandName}</div>
                     <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>→ {m.targetBrandName} {m.targetPerfumeName}</div>
                     <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -465,7 +465,7 @@ export function PerfumesPage() {
                           <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#f0f0f0', overflow: 'hidden', flexShrink: 0 }}>
                             <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
-                          <span style={{ fontWeight: 700, fontSize: '14px', color: C.navy, fontFamily: FH }}>{item.name}</span>
+                          <span style={{ fontWeight: 400, fontSize: '14px', color: C.navy, fontFamily: "'Inter', sans-serif" }}>{item.name}</span>
                         </div>
                       </td>
                       {/* Marka */}
