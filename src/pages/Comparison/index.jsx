@@ -106,7 +106,19 @@ export function ComparisonPage({ queryParams }) {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
       <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px', gap: '12px', flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, margin: 0 }}>Parfüm Karşılaştır</h1>
+          {(selOrigBrand || selOrigId || selMuadilBrand || selMuadilId) && (
+            <button
+              onClick={() => { setSelOrigBrand(''); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .15s', whiteSpace: 'nowrap' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.red; e.currentTarget.style.color = C.red; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>
+              Temizle
+            </button>
+          )}
+        </div>
         <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
 
         {/* Selectors */}
