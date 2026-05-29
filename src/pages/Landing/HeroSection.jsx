@@ -184,7 +184,7 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
 /* ── Main HeroSection ────────────────────────────────────────────────── */
 export function HeroSection() {
   const { navigate } = useRouter();
-  const { sliderImages, brands, perfumes, muadilPerfumes } = useData();
+  const { sliderImages, brands, perfumes, muadilPerfumes, loading } = useData();
   const { lg, xs } = useW();
 
   const [current, setCurrent] = useState(0);
@@ -205,6 +205,9 @@ export function HeroSection() {
     const t = setInterval(next, INTERVAL);
     return () => clearInterval(t);
   }, [total, paused, next]);
+
+  /* Still loading → render nothing to avoid white flash */
+  if (loading) return null;
 
   /* No slider images → editorial two-column layout */
   if (total === 0) {

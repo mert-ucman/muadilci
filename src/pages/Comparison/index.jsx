@@ -134,7 +134,7 @@ export function ComparisonPage({ queryParams }) {
             <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Muadil Parfüm</div>
             <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
               <div style={{ flex: 1 }}><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
+              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); if (selOrigId && id) window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${id}`); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
             </div>
           </Card>
         </div>
@@ -255,7 +255,12 @@ export function ComparisonPage({ queryParams }) {
                     .map(({ m, ms }) => {
                       const isSel = m.id === selMuadil.id;
                       return (
-                        <button key={m.id} onClick={() => setSelMuadilId(String(m.id))}
+                        <button key={m.id} onClick={() => {
+                              const newId = String(m.id);
+                              setSelMuadilId(newId);
+                              setSelMuadilBrand(m.brandName);
+                              window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${newId}`);
+                            }}
                           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', border: `1px solid ${isSel ? C.goldBorder : C.border}`, borderRadius: '10px', background: isSel ? C.goldBg : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: F, transition: 'all .15s' }}
                           onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = C.borderLight; }}
                           onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}>

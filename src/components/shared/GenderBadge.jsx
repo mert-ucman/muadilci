@@ -5,6 +5,7 @@ const GENDER_STYLE = {
 };
 
 export function GenderBadge({ gender }) {
+  if (!gender) return null;
   const s = GENDER_STYLE[gender] || { bg: '#f3f4f6', border: '#d1d5db', text: '#6b7280' };
   return (
     <span style={{
