@@ -14,6 +14,70 @@ import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumb
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
+function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel }) {
+  const [cSim, setCSim] = useState(initialValues?.sim ?? 5);
+  const [cProj, setCProj] = useState(initialValues?.proj ?? 5);
+  const [cLon, setCLon] = useState(initialValues?.lon ?? 5);
+  const [cText, setCText] = useState(initialValues?.text ?? '');
+  const [cRecommend, setCRecommend] = useState(initialValues?.recommend ?? null);
+  const [profanityError, setProfanityError] = useState(false);
+
+  const submit = () => {
+    if (!cText.trim()) return;
+    if (containsProfanity(cText)) { setProfanityError(true); return; }
+    onSubmit({ similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend });
+  };
+
+  return (
+    <div className="fade-in" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
+      {isEditMode && <div style={{ fontSize: '13px', fontWeight: 700, color: C.gold, marginBottom: '12px' }}>Yorumunu Düzenle</div>}
+      <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+        {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
+          <div key={l}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '13px', color: C.textMid }}>{l}</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: C.gold }}>{v}/10</span>
+            </div>
+            <input type="range" min="1" max="10" value={v} onChange={(e) => sv(Number(e.target.value))} style={{ width: '100%', accentColor: C.gold }} />
+          </div>
+        ))}
+      </div>
+      <textarea
+        value={cText}
+        onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); }}
+        placeholder="Deneyiminizi paylaşın..."
+        rows={3}
+        style={{ width: '100%', border: `1px solid ${profanityError ? C.red : C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: profanityError ? '6px' : '12px', boxSizing: 'border-box', transition: 'border-color .2s' }}
+      />
+      {profanityError && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', fontSize: '13px', color: C.red, fontWeight: 600 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '13px', color: C.textMid, fontWeight: 600 }}>Bu muadili tavsiye eder misiniz?</span>
+        <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
+          style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+          <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '15px' }} />
+        </button>
+        <button onClick={() => setCRecommend(cRecommend === false ? null : false)}
+          style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+          <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
+        </button>
+      </div>
+      <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
+        Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
+      </div>
+      {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
+        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
+      </div>
+    </div>
+  );
+}
+
 export function ComparisonPage({ queryParams }) {
   useSeo({
     title: 'Karşılaştır',
@@ -35,14 +99,9 @@ export function ComparisonPage({ queryParams }) {
   const [muadilSortDir, setMuadilSortDir] = useState('desc');
   const [showCForm, setShowCForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [editInitials, setEditInitials] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
-  const [cSim, setCSim] = useState(5);
-  const [cProj, setCProj] = useState(5);
-  const [cLon, setCLon] = useState(5);
-  const [cText, setCText] = useState('');
-  const [cRecommend, setCRecommend] = useState(null);
-  const [profanityError, setProfanityError] = useState(false);
 
 
   const origBrands = [...new Set(perfumes.map((p) => p.brandName))].sort((a, b) => a.localeCompare(b, 'tr'));
@@ -70,30 +129,25 @@ export function ComparisonPage({ queryParams }) {
   const recCount = approvedMuadilComments.filter((c) => c.recommend === true).length;
   const notRecCount = approvedMuadilComments.filter((c) => c.recommend === false).length;
 
-  const submitC = () => {
-    if (!cText.trim() || !user || !selMuadil) return;
-    if (containsProfanity(cText)) {
-      setProfanityError(true);
-      return;
-    }
-    setProfanityError(false);
-    const data = { similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend };
+  const submitC = (data) => {
+    if (!user || !selMuadil) return;
     if (isEditMode && userReview) {
       updateComment(userReview.id, data);
     } else {
       addComment({ muadilPerfumeId: selMuadil.id, ...data, status: isMod ? 'approved' : 'pending' });
     }
-    setCText(''); setCSim(5); setCProj(5); setCLon(5); setCRecommend(null);
-    setShowCForm(false); setIsEditMode(false);
+    setShowCForm(false); setIsEditMode(false); setEditInitials(null);
   };
 
   const openEditForm = () => {
     if (!userReview) return;
-    setCSim(userReview.similarity ?? 5);
-    setCProj(userReview.projection ?? 5);
-    setCLon(userReview.longevity ?? 5);
-    setCText(userReview.pendingUpdate?.text ?? userReview.text ?? '');
-    setCRecommend(userReview.recommend ?? null);
+    setEditInitials({
+      sim: userReview.similarity ?? 5,
+      proj: userReview.projection ?? 5,
+      lon: userReview.longevity ?? 5,
+      text: userReview.pendingUpdate?.text ?? userReview.text ?? '',
+      recommend: userReview.recommend ?? null,
+    });
     setIsEditMode(true);
     setShowCForm(true);
   };
@@ -312,52 +366,15 @@ export function ComparisonPage({ queryParams }) {
               </div>
 
               {showCForm && (
-                <div className="fade-in" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
-                  {isEditMode && <div style={{ fontSize: '13px', fontWeight: 700, color: C.gold, marginBottom: '12px' }}>Yorumunu Düzenle</div>}
-                  <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                    {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
-                      <div key={l}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '13px', color: C.textMid }}>{l}</span>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: C.gold }}>{v}/10</span>
-                        </div>
-                        <input type="range" min="1" max="10" value={v} onChange={(e) => sv(Number(e.target.value))} style={{ width: '100%', accentColor: C.gold }} />
-                      </div>
-                    ))}
-                  </div>
-                  <textarea
-                    value={cText}
-                    onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); }}
-                    placeholder="Deneyiminizi paylaşın..."
-                    rows={3}
-                    style={{ width: '100%', border: `1px solid ${profanityError ? C.red : C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: profanityError ? '6px' : '12px', boxSizing: 'border-box', transition: 'border-color .2s' }}
-                  />
-                  {profanityError && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', fontSize: '13px', color: C.red, fontWeight: 600 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '13px', color: C.textMid, fontWeight: 600 }}>Bu muadili tavsiye eder misiniz?</span>
-                    <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
-                      style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
-                      <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '15px' }} />
-                    </button>
-                    <button onClick={() => setCRecommend(cRecommend === false ? null : false)}
-                      style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
-                      <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
-                    </button>
-                  </div>
-                  <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
-                    ℹ️ Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
-                  </div>
-                  {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <Btn variant="secondary" size="sm" onClick={() => { setShowCForm(false); setIsEditMode(false); setProfanityError(false); }}>İptal</Btn>
-                    <Btn size="sm" onClick={submitC} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
-                  </div>
-                </div>
+                <CommentForm
+                  key={isEditMode ? 'edit' : 'new'}
+                  initialValues={editInitials}
+                  isEditMode={isEditMode}
+                  isMod={isMod}
+                  sm={sm}
+                  onSubmit={submitC}
+                  onCancel={() => { setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
+                />
               )}
 
               {!user && (

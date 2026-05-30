@@ -88,9 +88,17 @@ export function DataProvider({ children }) {
     await setDoc(ref, { ...p, id: ref.id, active: true, likes: 0, commentCount: 0, createdAt: serverTimestamp() });
   };
   const updatePerfume = async (id, d) => updateDoc(docRef('perfumes', id), d);
-  const deletePerfume = async (id) => {
+  const deletePerfume = async (id, withMuadils = false) => {
     const snap = await getDoc(docRef('perfumes', id));
     const urls = collectImageUrls(snap.exists() ? snap.data() : {});
+    if (withMuadils) {
+      const mSnaps = await getDocs(query(col('muadils'), where('targetPerfumeId', '==', id)));
+      await Promise.all(mSnaps.docs.map(async (mDoc) => {
+        const mUrls = collectImageUrls(mDoc.data());
+        await deleteDoc(mDoc.ref);
+        mUrls.forEach(deleteImageByUrl);
+      }));
+    }
     await deleteDoc(docRef('perfumes', id));
     urls.forEach(deleteImageByUrl);
   };

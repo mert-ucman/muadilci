@@ -35,18 +35,24 @@ function SortTh({ label, sortKey, sort, onSort }) {
 
 function SearchBar({ value, onChange, placeholder, count, total, deferred = false }) {
   const [local, setLocal] = useState(value);
+  const debounceRef = useRef(null);
 
-  // sync local when external value is cleared (e.g. tab switch resets search)
   useEffect(() => { if (value === '') setLocal(''); }, [value]);
 
   if (!deferred) {
+    const handleChange = (v) => {
+      setLocal(v);
+      clearTimeout(debounceRef.current);
+      if (!v) { onChange(''); return; }
+      debounceRef.current = setTimeout(() => onChange(v), 250);
+    };
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: `1px solid ${C.border}`, background: '#fafafa' }}>
         <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
           <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textLight }} width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', paddingLeft: '32px', paddingRight: value ? '60px' : '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }} />
-          {value && (
-            <button onClick={() => onChange('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 6px', borderRadius: '4px' }}>Temizle</button>
+          <input value={local} onChange={(e) => handleChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', paddingLeft: '32px', paddingRight: local ? '60px' : '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }} />
+          {local && (
+            <button onClick={() => handleChange('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 6px', borderRadius: '4px' }}>Temizle</button>
           )}
         </div>
         <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{count} / {total} kayıt</span>
@@ -1256,8 +1262,8 @@ export function AdminPanel() {
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
   const [openActionId, setOpenActionId] = useState(null);
-  const [uam, setUam] = useState({ open: false, user: null, step: 'actions', action: null, password: '', loading: false, error: '' });
-  const [iam, setIam] = useState({ open: false, item: null, itemType: null, step: 'actions', password: '', loading: false, error: '' });
+  const [uam, setUam] = useState({ open: false, user: null, step: 'actions', action: null, loading: false, error: '' });
+  const [iam, setIam] = useState({ open: false, item: null, itemType: null, step: 'actions', loading: false, error: '', withMuadils: false });
   const [sort, setSort] = useState({ key: '', dir: 'asc' });
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -1272,7 +1278,7 @@ export function AdminPanel() {
   const PERF_PER_PAGE = 50;
   const [userInput, setUserInput] = useState('');
   const [userQuery, setUserQuery] = useState('');
-  const [bulkDel, setBulkDel] = useState({ open: false, password: '', loading: false, error: '' });
+  const [bulkDel, setBulkDel] = useState({ open: false, loading: false, error: '' });
 
   // ─── Tüm Yorumlar sekmesi ───────────────────────────────────────────────
   const _today = new Date().toISOString().slice(0, 10);
@@ -1282,7 +1288,7 @@ export function AdminPanel() {
   const [revLoading, setRevLoading] = useState(false);
   const [revLoaded, setRevLoaded] = useState(false);
   const [revError, setRevError] = useState('');
-  const [revDel, setRevDel] = useState({ open: false, ids: [], password: '', loading: false, error: '' });
+  const [revDel, setRevDel] = useState({ open: false, ids: [], loading: false, error: '' });
 
   const loadReviews = async () => {
     setRevLoading(true); setRevError('');
@@ -1298,11 +1304,11 @@ export function AdminPanel() {
     }
   };
 
-  const openRevDel = (ids) => setRevDel({ open: true, ids, password: '', loading: false, error: '' });
-  const closeRevDel = () => setRevDel({ open: false, ids: [], password: '', loading: false, error: '' });
+  const openRevDel = (ids) => setRevDel({ open: true, ids, loading: false, error: '' });
+  const closeRevDel = () => setRevDel({ open: false, ids: [], loading: false, error: '' });
   const handleRevDelete = async () => {
     setRevDel((s) => ({ ...s, loading: true, error: '' }));
-    try { await reauthenticate(revDel.password); }
+    try { await reauthenticate(revDelPwRef.current?.value ?? ''); }
     catch { setRevDel((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
     await adminDeleteReviews(revDel.ids);
     const removed = new Set(revDel.ids);
@@ -1315,13 +1321,13 @@ export function AdminPanel() {
 
   const toggleSelect = (id) => setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const toggleAll = (ids) => setSelectedIds((prev) => ids.every((id) => prev.has(id)) ? new Set() : new Set(ids));
-  const openBulkDel = () => setBulkDel({ open: true, password: '', loading: false, error: '' });
-  const closeBulkDel = () => setBulkDel({ open: false, password: '', loading: false, error: '' });
+  const openBulkDel = () => setBulkDel({ open: true, loading: false, error: '' });
+  const closeBulkDel = () => setBulkDel({ open: false, loading: false, error: '' });
 
   const handleBulkDelete = async () => {
     setBulkDel((s) => ({ ...s, loading: true, error: '' }));
     try {
-      await reauthenticate(bulkDel.password);
+      await reauthenticate(bulkDelPwRef.current?.value ?? '');
     } catch {
       setBulkDel((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' }));
       return;
@@ -1334,23 +1340,23 @@ export function AdminPanel() {
     closeBulkDel();
   };
 
-  const closeIam = () => setIam({ open: false, item: null, itemType: null, step: 'actions', password: '', loading: false, error: '' });
-  const openIam = (item, itemType) => setIam({ open: true, item, itemType, step: 'actions', password: '', loading: false, error: '' });
+  const closeIam = () => setIam({ open: false, item: null, itemType: null, step: 'actions', loading: false, error: '', withMuadils: false });
+  const openIam = (item, itemType) => setIam({ open: true, item, itemType, step: 'actions', loading: false, error: '', withMuadils: false });
   const handleIamDelete = async () => {
     setIam((s) => ({ ...s, loading: true, error: '' }));
-    try { await reauthenticate(iam.password); } catch { setIam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+    try { await reauthenticate(iamPwRef.current?.value ?? ''); } catch { setIam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
     if (iam.itemType === 'brand') await deleteBrand(iam.item.id, iam.item.type);
-    else if (iam.itemType === 'perfume') await deletePerfume(iam.item.id);
+    else if (iam.itemType === 'perfume') await deletePerfume(iam.item.id, iam.withMuadils);
     else if (iam.itemType === 'muadil') await deleteMuadil(iam.item.id);
     closeIam();
   };
 
-  const closeUam = () => setUam({ open: false, user: null, step: 'actions', action: null, password: '', loading: false, error: '' });
-  const openUamConfirm = (action) => setUam((s) => ({ ...s, step: 'confirm', action, password: '', error: '' }));
+  const closeUam = () => setUam({ open: false, user: null, step: 'actions', action: null, loading: false, error: '' });
+  const openUamConfirm = (action) => setUam((s) => ({ ...s, step: 'confirm', action, error: '' }));
   const handleUamSubmit = async () => {
-    const { user: u, action, password } = uam;
+    const { user: u, action } = uam;
     setUam((s) => ({ ...s, loading: true, error: '' }));
-    try { await reauthenticate(password); } catch { setUam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+    try { await reauthenticate(uamPwRef.current?.value ?? ''); } catch { setUam((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
     if (action === 'mod') await updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' });
     else if (action === 'freeze') await updateUser(u.id, { active: !u.active });
     else if (action === 'delete') {
@@ -1381,7 +1387,12 @@ export function AdminPanel() {
   const [selPerf, setSelPerf] = useState(null);
   const [selMuadil, setSelMuadil] = useState(null);
   const [delTarget, setDelTarget] = useState(null);
-  const [delBrandPw, setDelBrandPw] = useState({ password: '', loading: false, error: '' });
+  const [delBrandPw, setDelBrandPw] = useState({ loading: false, error: '', withMuadils: false });
+  const iamPwRef = useRef(null);
+  const uamPwRef = useRef(null);
+  const bulkDelPwRef = useRef(null);
+  const revDelPwRef = useRef(null);
+  const delBrandPwRef = useRef(null);
   const [selBrand, setSelBrand] = useState(null);
 
   if (!isAdmin) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Erişim yetkisi yok.</div>;
@@ -1588,12 +1599,12 @@ export function AdminPanel() {
                         <td style={tdStyle}>
                           {u.role !== 'admin' && !u.deleted && (
                             sm ? (
-                              <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => setUam({ open: true, user: u, step: 'actions', action: null, password: '', loading: false, error: '' })}>İşlem Yap</Btn>
+                              <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => setUam({ open: true, user: u, step: 'actions', action: null, loading: false, error: '' })}>İşlem Yap</Btn>
                             ) : (
                               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                 <Btn size="sm" variant={u.role === 'moderator' ? 'orange' : 'navy'} onClick={() => updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' })}>{u.role === 'moderator' ? 'Mod. Al' : 'Mod. Ver'}</Btn>
                                 <Btn size="sm" variant={u.active ? 'danger' : 'success'} onClick={() => updateUser(u.id, { active: !u.active })}>{u.active ? 'Dondur' : 'Aktif Et'}</Btn>
-                                <Btn size="sm" variant="danger" onClick={() => setUam({ open: true, user: u, step: 'confirm', action: 'delete', password: '', loading: false, error: '' })}>Sil</Btn>
+                                <Btn size="sm" variant="danger" onClick={() => setUam({ open: true, user: u, step: 'confirm', action: 'delete', loading: false, error: '' })}>Sil</Btn>
                               </div>
                             )
                           )}
@@ -2020,28 +2031,44 @@ export function AdminPanel() {
               else if (iam.itemType === 'muadil') openEditMuadil(iam.item);
               closeIam();
             }}>Düzenle</Btn>
-            <Btn variant="danger" onClick={() => setIam((s) => ({ ...s, step: 'confirm', password: '', error: '' }))}>Sil</Btn>
+            <Btn variant="danger" onClick={() => setIam((s) => ({ ...s, step: 'confirm', error: '' }))}>Sil</Btn>
           </div>
         )}
         {iam.item && iam.step === 'confirm' && (
           <div>
             <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
               <strong>"{iam.item.name}"</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+              {iam.withMuadils && <><br /><strong>Dikkat:</strong> Bağlı bulunduğu muadillerle birlikte silinecektir.</>}
             </div>
+            {iam.itemType === 'perfume' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', padding: '10px 14px', background: iam.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${iam.withMuadils ? '#fecaca' : C.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: iam.withMuadils ? C.red : C.textMid, transition: 'all .15s' }}>
+                <input
+                  type="checkbox"
+                  checked={iam.withMuadils}
+                  onChange={(e) => {
+                    if (iamPwRef.current) iamPwRef.current.value = '';
+                    setIam((s) => ({ ...s, withMuadils: e.target.checked, error: '' }));
+                  }}
+                  style={{ width: '16px', height: '16px', accentColor: C.red, cursor: 'pointer', flexShrink: 0 }}
+                />
+                Bağlı muadil parfümleri de sil ({muadilPerfumes.filter((m) => String(m.targetPerfumeId) === String(iam.item.id)).length} adet)
+              </label>
+            )}
             <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
             <input
+              key={iam.item?.id + iam.withMuadils}
+              ref={iamPwRef}
               type="password"
-              value={iam.password}
-              onChange={(e) => setIam((s) => ({ ...s, password: e.target.value, error: '' }))}
-              onKeyDown={(e) => e.key === 'Enter' && !iam.loading && iam.password && handleIamDelete()}
+              onChange={() => { if (iam.error) setIam((s) => ({ ...s, error: '' })); }}
+              onKeyDown={(e) => e.key === 'Enter' && !iam.loading && handleIamDelete()}
               placeholder="Şifrenizi girin"
               autoFocus
               style={{ width: '100%', padding: '10px 14px', border: `1px solid ${iam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
             />
             {iam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{iam.error}</div>}
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-              <Btn variant="ghost" onClick={() => setIam((s) => ({ ...s, step: 'actions', password: '', error: '' }))} disabled={iam.loading}>Geri</Btn>
-              <Btn variant="danger" onClick={handleIamDelete} disabled={!iam.password || iam.loading}>
+              <Btn variant="ghost" onClick={() => setIam((s) => ({ ...s, step: 'actions', error: '' }))} disabled={iam.loading}>Geri</Btn>
+              <Btn variant="danger" onClick={handleIamDelete} disabled={iam.loading}>
                 {iam.loading ? 'Siliniyor…' : 'Evet, Sil'}
               </Btn>
             </div>
@@ -2071,17 +2098,18 @@ export function AdminPanel() {
             </div>
             <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
             <input
+              key={uam.user?.id + uam.action}
+              ref={uamPwRef}
               type="password"
-              value={uam.password}
-              onChange={(e) => setUam((s) => ({ ...s, password: e.target.value, error: '' }))}
-              onKeyDown={(e) => e.key === 'Enter' && !uam.loading && uam.password && handleUamSubmit()}
+              onChange={() => { if (uam.error) setUam((s) => ({ ...s, error: '' })); }}
+              onKeyDown={(e) => e.key === 'Enter' && !uam.loading && handleUamSubmit()}
               placeholder="Şifrenizi girin"
               autoFocus
               style={{ width: '100%', padding: '10px 14px', border: `1px solid ${uam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
             />
             {uam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{uam.error}</div>}
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-              <Btn variant={uam.action === 'delete' ? 'danger' : 'primary'} onClick={handleUamSubmit} disabled={!uam.password || uam.loading}>
+              <Btn variant={uam.action === 'delete' ? 'danger' : 'primary'} onClick={handleUamSubmit} disabled={uam.loading}>
                 {uam.loading ? 'İşleniyor…' : 'Onayla'}
               </Btn>
             </div>
@@ -2106,9 +2134,10 @@ export function AdminPanel() {
         </div>
         <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
         <input
+          key={bulkDel.open}
+          ref={bulkDelPwRef}
           type="password"
-          value={bulkDel.password}
-          onChange={(e) => setBulkDel((s) => ({ ...s, password: e.target.value, error: '' }))}
+          onChange={() => { if (bulkDel.error) setBulkDel((s) => ({ ...s, error: '' })); }}
           onKeyDown={(e) => e.key === 'Enter' && !bulkDel.loading && handleBulkDelete()}
           placeholder="Şifrenizi girin"
           autoFocus
@@ -2117,7 +2146,7 @@ export function AdminPanel() {
         {bulkDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{bulkDel.error}</div>}
         <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
           <Btn variant="ghost" onClick={closeBulkDel} disabled={bulkDel.loading}>İptal</Btn>
-          <Btn variant="danger" onClick={handleBulkDelete} disabled={!bulkDel.password || bulkDel.loading}>
+          <Btn variant="danger" onClick={handleBulkDelete} disabled={bulkDel.loading}>
             {bulkDel.loading ? 'Siliniyor…' : `${selectedIds.size} Kaydı Sil`}
           </Btn>
         </div>
@@ -2130,10 +2159,11 @@ export function AdminPanel() {
         </div>
         <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
         <input
+          key={revDel.open + revDel.ids.join()}
+          ref={revDelPwRef}
           type="password"
-          value={revDel.password}
-          onChange={(e) => setRevDel((s) => ({ ...s, password: e.target.value, error: '' }))}
-          onKeyDown={(e) => e.key === 'Enter' && !revDel.loading && revDel.password && handleRevDelete()}
+          onChange={() => { if (revDel.error) setRevDel((s) => ({ ...s, error: '' })); }}
+          onKeyDown={(e) => e.key === 'Enter' && !revDel.loading && handleRevDelete()}
           placeholder="Şifrenizi girin"
           autoFocus
           style={{ width: '100%', padding: '10px 14px', border: `1px solid ${revDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
@@ -2141,7 +2171,7 @@ export function AdminPanel() {
         {revDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{revDel.error}</div>}
         <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
           <Btn variant="ghost" onClick={closeRevDel} disabled={revDel.loading}>İptal</Btn>
-          <Btn variant="danger" onClick={handleRevDelete} disabled={!revDel.password || revDel.loading}>
+          <Btn variant="danger" onClick={handleRevDelete} disabled={revDel.loading}>
             {revDel.loading ? 'Siliniyor…' : `${revDel.ids.length} Yorumu Sil`}
           </Btn>
         </div>
@@ -2269,7 +2299,7 @@ export function AdminPanel() {
 
 
       {/* Silme Onay Modal */}
-      <Modal open={!!delTarget} onClose={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} title="Silme Onayı" width="400px">
+      <Modal open={!!delTarget} onClose={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false }); }} title="Silme Onayı" width="400px">
         {delTarget && (
           <div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
@@ -2277,24 +2307,26 @@ export function AdminPanel() {
                 <svg width="24" height="24" fill="none" stroke={C.red} strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </div>
               <div style={{ fontSize: '16px', fontWeight: 700, color: C.navy, marginBottom: '6px', textAlign: 'center' }}>Emin misiniz?</div>
-              <div style={{ fontSize: '14px', color: C.textMid, textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', color: C.textMid, textAlign: 'center', lineHeight: 1.6 }}>
                 <span style={{ fontWeight: 600, color: C.text }}>"{delTarget.name}"</span> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+                {delBrandPw.withMuadils && <><br /><span style={{ color: C.red, fontWeight: 700 }}>Dikkat:</span> Bağlı bulunduğu muadillerle birlikte silinecektir.</>}
               </div>
             </div>
             {delTarget.type === 'brand' ? (
               <>
                 <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
                 <input
+                  key={delTarget.id}
+                  ref={delBrandPwRef}
                   type="password"
-                  value={delBrandPw.password}
-                  onChange={(e) => setDelBrandPw((s) => ({ ...s, password: e.target.value, error: '' }))}
+                  onChange={() => { if (delBrandPw.error) setDelBrandPw((s) => ({ ...s, error: '' })); }}
                   onKeyDown={async (e) => {
-                    if (e.key !== 'Enter' || delBrandPw.loading || !delBrandPw.password) return;
+                    if (e.key !== 'Enter' || delBrandPw.loading) return;
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
-                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    try { await reauthenticate(delBrandPwRef.current?.value ?? ''); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
                     await deleteBrand(delTarget.id, delTarget.brandType);
                     setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
-                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                    setDelTarget(null); setDelBrandPw({ loading: false, error: '' });
                   }}
                   placeholder="Şifrenizi girin"
                   autoFocus
@@ -2302,31 +2334,46 @@ export function AdminPanel() {
                 />
                 {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
-                  <Btn variant="danger" disabled={!delBrandPw.password || delBrandPw.loading} onClick={async () => {
+                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
+                  <Btn variant="danger" disabled={delBrandPw.loading} onClick={async () => {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
-                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    try { await reauthenticate(delBrandPwRef.current?.value ?? ''); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
                     await deleteBrand(delTarget.id, delTarget.brandType);
                     setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
-                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                    setDelTarget(null); setDelBrandPw({ loading: false, error: '' });
                   }}>{delBrandPw.loading ? 'Siliniyor…' : 'Evet, Sil'}</Btn>
                 </div>
               </>
             ) : (
               <>
+                {delTarget.type === 'perfume' && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', padding: '10px 14px', background: delBrandPw.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${delBrandPw.withMuadils ? '#fecaca' : C.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: delBrandPw.withMuadils ? C.red : C.textMid, transition: 'all .15s' }}>
+                    <input
+                      type="checkbox"
+                      checked={delBrandPw.withMuadils}
+                      onChange={(e) => {
+                        if (delBrandPwRef.current) delBrandPwRef.current.value = '';
+                        setDelBrandPw((s) => ({ ...s, withMuadils: e.target.checked, error: '' }));
+                      }}
+                      style={{ width: '16px', height: '16px', accentColor: C.red, cursor: 'pointer', flexShrink: 0 }}
+                    />
+                    Bağlı muadil parfümleri de sil ({muadilPerfumes.filter((m) => String(m.targetPerfumeId) === String(delTarget.id)).length} adet)
+                  </label>
+                )}
                 <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
                 <input
+                  key={delTarget.id + delBrandPw.withMuadils}
+                  ref={delBrandPwRef}
                   type="password"
-                  value={delBrandPw.password}
-                  onChange={(e) => setDelBrandPw((s) => ({ ...s, password: e.target.value, error: '' }))}
+                  onChange={() => { if (delBrandPw.error) setDelBrandPw((s) => ({ ...s, error: '' })); }}
                   onKeyDown={async (e) => {
-                    if (e.key !== 'Enter' || delBrandPw.loading || !delBrandPw.password) return;
+                    if (e.key !== 'Enter' || delBrandPw.loading) return;
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
-                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
-                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id);
+                    try { await reauthenticate(delBrandPwRef.current?.value ?? ''); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id, delBrandPw.withMuadils);
                     else if (delTarget.type === 'muadil') await deleteMuadil(delTarget.id);
                     setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
-                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                    setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false });
                   }}
                   placeholder="Şifrenizi girin"
                   autoFocus
@@ -2334,14 +2381,14 @@ export function AdminPanel() {
                 />
                 {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
                 <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
-                  <Btn variant="danger" disabled={!delBrandPw.password || delBrandPw.loading} onClick={async () => {
+                  <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
+                  <Btn variant="danger" disabled={delBrandPw.loading} onClick={async () => {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
-                    try { await reauthenticate(delBrandPw.password); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
-                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id);
+                    try { await reauthenticate(delBrandPwRef.current?.value ?? ''); } catch { setDelBrandPw((s) => ({ ...s, loading: false, error: 'Şifre hatalı. Lütfen tekrar deneyin.' })); return; }
+                    if (delTarget.type === 'perfume') await deletePerfume(delTarget.id, delBrandPw.withMuadils);
                     else if (delTarget.type === 'muadil') await deleteMuadil(delTarget.id);
                     setSelectedIds((prev) => { const n = new Set(prev); n.delete(delTarget.id); return n; });
-                    setDelTarget(null); setDelBrandPw({ password: '', loading: false, error: '' });
+                    setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false });
                   }}>{delBrandPw.loading ? 'Siliniyor…' : 'Evet, Sil'}</Btn>
                 </div>
               </>

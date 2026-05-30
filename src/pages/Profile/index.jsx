@@ -69,6 +69,49 @@ function UsernameStatus({ status }) {
   return null;
 }
 
+function ProfileInfoForm({ user, onSave }) {
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState({ name: user?.name || '', bio: user?.bio || '' });
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveErr, setSaveErr] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const save = async () => {
+    setSaveLoading(true);
+    setSaveErr('');
+    try {
+      await onSave(form.name, form.bio);
+      setSaved(true);
+      setEdit(false);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setSaveErr('Kaydedilemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {saved && <div style={{ background: '#f0fff4', border: '1px solid #9ae6b4', borderRadius: '10px', padding: '11px 16px', color: '#276749', marginBottom: '14px', fontSize: '13px' }}>Bilgileriniz kaydedildi.</div>}
+      {saveErr && <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '11px 16px', color: '#c53030', marginBottom: '14px', fontSize: '13px' }}>{saveErr}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#1a202c' }}>Kişisel Bilgiler</h3>
+        {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
+      </div>
+      <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: toTitleCase(e.target.value) }))} disabled={!edit} />
+      <Input label="E-posta" type="email" value={user?.email || ''} disabled={true} />
+      <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} rows={3} disabled={!edit} />
+      {edit && (
+        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+          <Btn size="sm" onClick={save} disabled={saveLoading}>{saveLoading ? 'Kaydediliyor...' : 'Kaydet'}</Btn>
+          <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', bio: user?.bio || '' }); }}>İptal</Btn>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function ProfilePage({ queryParams }) {
   useSeo({ title: 'Profilim', noindex: true });
   const { user, logout, deleteAccount, updateProfilePhoto, deleteProfilePhoto, checkUsername, updateUsername } = useAuth();
@@ -79,11 +122,6 @@ export function ProfilePage({ queryParams }) {
 
   const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : 'info';
   const [tab, setTab] = useState(tabInit);
-  const [edit, setEdit] = useState(false);
-  const [form, setForm] = useState({ name: user?.name || '', email: user?.email || '', bio: user?.bio || '' });
-  const [saved, setSaved] = useState(false);
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [saveErr, setSaveErr] = useState('');
 
   // Kullanıcı adı düzenleme state'leri
   const [usernameEdit, setUsernameEdit] = useState(false);
@@ -97,7 +135,7 @@ export function ProfilePage({ queryParams }) {
   const [confirmDeleteCommentId, setConfirmDeleteCommentId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteErr, setDeleteErr] = useState('');
-  const [deletePass, setDeletePass] = useState('');
+  const deletePassRef = useRef(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoErr, setPhotoErr] = useState('');
   const [avatarHover, setAvatarHover] = useState(false);
@@ -135,21 +173,6 @@ export function ProfilePage({ queryParams }) {
   );
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
-
-  const save = async () => {
-    setSaveLoading(true);
-    setSaveErr('');
-    try {
-      await updateUser(user.uid, { name: form.name, bio: form.bio });
-      setSaved(true);
-      setEdit(false);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (e) {
-      setSaveErr('Kaydedilemedi. Lütfen tekrar deneyin.');
-    } finally {
-      setSaveLoading(false);
-    }
-  };
 
   const saveUsername = async () => {
     if (unStatus === 'same') { setUsernameEdit(false); return; }
@@ -223,11 +246,12 @@ export function ProfilePage({ queryParams }) {
   const isGoogleUser = user?.provider === 'google.com';
 
   const handleDeleteAccount = async () => {
-    if (!isGoogleUser && !deletePass) { setDeleteErr('Lütfen şifrenizi girin.'); return; }
+    const pw = deletePassRef.current?.value ?? '';
+    if (!isGoogleUser && !pw) { setDeleteErr('Lütfen şifrenizi girin.'); return; }
     setDeleteLoading(true);
     setDeleteErr('');
     try {
-      await deleteAccount(deletePass);
+      await deleteAccount(pw);
       navigate('/');
     } catch (e) {
       if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
@@ -299,7 +323,7 @@ export function ProfilePage({ queryParams }) {
       )}
 
       {/* Hesap silme onay modalı */}
-      <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); setDeletePass(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
+      <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
         <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff5f5', border: '2px solid #fc8181', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '24px' }}>⚠</div>
           <p style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Emin misiniz?</p>
@@ -312,10 +336,11 @@ export function ProfilePage({ queryParams }) {
             <div style={{ textAlign: 'left', marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.navy, marginBottom: '6px' }}>Onaylamak için şifrenizi girin</label>
               <input
+                key={showDeleteModal}
+                ref={deletePassRef}
                 type="password"
-                value={deletePass}
-                onChange={(e) => { setDeletePass(e.target.value); setDeleteErr(''); }}
-                onKeyDown={(e) => e.key === 'Enter' && !deleteLoading && deletePass && handleDeleteAccount()}
+                onChange={() => { if (deleteErr) setDeleteErr(''); }}
+                onKeyDown={(e) => e.key === 'Enter' && !deleteLoading && handleDeleteAccount()}
                 placeholder="Şifreniz"
                 autoFocus
                 style={{ width: '100%', padding: '10px 14px', border: `1px solid ${deleteErr ? '#fc8181' : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box' }}
@@ -336,8 +361,8 @@ export function ProfilePage({ queryParams }) {
             </div>
           )}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '6px' }}>
-            <Btn variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteErr(''); setDeletePass(''); }}>Vazgeç</Btn>
-            <Btn variant="danger" onClick={handleDeleteAccount} disabled={deleteLoading || (!isGoogleUser && !deletePass)}>
+            <Btn variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteErr(''); }}>Vazgeç</Btn>
+            <Btn variant="danger" onClick={handleDeleteAccount} disabled={deleteLoading}>
               {deleteLoading ? 'Siliniyor...' : 'Evet, Hesabımı Sil'}
             </Btn>
           </div>
@@ -407,83 +432,69 @@ export function ProfilePage({ queryParams }) {
 
         {tab === 'info' && (
           <div style={{ maxWidth: '480px' }}>
-            {saved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '11px 16px', color: C.green, marginBottom: '14px', fontSize: '13px' }}>Bilgileriniz kaydedildi.</div>}
-            {saveErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '11px 16px', color: C.red, marginBottom: '14px', fontSize: '13px' }}>{saveErr}</div>}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 800, color: C.navy }}>Kişisel Bilgiler</h3>
-              {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
-            </div>
-            <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm({ ...form, name: toTitleCase(e.target.value) })} disabled={!edit} />
-            <Input label="E-posta" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={true} />
-            <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} disabled={!edit} />
-            {edit && (
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <Btn size="sm" onClick={save} disabled={saveLoading}>{saveLoading ? 'Kaydediliyor...' : 'Kaydet'}</Btn>
-                <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', email: user?.email || '', bio: user?.bio || '' }); }}>İptal</Btn>
-              </div>
-            )}
+            <ProfileInfoForm user={user} onSave={(name, bio) => updateUser(user.uid, { name, bio })} />
 
-            {/* Kullanıcı Adı Bölümü */}
-            <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy }}>Kullanıcı Adı</h3>
-                {!usernameEdit && (
-                  <Btn variant="ghost" size="sm" onClick={() => { setUnErr(''); setNewUsername(user?.username || ''); setUnStatus(''); setUsernameEdit(true); }}>Değiştir</Btn>
-                )}
-              </div>
-              {unSaved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.green, marginBottom: '12px', fontSize: '13px' }}>Kullanıcı adı güncellendi. Tüm yorumlarınız yeni adınızla görünecek.</div>}
-              {unErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, marginBottom: '12px', fontSize: '13px' }}>⚠ {unErr}</div>}
-              {!usernameEdit ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '15px', color: C.textLight }}>@</span>
-                  <span style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{user?.username || <span style={{ color: C.textLight, fontStyle: 'italic', fontWeight: 400 }}>Henüz belirlenmedi</span>}</span>
+            {user.role !== 'admin' && (
+              <>
+                {/* Kullanıcı Adı Bölümü */}
+                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy }}>Kullanıcı Adı</h3>
+                    {!usernameEdit && (
+                      <Btn variant="ghost" size="sm" onClick={() => { setUnErr(''); setNewUsername(user?.username || ''); setUnStatus(''); setUsernameEdit(true); }}>Değiştir</Btn>
+                    )}
+                  </div>
+                  {unSaved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.green, marginBottom: '12px', fontSize: '13px' }}>Kullanıcı adı güncellendi. Tüm yorumlarınız yeni adınızla görünecek.</div>}
+                  {unErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, marginBottom: '12px', fontSize: '13px' }}>⚠ {unErr}</div>}
+                  {!usernameEdit ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '15px', color: C.textLight }}>@</span>
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{user?.username || <span style={{ color: C.textLight, fontStyle: 'italic', fontWeight: 400 }}>Henüz belirlenmedi</span>}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ position: 'relative', marginBottom: '4px' }}>
+                        <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#718096', pointerEvents: 'none' }}>@</span>
+                        <input
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
+                          maxLength={20}
+                          placeholder={user?.username || ''}
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            border: `1px solid ${unStatus === 'available' ? '#38a169' : unStatus === 'taken' || unStatus === 'invalid' || unStatus === 'reserved' ? '#fc8181' : '#e2e8f0'}`,
+                            borderRadius: '10px', padding: '10px 14px 10px 28px', fontSize: '14px',
+                            color: '#2d3748', outline: 'none',
+                          }}
+                        />
+                      </div>
+                      <UsernameStatus status={unStatus} />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <Btn size="sm" onClick={saveUsername} disabled={unLoading || (unStatus !== 'available' && unStatus !== 'same')}>
+                          {unLoading ? 'Kaydediliyor...' : 'Kaydet'}
+                        </Btn>
+                        <Btn variant="secondary" size="sm" onClick={() => { setUsernameEdit(false); setUnErr(''); setUnStatus(''); }}>İptal</Btn>
+                      </div>
+                      <p style={{ fontSize: '11px', color: '#718096', marginTop: '8px', lineHeight: 1.5 }}>
+                        Kullanıcı adınızı değiştirirseniz tüm yorumlarınız otomatik olarak yeni adınızla güncellenir.
+                      </p>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <>
-                  <div style={{ position: 'relative', marginBottom: '4px' }}>
-                    <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#718096', pointerEvents: 'none' }}>@</span>
-                    <input
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
-                      maxLength={20}
-                      placeholder={user?.username || ''}
-                      style={{
-                        width: '100%', boxSizing: 'border-box',
-                        border: `1px solid ${unStatus === 'available' ? '#38a169' : unStatus === 'taken' || unStatus === 'invalid' || unStatus === 'reserved' ? '#fc8181' : '#e2e8f0'}`,
-                        borderRadius: '10px', padding: '10px 14px 10px 28px', fontSize: '14px',
-                        color: '#2d3748', outline: 'none',
-                      }}
-                    />
-                  </div>
-                  <UsernameStatus status={unStatus} />
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                    <Btn
-                      size="sm"
-                      onClick={saveUsername}
-                      disabled={unLoading || (unStatus !== 'available' && unStatus !== 'same')}
-                    >
-                      {unLoading ? 'Kaydediliyor...' : 'Kaydet'}
-                    </Btn>
-                    <Btn variant="secondary" size="sm" onClick={() => { setUsernameEdit(false); setUnErr(''); setUnStatus(''); }}>İptal</Btn>
-                  </div>
-                  <p style={{ fontSize: '11px', color: '#718096', marginTop: '8px', lineHeight: 1.5 }}>
-                    Kullanıcı adınızı değiştirirseniz tüm yorumlarınız otomatik olarak yeni adınızla güncellenir.
-                  </p>
-                </>
-              )}
-            </div>
 
-            <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Şifre Değiştir</h3>
-              <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>
-            </div>
-            <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#c53030', marginBottom: '6px' }}>Tehlikeli Bölge</h3>
-              <p style={{ fontSize: '13px', color: C.textLight, marginBottom: '14px', lineHeight: 1.6 }}>
-                Hesabınızı kalıcı olarak silmek istiyorsanız aşağıdaki butona tıklayın. Bu işlem geri alınamaz.
-              </p>
-              <Btn variant="danger" onClick={() => setShowDeleteModal(true)}>Hesabımı Kalıcı Olarak Sil</Btn>
-            </div>
+                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Şifre Değiştir</h3>
+                  <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>
+                </div>
+                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#c53030', marginBottom: '6px' }}>Tehlikeli Bölge</h3>
+                  <p style={{ fontSize: '13px', color: C.textLight, marginBottom: '14px', lineHeight: 1.6 }}>
+                    Hesabınızı kalıcı olarak silmek istiyorsanız aşağıdaki butona tıklayın. Bu işlem geri alınamaz.
+                  </p>
+                  <Btn variant="danger" onClick={() => setShowDeleteModal(true)}>Hesabımı Kalıcı Olarak Sil</Btn>
+                </div>
+              </>
+            )}
           </div>
         )}
 
