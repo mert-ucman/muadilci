@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDoc, getDocs,
@@ -44,10 +44,17 @@ export function DataProvider({ children }) {
     const total = 4;
     const tryDone = () => { if (++resolved >= total) setLoading(false); };
 
+    // Brands: küçük koleksiyon, onSnapshot kalabilir
     unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => { setBrands(snap2arr(s)); tryDone(); }));
-    unsubs.push(onSnapshot(query(col('perfumes'), orderBy('name')), (s) => { setPerfumes(snap2arr(s)); tryDone(); }));
-    unsubs.push(onSnapshot(query(col('muadils'), orderBy('name')), (s) => { setMuadil(snap2arr(s)); tryDone(); }));
-    unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc')), (s) => { setComments(snap2arr(s)); tryDone(); }));
+
+    // Perfumes ve Muadils: büyük koleksiyonlar, yalnızca başlangıçta bir kez çekiliyor.
+    // Admin yazma işlemleri state'i manuel güncelliyor; real-time listener fatura şişirir.
+    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => { setPerfumes(snap2arr(s)); tryDone(); });
+    getDocs(query(col('muadils'), orderBy('name'))).then((s) => { setMuadil(snap2arr(s)); tryDone(); });
+
+    // Reviews: en son 200 yorum yeterli; geçmiş admin panelinden ayrıca çekiliyor
+    unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)), (s) => { setComments(snap2arr(s)); tryDone(); }));
+
     unsubs.push(onSnapshot(col('sliderImages'), (s) => setSliderImages(snap2arr(s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)))));
     unsubs.push(onSnapshot(doc(db, 'settings', 'site'), (s) => { if (s.exists()) setFaviconUrl(s.data().faviconUrl || ''); }));
 
@@ -73,21 +80,28 @@ export function DataProvider({ children }) {
     const batch = writeBatch(db);
     const childCol = type === 'muadil' ? 'muadils' : 'perfumes';
     const childSnap = await getDocs(query(col(childCol), where('brandId', '==', id)));
-    // Silinecek görselleri topla (marka logosu + alt parfüm görselleri)
     const brandSnap = await getDoc(docRef('brands', id));
     const urls = collectImageUrls(brandSnap.exists() ? brandSnap.data() : {});
-    childSnap.docs.forEach((d) => { urls.push(...collectImageUrls(d.data())); batch.delete(d.ref); });
+    const childIds = new Set();
+    childSnap.docs.forEach((d) => { urls.push(...collectImageUrls(d.data())); batch.delete(d.ref); childIds.add(d.id); });
     batch.delete(docRef('brands', id));
     await batch.commit();
-    urls.forEach(deleteImageByUrl); // Storage temizliği (best-effort)
+    urls.forEach(deleteImageByUrl);
+    if (type === 'muadil') setMuadil((prev) => prev.filter((m) => !childIds.has(m.id)));
+    else setPerfumes((prev) => prev.filter((p) => !childIds.has(p.id)));
   };
 
   // ─── Perfumes ─────────────────────────────────────────────────────────────
   const addPerfume = async (p) => {
     const ref = doc(col('perfumes'));
-    await setDoc(ref, { ...p, id: ref.id, active: true, likes: 0, commentCount: 0, createdAt: serverTimestamp() });
+    const data = { ...p, id: ref.id, active: true, likes: 0, commentCount: 0, createdAt: serverTimestamp() };
+    await setDoc(ref, data);
+    setPerfumes((prev) => [...prev, { ...data, createdAt: new Date() }].sort((a, b) => a.name.localeCompare(b.name, 'tr')));
   };
-  const updatePerfume = async (id, d) => updateDoc(docRef('perfumes', id), d);
+  const updatePerfume = async (id, d) => {
+    await updateDoc(docRef('perfumes', id), d);
+    setPerfumes((prev) => prev.map((p) => p.id === id ? { ...p, ...d } : p));
+  };
   const deletePerfume = async (id, withMuadils = false) => {
     const snap = await getDoc(docRef('perfumes', id));
     const urls = collectImageUrls(snap.exists() ? snap.data() : {});
@@ -98,31 +112,36 @@ export function DataProvider({ children }) {
         await deleteDoc(mDoc.ref);
         mUrls.forEach(deleteImageByUrl);
       }));
+      setMuadil((prev) => prev.filter((m) => String(m.targetPerfumeId) !== String(id)));
     }
     await deleteDoc(docRef('perfumes', id));
     urls.forEach(deleteImageByUrl);
+    setPerfumes((prev) => prev.filter((p) => p.id !== id));
   };
 
   // ─── Muadils ─────────────────────────────────────────────────────────────
   const addMuadil = async (m) => {
     const ref = doc(col('muadils'));
-    await setDoc(ref, {
-      ...m, id: ref.id, active: true,
-      avgSimilarity: 0, avgProjection: 0, avgLongevity: 0, reviewCount: 0,
-      createdAt: serverTimestamp(),
-    });
+    const data = { ...m, id: ref.id, active: true, avgSimilarity: 0, avgProjection: 0, avgLongevity: 0, reviewCount: 0, createdAt: serverTimestamp() };
+    await setDoc(ref, data);
+    setMuadil((prev) => [...prev, { ...data, createdAt: new Date() }].sort((a, b) => a.name.localeCompare(b.name, 'tr')));
   };
-  const updateMuadil = async (id, d) => updateDoc(docRef('muadils', id), d);
+  const updateMuadil = async (id, d) => {
+    await updateDoc(docRef('muadils', id), d);
+    setMuadil((prev) => prev.map((m) => m.id === id ? { ...m, ...d } : m));
+  };
   const deleteMuadil = async (id) => {
     const snap = await getDoc(docRef('muadils', id));
     const urls = collectImageUrls(snap.exists() ? snap.data() : {});
     await deleteDoc(docRef('muadils', id));
     urls.forEach(deleteImageByUrl);
+    setMuadil((prev) => prev.filter((m) => m.id !== id));
   };
 
   const incrementCompareCount = async (muadilId) => {
     if (!muadilId) return;
     await updateDoc(docRef('muadils', muadilId), { compareCount: increment(1) });
+    setMuadil((prev) => prev.map((m) => String(m.id) === String(muadilId) ? { ...m, compareCount: (m.compareCount ?? 0) + 1 } : m));
   };
 
   const toggleMuadilRecommend = async (userId, muadilId, isRecommend) => {
@@ -146,6 +165,7 @@ export function DataProvider({ children }) {
       newRec    = recBy.filter(u => u !== uid);
     }
     await updateDoc(ref, { recommendedBy: newRec, notRecommendedBy: newNotRec });
+    setMuadil((prev) => prev.map((m) => String(m.id) === String(muadilId) ? { ...m, recommendedBy: newRec, notRecommendedBy: newNotRec } : m));
   };
 
   const getMuadilRecommendStatus = (userId, muadilId) => {
@@ -159,7 +179,16 @@ export function DataProvider({ children }) {
   };
 
   // ─── Reviews / Comments ───────────────────────────────────────────────────
+  const lastCommentAt = useRef(0);
+  const COMMENT_COOLDOWN_MS = 30_000;
+
   const addComment = async (c) => {
+    const now = Date.now();
+    if (now - lastCommentAt.current < COMMENT_COOLDOWN_MS) {
+      const remaining = Math.ceil((COMMENT_COOLDOWN_MS - (now - lastCommentAt.current)) / 1000);
+      throw Object.assign(new Error(`Çok hızlı yorum gönderiyorsunuz. ${remaining} saniye bekleyin.`), { code: 'rate-limited', remaining });
+    }
+    lastCommentAt.current = now;
     const ref = doc(col('reviews'));
     await setDoc(ref, {
       ...c,
@@ -199,12 +228,14 @@ export function DataProvider({ children }) {
     if (muadilSnap.exists()) {
       const data = muadilSnap.data();
       const n = (data.reviewCount ?? 0) + 1;
-      await updateDoc(docRef('muadils', muadilId), {
+      const updates = {
         reviewCount: n,
         avgSimilarity: ((data.avgSimilarity ?? 0) * (n - 1) + c.similarity) / n,
         avgProjection: ((data.avgProjection ?? 0) * (n - 1) + c.projection) / n,
         avgLongevity: ((data.avgLongevity ?? 0) * (n - 1) + c.longevity) / n,
-      });
+      };
+      await updateDoc(docRef('muadils', muadilId), updates);
+      setMuadil((prev) => prev.map((m) => String(m.id) === muadilId ? { ...m, ...updates } : m));
     }
   };
 
@@ -349,7 +380,9 @@ export function DataProvider({ children }) {
     if (muadilId) {
       const mSnap = await getDoc(docRef('muadils', muadilId));
       if (mSnap.exists()) {
-        await updateDoc(docRef('muadils', muadilId), { reviewCount: Math.max(0, (mSnap.data().reviewCount ?? 1) - 1) });
+        const newCount = Math.max(0, (mSnap.data().reviewCount ?? 1) - 1);
+        await updateDoc(docRef('muadils', muadilId), { reviewCount: newCount });
+        setMuadil((prev) => prev.map((m) => String(m.id) === muadilId ? { ...m, reviewCount: newCount } : m));
       }
     }
   };
@@ -379,7 +412,9 @@ export function DataProvider({ children }) {
     if (muadilId) {
       const mSnap = await getDoc(docRef('muadils', muadilId));
       if (mSnap.exists()) {
-        await updateDoc(docRef('muadils', muadilId), { reviewCount: Math.max(0, (mSnap.data().reviewCount ?? 1) - 1) });
+        const newCount = Math.max(0, (mSnap.data().reviewCount ?? 1) - 1);
+        await updateDoc(docRef('muadils', muadilId), { reviewCount: newCount });
+        setMuadil((prev) => prev.map((m) => String(m.id) === muadilId ? { ...m, reviewCount: newCount } : m));
       }
     }
   };
@@ -546,6 +581,9 @@ export function DataProvider({ children }) {
     batch.update(ref, { [field]: next });
     if (targetCol) batch.update(docRef(targetCol, String(itemId)), { likes: increment(adding ? 1 : -1) });
     await batch.commit();
+    const delta = adding ? 1 : -1;
+    if (targetCol === 'perfumes') setPerfumes((prev) => prev.map((p) => String(p.id) === String(itemId) ? { ...p, likes: (p.likes ?? 0) + delta } : p));
+    else if (targetCol === 'muadils') setMuadil((prev) => prev.map((m) => String(m.id) === String(itemId) ? { ...m, likes: (m.likes ?? 0) + delta } : m));
   }, []);
 
   const toggleBrandFavorite = useCallback(makeFavToggle('favBrands', setBrandFavorites, 'brands'), [makeFavToggle]);

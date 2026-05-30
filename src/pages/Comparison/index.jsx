@@ -14,7 +14,7 @@ import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumb
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
-function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel }) {
+function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel, submitError }) {
   const [cSim, setCSim] = useState(initialValues?.sim ?? 5);
   const [cProj, setCProj] = useState(initialValues?.proj ?? 5);
   const [cLon, setCLon] = useState(initialValues?.lon ?? 5);
@@ -70,6 +70,7 @@ function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel 
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
       {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      {submitError && <div style={{ fontSize: '13px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>{submitError}</div>}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
         <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
@@ -100,6 +101,7 @@ export function ComparisonPage({ queryParams }) {
   const [showCForm, setShowCForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editInitials, setEditInitials] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
 
@@ -129,14 +131,19 @@ export function ComparisonPage({ queryParams }) {
   const recCount = approvedMuadilComments.filter((c) => c.recommend === true).length;
   const notRecCount = approvedMuadilComments.filter((c) => c.recommend === false).length;
 
-  const submitC = (data) => {
+  const submitC = async (data) => {
     if (!user || !selMuadil) return;
-    if (isEditMode && userReview) {
-      updateComment(userReview.id, data);
-    } else {
-      addComment({ muadilPerfumeId: selMuadil.id, ...data, status: isMod ? 'approved' : 'pending' });
+    setSubmitError('');
+    try {
+      if (isEditMode && userReview) {
+        await updateComment(userReview.id, data);
+      } else {
+        await addComment({ muadilPerfumeId: selMuadil.id, ...data, status: isMod ? 'approved' : 'pending' });
+      }
+      setShowCForm(false); setIsEditMode(false); setEditInitials(null);
+    } catch (e) {
+      if (e.code === 'rate-limited') setSubmitError(e.message);
     }
-    setShowCForm(false); setIsEditMode(false); setEditInitials(null);
   };
 
   const openEditForm = () => {
@@ -372,6 +379,7 @@ export function ComparisonPage({ queryParams }) {
                   isEditMode={isEditMode}
                   isMod={isMod}
                   sm={sm}
+                  submitError={submitError}
                   onSubmit={submitC}
                   onCancel={() => { setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
                 />
