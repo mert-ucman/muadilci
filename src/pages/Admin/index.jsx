@@ -993,6 +993,7 @@ function MergePerfRow({ p, side, muadilCountById }) {
 
 function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, results: res, groupedResults, onSel, selected, side, muadilCountById }) {
   const handleSel = (x) => { onSel(x); setQ(x.name); setOpen(false); };
+  const handleClear = () => { setQ(''); onSel(null); setOpen(false); };
   const hasGrouped = !!groupedResults;
   const hasItems = hasGrouped
     ? (groupedResults.sameBrand.length + groupedResults.others.length) > 0
@@ -1009,8 +1010,11 @@ function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, 
             onChange={(e) => { setQ(e.target.value); setOpen(true); if (!e.target.value) onSel(null); }}
             onFocus={() => { if (q) setOpen(true); }}
             placeholder="Parfüm adı veya marka ara…"
-            style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '32px', height: '38px', border: `1.5px solid ${selected ? (side === 'src' ? '#fca5a5' : '#86efac') : C.border}`, borderRadius: '9px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F }}
+            style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '32px', paddingRight: q ? '32px' : '10px', height: '38px', border: `1.5px solid ${selected ? (side === 'src' ? '#fca5a5' : '#86efac') : C.border}`, borderRadius: '9px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F }}
           />
+          {q && (
+            <button onClick={handleClear} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: '2px', display: 'flex', alignItems: 'center' }}>×</button>
+          )}
         </div>
         {selected && <MergePerfRow p={selected} side={side} muadilCountById={muadilCountById} />}
         {open && hasItems && (
