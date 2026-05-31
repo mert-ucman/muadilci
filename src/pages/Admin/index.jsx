@@ -89,6 +89,25 @@ function SearchBar({ value, onChange, placeholder, count, total, deferred = fals
   );
 }
 
+function CopyBtn({ text, title = 'Kopyala', variant = 'default' }) {
+  const [copied, setCopied] = useState(false);
+  const colors = variant === 'brand'
+    ? { border: '#bfdbfe', bg: '#eff6ff', color: '#3b82f6', copiedBorder: '#86efac', copiedBg: '#f0fdf4', copiedColor: '#16a34a' }
+    : { border: '#e5e7eb', bg: '#fafafa', color: '#9ca3af', copiedBorder: '#86efac', copiedBg: '#f0fdf4', copiedColor: '#16a34a' };
+  return (
+    <button
+      title={title}
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${copied ? colors.copiedBorder : colors.border}`, background: copied ? colors.copiedBg : colors.bg, color: copied ? colors.copiedColor : colors.color, cursor: 'pointer', transition: 'all .15s', flexShrink: 0 }}
+    >
+      {copied
+        ? <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        : <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      }
+    </button>
+  );
+}
+
 const TABS = [
   { k: 'dashboard', l: 'Genel Bakış' },
   { k: 'users', l: 'Kullanıcılar' },
@@ -972,7 +991,13 @@ function MergePerfRow({ p, side, muadilCountById }) {
   );
 }
 
-function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, results: res, onSel, selected, side, muadilCountById }) {
+function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, results: res, groupedResults, onSel, selected, side, muadilCountById }) {
+  const handleSel = (x) => { onSel(x); setQ(x.name); setOpen(false); };
+  const hasGrouped = !!groupedResults;
+  const hasItems = hasGrouped
+    ? (groupedResults.sameBrand.length + groupedResults.others.length) > 0
+    : res?.length > 0;
+
   return (
     <div>
       <div style={{ fontSize: '12px', fontWeight: 700, color: labelColor, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '6px' }}>{label}</div>
@@ -988,9 +1013,30 @@ function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, 
           />
         </div>
         {selected && <MergePerfRow p={selected} side={side} muadilCountById={muadilCountById} />}
-        {open && res.length > 0 && (
+        {open && hasItems && (
           <div style={{ position: 'absolute', top: '42px', left: 0, right: 0, background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,.12)', zIndex: 200, overflow: 'hidden' }}>
-            {res.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={(x) => { onSel(x); setQ(x.name); setOpen(false); }} />)}
+            {hasGrouped ? (
+              <>
+                {groupedResults.sameBrand.length > 0 && (
+                  <>
+                    <div style={{ padding: '5px 12px 3px', fontSize: '10px', fontWeight: 700, color: C.gold, textTransform: 'uppercase', letterSpacing: '.07em', background: C.goldBg, borderBottom: `1px solid ${C.goldBorder}` }}>
+                      Aynı Marka
+                    </div>
+                    {groupedResults.sameBrand.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={handleSel} />)}
+                  </>
+                )}
+                {groupedResults.others.length > 0 && (
+                  <>
+                    <div style={{ padding: '5px 12px 3px', fontSize: '10px', fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '.07em', background: '#fff5f5', borderBottom: `1px solid #fecaca`, borderTop: groupedResults.sameBrand.length > 0 ? `1px solid #fecaca` : 'none' }}>
+                      Diğer Markalar
+                    </div>
+                    {groupedResults.others.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={handleSel} />)}
+                  </>
+                )}
+              </>
+            ) : (
+              res.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={handleSel} />)
+            )}
           </div>
         )}
       </div>
@@ -998,7 +1044,7 @@ function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, 
   );
 }
 
-function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, setRunning, progress, setProgress, results, setResults }) {
+function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, setRunning, progress, setProgress, results, setResults, onRefresh }) {
   const [srcQ, setSrcQ] = useState('');
   const [tgtQ, setTgtQ] = useState('');
   const [source, setSource] = useState(null);
@@ -1039,7 +1085,25 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
   };
 
   const srcResults = useMemo(() => filterPerfs(srcQ), [srcQ, perfumes]);
-  const tgtResults = useMemo(() => filterPerfs(tgtQ), [tgtQ, perfumes]);
+
+  const tgtResults = useMemo(() => {
+    if (!tgtQ.trim()) return { sameBrand: [], others: [] };
+    const lq = normQ(tgtQ);
+    const matches = perfumes
+      .filter((p) => normQ(p.name).includes(lq) || normQ(p.brandName).includes(lq))
+      .sort((a, b) => {
+        const aS = normQ(a.name).startsWith(lq) ? 0 : 1;
+        const bS = normQ(b.name).startsWith(lq) ? 0 : 1;
+        return aS - bS || a.name.localeCompare(b.name, 'tr');
+      });
+    if (source) {
+      const sameBrand = matches.filter((p) => p.brandName === source.brandName).slice(0, 6);
+      const sameBrandIds = new Set(sameBrand.map((p) => p.id));
+      const others = matches.filter((p) => !sameBrandIds.has(p.id)).slice(0, 6);
+      return { sameBrand, others };
+    }
+    return { sameBrand: [], others: matches.slice(0, 8) };
+  }, [tgtQ, perfumes, source]);
 
   const selectSrc = (p) => { setSource(p); setSrcQ(p.name); setSrcOpen(false); };
   const selectTgt = (p) => { setTarget(p); setTgtQ(p.name); setTgtOpen(false); };
@@ -1053,12 +1117,17 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
 
   const removePair = (id) => setPairs((prev) => prev.filter((p) => p.id !== id));
 
+  const [undoData, setUndoData] = useState(null);
+  const [undoing, setUndoing] = useState(false);
+
   const runMerges = async () => {
     if (!pairs.length) return;
     setRunning(true);
     setProgress({ done: 0, total: pairs.length });
     setResults(null);
+    setUndoData(null);
     const res = [];
+    const undoList = [];
 
     for (let i = 0; i < pairs.length; i++) {
       const { source: src, target: tgt } = pairs[i];
@@ -1069,9 +1138,19 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
 
         const batch = writeBatch(db);
         let moved = 0, skipped = 0;
+        const movedIds = [];
+        const deletedMuadils = [];
+
         mSnap.docs.forEach((d) => {
-          if (existingBrands.has(d.data().brandId)) { batch.delete(d.ref); skipped++; }
-          else { batch.update(d.ref, { targetPerfumeId: tgt.id, targetPerfumeName: tgt.name, targetBrandName: tgt.brandName, name: `${tgt.brandName} ${tgt.name} Benzeri` }); moved++; }
+          if (existingBrands.has(d.data().brandId)) {
+            deletedMuadils.push({ id: d.id, ...d.data() });
+            batch.delete(d.ref);
+            skipped++;
+          } else {
+            movedIds.push(d.id);
+            batch.update(d.ref, { targetPerfumeId: tgt.id, targetPerfumeName: tgt.name, targetBrandName: tgt.brandName, name: `${tgt.brandName} ${tgt.name} Benzeri` });
+            moved++;
+          }
         });
 
         const tgtUpdates = {};
@@ -1086,6 +1165,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
         batch.delete(doc(db, 'perfumes', src.id));
         await batch.commit();
         res.push({ source: src, target: tgt, status: 'ok', moved, skipped, inherited: Object.keys(tgtUpdates) });
+        undoList.push({ source: src, target: tgt, tgtUpdates, movedIds, deletedMuadils });
       } catch (e) {
         res.push({ source: src, target: tgt, status: 'error', error: e.message });
       }
@@ -1093,9 +1173,56 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
     }
 
     setResults(res);
+    setUndoData(undoList.length > 0 ? undoList : null);
     setRunning(false);
     const failedSrcIds = new Set(res.filter((r) => r.status === 'error').map((r) => r.source.id));
     setPairs((prev) => prev.filter((p) => failedSrcIds.has(p.source.id)));
+    if (onRefresh) onRefresh();
+  };
+
+  const handleUndo = async () => {
+    if (!undoData?.length) return;
+    setUndoing(true);
+    try {
+      for (const { source: src, target: tgt, tgtUpdates, movedIds, deletedMuadils } of undoData) {
+        const batch = writeBatch(db);
+
+        // 1. Kaynak parfümü yeniden oluştur
+        batch.set(doc(db, 'perfumes', src.id), src);
+
+        // 2. Hedef parfümün inherited alanlarını geri al
+        if (Object.keys(tgtUpdates).length > 0) {
+          const revert = {};
+          for (const key of Object.keys(tgtUpdates)) revert[key] = tgt[key] ?? null;
+          batch.update(doc(db, 'perfumes', tgt.id), revert);
+        }
+
+        // 3. Taşınan muadilleri geri taşı
+        for (const mId of movedIds) {
+          batch.update(doc(db, 'muadils', mId), {
+            targetPerfumeId: src.id,
+            targetPerfumeName: src.name,
+            targetBrandName: src.brandName,
+            name: `${src.brandName} ${src.name} Benzeri`,
+          });
+        }
+
+        // 4. Silinen muadilleri yeniden oluştur
+        for (const m of deletedMuadils) {
+          const { id, ...data } = m;
+          batch.set(doc(db, 'muadils', id), { ...data, id });
+        }
+
+        await batch.commit();
+      }
+      setUndoData(null);
+      setResults(null);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      alert('Geri alma başarısız: ' + e.message);
+    } finally {
+      setUndoing(false);
+    }
   };
 
   return (
@@ -1104,7 +1231,15 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
 
       {/* Selector card */}
       <Card style={{ padding: '24px', marginBottom: '20px' }}>
-        <div style={{ fontWeight: 800, fontSize: '17px', color: C.navy, marginBottom: '4px' }}>Parfüm Birleştirme</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ fontWeight: 800, fontSize: '17px', color: C.navy }}>Parfüm Birleştirme</div>
+          {onRefresh && (
+            <button onClick={onRefresh} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Yenile
+            </button>
+          )}
+        </div>
         <div style={{ fontSize: '13px', color: C.textLight, marginBottom: '24px' }}>Solda <b>silinecek</b> (kaynak), sağda <b>korunacak</b> (hedef) parfümü seçin. Muadiller otomatik taşınır; eksik cinsiyet / nota / açıklama kopyalanır.</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 32px 1fr', gap: '12px', alignItems: 'start' }}>
@@ -1121,7 +1256,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
           <MergePerfSearchBox
             label="Korunacak (Hedef)" labelColor="#16a34a"
             q={tgtQ} setQ={setTgtQ} open={tgtOpen} setOpen={setTgtOpen}
-            refEl={tgtRef} results={tgtResults}
+            refEl={tgtRef} groupedResults={tgtResults}
             onSel={(p) => { setTarget(p); if (!p) setTgtQ(''); }}
             selected={target} side="tgt" muadilCountById={muadilCountById}
           />
@@ -1214,6 +1349,16 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
             {results.some((r) => r.status === 'error') && (
               <span style={{ fontSize: '13px', color: C.red, fontWeight: 600 }}>{results.filter((r) => r.status === 'error').length} hatalı</span>
             )}
+            {undoData && (
+              <button
+                onClick={handleUndo}
+                disabled={undoing}
+                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: undoing ? 'default' : 'pointer', fontFamily: F, opacity: undoing ? 0.6 : 1 }}
+              >
+                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                {undoing ? 'Geri alınıyor…' : 'Son Birleştirmeyi Geri Al'}
+              </button>
+            )}
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', minWidth: '560px', borderCollapse: 'collapse' }}>
@@ -1257,7 +1402,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, refreshPerfumes, refreshMuadils } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -1394,6 +1539,176 @@ export function AdminPanel() {
   const revDelPwRef = useRef(null);
   const delBrandPwRef = useRef(null);
   const [selBrand, setSelBrand] = useState(null);
+
+  // ─── Perfumes tablosu için memoized hesaplamalar ───────────────────────────
+  // muadilCount: her parfüm için kaç muadil var — O(n) map yerine O(n+m)
+  const muadilCountMap = useMemo(() => {
+    const map = {};
+    muadilPerfumes.forEach((m) => { map[m.targetPerfumeId] = (map[m.targetPerfumeId] || 0) + 1; });
+    return map;
+  }, [muadilPerfumes]);
+
+  const basePerfumes = useMemo(() =>
+    perfumes.map((p) => ({ ...p, muadilCount: muadilCountMap[p.id] || 0 })),
+  [perfumes, muadilCountMap]);
+
+  const perfBrandList = useMemo(() =>
+    Array.from(new Set(perfumes.map((p) => p.brandName).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr')),
+  [perfumes]);
+
+  const filteredPerfs = useMemo(() => {
+    const q = search.toLowerCase();
+    return basePerfumes.filter((p) =>
+      (!perfBrandFilter || p.brandName === perfBrandFilter) &&
+      (!q || p.name.toLowerCase().includes(q) || p.brandName.toLowerCase().includes(q) || (p.gender || '').toLowerCase().includes(q))
+    );
+  }, [basePerfumes, search, perfBrandFilter]);
+
+  const sortedPerfs = useMemo(() =>
+    applySort(filteredPerfs, (p, k) => ({ name: p.name, brandName: p.brandName, gender: p.gender, muadilCount: p.muadilCount })[k]),
+  [filteredPerfs, sort]);
+
+  // ─── Muadils tablosu için memoized hesaplamalar ───────────────────────────
+  // Yorumları muadilId'ye göre önceden grupla — her satırda filter() yerine O(1) lookup
+  const commentsByMuadil = useMemo(() => {
+    const map = {};
+    comments.filter((c) => c.status === 'approved').forEach((c) => {
+      if (!map[c.muadilPerfumeId]) map[c.muadilPerfumeId] = [];
+      map[c.muadilPerfumeId].push(c);
+    });
+    return map;
+  }, [comments]);
+
+  const baseMuadil = useMemo(() =>
+    muadilPerfumes.map((m) => {
+      const ok = commentsByMuadil[m.id] || [];
+      if (!ok.length) return { ...m, overall: -1, commentCount: 0 };
+      const avg = (arr) => parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1));
+      const scent = avg(ok.map((c) => c.similarity));
+      const projection = avg(ok.map((c) => c.projection));
+      const longevity = avg(ok.map((c) => c.longevity));
+      return { ...m, overall: parseFloat(((scent + projection + longevity) / 3).toFixed(1)), commentCount: ok.length };
+    }),
+  [muadilPerfumes, commentsByMuadil]);
+
+  const muadilBrandList = useMemo(() =>
+    Array.from(new Set(muadilPerfumes.map((m) => m.brandName).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr')),
+  [muadilPerfumes]);
+
+  const filteredMuadils = useMemo(() => {
+    const q = search.toLowerCase();
+    return baseMuadil.filter((m) =>
+      (!muadilBrandFilter || m.brandName === muadilBrandFilter) &&
+      (!q || m.name.toLowerCase().includes(q) || m.brandName.toLowerCase().includes(q) || (m.targetPerfumeName || '').toLowerCase().includes(q) || (m.targetBrandName || '').toLowerCase().includes(q))
+    );
+  }, [baseMuadil, search, muadilBrandFilter]);
+
+  const sortedMuadils = useMemo(() =>
+    applySort(filteredMuadils, (m, k) => ({ name: m.name, brandName: m.brandName, targetPerfumeName: `${m.targetBrandName} ${m.targetPerfumeName}`, overall: m.overall, commentCount: m.commentCount })[k]),
+  [filteredMuadils, sort]);
+
+  // ─── Brands tablosu için memoized hesaplamalar ────────────────────────────
+  const perfCountByBrand = useMemo(() => {
+    const map = {};
+    perfumes.forEach((p) => { map[p.brandId] = (map[p.brandId] || 0) + 1; });
+    return map;
+  }, [perfumes]);
+
+  const muadilCountByBrand = useMemo(() => {
+    const map = {};
+    muadilPerfumes.forEach((m) => { map[m.brandId] = (map[m.brandId] || 0) + 1; });
+    return map;
+  }, [muadilPerfumes]);
+
+  const baseOrigBrands = useMemo(() =>
+    brands.filter((b) => b.type === 'original').map((b) => ({ ...b, perfumeCount: perfCountByBrand[b.id] || 0 })),
+  [brands, perfCountByBrand]);
+
+  const baseMuadilBrands = useMemo(() =>
+    brands.filter((b) => b.type === 'muadil').map((b) => ({ ...b, perfumeCount: muadilCountByBrand[b.id] || 0 })),
+  [brands, muadilCountByBrand]);
+
+  const filteredOrigBrands = useMemo(() => {
+    const q = search.toLowerCase();
+    return baseOrigBrands.filter((b) => !q || b.name.toLowerCase().includes(q) || (b.origin || '').toLowerCase().includes(q));
+  }, [baseOrigBrands, search]);
+
+  const filteredMuadilBrands = useMemo(() => {
+    const q = search.toLowerCase();
+    return baseMuadilBrands.filter((b) => !q || b.name.toLowerCase().includes(q) || (b.origin || '').toLowerCase().includes(q));
+  }, [baseMuadilBrands, search]);
+
+  const sortedOrigBrands = useMemo(() =>
+    applySort(filteredOrigBrands, (b, k) => ({ name: b.name, origin: b.origin || '', category: b.category || '', perfumeCount: b.perfumeCount })[k]),
+  [filteredOrigBrands, sort]);
+
+  const sortedMuadilBrands = useMemo(() =>
+    applySort(filteredMuadilBrands, (b, k) => ({ name: b.name, origin: b.origin || '', category: b.category || '', perfumeCount: b.perfumeCount })[k]),
+  [filteredMuadilBrands, sort]);
+
+  // ─── Export ───────────────────────────────────────────────────────────────
+  const [exportModal, setExportModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (tab === 'perfumes') await refreshPerfumes();
+      else if (tab === 'muadil') await refreshMuadils();
+      else if (tab === 'original-brands' || tab === 'muadil-brands') { await refreshPerfumes(); await refreshMuadils(); }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const getExportData = () => {
+    if (tab === 'perfumes') {
+      return {
+        headers: ['Marka', 'Parfüm Adı', 'Cinsiyet', 'Muadil Sayısı', 'URL'],
+        rows: sortedPerfs.map((p) => [p.brandName, p.name, p.gender || '', p.muadilCount, `/${p.brandSlug}/${p.slug}`]),
+        filename: 'parfumler',
+      };
+    }
+    const isOrig = tab === 'original-brands';
+    const data = isOrig ? sortedOrigBrands : sortedMuadilBrands;
+    return {
+      headers: ['Marka', 'Köken', 'Kategori', 'Parfüm Sayısı'],
+      rows: data.map((b) => [b.name, b.origin || '', b.category || '', b.perfumeCount]),
+      filename: isOrig ? 'orijinal-markalar' : 'muadil-markalar',
+    };
+  };
+
+  const exportCSV = () => {
+    const { headers, rows, filename } = getExportData();
+    const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((r) => r.map(escape).join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${filename}.csv`; a.click();
+    setExportModal(false);
+  };
+
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx');
+    const { headers, rows, filename } = getExportData();
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    ws['!cols'] = headers.map(() => ({ wch: 24 }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Liste');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    setExportModal(false);
+  };
+
+  const exportPDF = () => {
+    const { headers, rows, filename } = getExportData();
+    const thStyle = 'padding:8px 12px;background:#1a1a2e;color:#fff;font-weight:700;font-size:12px;text-align:left;border:1px solid #ddd;';
+    const tdStyle = 'padding:7px 12px;font-size:12px;border:1px solid #ddd;';
+    const trEven = 'background:#f9f9fb;';
+    const ths = headers.map((h) => `<th style="${thStyle}">${h}</th>`).join('');
+    const trs = rows.map((r, i) => `<tr style="${i % 2 === 1 ? trEven : ''}">${r.map((c) => `<td style="${tdStyle}">${c}</td>`).join('')}</tr>`).join('');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${filename}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}h2{margin-bottom:16px;font-size:16px}@media print{button{display:none}}</style></head><body><h2>${filename} — ${rows.length} kayıt</h2><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table><script>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+    const w = window.open('', '_blank'); w.document.write(html); w.document.close();
+    setExportModal(false);
+  };
 
   if (!isAdmin) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Erişim yetkisi yok.</div>;
 
@@ -1622,13 +1937,8 @@ export function AdminPanel() {
         {/* Original / Muadil Brands */}
         {(tab === 'original-brands' || tab === 'muadil-brands') && (() => {
           const isOrig = tab === 'original-brands';
-          const baseBrands = brands.filter((b) => b.type === (isOrig ? 'original' : 'muadil')).map((b) => ({
-            ...b,
-            perfumeCount: isOrig ? perfumes.filter((p) => p.brandId === b.id).length : muadilPerfumes.filter((m) => m.brandId === b.id).length,
-          }));
-          const q = search.toLowerCase();
-          const filtered = baseBrands.filter((b) => !q || b.name.toLowerCase().includes(q) || (b.origin || '').toLowerCase().includes(q));
-          const sorted = applySort(filtered, (b, k) => ({ name: b.name, origin: b.origin || '', category: b.category || '', perfumeCount: b.perfumeCount, active: b.active ? 'Aktif' : 'Pasif' })[k]);
+          const baseBrands = isOrig ? baseOrigBrands : baseMuadilBrands;
+          const sorted = isOrig ? sortedOrigBrands : sortedMuadilBrands;
           return (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -1638,7 +1948,17 @@ export function AdminPanel() {
                 <Btn onClick={() => { setBf({ name: '', slug: '', type: isOrig ? 'original' : 'muadil', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' }); setShowBM(true); }}>+ Marka Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span></div>
+                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontWeight: 700, color: C.navy }}>{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span>
+                  <button onClick={() => setExportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Listeye Aktar
+                  </button>
+                  <button onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    {refreshing ? 'Yenileniyor…' : 'Yenile'}
+                  </button>
+                </div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Marka adı veya köken ara…" count={sorted.length} total={baseBrands.length} />
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table style={{ width: '100%', minWidth: '580px', borderCollapse: 'collapse' }}>
@@ -1700,14 +2020,7 @@ export function AdminPanel() {
 
         {/* Perfumes */}
         {tab === 'perfumes' && (() => {
-          const basePerfumes = perfumes.map((p) => ({ ...p, muadilCount: muadilPerfumes.filter((m) => m.targetPerfumeId === p.id).length }));
-          const perfBrandList = Array.from(new Set(perfumes.map((p) => p.brandName).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr'));
-          const q = search.toLowerCase();
-          const filtered = basePerfumes.filter((p) =>
-            (!perfBrandFilter || p.brandName === perfBrandFilter) &&
-            (!q || p.name.toLowerCase().includes(q) || p.brandName.toLowerCase().includes(q) || (p.gender || '').toLowerCase().includes(q))
-          );
-          const sorted = applySort(filtered, (p, k) => ({ name: p.name, brandName: p.brandName, gender: p.gender, muadilCount: p.muadilCount })[k]);
+          const sorted = sortedPerfs;
           const totalPages = Math.ceil(sorted.length / PERF_PER_PAGE);
           const safePage = Math.min(perfPage, totalPages || 1);
           const pageItems = sorted.slice((safePage - 1) * PERF_PER_PAGE, safePage * PERF_PER_PAGE);
@@ -1722,6 +2035,14 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 700, color: C.navy }}>Orijinal Parfümler</span>
+                  <button onClick={() => setExportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Listeye Aktar
+                  </button>
+                  <button onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    {refreshing ? 'Yenileniyor…' : 'Yenile'}
+                  </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
                     <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                     <select
@@ -1745,6 +2066,7 @@ export function AdminPanel() {
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((p) => selectedIds.has(p.id))} onChange={() => toggleAll(sorted.map((p) => p.id))} />
                     </th>
                     <SortTh label="Parfüm" sortKey="name" sort={sort} onSort={toggleSort} />
+                    <th style={{ ...thStyle, width: '70px' }} />
                     <SortTh label="Marka" sortKey="brandName" sort={sort} onSort={toggleSort} />
                     <th style={thStyle}>URL</th>
                     <SortTh label="Cinsiyet" sortKey="gender" sort={sort} onSort={toggleSort} />
@@ -1756,6 +2078,12 @@ export function AdminPanel() {
                       <tr key={p.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(p.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(p.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(p.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
                         <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
+                        <td style={{ ...tdStyle, width: '70px', padding: '0 4px' }}>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <CopyBtn text={p.name} title="Parfüm adını kopyala" />
+                            <CopyBtn text={`${p.brandName} ${p.name}`} title="Marka + parfüm adını kopyala" variant="brand" />
+                          </div>
+                        </td>
                         <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${p.brandSlug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{p.brandName}</a></td>
                         <td style={{ ...tdStyle, fontSize: '12px', color: C.gold }}>/{p.brandSlug}/{p.slug}</td>
                         <td style={tdStyle}><GenderBadge gender={p.gender} /></td>
@@ -2012,6 +2340,7 @@ export function AdminPanel() {
             running={mergeRunning} setRunning={setMergeRunning}
             progress={mergeProgress} setProgress={setMergeProgress}
             results={mergeResults} setResults={setMergeResults}
+            onRefresh={async () => { await refreshPerfumes(); await refreshMuadils(); }}
           />
         )}
       </div>
@@ -2125,6 +2454,28 @@ export function AdminPanel() {
             <Btn variant="primary" onClick={closeUam} style={{ width: '100%', justifyContent: 'center' }}>Tamam</Btn>
           </div>
         )}
+      </Modal>
+
+      {/* Export Modalı */}
+      <Modal open={exportModal} onClose={() => setExportModal(false)} title="Listeyi Dışa Aktar" width="360px">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <p style={{ fontSize: '13px', color: C.textMid, marginBottom: '4px' }}>
+            Şu an görünen <strong>{
+              tab === 'perfumes' ? sortedPerfs.length :
+              tab === 'original-brands' ? sortedOrigBrands.length :
+              sortedMuadilBrands.length
+            } kayıt</strong> hangi formatta aktarılsın?
+          </p>
+          <Btn variant="primary" onClick={exportExcel} style={{ justifyContent: 'center' }}>
+            Excel (.xlsx)
+          </Btn>
+          <Btn variant="ghost" onClick={exportCSV} style={{ justifyContent: 'center' }}>
+            CSV (.csv)
+          </Btn>
+          <Btn variant="ghost" onClick={exportPDF} style={{ justifyContent: 'center' }}>
+            PDF (yazdır)
+          </Btn>
+        </div>
       </Modal>
 
       {/* Toplu Silme Şifre Modalı */}
