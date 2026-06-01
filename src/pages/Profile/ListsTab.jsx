@@ -3,6 +3,7 @@ import { Btn } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import logoDark from '@/img/logos/logo-dark-minified.png';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { CreateListModal } from './CreateListModal';
@@ -215,6 +216,7 @@ export function ListsTab({ userId, lists, loading, createList, updateList, delet
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [shareCard, setShareCard] = useState(null); // { listTitle, listId }
   const { user } = useAuth();
+  const { logActivity } = useData();
 
   const handleTemplateSelect = (title) => {
     setPrefilledTitle(title);
@@ -241,7 +243,12 @@ export function ListsTab({ userId, lists, loading, createList, updateList, delet
     if (editingList) {
       await updateList(editingList.id, data);
     } else {
-      await createList(data);
+      const ref = await createList(data);
+      logActivity('list_created', {
+        listId: ref.id,
+        listTitle: data.title,
+        listUrl: user?.username ? `/@${user.username}?list=${ref.id}` : null,
+      });
     }
   };
 

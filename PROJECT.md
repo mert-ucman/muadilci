@@ -9,7 +9,7 @@
 > **Proje boyunca emoji değil, FontAwesome kütüphanesi kullanılacak.**
 > Tüm ikonlar `@fortawesome/free-solid-svg-icons` paketinden gelmelidir.
 > `free-regular-svg-icons` **yüklü değil**; outline ikon gerektiğinde solid ikon `C.textLight` renginde kullanılır.
-> Hiçbir JSX dosyasına `🔒`, `📋`, `🌸` gibi emoji karakteri eklenmez.
+> Hiçbir JSX dosyasına emoji karakteri eklenmez.
 
 ---
 
@@ -42,9 +42,10 @@ src/
 │   └── routes.js                   # matchRoute yardımcısı (@:param desteği), NO_LAYOUT_PATHS
 │
 ├── contexts/
-│   ├── AuthContext.jsx             # Kullanıcı auth, rol yönetimi, publicProfiles sync, inaktivite timer
-│   ├── DataContext.jsx             # Firestore real-time listeners, veri fonksiyonları
-│   └── RouterContext.jsx           # History API tabanlı custom SPA router, goBack()
+│   ├── AuthContext.jsx             # Auth, rol yönetimi, publicProfiles sync, inaktivite,
+│   │                               # presence heartbeat, giriş/çıkış aktivite logu
+│   ├── DataContext.jsx             # Firestore real-time listeners, logActivity(), updateUser()
+│   └── RouterContext.jsx           # History API SPA router, navigate(), goBack()
 │
 ├── hooks/
 │   ├── useW.js                     # Responsive breakpoint hook (xs/sm/md/w)
@@ -52,8 +53,9 @@ src/
 │
 ├── lib/
 │   ├── firebase.js                 # Firebase init (browserLocalPersistence)
-│   ├── storage.js                  # uploadDataURL / deleteImageByUrl yardımcıları
+│   ├── storage.js                  # uploadDataURL / deleteImageByUrl
 │   ├── seo.js                      # useSeo hook (title, meta, OG, JSON-LD, canonical)
+│   ├── activityLog.js              # writeActivityLog() + updatePresence() — bağımsız yardımcılar
 │   └── seed.js                     # Firestore seed script
 │
 ├── utils/
@@ -63,54 +65,40 @@ src/
 │
 ├── components/
 │   ├── ui/
-│   │   ├── Badge.jsx               # Renkli etiket
-│   │   ├── Btn.jsx                 # Buton (primary/secondary/ghost/danger)
-│   │   ├── Card.jsx                # Kart container
-│   │   ├── Modal.jsx               # Overlay modal
-│   │   ├── Input.jsx               # Text input
-│   │   ├── Select.jsx              # Dropdown select
-│   │   ├── Textarea.jsx            # Çok satırlı input
-│   │   ├── ScoreBar.jsx            # Puan ilerleme çubuğu
-│   │   └── FaIcon.jsx              # FontAwesome sarmalayıcı
+│   │   ├── Badge.jsx, Btn.jsx, Card.jsx, Modal.jsx
+│   │   ├── Input.jsx, Select.jsx, Textarea.jsx
+│   │   ├── ScoreBar.jsx, FaIcon.jsx
 │   ├── shared/
-│   │   └── GenderBadge.jsx         # Erkek/Kadın/Unisex rozeti
+│   │   └── GenderBadge.jsx
 │   └── layout/
-│       ├── Navbar.jsx              # Üst navigasyon (tüm nav linkleri <a> → yeni sekme desteği)
-│       └── Footer.jsx              # Alt bilgi
+│       ├── Navbar.jsx              # Üst nav (tüm linkler <a>, yeni sekme desteği)
+│       └── Footer.jsx
 │
 └── pages/
-    ├── Landing/                    # Ana sayfa bölümleri
-    │   ├── index.jsx
-    │   ├── HeroSection.jsx
-    │   ├── HowItWorksSection.jsx
-    │   ├── ComparisonSection.jsx
-    │   ├── PopularMatchesSection.jsx
-    │   ├── BrandsBandSection.jsx   # Sonsuz marquee slider
-    │   ├── TestimonialsSection.jsx
-    │   └── CTASection.jsx
-    ├── Perfumes/index.jsx          # Tüm parfümler (orijinal + muadil tab)
+    ├── Landing/                    # Ana sayfa bölümleri (Hero, HowItWorks, vb.)
+    ├── Perfumes/index.jsx
     ├── Brands/
-    │   ├── BrandsPage.jsx          # Marka listesi
-    │   └── BrandPage.jsx           # Marka profili — Geri Dön: goBack()
-    ├── PerfumeDetail/index.jsx     # Parfüm detay + muadil listesi — Geri Dön: goBack()
-    ├── Comparison/index.jsx        # Karşılaştırma ekranı + yorum sistemi (yazar adları tıklanabilir)
-    ├── Leaderboard/index.jsx       # En İyiler (top muadil parfümler + markalar)
-    ├── PublicProfile/index.jsx     # Herkese açık profil (/@username) — listeler + karşılaştırmalar
+    │   ├── BrandsPage.jsx
+    │   └── BrandPage.jsx           # Geri Dön: goBack('/markalar')
+    ├── PerfumeDetail/index.jsx     # Geri Dön: goBack('/marka/:slug')
+    ├── Comparison/index.jsx        # Yorum sistemi — yazar adları /@username'e tıklanabilir
+    ├── Leaderboard/index.jsx
+    ├── PublicProfile/index.jsx     # /@username — profil, listeler (giriş gerekli), karşılaştırmalar
     ├── Profile/
-    │   ├── index.jsx               # Kullanıcı profili (Bilgilerim / Favorilerim / Yorumlarım / Listelerim)
-    │   ├── ListsTab.jsx            # Parfüm listeleri accordion + paylaş butonu + ShareCard
-    │   ├── CreateListModal.jsx     # Liste oluşturma/düzenleme modal (kategori, dropdown, özel giriş)
-    │   └── TemplatePickerModal.jsx # Hazır başlık şablonu seçici (dropdown ile oluşturucu)
-    ├── Moderation/index.jsx        # Yorum moderasyon paneli
-    ├── Admin/index.jsx             # Yönetim paneli (parfüm/marka CRUD + Tüm Yorumlar)
-    ├── NotFound.jsx                # 404 sayfası (noindex, ana sayfaya yönlendirme)
+    │   ├── index.jsx               # 4 sekme: Bilgilerim / Favorilerim / Yorumlarım / Listelerim
+    │   ├── ListsTab.jsx            # Accordion listeler + Paylaş (ShareCard) + logActivity
+    │   ├── CreateListModal.jsx     # Kategori radio + dropdown + "Listede yok" (2 input)
+    │   └── TemplatePickerModal.jsx # 4 dropdown ile başlık oluşturucu
+    ├── Moderation/index.jsx
+    ├── Admin/
+    │   ├── index.jsx               # Sol sidebar nav + tüm sekmeler
+    │   └── ActivityTab.jsx         # Hareketler: aktif kullanıcılar paneli + aktivite tablosu
+    ├── NotFound.jsx
     └── Auth/
-        ├── LoginPage.jsx           # İki kolonlu layout (sol: sign-up.png görseli)
-        ├── RegisterPage.jsx        # İki kolonlu layout (sol: login page.png görseli)
-        ├── ForgotPasswordPage.jsx
-        ├── ResetPasswordPage.jsx
-        ├── AuthLayout.jsx          # İki kolonlu auth layout (bgImage + headline prop'ları)
-        └── TermsModal.jsx
+        ├── LoginPage.jsx           # İki kolonlu layout (sol: sign-up.png)
+        ├── RegisterPage.jsx        # İki kolonlu layout (sol: login page.png)
+        ├── AuthLayout.jsx          # bgImage + headline prop'ları, Ana Sayfa butonu
+        └── ...
 ```
 
 ---
@@ -128,15 +116,13 @@ src/
 | `/marka/:brandSlug` | Marka Profili | — |
 | `/:brandSlug/:perfumeSlug` | Parfüm Detay | — |
 | `/profil` | Kişisel Profil | Giriş gerekli |
-| `/moderasyon` | Moderasyon | Moderatör rolü gerekli |
-| `/admin` | Yönetim | Admin rolü gerekli |
+| `/moderasyon` | Moderasyon | Moderatör gerekli |
+| `/admin` | Yönetim | Admin gerekli |
 | `/giris` | Giriş | Giriş yapılmışsa `/`'e yönlendir |
 | `/kayit` | Kayıt | Giriş yapılmışsa `/`'e yönlendir |
-| `*` | 404 Sayfa Bulunamadı | — |
+| `*` | 404 | — |
 
-> `matchRoute` `@:param` pattern'ini destekler: `/@:username` → `/@mert` eşleşir, `params.username = 'mert'` döner.
-
-> Routing, History API (`pushState` / `popstate`) ile çalışır. Firebase Hosting'de `rewrites` tüm yolları `index.html`'e yönlendirir.
+> `matchRoute` `@:param` destekler: `/@:username` → `params.username = 'mert'`
 
 ---
 
@@ -144,11 +130,9 @@ src/
 
 | Rol | Yetkiler |
 |-----|----------|
-| `user` | Favori ekle, yorum yap, profil düzenle, parfüm listesi oluştur/paylaş |
-| `moderator` | + Yorumları onayla/reddet; yorumlarda `@moderatör` olarak görünür |
-| `admin` | + Tüm CRUD işlemleri; yorumlarda taç ikonu ile görünür; inaktivite debug timer görünür |
-
-**Yasaklı kullanıcı adı önekleri:** `admin`, `mod` — kayıt sırasında engellenir.
+| `user` | Favori, yorum, profil düzenleme, liste oluşturma/paylaşma |
+| `moderator` | + Yorumları onayla/reddet; yorumlarda `@moderatör` |
+| `admin` | + Tüm CRUD; Admin paneli; Hareketler + aktif kullanıcılar |
 
 ---
 
@@ -156,137 +140,156 @@ src/
 
 | Koleksiyon | Açıklama | Önemli Alanlar |
 |------------|----------|----------------|
-| `brands` | Markalar | `type: 'original'\|'muadil'`, `active`, `likes`, `slug`, `founded`, `origin`, `logoImage` |
-| `perfumes` | Orijinal parfümler | `brandId`, `brandSlug`, `slug`, `gender`, `year`, `notes{top,heart,base}`, `likes`, `images[]` |
-| `muadils` | Muadil parfümler | `brandId`, `targetPerfumeId`, `targetPerfumeName`, `targetBrandName`, `likes`, `reviewCount` |
-| `reviews` | Kullanıcı yorumları | `muadilId`, `userId`, `similarity`, `projection`, `longevity`, `recommend`, `status`, `userRole` |
+| `brands` | Markalar | `type`, `active`, `slug`, `logoImage` |
+| `perfumes` | Orijinal parfümler | `brandSlug`, `slug`, `gender`, `year`, `notes`, `images[]` |
+| `muadils` | Muadil parfümler | `targetPerfumeId`, `targetPerfumeName`, `targetBrandName` |
+| `reviews` | Kullanıcı yorumları | `muadilId`, `userId`, `similarity`, `projection`, `longevity`, `status` |
 | `users` | Kullanıcı profilleri | `uid`, `username`, `role`, `photoURL`, `active`, `deleted` |
-| `users/{uid}/favorites` | Favori alt-koleksiyon | `type: 'brand'\|'perfume'\|'muadil'`, `refId` |
-| `users/{uid}/perfumeLists` | Parfüm listeleri (herkese okunabilir) | `title`, `category`, `items[]`, `createdAt` |
-| `publicProfiles` | Herkese açık profil özeti (otomatik sync) | `uid`, `name`, `username`, `photoURL`, `role` |
+| `users/{uid}/favorites` | Favoriler | `type`, `refId` |
+| `users/{uid}/perfumeLists` | Parfüm listeleri (**herkese okunabilir**) | `title`, `category`, `items[]` |
+| `publicProfiles` | Açık profil özeti (**herkese okunabilir**) | `uid`, `name`, `username`, `photoURL`, `role` |
+| `presence` | Aktif kullanıcı takibi (**sadece admin okur**) | `userId`, `userName`, `photoURL`, `online`, `lastSeen`, `page` |
+| `activityLogs` | Kullanıcı hareketleri (**sadece admin okur**) | `type`, `userId`, `userName`, `createdAt` + tip'e özel alanlar |
 | `usernames` | Kullanıcı adı benzersizliği | `uid`, `email` |
-| `notifications` | Kullanıcı bildirimleri | `type`, `userId`, `perfumeUrl`, `read`, `forStaff` |
-| `sliderImages` | Ana sayfa slider | `url` (Storage URL), `order` |
-| `settings` | Site ayarları | `faviconUrl` vb. |
+| `notifications` | Bildirimler | `type`, `userId`, `perfumeUrl`, `read`, `forStaff` |
+| `sliderImages` | Ana sayfa slider | `url`, `order` |
+| `settings` | Site ayarları | `faviconUrl` |
 
-**Tüm görseller** Firebase Storage URL'si olarak saklanır.
+**Yorum `status`:** `pending` · `approved` · `pending_update` · `rejected`
 
-**Yorum `status` değerleri:** `pending` · `approved` · `pending_update` · `rejected`
-
-**`publicProfiles` sync:** `AuthContext.syncPublicProfile()` — kayıt, fotoğraf güncelleme/silme, kullanıcı adı değişiminde otomatik tetiklenir. `DataContext.updateUser()` da `name` değişikliğini sync eder.
+**`publicProfiles` sync:** `AuthContext.syncPublicProfile()` — kayıt, fotoğraf, username değişiminde. `DataContext.updateUser()` isim değişikliğini de sync eder.
 
 ---
 
-## Parfüm Listeleri Özelliği
+## Aktivite Log Sistemi (`activityLogs` + `presence`)
 
-- Kullanıcılar profil sayfasında `Listelerim` sekmesinden liste oluşturur.
-- Her liste: başlık + kategori (Orijinal/Muadil) + max 10 parfüm.
-- Parfüm seçimi: marka dropdown → parfüm dropdown. Bulunamazsa "Listede yok" checkbox → 2 serbest giriş alanı (Marka / Ürün).
-- Başlık şablonu: `En İyi / Ömür Boyu` × `3/5/10` × `Kış/İlkbahar/Yaz/Sonbahar/4 Mevsim` × `Orijinal/Muadil` kombinasyonları dropdown ile oluşturulur.
-- Paylaş butonu: `window.location.origin/@username?list=listId` linkini panoya kopyalar + animasyonlu `ShareCard` gösterir.
-- Herkese açık profil (`/@username`) — listeler yalnızca **giriş yapmış** kullanıcılara gösterilir.
+### Log tipleri
+
+| Tip | Tetikleyen yer | Ek alanlar |
+|-----|----------------|------------|
+| `review_created` | `DataContext.addComment()` | `reviewId`, `muadilId`, `muadilName`, `targetBrandName`, `targetPerfumeName`, `perfumeUrl` |
+| `list_created` | `ListsTab.handleSave()` | `listId`, `listTitle`, `listUrl` |
+| `login` | `AuthContext.loginWithEmail/Google()` | `method: 'email'\|'google'` |
+| `logout` | `AuthContext.logout()` | — |
+
+### Presence sistemi
+
+- **`src/lib/activityLog.js`** — `writeActivityLog()` + `updatePresence()` bağımsız yardımcılar (döngüsel bağımlılık engeli için DataContext/AuthContext dışında tutulur)
+- Giriş → `presence/{uid}` oluşturulur/güncellenir (`online: true`)
+- Her **60 saniye** heartbeat — `lastSeen` güncellenir
+- `beforeunload` → `online: false`
+- Çıkış → `online: false`
+- **"Aktif"** tanımı: `lastSeen > now - 5 dakika`
+- Admin > Hareketler sekmesinde real-time `onSnapshot` ile gösterilir
+
+### Admin Hareketler sekmesi özellikleri
+- Aktif kullanıcılar paneli (yeşil, gerçek zamanlı)
+- Aktivite tablosu: arama, tür filtresi (Yorum/Liste/Giriş/Çıkış), sıralama, sayfalama
+- Yorum satırlarında canlı durum (DataContext `comments` ile join)
+- Tıklanabilir kullanıcı adları ve hareket linkleri
+
+---
+
+## Admin Paneli
+
+- **Sidebar:** sol tarafta 210px, FontAwesome ikonlu dikey navigasyon; `position: sticky`
+- **Sekmeler:** Genel Bakış, Kullanıcılar, Orijinal/Muadil Markalar, Orijinal/Muadil Parfümler, Tüm Yorumlar, Slider, Favicon, Parfüm Birleştir, **Hareketler**
+- **Mobil:** dropdown select
+
+---
+
+## Parfüm Listeleri
+
+- **Şablon:** 4 dropdown → `En İyi/Ömür Boyu` × `3/5/10` × `5 mevsim` × `Orijinal/Muadil`
+- **Oluşturma:** Kategori radio → marka+parfüm dropdown (veya "Listede yok" → 2 serbest giriş)
+- **Max:** 10 parfüm / liste
+- **Paylaş:** `window.location.origin/@username?list=listId` → panoya kopyala + `ShareCard` animasyonu (kullanıcı kapatana kadar açık kalır)
+- **Herkese açık profil:** listeler yalnızca giriş yapmış kullanıcılara gösterilir
 
 ---
 
 ## İnaktivite Sistemi
 
-- **Süre:** 10 dakika hareketsizlik → otomatik çıkış (`AuthContext`)
-- **Dinlenen olaylar:** `mousemove`, `mousedown`, `keydown`, `touchstart`, `scroll`, `click`
-- **Sekmeler arası sync:** `BroadcastChannel('muadilci_activity')` + `localStorage('muadilci_last_activity')`
-- **Sayfa yenilemede:** `localStorage`'daki son aktivite zamanından kalan süre hesaplanır; süre dolmuşsa anında çıkış.
-- **Görsel timer** yalnızca admin rolünde gösteriliyordu, kaldırıldı. Sistem arka planda çalışmaya devam eder.
+- **Süre:** 10 dakika → otomatik çıkış
+- **Olaylar:** `mousemove`, `mousedown`, `keydown`, `touchstart`, `scroll`, `click`
+- **Sync:** `BroadcastChannel('muadilci_activity')` + `localStorage('muadilci_last_activity')`
+- Sayfa yenilemede kalan süre hesaplanır; dolmuşsa anında çıkış
 
 ---
 
-## Puan Sistemi (`src/utils/scoring.js`)
+## Puan Sistemi
 
-Yalnızca `status === 'approved'` yorumlardan hesaplanır:
+Yalnızca `status === 'approved'` yorumlardan:
 
-| Metrik | Kaynak alan |
-|--------|-------------|
-| Koku Yakınlığı | `similarity` ortalaması |
-| Yayılım | `projection` ortalaması |
-| Kalıcılık | `longevity` ortalaması |
-| **Genel Puan** | Üç metriğin eşit ağırlıklı ortalaması (0–10) |
+| Metrik | Alan |
+|--------|------|
+| Koku Yakınlığı | `similarity` |
+| Yayılım | `projection` |
+| Kalıcılık | `longevity` |
+| **Genel** | 3 metrik ortalaması (0–10) |
 
-**Renk kodlaması:** `≤ 4.0` → kırmızı · `4.1–6.9` → turuncu · `≥ 7.0` → yeşil
+`≤ 4.0` kırmızı · `4.1–6.9` turuncu · `≥ 7.0` yeşil
 
 ---
 
-## Küfür Filtresi (`src/utils/profanity.js`)
+## Küfür Filtresi
 
-`containsProfanity(text): boolean` — 6 bypass tekniğini yakalar:
-
-| # | Teknik | Örnek |
-|---|--------|-------|
-| 1 | Büyük/küçük harf | `SiKeRiM` |
-| 2 | Türkçe karakter varyantı | `şikerim` |
-| 3 | Leet-speak / sembol | `s1k`, `$ik` |
-| 4 | Harf arası ayraç | `s.i.k`, `s*i*k` |
-| 5 | Tekrar eden harfler | `siiik` |
-| 6 | Sesli harf çıkarma | `yrrak`, `sktir` |
+`containsProfanity(text)` — 6 teknik: büyük/küçük harf, Türkçe varyant, leet-speak, ayraç, tekrar harf, sesli harf çıkarma.
 
 ---
 
 ## Güvenlik Mimarisi
 
-### Firestore Rules
-| Kural | Açıklama |
-|-------|----------|
-| `isAdmin()` / `isMod()` | Firestore `users` belgesinden rol okunur |
-| `users` write | `role`, `active`, `deleted` alanları sahip tarafından değiştirilemez |
-| `users` read | Yalnızca sahip veya mod/admin (PII koruması) |
-| `users/{uid}/favorites` | Yalnızca sahip okur/yazar |
-| `users/{uid}/perfumeLists` | **Herkes okuyabilir**, yalnızca sahip yazar |
-| `publicProfiles` | **Herkes okuyabilir**, sahip veya admin yazar |
-| `usernames` | `get` herkese açık; `list` yalnızca mod |
-| `reviews` create | `status == 'pending'`, `userRole` eşleşmeli, `email_verified == true` |
+### Firestore Rules (özet)
+| Koleksiyon | Okuma | Yazma |
+|------------|-------|-------|
+| `users` | Sahip veya mod/admin | Sahip (rol/active/deleted değiştirilemez) |
+| `users/{uid}/perfumeLists` | **Herkes** | Sahip |
+| `publicProfiles` | **Herkes** | Sahip veya admin |
+| `presence` | Admin | Sahip |
+| `activityLogs` | Admin | Giriş yapmış herkes |
+| `reviews` create | — | `pending` + `email_verified` + role eşleşmeli |
 
 ### Storage Rules
 | Yol | Okuma | Yazma |
 |-----|-------|-------|
-| `perfumes/**` | Herkese açık | Yalnızca admin |
-| `brands/**` | Herkese açık | Yalnızca admin |
-| `slider/**` | Herkese açık | Yalnızca admin |
-| `users/{userId}/**` | Herkese açık | Yalnızca sahip |
+| `perfumes/`, `brands/`, `slider/` | Herkes | Admin |
+| `users/{userId}/` | Herkes | Sahip |
 
 ---
 
-## SEO Mimarisi
+## SEO
 
 | Bileşen | Açıklama |
 |---------|----------|
-| `src/lib/seo.js` — `useSeo()` | `document.title`, `<meta description>`, OG/Twitter tag'leri, `canonical`, JSON-LD |
-| `public/robots.txt` | `/admin`, `/profil` vb. private yollar `Disallow` |
-| `public/sitemap.xml` | `scripts/generate-sitemap.mjs` ile üretilir |
+| `useSeo()` | `document.title`, meta, OG/Twitter, canonical, JSON-LD |
+| `robots.txt` | `/admin`, `/profil` → `Disallow` |
+| `sitemap.xml` | `node scripts/generate-sitemap.mjs` ile üretilir |
 
 ---
 
-## UI Kuralları & Kararlar
+## UI Kuralları
 
-> **İkon kuralı (tekrar): Proje boyunca emoji değil FontAwesome kullanılır.**
+> **Proje boyunca emoji değil FontAwesome kullanılır.**
 
-- **Parfüm / marka adları** → `FH` (Cormorant Garamond)
-- **UI metinleri, sayılar** → `F` (DM Sans)
-- **Favori rengi** → altın (`C.gold`) — kırmızı kullanılmaz
-- **Geri Dön butonları** → `goBack(fallbackUrl)` kullanır (RouterContext)
-- **Nav linkleri** → `<a href="/#/...">` ile sarılı; orta tık / Ctrl+tık yeni sekme açar
-- **Düzenleme/silme** yalnızca `/admin` panelinden
-- **Varsayılan görünüm:** liste sayfaları `A-Z` sıralı açılır
-- **`localStorage` anahtarları:** `perf_tab`, `perf_view_v2`, `perf_sort_v2`, `perf_pp`, `brands_view_v2`, `brands_sort_v2`, `muadilci_last_activity`
-- **Auth layout:** iki kolonlu (`bgImage` + `headline` prop'ları ile özelleştirilebilir); mobilde sol kolon gizlenir
+- Parfüm/marka adları → `FH` (Cormorant Garamond)
+- UI metinleri → `F` (DM Sans)
+- Favori rengi → `C.gold` (kırmızı kullanılmaz)
+- Geri Dön → `goBack(fallback)` (RouterContext)
+- Nav linkleri → `<a href="/#/...">` (orta tık/Ctrl+tık desteği)
+- Düzenleme/silme yalnızca `/admin`'den
+- `localStorage` anahtarları: `perf_tab`, `perf_view_v2`, `perf_sort_v2`, `perf_pp`, `brands_view_v2`, `brands_sort_v2`, `muadilci_last_activity`
+- Auth layout: iki kolonlu, sol görsel + sağ form; `bgImage`+`headline` prop ile özelleştirilebilir
 
 ---
 
-## Önemli Geliştirme Notları
+## Önemli Notlar
 
-- `DataContext` tüm koleksiyonları real-time dinler; sayfalarda ayrıca fetch yapılmaz (`PublicProfile` hariç).
-- Onaylanmamış yorumlar puan hesaplamalarına dahil edilmez.
-- Moderatör yorumları Firestore'da gerçek ad ile saklanır, UI'da `@moderatör` gösterilir.
-- `@fortawesome/free-regular-svg-icons` **yüklü değil**; outline ikon gerektiğinde solid ikon `C.textLight` renginde kullanılır.
-- Bildirimler: `review_approved` / `review_rejected` tiplerinde `perfumeUrl` alanı `/karsilastir?orijinal=X&muadil=Y` formatında saklanır.
-- `publicProfiles` belgesi olmayan eski kullanıcılar için — bir sonraki giriş yapışlarında `fetchOrCreateUserDoc` otomatik oluşturur.
-- Sitemap güncellemek: `node scripts/generate-sitemap.mjs` (Firebase Admin SDK gerekir).
+- `DataContext` tüm koleksiyonları real-time dinler; sayfalarda ayrıca fetch yapılmaz (`PublicProfile` ve `ActivityTab` hariç — bunlar doğrudan Firestore sorgular).
+- `src/lib/activityLog.js` hem `AuthContext` hem `DataContext` tarafından kullanılır — döngüsel bağımlılığı önlemek için bağımsız modüle alındı.
+- `@fortawesome/free-regular-svg-icons` **yüklü değil**.
+- `publicProfiles` olmayan eski kullanıcılar bir sonraki girişte otomatik oluşturulur.
+- Sitemap: `node scripts/generate-sitemap.mjs` (Firebase Admin SDK gerekir).
 
 ---
 

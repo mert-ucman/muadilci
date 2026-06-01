@@ -23,6 +23,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
+import { writeActivityLog, updatePresence } from '@/lib/activityLog';
 
 // 10 dakika hareketsizlik → otomatik çıkış
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -136,12 +137,10 @@ export function AuthProvider({ children }) {
     const userData = await fetchOrCreateUserDoc(cred.user);
     const provider = cred.user.providerData[0]?.providerId || 'password';
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-    setUser({
-      ...userData,
-      uid: cred.user.uid,
-      emailVerified: cred.user.emailVerified || provider === 'google.com',
-      provider,
-    });
+    const u = { ...userData, uid: cred.user.uid };
+    writeActivityLog(u, 'login', { method: 'email' });
+    updatePresence(u, true);
+    setUser({ ...u, emailVerified: cred.user.emailVerified || provider === 'google.com', provider });
   };
 
   const register = async (name, username, email, password) => {
@@ -293,12 +292,10 @@ export function AuthProvider({ children }) {
     const userData = await fetchOrCreateUserDoc(cred.user);
     if (!userData) { setUser(null); return; }
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-    setUser({
-      ...userData,
-      uid: cred.user.uid,
-      emailVerified: true,
-      provider: 'google.com',
-    });
+    const u = { ...userData, uid: cred.user.uid };
+    writeActivityLog(u, 'login', { method: 'google' });
+    updatePresence(u, true);
+    setUser({ ...u, emailVerified: true, provider: 'google.com' });
   };
 
   // E-posta doğrulama maili gönder
@@ -384,7 +381,13 @@ export function AuthProvider({ children }) {
   }, [user?.uid]);
   // ────────────────────────────────────────────────────────────────────────────
 
-  const logout = () => signOut(auth).then(() => setUser(null));
+  const logout = () => {
+    if (user) {
+      writeActivityLog(user, 'logout');
+      updatePresence(user, false);
+    }
+    return signOut(auth).then(() => setUser(null));
+  };
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email, {
     url: window.location.origin,
@@ -435,6 +438,19 @@ export function AuthProvider({ children }) {
       }
     });
     return () => unsub();
+  }, [user?.uid]);
+
+  // Presence heartbeat — 60 sn'de bir lastSeen güncelle
+  useEffect(() => {
+    if (!user) return;
+    updatePresence(user, true);
+    const id = setInterval(() => updatePresence(user, true), 60_000);
+    const handleUnload = () => updatePresence(user, false);
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('beforeunload', handleUnload);
+    };
   }, [user?.uid]);
 
   const isAdmin = user?.role === 'admin';

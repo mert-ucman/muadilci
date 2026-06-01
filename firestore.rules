@@ -94,6 +94,18 @@ service cloud.firestore {
       allow delete: if isMod() || isOwner(resource.data.userId);
     }
 
+    // ── Activity Logs ─────────────────────────────────────────────────────
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuth();
+    }
+
+    // ── Presence (aktif kullanıcı takibi) ────────────────────────────────
+    match /presence/{uid} {
+      allow read: if isAdmin();
+      allow write: if isOwner(uid);
+    }
+
     // ── Slider Images ─────────────────────────────────────────────────────
     match /sliderImages/{imgId} {
       allow read: if true;

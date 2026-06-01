@@ -6,81 +6,115 @@
 
 ## 🔴 Kritik
 
-- [ ] **`og-default.png` ekle** — `public/og-default.png` dosyası yok. Sosyal medyada paylaşımlarda resim görünmüyor. 1200×630 px, siteye uygun tasarım yapılmalı.
-- [ ] **muadilci.com domainini Firebase Hosting'e bağla** — Firebase Console → Hosting → "Add custom domain" ile bağlantı kurulmalı. DNS kayıtları (A + TXT) domain yönetim paneline girilmeli.
-- [ ] **Firebase Hosting `rewrites` kuralını doğrula** — History API routing için `firebase.json`'da `"rewrites": [{ "source": "**", "destination": "/index.html" }]` mevcut olmalı; yoksa direkt URL girişi 404 verir.
+- [ ] **`og-default.png` ekle** — `public/og-default.png` yok. Sosyal medya paylaşımlarında görsel çıkmıyor. 1200×630 px, siteye uygun tasarım gerekli.
+- [ ] **muadilci.com domainini Firebase Hosting'e bağla** — Firebase Console → Hosting → "Add custom domain". DNS kayıtları (A + TXT) domain paneline girilmeli.
+- [ ] **Firebase Hosting `rewrites` kuralını doğrula** — `firebase.json`'da `"rewrites": [{"source":"**","destination":"/index.html"}]` olmalı; yoksa direkt URL girişi 404 verir.
+- [ ] **Projeyi production'a deploy et** — `npx firebase deploy` ile Hosting + Firestore rules + indexes birlikte deploy edilmeli.
 
 ---
 
 ## 🟡 Önemli
 
 ### İçerik & Veri
-- [ ] **Parfüm ve muadil içeriklerini genişlet** — Şu an sadece 7 orijinal parfüm ve 3 muadil var. Gerçek kullanım için çok az; admin panelinden toplu veri girişi yapılmalı.
-- [ ] **Marka logosu eksik olanları tamamla** — Bazı markaların logosu yok; admin panelinden yüklenebilir.
-- [ ] **Sitemap'i güncel tut** — Yeni içerik eklendikçe `node scripts/generate-sitemap.mjs` çalıştırılmalı ve `public/sitemap.xml` push edilmeli.
+- [ ] **Parfüm ve muadil içeriklerini genişlet** — Admin panelinden toplu veri girişi yapılmalı.
+- [ ] **Marka logosu eksiklerini tamamla** — Admin panelinden yüklenebilir.
+- [ ] **Sitemap'i güncel tut** — Yeni içerik eklendikçe `node scripts/generate-sitemap.mjs` çalıştırılıp `public/sitemap.xml` push edilmeli.
+- [ ] **`publicProfiles` backfill** — Kayıt öncesi üye olmuş kullanıcılar için `publicProfiles` belgesi yok. Admin panelinden veya tek seferlik script ile mevcut `users` belgelerinden toplu oluşturulmalı.
 
 ### Güvenlik
-- [ ] **API anahtarı HTTP referrer kısıtlaması** — Google Cloud Console → Credentials → Firebase Web API key → "Application restrictions" → HTTP referrers: yalnızca `muadilci.com` ve `muadilci-890e4.web.app` izin verilmeli.
-- [ ] **Aktif-olmayan kullanıcı write engeli** — `active: false` olan kullanıcılar hâlâ doğrudan API isteğiyle yorum yazabilir. Firestore `reviews` create kuralına `userDoc().active == true` koşulu eklenmeli.
-- [ ] **Rate limiting — yorum flood koruması** — Aynı kullanıcının kısa sürede çok fazla yorum yazmasını engellemek için Cloud Functions veya Firestore kuralında zaman damgası kontrolü eklenmeli.
+- [ ] **API anahtarı HTTP referrer kısıtlaması** — Google Cloud Console → Credentials → Firebase Web API key → HTTP referrers: yalnızca `muadilci.com` ve `muadilci-890e4.web.app`.
+- [ ] **Aktif-olmayan kullanıcı write engeli** — `active: false` kullanıcılar yorum yazabilir. Firestore `reviews` create kuralına `userDoc().active == true` eklenmeli.
+- [ ] **Rate limiting — yorum flood koruması** — Cloud Functions veya Firestore kuralında zaman damgası kontrolü.
 
 ### Kullanıcı Deneyimi
-- [ ] **E-posta değiştirme özelliği** — Profil sayfasında şu an yalnızca şifre değiştirilebiliyor. E-posta değiştirme (Firebase `updateEmail` + yeniden doğrulama) eklenmeli.
-- [ ] **Yorum düzenleme** — Kullanıcı kendi `pending` yorumunu düzenleyebilmeli (Firestore kuralı hazır; UI yok).
-- [ ] **Hesap silme** — Kullanıcının kendi hesabını silmesi için profil sayfasında "Hesabımı Sil" butonu eklenmeli (Cloud Function tetiklenerek hem Auth hem Firestore silinmeli).
+- [ ] **E-posta değiştirme** — Profil sayfasında `updateEmail` + yeniden doğrulama akışı.
+- [ ] **Yorum düzenleme UI** — Kullanıcı kendi `pending` yorumunu düzenleyebilmeli (Firestore kuralı hazır; UI eksik).
+- [ ] **Karanlık mod** — `theme.js` üzerinden dark/light toggle; `prefers-color-scheme` ile varsayılan.
 
 ---
 
 ## 🟢 İyileştirme
 
 ### SEO & Performans
-- [ ] **Structured data genişlet** — Muadil parfüm sayfalarına `ItemList` ve `Review` JSON-LD schema eklenmeli.
-- [ ] **`hreflang` etiketi** — Site şu an yalnızca Türkçe; ileride İngilizce eklenirse `hreflang` eklenmeli.
-- [ ] **Lazy loading** — Uzun parfüm/marka listelerinde görüntüler `loading="lazy"` ile yüklenmeli; sayfalama (pagination) veya sanal liste (virtual scroll) düşünülmeli.
-- [ ] **Core Web Vitals optimizasyonu** — Google Search Console'a site eklendikten sonra LCP, CLS, FID skorları ölçülmeli ve iyileştirilmeli.
-- [ ] **Image optimizasyonu** — Firebase Storage'a yüklerken WebP formatına dönüştürme ve boyut kısıtlaması (max 800px genişlik) uygulanmalı.
+- [ ] **Structured data genişlet** — Muadil parfüm sayfalarına `ItemList` ve `Review` JSON-LD schema.
+- [ ] **Lazy loading** — Uzun listelerde `loading="lazy"`; sayfalama veya virtual scroll.
+- [ ] **Core Web Vitals** — Google Search Console'a site eklendikten sonra LCP/CLS/FID ölçülmeli.
+- [ ] **Image optimizasyonu** — Storage'a yüklerken WebP dönüştürme, max 800px genişlik.
 
 ### Admin Paneli
-- [ ] **Toplu içerik yükleme (CSV/JSON import)** — Admin paneline çok sayıda parfüm/marka eklemek için toplu yükleme özelliği eklenmeli.
-- [ ] **Admin dashboard istatistikleri** — Toplam kullanıcı, yorum, parfüm, onay bekleyen yorum sayıları özetini gösteren bir dashboard ekranı eklenmeli.
-- [ ] **Moderasyon geçmişi** — Hangi yorumun kim tarafından onaylandığı/reddedildiği kaydedilmeli (`moderatedBy`, `moderatedAt` alanları).
+- [ ] **Toplu içerik yükleme (CSV/JSON import)** — Admin paneline parfüm/marka için toplu yükleme.
+- [ ] **Moderasyon geçmişi** — `moderatedBy`, `moderatedAt` alanları reviews'a eklenmeli.
+- [ ] **activityLogs temizleme** — Eski kayıtları silmek için admin panelinde temizle butonu veya Cloud Function scheduled task.
 
 ### Kullanıcı Deneyimi
-- [ ] **Gelişmiş parfüm arama** — Notaya göre arama (bergamot, gül vb.), yıla göre filtreleme, cinsiyet filtresi kombinasyonu.
-- [ ] **Karşılaştırma geçmişi** — Kullanıcının daha önce baktığı karşılaştırmalar `localStorage`'da saklanmalı.
-- [ ] **Paylaşım butonu** — Parfüm/muadil sayfalarında "Kopyala" veya Web Share API ile paylaşım.
-- [ ] **Bildirim sistemi** — Yorumu onaylandığında kullanıcıya e-posta (Firebase Extensions: "Trigger Email") veya in-app bildirim gönderilmeli.
-- [ ] **Karanlık mod** — Tema sabitleri (`theme.js`) üzerinden dark/light toggle eklenmeli; `prefers-color-scheme` CSS media query ile varsayılan belirlenmeli.
+- [ ] **Gelişmiş parfüm arama** — Notaya, yıla, cinsiyete göre kombine filtre.
+- [ ] **Karşılaştırma geçmişi** — Kullanıcının baktığı karşılaştırmalar `localStorage`'da saklanmalı.
+- [ ] **Web Share API** — Parfüm/muadil sayfalarında tarayıcı paylaşım API'si.
+- [ ] **E-posta bildirimi** — Firebase Extensions "Trigger Email" ile yorum onayı e-postası.
 
 ---
 
 ## 🔵 Gelecek / Uzun Vadeli
 
-- [ ] **PWA desteği** — `manifest.json` ve Service Worker ile offline çalışma ve "Uygulamayı yükle" özelliği.
-- [ ] **Mobil uygulama** — React Native veya Flutter ile iOS/Android uygulaması.
-- [ ] **AI öneri sistemi** — Kullanıcının favorilerine göre muadil önerisi yapan model.
-- [ ] **Marka işbirlikleri** — Muadil marka hesapları (özel badge, öne çıkarma imkânı).
+- [ ] **PWA desteği** — `manifest.json` + Service Worker ile offline çalışma.
+- [ ] **Mobil uygulama** — React Native veya Flutter.
+- [ ] **AI öneri sistemi** — Favorilere göre muadil öneren model.
+- [ ] **Marka işbirlikleri** — Muadil marka hesapları (özel badge, öne çıkarma).
 - [ ] **Çoklu dil desteği** — İngilizce arayüz ve içerik.
-- [ ] **Kullanıcı rozet sistemi** — Yorum sayısına veya beğeniye göre rozet (İlk Yorum, Uzman vb.).
+- [ ] **Kullanıcı rozet sistemi** — Yorum sayısına/beğeniye göre rozet.
 
 ---
 
 ## ✅ Tamamlananlar
 
-- [x] Firestore'daki base64 görselleri Firebase Storage'a taşı (`scripts/migrate-images-to-storage.mjs`)
-- [x] Firebase Storage kurallarını yapılandır (`storage.rules`)
-- [x] Numerik marka/parfüm/muadil ID'lerini auto-generated ID'ye dönüştür
-- [x] Admin kullanıcı silme: Auth + Firestore aynı anda silinsin (Cloud Function)
-- [x] E-posta doğrulama ekranı tekrar gösterilmesin sorunu
-- [x] Tüm liste sayfaları varsayılan olarak `liste` görünümü + `A-Z` sıralaması
-- [x] Admin paneline "Tüm Yorumlar" sekmesi (tarih aralığı, filtre, şifreli silme)
+### Altyapı & Güvenlik
+- [x] Firestore base64 → Firebase Storage migration (`scripts/migrate-images-to-storage.mjs`)
+- [x] Firebase Storage kuralları (`storage.rules`)
+- [x] Numerik ID'ler → auto-generated ID dönüşümü
+- [x] Admin kullanıcı silme: Auth + Firestore aynı anda (Cloud Function)
 - [x] History API tabanlı routing (hash URL → clean URL)
-- [x] SEO altyapısı: `useSeo` hook, OG/Twitter meta, JSON-LD, sitemap, robots.txt
-- [x] 404 sayfası
-- [x] Güvenlik açıkları: yetki yükseltme, PII sızıntısı, e-posta enumeration, review bypass
-- [x] Profil fotoğrafı Storage'a yükleme / silme
+- [x] SEO altyapısı: `useSeo`, OG/Twitter meta, JSON-LD, sitemap, robots.txt
+- [x] Güvenlik: yetki yükseltme, PII sızıntısı, e-posta enumeration, review bypass korumaları
+- [x] `browserLocalPersistence` — oturum sekmeler arası korunur
+- [x] Firestore rules: `publicProfiles`, `perfumeLists`, `activityLogs`, `presence` koleksiyonları
+- [x] Firestore composite index: `presence (online + lastSeen)`
+
+### Auth & Kullanıcı
+- [x] E-posta doğrulama ekranı / yeniden gönder
+- [x] Profil fotoğrafı yükleme, kırpma, silme
 - [x] Silinmiş kullanıcı yorumlarında fotoğraf sızıntısı engeli
+- [x] Kullanıcı adı değiştirme (benzersizlik kontrolü, tüm yorumlara yansıma)
+- [x] İnaktivite sistemi — 10 dk hareketsizlik → otomatik çıkış (BroadcastChannel + localStorage)
+- [x] Presence sistemi — giriş/çıkış/heartbeat/beforeunload + `online` flag
+- [x] Giriş/çıkış aktivite logları (`activityLogs`)
+- [x] Hesap silme (Auth + Firestore + yorum anonimleştirme)
+
+### Profil & Listeler
+- [x] Herkese açık profil (`/@username`) — fotoğraf, listeler (giriş gerekli), karşılaştırmalar
+- [x] `publicProfiles` koleksiyonu + otomatik sync (kayıt, fotoğraf, username, isim)
+- [x] Listelerim sekmesi — liste oluşturma, düzenleme, silme, accordion görünüm
+- [x] Liste şablon seçici (4 dropdown ile başlık oluşturucu)
+- [x] Liste paylaşma — `ShareCard` animasyonu, link panoya kopyalama
+- [x] Liste öğeleri tıklanabilir → parfüm/karşılaştırma sayfasına yönlendirme
+- [x] Üye olmayan kullanıcılara liste erişimi kısıtlama (blur + üye ol CTA)
+
+### Admin Paneli
+- [x] Sol sidebar navigasyon (FontAwesome ikonlu, sticky)
+- [x] Dashboard istatistikleri (toplam kullanıcı, parfüm, muadil, bekleyen yorum)
+- [x] Tüm Yorumlar sekmesi (tarih aralığı, filtre, şifreli toplu silme)
+- [x] Hareketler sekmesi — aktivite tablosu (yorum/liste/giriş/çıkış, arama, filtre, sıralama)
+- [x] Aktif Kullanıcılar paneli — real-time `onSnapshot`, online badge, tıklanabilir profil
+
+### UI & UX
+- [x] Navbar linkleri `<a>` etiketi — orta tık / Ctrl+tık yeni sekme açar
+- [x] `goBack(fallback)` — Geri Dön butonları gerçek tarayıcı geçmişine döner
+- [x] Auth layout: iki kolonlu tasarım (sol görsel + sağ form), `bgImage`+`headline` prop
+- [x] Giriş sayfası `sign-up.png` görseli; üye ol sayfası `login page.png`
+- [x] Yorum yazarı adları `/@username`'e tıklanabilir link
+- [x] Bildirim click → `review_approved`/`rejected` → karşılaştırma sayfasına gidiyor
+- [x] 404 sayfası
+- [x] Tüm liste sayfaları varsayılan `liste` görünümü + `A-Z` sıralaması
 
 ---
 
-*Son güncelleme: 2026-05-23*
+*Son güncelleme: 2026-06-01*

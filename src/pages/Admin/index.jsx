@@ -10,10 +10,11 @@ import { GenderBadge } from '@/components/shared';
 import { C, F } from '@/constants/theme';
 import { uploadDataURL } from '@/lib/storage';
 import { db } from '@/lib/firebase';
+import { ActivityTab } from './ActivityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments } from '@fortawesome/free-solid-svg-icons';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -109,16 +110,17 @@ function CopyBtn({ text, title = 'Kopyala', variant = 'default' }) {
 }
 
 const TABS = [
-  { k: 'dashboard', l: 'Genel Bakış' },
-  { k: 'users', l: 'Kullanıcılar' },
-  { k: 'original-brands', l: 'Orijinal Markalar' },
-  { k: 'muadil-brands', l: 'Muadil Markalar' },
-  { k: 'perfumes', l: 'Orijinal Parfümler' },
-  { k: 'muadil', l: 'Muadil Parfümler' },
-  { k: 'reviews', l: 'Tüm Yorumlar' },
-  { k: 'slider', l: 'Ana Sayfa Slider' },
-  { k: 'favicon', l: 'Favicon' },
-  { k: 'merge-perfumes', l: 'Parfüm Birleştir' },
+  { k: 'dashboard',       l: 'Genel Bakış',       icon: faGauge },
+  { k: 'users',           l: 'Kullanıcılar',       icon: faUsers },
+  { k: 'original-brands', l: 'Orijinal Markalar',  icon: faBuilding },
+  { k: 'muadil-brands',   l: 'Muadil Markalar',    icon: faFlask },
+  { k: 'perfumes',        l: 'Orijinal Parfümler', icon: faSprayCan },
+  { k: 'muadil',          l: 'Muadil Parfümler',   icon: faStar },
+  { k: 'reviews',         l: 'Tüm Yorumlar',       icon: faComments },
+  { k: 'slider',          l: 'Slider',             icon: faImages },
+  { k: 'favicon',         l: 'Favicon',            icon: faImage },
+  { k: 'merge-perfumes',  l: 'Parfüm Birleştir',  icon: faCodeMerge },
+  { k: 'activity',        l: 'Hareketler',         icon: faClockRotateLeft },
 ];
 
 function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB }) {
@@ -1775,22 +1777,53 @@ export function AdminPanel() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: sm ? '16px' : xs ? '16px' : '26px 32px' }}>
-        {/* Tabs — desktop: buton grubu, tablet/mobil: dropdown */}
-        {sm ? (
-          <select
-            value={tab}
-            onChange={(e) => setTab(e.target.value)}
-            style={{ width: '100%', marginBottom: '18px', height: '42px', padding: '0 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: C.card, color: C.navy, fontSize: '14px', fontWeight: 700, fontFamily: F, cursor: 'pointer', outline: 'none' }}>
-            {TABS.map(({ k, l }) => <option key={k} value={k}>{l}</option>)}
-          </select>
-        ) : (
-          <div style={{ display: 'flex', gap: '4px', marginBottom: '26px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px', overflowX: 'auto', width: 'fit-content', maxWidth: '100%' }}>
-            {TABS.map(({ k, l }) => (
-              <button key={k} onClick={() => setTab(k)} style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', background: tab === k ? C.navy : 'transparent', color: tab === k ? '#fff' : C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>{l}</button>
-            ))}
-          </div>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', minHeight: 'calc(100vh - 80px)' }}>
+
+        {/* ── Sidebar (desktop) ──────────────────────────────────────────── */}
+        {!sm && (
+          <aside style={{
+            width: '210px', flexShrink: 0,
+            borderRight: `1px solid ${C.border}`,
+            background: C.card,
+            padding: '20px 0',
+            position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
+          }}>
+            {TABS.map(({ k, l, icon }) => {
+              const active = tab === k;
+              return (
+                <button key={k} onClick={() => setTab(k)} style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  width: '100%', padding: '10px 18px',
+                  border: 'none', background: active ? C.goldBg : 'transparent',
+                  borderLeft: `3px solid ${active ? C.gold : 'transparent'}`,
+                  color: active ? C.gold : C.textMid,
+                  fontSize: '13px', fontWeight: active ? 700 : 500,
+                  cursor: 'pointer', fontFamily: F, textAlign: 'left',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.bg; e.currentTarget.style.color = C.text; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textMid; } }}
+                >
+                  <FontAwesomeIcon icon={icon} style={{ fontSize: '13px', width: '16px', flexShrink: 0 }} />
+                  {l}
+                </button>
+              );
+            })}
+          </aside>
         )}
+
+        {/* ── İçerik alanı ───────────────────────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 0, padding: sm ? '16px' : '28px 32px', overflowX: 'hidden' }}>
+
+          {/* Mobil: dropdown */}
+          {sm && (
+            <select
+              value={tab}
+              onChange={(e) => setTab(e.target.value)}
+              style={{ width: '100%', marginBottom: '18px', height: '42px', padding: '0 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: C.card, color: C.navy, fontSize: '14px', fontWeight: 700, fontFamily: F, cursor: 'pointer', outline: 'none' }}>
+              {TABS.map(({ k, l }) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          )}
 
         {/* Dashboard */}
         {tab === 'dashboard' && (
@@ -2337,6 +2370,8 @@ export function AdminPanel() {
           <FaviconTab faviconUrl={faviconUrl} updateFavicon={updateFavicon} />
         )}
 
+        {tab === 'activity' && <ActivityTab />}
+
         {tab === 'merge-perfumes' && (
           <MergePerfumesTab
             perfumes={perfumes} muadilPerfumes={muadilPerfumes}
@@ -2347,7 +2382,8 @@ export function AdminPanel() {
             onRefresh={async () => { await refreshPerfumes(); await refreshMuadils(); }}
           />
         )}
-      </div>
+        </div>{/* kapanış: içerik alanı */}
+      </div>{/* kapanış: flex wrapper */}
 
       {/* Kayıt İşlem Modalı (mobil) */}
       <Modal open={iam.open} onClose={closeIam} title={iam.item ? `${iam.item.name} için işlem yap` : ''} width="360px">

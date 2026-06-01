@@ -182,6 +182,19 @@ export function DataProvider({ children }) {
   const lastCommentAt = useRef(0);
   const COMMENT_COOLDOWN_MS = 30_000;
 
+  const logActivity = async (type, data) => {
+    try {
+      await addDoc(col('activityLogs'), {
+        type,
+        userId: user?.uid || null,
+        userName: user?.username ? `@${user.username}` : (user?.name || ''),
+        userUsername: user?.username || null,
+        ...data,
+        createdAt: serverTimestamp(),
+      });
+    } catch { /* log hatası ana akışı engellemesin */ }
+  };
+
   const addComment = async (c) => {
     const now = Date.now();
     if (now - lastCommentAt.current < COMMENT_COOLDOWN_MS) {
@@ -222,6 +235,16 @@ export function DataProvider({ children }) {
     } catch (e) {
       // bildirim hatası yorum gönderimini engellemesin
     }
+
+    // Aktivite logu (muadil değişkeni yukarıda zaten tanımlı)
+    logActivity('review_created', {
+      reviewId: ref.id,
+      muadilId,
+      muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+      targetBrandName: muadil?.targetBrandName || '',
+      targetPerfumeName: muadil?.targetPerfumeName || '',
+      perfumeUrl: muadil?.targetPerfumeId ? `/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}` : null,
+    });
 
     // muadil istatistiklerini güncelle
     const muadilSnap = await getDoc(docRef('muadils', muadilId));
@@ -669,7 +692,7 @@ export function DataProvider({ children }) {
       notifications, unreadNotifCount, notifHasMore,
       markNotificationRead, markAllNotificationsRead,
       loadMoreNotifications, clearAllNotifications,
-      addComment, approveComment, rejectComment, deleteComment, updateComment,
+      logActivity, addComment, approveComment, rejectComment, deleteComment, updateComment,
       fetchReviewsByDateRange, adminDeleteReview, adminDeleteReviews,
       incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus,
       updateUser, deleteUser,

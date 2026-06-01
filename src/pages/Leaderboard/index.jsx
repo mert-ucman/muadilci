@@ -1,45 +1,47 @@
+import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
+import { calcAllMuadilScores, calcAllBrandScores } from '@/utils/scoring';
 import { faTrophy, faMedal } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-function calcMuadilScore(muadilId, comments) {
-  const approved = comments.filter((c) => c.muadilPerfumeId === muadilId && c.status === 'approved');
-  if (!approved.length) return null;
-  const total = approved.reduce((s, c) => s + (c.similarity + c.projection + c.longevity) / 3, 0);
-  return +(total / approved.length).toFixed(1);
-}
-
-function ScoreBadge({ score }) {
+function ScoreBadge({ score, count }) {
+  const formatted = typeof score === 'number' ? score.toFixed(4) : score;
   const color = score >= 8 ? C.green : score >= 6 ? C.gold : C.orange;
-  const bg = score >= 8 ? C.greenBg : score >= 6 ? C.goldBg : C.orangeBg;
+  const bg    = score >= 8 ? C.greenBg : score >= 6 ? C.goldBg : C.orangeBg;
   return (
-    <div style={{
-      padding: '6px 10px', borderRadius: '10px',
-      background: bg, display: 'flex',
-      alignItems: 'baseline', gap: '1px', flexShrink: 0,
-    }}>
-      <span style={{ fontSize: '15px', fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
-      <span style={{ fontSize: '11px', color, fontWeight: 600 }}>/10</span>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0, gap: '2px' }}>
+      <div style={{ padding: '6px 10px', borderRadius: '10px', background: bg, display: 'flex', alignItems: 'baseline', gap: '1px' }}>
+        <span style={{ fontSize: '15px', fontWeight: 800, color, lineHeight: 1 }}>{formatted}</span>
+        <span style={{ fontSize: '11px', color, fontWeight: 600 }}>/10</span>
+      </div>
+      {count !== undefined && (
+        <span style={{ fontSize: '10px', color: C.textLight }}>{count} yorum</span>
+      )}
     </div>
   );
 }
 
 function RankNum({ n }) {
-  const medals = { 1: { bg: '#FFD700', color: '#7a5a00' }, 2: { bg: '#C0C0C0', color: '#555' }, 3: { bg: '#CD7F32', color: '#5c3300' } };
+  const medals = {
+    1: { bg: '#FFD700', color: '#7a5a00' },
+    2: { bg: '#C0C0C0', color: '#555' },
+    3: { bg: '#CD7F32', color: '#5c3300' },
+  };
   const m = medals[n];
   return (
     <div style={{
       width: '28px', height: '28px', borderRadius: '50%',
       background: m ? m.bg : C.border,
       color: m ? m.color : C.textLight,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '12px', fontWeight: 800, flexShrink: 0,
+      display: 'grid', placeItems: 'center',
+      fontSize: '11px', fontWeight: 800, flexShrink: 0,
+      fontFamily: F, userSelect: 'none',
     }}>
-      {n}
+      <span style={{ display: 'block', lineHeight: 1, marginTop: '0.5px' }}>{n}</span>
     </div>
   );
 }
@@ -54,7 +56,7 @@ function PerfumeTable({ rows, navigate }) {
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '11px 14px', borderRadius: '12px', cursor: 'pointer',
-            marginBottom: '6px',
+            marginBottom: i < rows.length - 1 ? '6px' : 0,
             border: `1px solid ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : C.border}`,
             background: i < 3 ? (i === 0 ? '#fffdf0' : i === 1 ? '#f8f8f8' : '#fff8f4') : C.card,
             transition: 'box-shadow .15s',
@@ -73,7 +75,7 @@ function PerfumeTable({ rows, navigate }) {
               <span>{row.muadil.targetPerfumeName}</span>
             </div>
           </div>
-          <ScoreBadge score={row.score} />
+          <ScoreBadge score={row.bayesianScore} count={row.reviewCount} />
         </div>
       ))}
     </div>
@@ -91,7 +93,7 @@ function BrandTable({ rows, navigate }) {
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '11px 14px', borderRadius: '12px', cursor: 'pointer',
-            marginBottom: '6px',
+            marginBottom: i < rows.length - 1 ? '6px' : 0,
             border: `1px solid ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : C.border}`,
             background: i < 3 ? (i === 0 ? '#fffdf0' : i === 1 ? '#f8f8f8' : '#fff8f4') : C.card,
             transition: 'box-shadow .15s',
@@ -109,12 +111,14 @@ function BrandTable({ rows, navigate }) {
             {row.brand.logo}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.brand.name}</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {row.brand.name}
+            </div>
             <div style={{ fontSize: '11px', color: C.textLight, marginTop: '2px' }}>
-              {row.perfumeCount} muadil · {row.brand.origin}
+              {row.ratedProductCount} puanlı ürün · {row.brand.origin}
             </div>
           </div>
-          <ScoreBadge score={row.score} />
+          <ScoreBadge score={row.brandBayesianScore} />
         </div>
       ))}
     </div>
@@ -126,31 +130,36 @@ export function LeaderboardPage() {
     title: 'En İyiler',
     description: 'En yüksek puan alan muadil parfümler ve markalar. Topluluğun en beğendiği orijinal-muadil eşleşmelerini keşfet.',
   });
+
   const { muadilPerfumes, comments, brands } = useData();
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
 
-  const muadilScores = muadilPerfumes
-    .filter((m) => m.active)
-    .map((m) => ({ muadil: m, score: calcMuadilScore(m.id, comments) }))
-    .filter((r) => r.score !== null)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10);
 
-  const muadilBrands = brands.filter((b) => b.type === 'muadil' && b.active);
-  const brandScores = muadilBrands
-    .map((brand) => {
-      const brandMuadils = muadilPerfumes.filter((m) => m.brandId === brand.id && m.active);
-      const scored = brandMuadils
-        .map((m) => calcMuadilScore(m.id, comments))
-        .filter((s) => s !== null);
-      if (!scored.length) return null;
-      const avg = +(scored.reduce((a, b) => a + b, 0) / scored.length).toFixed(1);
-      return { brand, score: avg, perfumeCount: brandMuadils.length };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10);
+  // Bayesian puan haritası — comments değiştiğinde yeniden hesapla
+  const muadilScoreMap = useMemo(
+    () => calcAllMuadilScores(muadilPerfumes.filter((m) => m.active !== false), comments),
+    [muadilPerfumes, comments]
+  );
+
+  // Top 10 muadil: bayesianScore ile sıralanır, avgScore gösterilir
+  const topMuadils = useMemo(() => {
+    const rows = [];
+    for (const [id, scores] of muadilScoreMap.entries()) {
+      const muadil = muadilPerfumes.find((m) => m.id === id);
+      if (!muadil) continue;
+      rows.push({ muadil, ...scores });
+    }
+    return rows
+      .sort((a, b) => b.bayesianScore - a.bayesianScore)
+      .slice(0, 10);
+  }, [muadilScoreMap, muadilPerfumes]);
+
+  // Top 10 marka: brandBayesianScore ile sıralanır, brandAvgScore gösterilir
+  const topBrands = useMemo(() => {
+    const muadilBrands = brands.filter((b) => b.type === 'muadil' && b.active !== false);
+    return calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap).slice(0, 10);
+  }, [brands, muadilPerfumes, muadilScoreMap]);
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', padding: xs ? '20px 16px 40px' : sm ? '28px 16px 60px' : '40px 0 80px' }}>
@@ -164,12 +173,20 @@ export function LeaderboardPage() {
           <p style={{ fontSize: '14px', color: C.textLight, marginTop: '8px', fontFamily: F }}>
             Kullanıcı puanlarına göre en başarılı muadil parfümler ve markalar
           </p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '10px', padding: '6px 14px', borderRadius: '20px', background: C.surface, border: `1px solid ${C.border}` }}>
+            <svg width="12" height="12" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span style={{ fontSize: '12px', color: C.textLight, fontFamily: F }}>
+              muadilci.com bu listeleri hazırlarken güvenilirlik ortalaması için <strong style={{ color: C.textMid }}>Bayesian Ortalamasını</strong> kullanır.
+            </span>
+          </div>
         </div>
 
-        {/* Two-column layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '24px' }}>
+        {/* İki kolon */}
+        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '24px', alignItems: 'start' }}>
 
-          {/* Left: Top 10 Muadil Perfumes */}
+          {/* Sol: Top 10 Muadil */}
           <div style={{ background: C.card, borderRadius: '20px', border: `1px solid ${C.border}`, padding: sm ? '20px 16px' : '28px', boxShadow: C.shadow }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
               <div style={{
@@ -181,14 +198,14 @@ export function LeaderboardPage() {
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: C.navy, fontFamily: F }}>
-                  En İyi Muadil Parfümler
+                  En İyi 10 Muadil Parfüm
                 </h2>
-                <p style={{ margin: 0, fontSize: '12px', color: C.textLight }}>Benzerlik, yayılım ve kalıcılık puanı</p>
+                <p style={{ margin: 0, fontSize: '12px', color: C.textLight }}>Parfüme ait benzerlik, yayılım, kalıcılık puanı ortalaması</p>
               </div>
             </div>
 
-            {muadilScores.length > 0 ? (
-              <PerfumeTable rows={muadilScores} navigate={navigate} />
+            {topMuadils.length > 0 ? (
+              <PerfumeTable rows={topMuadils} navigate={navigate} />
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: C.textLight, fontSize: '14px' }}>
                 Henüz yeterli puan verisi yok.
@@ -196,7 +213,7 @@ export function LeaderboardPage() {
             )}
           </div>
 
-          {/* Right: Top 10 Muadil Brands */}
+          {/* Sağ: Top 10 Marka */}
           <div style={{ background: C.card, borderRadius: '20px', border: `1px solid ${C.border}`, padding: sm ? '20px 16px' : '28px', boxShadow: C.shadow }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
               <div style={{
@@ -208,14 +225,14 @@ export function LeaderboardPage() {
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: C.navy, fontFamily: F }}>
-                  En İyi Muadil Markalar
+                  En İyi 10 Muadil Marka
                 </h2>
-                <p style={{ margin: 0, fontSize: '12px', color: C.textLight }}>Tüm muadil parfümlerinin ortalama puanı</p>
+                <p style={{ margin: 0, fontSize: '12px', color: C.textLight }}>Markaya ait parfümlerin ortalaması</p>
               </div>
             </div>
 
-            {brandScores.length > 0 ? (
-              <BrandTable rows={brandScores} navigate={navigate} />
+            {topBrands.length > 0 ? (
+              <BrandTable rows={topBrands} navigate={navigate} />
             ) : (
               <div style={{ textAlign: 'center', padding: '40px 0', color: C.textLight, fontSize: '14px' }}>
                 Henüz yeterli puan verisi yok.
