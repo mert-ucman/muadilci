@@ -1,22 +1,156 @@
 import { useRouter } from '@/contexts/RouterContext';
-import { Card } from '@/components/ui';
-import { C } from '@/constants/theme';
+import { C, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
+import { useW } from '@/hooks/useW';
 import logoDark from '@/img/logos/logo-dark-minified.png';
+import loginBg from '@/img/login page.png';
+import signUpBg from '@/img/sign-up.png';
 
-export function AuthLayout({ title, subtitle, children }) {
+export { loginBg, signUpBg };
+
+const GOLD = 'rgb(184,147,90)';
+
+const DEFAULT_HEADLINE = (
+  <>Kokuların<br /><em style={{ color: GOLD, fontStyle: 'italic' }}>Zarif</em> Dünyasına<br />Hoş Geldiniz</>
+);
+
+export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headline = DEFAULT_HEADLINE }) {
   const { navigate } = useRouter();
+  const { lg } = useW();
   useSeo({ title: title || 'Hesap', noindex: true });
+
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-      <div onClick={() => navigate('/')} style={{ cursor: 'pointer', marginBottom: '32px' }}>
-        <img src={logoDark} alt="muadilci" style={{ height: '120px', objectFit: 'contain', display: 'block' }} />
+    <div style={{
+      minHeight: '100vh',
+      background: C.bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 24px',
+    }}>
+      <div style={{
+        display: 'flex',
+        width: '100%',
+        maxWidth: '920px',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.13)',
+      }}>
+
+        {/* ── Sol panel: görsel ─────────────────────────────────────── */}
+        {!lg && (
+          <div style={{
+            width: '400px',
+            minHeight: '560px',
+            flexShrink: 0,
+            position: 'relative',
+            backgroundImage: `url(${bgImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+          }}>
+            {/* karartma gradyanı */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(170deg, rgba(15,10,5,0.18) 0%, rgba(18,12,4,0.80) 65%)',
+            }} />
+
+            {/* metin */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              padding: '40px 36px',
+            }}>
+
+              <h2 style={{
+                fontFamily: FH,
+                fontSize: '30px',
+                fontWeight: 400,
+                color: '#fff',
+                lineHeight: 1.32,
+                marginBottom: '18px',
+                letterSpacing: '-0.01em',
+              }}>
+                {headline}
+              </h2>
+              <p style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '12.5px',
+                fontWeight: 300,
+                color: 'rgba(255,255,255,0.58)',
+                lineHeight: 1.85,
+                letterSpacing: '0.02em',
+              }}>
+                Dünya'nın lüks parfüm muadillerini<br />
+                keşfet, karşılaştır ve en iyisini bul.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Sağ panel: form ───────────────────────────────────────── */}
+        <div style={{
+          flex: 1,
+          background: '#FAFAF8',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: lg ? '40px 28px' : '40px 44px',
+          position: 'relative',
+        }}>
+          {/* Ana sayfa butonu */}
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              position: 'absolute', top: '18px', left: '18px',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'none', border: `1px solid ${C.border}`,
+              borderRadius: '8px', padding: '6px 12px',
+              fontSize: '12px', color: C.textMid, cursor: 'pointer',
+              fontFamily: 'Nunito, sans-serif', fontWeight: 600,
+              transition: 'color 0.2s, border-color 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = C.gold; e.currentTarget.style.borderColor = C.gold; }}
+            onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
+          >
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Ana Sayfa
+          </button>
+
+          <div
+            onClick={() => navigate('/')}
+            style={{ cursor: 'pointer', marginBottom: '24px' }}
+          >
+            <img
+              src={logoDark}
+              alt="muadilci"
+              style={{ height: '72px', objectFit: 'contain', display: 'block' }}
+            />
+          </div>
+
+          <div style={{ width: '100%', maxWidth: '360px' }}>
+            <h1 style={{
+              fontSize: '22px', fontWeight: 900, color: C.navy,
+              marginBottom: '6px', textAlign: 'center',
+            }}>
+              {title}
+            </h1>
+            <p style={{
+              color: C.textLight, fontSize: '13px',
+              textAlign: 'center', marginBottom: '24px',
+            }}>
+              {subtitle}
+            </p>
+            {children}
+          </div>
+        </div>
+
       </div>
-      <Card style={{ width: '100%', maxWidth: '420px', padding: '32px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 900, color: C.navy, marginBottom: '6px', textAlign: 'center' }}>{title}</h1>
-        <p style={{ color: C.textLight, fontSize: '14px', textAlign: 'center', marginBottom: '26px' }}>{subtitle}</p>
-        {children}
-      </Card>
     </div>
   );
 }
@@ -26,7 +160,15 @@ export function GoogleBtn({ label, onClick, loading }) {
     <button
       onClick={onClick}
       disabled={loading}
-      style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '11px', background: loading ? '#f5f5f5' : C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px', fontWeight: 600, color: C.text, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Nunito,sans-serif', marginBottom: '14px', opacity: loading ? 0.7 : 1 }}
+      style={{
+        width: '100%', border: `1px solid ${C.border}`, borderRadius: '10px',
+        padding: '11px', background: loading ? '#f5f5f5' : C.card,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: '10px', fontSize: '14px', fontWeight: 600, color: C.text,
+        cursor: loading ? 'not-allowed' : 'pointer',
+        fontFamily: 'Nunito,sans-serif', marginBottom: '14px',
+        opacity: loading ? 0.7 : 1,
+      }}
       onMouseEnter={(e) => !loading && (e.currentTarget.style.background = '#f9f9f9')}
       onMouseLeave={(e) => !loading && (e.currentTarget.style.background = C.card)}
     >

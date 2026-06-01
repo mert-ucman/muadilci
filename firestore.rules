@@ -28,6 +28,18 @@ service cloud.firestore {
       match /favorites/{docId} {
         allow read, write: if isOwner(uid);
       }
+
+      // Parfüm listeleri alt-koleksiyonu (herkese okunabilir, sadece sahip yazabilir)
+      match /perfumeLists/{listId} {
+        allow read: if true;
+        allow write: if isOwner(uid);
+      }
+    }
+
+    // ── Public Profiles ───────────────────────────────────────────────────
+    match /publicProfiles/{uid} {
+      allow read: if true;
+      allow write: if isOwner(uid) || isAdmin();
     }
 
     // ── Usernames (benzersizlik için) ─────────────────────────────────────

@@ -7,8 +7,13 @@ export function matchRoute(pattern, base) {
   if (pp.length !== bp.length) return null;
   const params = {};
   for (let i = 0; i < pp.length; i++) {
-    if (pp[i].startsWith(':')) params[pp[i].slice(1)] = bp[i];
-    else if (pp[i] !== bp[i]) return null;
+    if (pp[i].startsWith('@:')) {
+      // @:username → path segment must start with @
+      if (!bp[i].startsWith('@')) return null;
+      params[pp[i].slice(2)] = bp[i].slice(1);
+    } else if (pp[i].startsWith(':')) {
+      params[pp[i].slice(1)] = bp[i];
+    } else if (pp[i] !== bp[i]) return null;
   }
   return params;
 }

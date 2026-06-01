@@ -63,7 +63,7 @@ function IconList() {
 }
 
 export function BrandPage({ params }) {
-  const { navigate } = useRouter();
+  const { navigate, goBack } = useRouter();
   const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
@@ -185,7 +185,7 @@ export function BrandPage({ params }) {
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
           {/* Üst bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <button onClick={() => navigate('/markalar')}
+            <button onClick={() => goBack('/markalar')}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: '10px', padding: '7px 14px', color: 'rgba(255,255,255,.85)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.2)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,.12)'}>

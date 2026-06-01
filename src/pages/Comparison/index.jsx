@@ -446,6 +446,13 @@ export function ComparisonPage({ queryParams }) {
                                 </span>
                               ) : isDeleted ? (
                                 <span style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>{liveName}</span>
+                              ) : commentUser?.username ? (
+                                <a href={`/@${commentUser.username}`}
+                                  onClick={(e) => { e.preventDefault(); navigate(`/@${commentUser.username}`); }}
+                                  style={{ fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                                  onMouseEnter={e => e.currentTarget.style.color = C.gold}
+                                  onMouseLeave={e => e.currentTarget.style.color = C.text}
+                                >{liveName}</a>
                               ) : (
                                 <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{liveName}</span>
                               )}

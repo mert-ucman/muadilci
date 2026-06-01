@@ -55,13 +55,21 @@ export function RouterProvider({ children }) {
   const navigate = useCallback((to) => {
     if (!to) return;
     if (to === path) { window.scrollTo(0, 0); return; }
-    // Mevcut sayfanın scroll pozisyonunu kaydet
     scrollPositions.current.set(path, window.scrollY);
     window.history.pushState(null, '', to);
     currentPathRef.current = to;
     setPath(to);
     window.scrollTo(0, 0);
   }, [path]);
+
+  // Tarayıcı geçmişinde bir adım geri; geçmiş yoksa fallback URL'ye gider
+  const goBack = useCallback((fallback = '/') => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate(fallback);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     try { logEvent(analytics, 'page_view', { page_path: path }); } catch { /* analytics devre dışı */ }
@@ -77,7 +85,7 @@ export function RouterProvider({ children }) {
   }
 
   return (
-    <RouterCtx.Provider value={{ path, basePath, query, navigate }}>
+    <RouterCtx.Provider value={{ path, basePath, query, navigate, goBack }}>
       {children}
     </RouterCtx.Provider>
   );

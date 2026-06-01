@@ -5,10 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
+import { usePerfumeLists } from '@/hooks/usePerfumeLists';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
+import { ListsTab } from './ListsTab';
 
 function getCroppedImg(src, pixelCrop, outputSize = 240) {
   return new Promise((resolve, reject) => {
@@ -120,8 +122,10 @@ export function ProfilePage({ queryParams }) {
   const { w, sm, xs } = useW();
   const { comments, perfumes, muadilPerfumes, brands, updateUser, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
 
-  const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : 'info';
+  const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : queryParams?.tab === 'lists' ? 'lists' : 'info';
   const [tab, setTab] = useState(tabInit);
+
+  const { lists, loading: listsLoading, createList, updateList, deleteList } = usePerfumeLists(user?.uid);
 
   // Kullanıcı adı düzenleme state'leri
   const [usernameEdit, setUsernameEdit] = useState(false);
@@ -422,7 +426,7 @@ export function ProfilePage({ queryParams }) {
         )}
         {/* Tabs — scrollable on mobile */}
         <div className="tabs-scroll" style={{ borderBottom: `1px solid ${C.border}`, marginBottom: '28px' }}>
-          {[{ k: 'info', l: 'Bilgilerim' }, { k: 'favorites', l: 'Favorilerim' }, { k: 'reviews', l: 'Yorumlarım' }].map(({ k, l }) => (
+          {[{ k: 'info', l: 'Bilgilerim' }, { k: 'favorites', l: 'Favorilerim' }, { k: 'reviews', l: 'Yorumlarım' }, { k: 'lists', l: 'Listelerim' }].map(({ k, l }) => (
             <button key={k} onClick={() => setTab(k)}
               style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === k ? C.gold : 'transparent'}`, padding: '10px 16px', color: tab === k ? C.gold : C.textMid, fontSize: '14px', fontWeight: tab === k ? 700 : 500, cursor: 'pointer', fontFamily: F, marginBottom: '-1px', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {l}
@@ -676,6 +680,18 @@ export function ProfilePage({ queryParams }) {
               );
             })}
           </div>
+        )}
+        {tab === 'lists' && (
+          <ListsTab
+            userId={user.uid}
+            lists={lists}
+            loading={listsLoading}
+            createList={createList}
+            updateList={updateList}
+            deleteList={deleteList}
+            perfumes={perfumes}
+            muadilPerfumes={muadilPerfumes}
+          />
         )}
       </div>
     </div>

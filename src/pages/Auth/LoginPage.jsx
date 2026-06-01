@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { Btn } from '@/components/ui';
-import { AuthLayout, GoogleBtn, Divider, EyeIcon } from './AuthLayout';
+import { AuthLayout, GoogleBtn, Divider, EyeIcon, signUpBg } from './AuthLayout';
 import { C } from '@/constants/theme';
 
 export function LoginPage() {
@@ -62,7 +62,12 @@ export function LoginPage() {
   });
 
   return (
-    <AuthLayout title="Hoş Geldiniz" subtitle="Hesabınıza giriş yapın">
+    <AuthLayout
+      title="Hoş Geldiniz"
+      subtitle="Hesabınıza giriş yapın"
+      bgImage={signUpBg}
+      headline={<>Kokuların<br /><em style={{ color: 'rgb(184,147,90)', fontStyle: 'italic' }}>Güçlü</em> Dünyasına<br />Hoş Geldiniz</>}
+    >
       <GoogleBtn label="Google ile Giriş Yap" onClick={handleGoogle} loading={googleLoading} />
       <Divider />
 

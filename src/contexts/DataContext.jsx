@@ -258,6 +258,9 @@ export function DataProvider({ children }) {
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          const perfumeUrl = muadil?.targetPerfumeId
+            ? `/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}`
+            : null;
           await addDoc(col('notifications'), {
             type: 'review_approved',
             forStaff: false,
@@ -265,6 +268,7 @@ export function DataProvider({ children }) {
             reviewId: id,
             muadilId: review.muadilId || '',
             muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            perfumeUrl: perfumeUrl ?? null,
             reviewCreatedAt: review.createdAt ?? null,
             read: false,
             createdAt: serverTimestamp(),
@@ -285,6 +289,9 @@ export function DataProvider({ children }) {
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          const perfumeUrl = muadil?.targetPerfumeId
+            ? `/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}`
+            : null;
           await addDoc(col('notifications'), {
             type: 'review_rejected',
             forStaff: false,
@@ -292,6 +299,7 @@ export function DataProvider({ children }) {
             reviewId: id,
             muadilId: review.muadilId || '',
             muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            perfumeUrl: perfumeUrl ?? null,
             reviewCreatedAt: review.createdAt ?? null,
             read: false,
             createdAt: serverTimestamp(),
@@ -305,6 +313,9 @@ export function DataProvider({ children }) {
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
+          const perfumeUrl = muadil?.targetPerfumeId
+            ? `/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}`
+            : null;
           await addDoc(col('notifications'), {
             type: 'review_rejected',
             forStaff: false,
@@ -312,6 +323,7 @@ export function DataProvider({ children }) {
             reviewId: id,
             muadilId: review.muadilId || '',
             muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+            perfumeUrl: perfumeUrl ?? null,
             reviewCreatedAt: review.createdAt ?? null,
             read: false,
             createdAt: serverTimestamp(),
@@ -425,7 +437,13 @@ export function DataProvider({ children }) {
   };
 
   // ─── Users ────────────────────────────────────────────────────────────────
-  const updateUser = async (id, d) => updateDoc(docRef('users', id), d);
+  const updateUser = async (id, d) => {
+    await updateDoc(docRef('users', id), d);
+    // Herkese açık profil alanlarını (name) senkronize et
+    const pub = {};
+    if (d.name !== undefined) pub.name = d.name;
+    if (Object.keys(pub).length) setDoc(doc(db, 'publicProfiles', id), pub, { merge: true }).catch(() => {});
+  };
   const deleteUser = async (id) => {
     // 1. Kullanıcı verisini al (kullanıcı adı için)
     const userSnap = await getDoc(docRef('users', id));

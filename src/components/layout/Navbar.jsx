@@ -13,7 +13,7 @@ import { faRightToBracket, faUserPlus, faBars, faBell, faCheck, faXmark } from '
 export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
-  const { perfumes, brands, comments, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
+  const { perfumes, brands, muadilPerfumes, comments, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
   const { lg } = useW();
 
   const [scrolled,       setScrolled]       = useState(false);
@@ -97,9 +97,10 @@ export function Navbar() {
               {navLinks.map(link => {
                 const isActive = basePath === link.u;
                 return (
-                  <button
+                  <a
                     key={link.u}
-                    onClick={() => navigate(link.u)}
+                    href={`/#${link.u}`}
+                    onClick={e => { e.preventDefault(); navigate(link.u); }}
                     style={{
                       background: 'none',
                       border: 'none',
@@ -112,6 +113,9 @@ export function Navbar() {
                       letterSpacing: isActive ? '0' : '0.01em',
                       position: 'relative',
                       transition: 'color 0.2s',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = C.text; }}
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = C.textMid; }}
@@ -135,7 +139,7 @@ export function Navbar() {
                         height: '1px', background: C.gold, borderRadius: '1px',
                       }} />
                     )}
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -290,7 +294,20 @@ export function Navbar() {
                       return (
                         <div
                           key={n.id}
-                          onClick={() => { markNotificationRead(n.id); if (n.type === 'new_review') navigate('/moderasyon'); }}
+                          onClick={() => {
+                            markNotificationRead(n.id);
+                            setNotifOpen(false);
+                            if (n.type === 'new_review' || n.type === 'review_updated') {
+                              navigate('/moderasyon');
+                            } else if (n.type === 'review_approved' || n.type === 'review_rejected') {
+                              if (n.perfumeUrl) {
+                                navigate(n.perfumeUrl);
+                              } else if (n.muadilId) {
+                                const m = muadilPerfumes.find((m) => String(m.id) === String(n.muadilId));
+                                if (m?.targetPerfumeId) navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`);
+                              }
+                            }
+                          }}
                           style={{
                             padding: '11px 16px', cursor: 'pointer',
                             borderBottom: `1px solid ${C.borderLight}`,
@@ -377,10 +394,10 @@ export function Navbar() {
                     { l: 'Favorilerim',  u: '/profil?tab=favorites' },
                     { l: 'Yorumlarım',   u: '/profil?tab=reviews' },
                   ].map(({ l, u }) => (
-                    <button key={u} onClick={() => { navigate(u); setMenuOpen(false); }}
-                      style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '13px', color: C.text, cursor: 'pointer', fontFamily: F }}
+                    <a key={u} href={`/#${u}`} onClick={e => { e.preventDefault(); navigate(u); setMenuOpen(false); }}
+                      style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', textAlign: 'left', fontSize: '13px', color: C.text, cursor: 'pointer', fontFamily: F, textDecoration: 'none' }}
                       onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}>{l}</button>
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}>{l}</a>
                   ))}
                   <div style={{ height: '1px', background: C.borderLight }} />
                   <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }}
@@ -501,15 +518,15 @@ export function Navbar() {
             {/* Mobile nav links */}
             <div style={{ flex: 1, padding: '10px 12px', overflowY: 'auto' }}>
               {navLinks.map(link => (
-                <button key={link.u} onClick={() => handleNav(link.u)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '8px', border: 'none', background: basePath === link.u ? C.goldBg : 'transparent', color: basePath === link.u ? C.gold : C.text, fontSize: '15px', fontWeight: basePath === link.u ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '2px' }}>
+                <a key={link.u} href={`/#${link.u}`} onClick={e => { e.preventDefault(); handleNav(link.u); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '8px', background: basePath === link.u ? C.goldBg : 'transparent', color: basePath === link.u ? C.gold : C.text, fontSize: '15px', fontWeight: basePath === link.u ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '2px', textDecoration: 'none' }}>
                   <span>{link.l}</span>
                   {link.badge > 0 && (
                     <span style={{ minWidth: '20px', height: '20px', borderRadius: '10px', background: C.gold, color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
                       {link.badge > 99 ? '99+' : link.badge}
                     </span>
                   )}
-                </button>
+                </a>
               ))}
             </div>
 
@@ -526,7 +543,7 @@ export function Navbar() {
                       <div style={{ fontSize: '12px', color: C.gold }}>{roleLabel[user.role]}</div>
                     </div>
                   </div>
-                  <button onClick={() => handleNav('/profil')} style={{ display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '6px' }}>Profilim</button>
+                  <a href="/#/profil" onClick={e => { e.preventDefault(); handleNav('/profil'); }} style={{ display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '6px', textDecoration: 'none' }}>Profilim</a>
                   <button onClick={() => { logout(); handleNav('/'); }} style={{ display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px', border: 'none', background: C.redBg, color: C.red, fontSize: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: F }}>Çıkış Yap</button>
                 </>
               ) : (

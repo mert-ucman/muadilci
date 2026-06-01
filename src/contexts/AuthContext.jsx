@@ -24,6 +24,13 @@ import { auth, db } from '@/lib/firebase';
 import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
 
+// 10 dakika hareketsizlik → otomatik çıkış
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+// localStorage'a yazılan son aktivite anahtarı (tüm sekmeler paylaşır)
+const LAST_ACTIVITY_KEY = 'muadilci_last_activity';
+// BroadcastChannel mesaj tipi
+const ACTIVITY_MSG = 'user_activity';
+
 const RESERVED_WORDS = [
   'admin', 'mod', 'moderator', 'moderatör', 'muadilci',
   'support', 'destek', 'official', 'resmi', 'sistem',
@@ -46,6 +53,11 @@ export function useAuth() {
   return useContext(AuthCtx);
 }
 
+function syncPublicProfile(uid, data) {
+  // Hata olsa bile ana akışı engellemesin
+  setDoc(doc(db, 'publicProfiles', uid), data, { merge: true }).catch(() => {});
+}
+
 async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
   const ref = doc(db, 'users', firebaseUser.uid);
   const snap = await getDoc(ref);
@@ -54,7 +66,12 @@ async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
     await signOut(auth);
     return null;
   }
-  if (snap.exists()) return snap.data();
+  if (snap.exists()) {
+    const d = snap.data();
+    // Mevcut kullanıcı için publicProfiles'ı güncel tut
+    syncPublicProfile(firebaseUser.uid, { uid: firebaseUser.uid, name: d.name, username: d.username || null, photoURL: d.photoURL || null, role: d.role || 'user' });
+    return d;
+  }
 
   const name = extraData.name || firebaseUser.displayName || firebaseUser.email.split('@')[0];
   const userData = {
@@ -69,6 +86,7 @@ async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
     createdAt: serverTimestamp(),
   };
   await setDoc(ref, userData);
+  syncPublicProfile(firebaseUser.uid, { uid: firebaseUser.uid, name, username: userData.username, photoURL: userData.photoURL, role: 'user' });
   return userData;
 }
 
@@ -76,6 +94,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = loading
   // Kullanıcı kendi hesabını silerken otomatik-çıkış listener'ını sustur
   const selfDeletingRef = useRef(false);
+  // İnaktivite timer ref'i
+  const inactivityTimerRef = useRef(null);
+  // BroadcastChannel: sekmeler arası aktivite senkronizasyonu
+  const channelRef = useRef(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -113,6 +135,7 @@ export function AuthProvider({ children }) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const userData = await fetchOrCreateUserDoc(cred.user);
     const provider = cred.user.providerData[0]?.providerId || 'password';
+    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     setUser({
       ...userData,
       uid: cred.user.uid,
@@ -156,6 +179,7 @@ export function AuthProvider({ children }) {
     batch.set(doc(db, 'users', cred.user.uid), userData);
     batch.set(usernameRef, { uid: cred.user.uid, email });
     await batch.commit();
+    syncPublicProfile(cred.user.uid, { uid: cred.user.uid, name, username: usernameKey, photoURL: null, role: 'user' });
     // Doğrulama maili gönder — hata olsa bile kayıt tamamlanmış olur,
     // kullanıcı doğrulama sayfasından "tekrar gönder" diyebilir
     try {
@@ -213,6 +237,7 @@ export function AuthProvider({ children }) {
       reviewsSnap.docs.forEach((d) => rb.update(d.ref, { userName: newUserName }));
       await rb.commit();
     }
+    syncPublicProfile(currentUser.uid, { username: newKey });
     setUser((prev) => ({ ...prev, username: newKey }));
   };
 
@@ -267,6 +292,7 @@ export function AuthProvider({ children }) {
     const cred = await signInWithPopup(auth, googleProvider);
     const userData = await fetchOrCreateUserDoc(cred.user);
     if (!userData) { setUser(null); return; }
+    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     setUser({
       ...userData,
       uid: cred.user.uid,
@@ -294,6 +320,70 @@ export function AuthProvider({ children }) {
     return verified;
   };
 
+  // ── İnaktivite yönetimi ─────────────────────────────────────────────────────
+  const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimerRef.current);
+    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    inactivityTimerRef.current = setTimeout(() => {
+      signOut(auth).then(() => setUser(null));
+    }, INACTIVITY_TIMEOUT_MS);
+  };
+
+  // Kullanıcı giriş yaptığında / state değiştiğinde inaktivite dinleyicilerini kur
+  useEffect(() => {
+    if (!user) {
+      // Giriş yoksa timer ve dinleyicileri temizle
+      clearTimeout(inactivityTimerRef.current);
+      if (channelRef.current) { channelRef.current.close(); channelRef.current = null; }
+      return;
+    }
+
+    // BroadcastChannel: diğer sekmelerden gelen aktivite mesajlarını al
+    try {
+      channelRef.current = new BroadcastChannel('muadilci_activity');
+      channelRef.current.onmessage = (e) => {
+        if (e.data === ACTIVITY_MSG) resetInactivityTimer();
+      };
+    } catch { /* BroadcastChannel desteklenmiyor */ }
+
+    // Sayfa yüklendiğinde mevcut son aktiviteye göre kalan süreyi hesapla
+    const stored = localStorage.getItem(LAST_ACTIVITY_KEY);
+    if (!stored) {
+      // İlk giriş veya temizlenmiş — şimdiden başlat
+      localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    }
+    const lastActivity = stored ? parseInt(stored, 10) : Date.now();
+    const elapsed = Date.now() - lastActivity;
+    if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+      // Zaten süre dolmuş → hemen çıkış
+      signOut(auth).then(() => setUser(null));
+      return;
+    }
+    // Kalan süre kadar timer kur
+    clearTimeout(inactivityTimerRef.current);
+    inactivityTimerRef.current = setTimeout(() => {
+      signOut(auth).then(() => setUser(null));
+    }, INACTIVITY_TIMEOUT_MS - elapsed);
+
+    // DOM aktivite olayları
+    const handleActivity = () => {
+      resetInactivityTimer();
+      // Diğer sekmelere bildir
+      try { channelRef.current?.postMessage(ACTIVITY_MSG); } catch { /* noop */ }
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach((ev) => window.addEventListener(ev, handleActivity, { passive: true }));
+
+    return () => {
+      clearTimeout(inactivityTimerRef.current);
+      events.forEach((ev) => window.removeEventListener(ev, handleActivity));
+      if (channelRef.current) { channelRef.current.close(); channelRef.current = null; }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   const logout = () => signOut(auth).then(() => setUser(null));
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email, {
@@ -310,6 +400,7 @@ export function AuthProvider({ children }) {
     const url = await uploadDataURL(dataUrl, `users/${currentUser.uid}`);
     const oldUrl = user?.photoURL;
     await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: url });
+    syncPublicProfile(currentUser.uid, { photoURL: url });
     setUser((prev) => ({ ...prev, photoURL: url }));
     // Eski fotoğrafı Storage'dan temizle (best-effort)
     if (oldUrl && oldUrl !== url) deleteImageByUrl(oldUrl);
@@ -320,6 +411,7 @@ export function AuthProvider({ children }) {
     if (!currentUser) throw new Error('Oturum açık değil.');
     const oldUrl = user?.photoURL;
     await updateDoc(doc(db, 'users', currentUser.uid), { photoURL: null });
+    syncPublicProfile(currentUser.uid, { photoURL: null });
     setUser((prev) => ({ ...prev, photoURL: null }));
     if (oldUrl) deleteImageByUrl(oldUrl);
   };

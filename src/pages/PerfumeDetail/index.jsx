@@ -40,7 +40,7 @@ const COLS = [
 ];
 
 export function PerfumeDetailPage({ params }) {
-  const { navigate } = useRouter();
+  const { navigate, goBack } = useRouter();
   const { perfumes, muadilPerfumes, comments, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
@@ -109,7 +109,7 @@ export function PerfumeDetailPage({ params }) {
 
         {/* Üst bar: Geri Dön + Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '22px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
+          <button onClick={() => goBack(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '7px 14px', color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, flexShrink: 0, transition: 'all .15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bg; e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.color = C.navy; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}>

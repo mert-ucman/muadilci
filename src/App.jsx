@@ -22,6 +22,7 @@ import { ModerationPage }    from '@/pages/Moderation';
 import { AdminPanel }        from '@/pages/Admin';
 import { LeaderboardPage }   from '@/pages/Leaderboard';
 import { NotFoundPage }      from '@/pages/NotFound';
+import { PublicProfilePage } from '@/pages/PublicProfile';
 
 const ROUTES = [
   { pat: '/',                       C: LandingPage },
@@ -36,9 +37,11 @@ const ROUTES = [
   { pat: '/en-iyiler',               C: LeaderboardPage },
   { pat: '/moderasyon',             C: ModerationPage },
   { pat: '/admin',                  C: AdminPanel },
+  { pat: '/@:username',              C: PublicProfilePage },
   { pat: '/marka/:brandSlug',       C: BrandPage },
   { pat: '/:brandSlug/:perfumeSlug', C: PerfumeDetailPage },
 ];
+
 
 export function App() {
   const { basePath, query, navigate } = useRouter();
@@ -98,7 +101,7 @@ export function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
-      {!noLayout && <Navbar />}
+{!noLayout && <Navbar />}
       <div style={{ flex: 1 }}>
         <Page params={params} queryParams={query} />
       </div>
