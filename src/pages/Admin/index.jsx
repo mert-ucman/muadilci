@@ -14,7 +14,7 @@ import { ActivityTab } from './ActivityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -1821,7 +1821,7 @@ export function AdminPanel() {
 
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         {/* ── İçerik alanı ─────────────────────────────────────────────────── */}
-        <div style={{ padding: sm ? '16px' : '28px 32px', overflowX: 'auto' }}>
+        <div style={{ padding: sm ? '16px' : '28px 32px' }}>
 
         {/* Dashboard */}
         {tab === 'dashboard' && (
@@ -2078,20 +2078,35 @@ export function AdminPanel() {
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                    <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    <select
-                      value={perfBrandFilter}
-                      onChange={(e) => { setPerfBrandFilter(e.target.value); setPerfPage(1); }}
-                      style={{ height: '32px', border: `1.5px solid ${perfBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: perfBrandFilter ? C.navy : C.textLight, background: perfBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: perfBrandFilter ? 700 : 400 }}
-                    >
-                      <option value="">Tüm Markalar</option>
-                      {perfBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                    {perfBrandFilter && (
-                      <button onClick={() => { setPerfBrandFilter(''); setPerfPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
-                    )}
-                  </div>
+                  {(() => {
+                      const list = ['', ...perfBrandList];
+                      const idx = list.indexOf(perfBrandFilter);
+                      const btnBase = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: 'none', background: 'transparent', cursor: 'pointer', color: C.textMid, padding: 0, transition: 'color .15s' };
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', border: `1.5px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
+                            <button onClick={() => { setPerfBrandFilter(list[(idx - 1 + list.length) % list.length]); setPerfPage(1); }} title="Önceki marka" style={{ ...btnBase, borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronUp} style={{ fontSize: '9px' }} />
+                            </button>
+                            <button onClick={() => { setPerfBrandFilter(list[(idx + 1) % list.length]); setPerfPage(1); }} title="Sonraki marka" style={btnBase} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '9px' }} />
+                            </button>
+                          </div>
+                          <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                          <select
+                            value={perfBrandFilter}
+                            onChange={(e) => { setPerfBrandFilter(e.target.value); setPerfPage(1); }}
+                            style={{ height: '32px', border: `1.5px solid ${perfBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: perfBrandFilter ? C.navy : C.textLight, background: perfBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: perfBrandFilter ? 700 : 400 }}
+                          >
+                            <option value="">Tüm Markalar</option>
+                            {perfBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                          {perfBrandFilter && (
+                            <button onClick={() => { setPerfBrandFilter(''); setPerfPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
+                          )}
+                        </div>
+                      );
+                  })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setPerfPage(1); }} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
@@ -2188,20 +2203,35 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 700, color: C.navy }}>Muadil Parfümler</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                    <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                    <select
-                      value={muadilBrandFilter}
-                      onChange={(e) => { setMuadilBrandFilter(e.target.value); setMuadilPage(1); }}
-                      style={{ height: '32px', border: `1.5px solid ${muadilBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: muadilBrandFilter ? C.navy : C.textLight, background: muadilBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: muadilBrandFilter ? 700 : 400 }}
-                    >
-                      <option value="">Tüm Markalar</option>
-                      {muadilBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                    {muadilBrandFilter && (
-                      <button onClick={() => { setMuadilBrandFilter(''); setMuadilPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
-                    )}
-                  </div>
+                  {(() => {
+                      const list = ['', ...muadilBrandList];
+                      const idx = list.indexOf(muadilBrandFilter);
+                      const btnBase = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: 'none', background: 'transparent', cursor: 'pointer', color: C.textMid, padding: 0, transition: 'color .15s' };
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', border: `1.5px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
+                            <button onClick={() => { setMuadilBrandFilter(list[(idx - 1 + list.length) % list.length]); setMuadilPage(1); }} title="Önceki marka" style={{ ...btnBase, borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronUp} style={{ fontSize: '9px' }} />
+                            </button>
+                            <button onClick={() => { setMuadilBrandFilter(list[(idx + 1) % list.length]); setMuadilPage(1); }} title="Sonraki marka" style={btnBase} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '9px' }} />
+                            </button>
+                          </div>
+                          <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                          <select
+                            value={muadilBrandFilter}
+                            onChange={(e) => { setMuadilBrandFilter(e.target.value); setMuadilPage(1); }}
+                            style={{ height: '32px', border: `1.5px solid ${muadilBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: muadilBrandFilter ? C.navy : C.textLight, background: muadilBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: muadilBrandFilter ? 700 : 400 }}
+                          >
+                            <option value="">Tüm Markalar</option>
+                            {muadilBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                          {muadilBrandFilter && (
+                            <button onClick={() => { setMuadilBrandFilter(''); setMuadilPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
+                          )}
+                        </div>
+                      );
+                  })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setMuadilPage(1); }} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>

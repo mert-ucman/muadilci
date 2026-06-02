@@ -147,7 +147,7 @@ export function PerfumeDetailPage({ params }) {
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: sm ? '18px' : '24px' }}>
             <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 600, color: C.navy, marginBottom: '8px', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}>{perfume.name}</h1>
             <div style={{ fontSize: '15px', color: C.textMid, marginBottom: '16px' }}>{perfume.brandName} · Est. {perfume.year}</div>
-            <p style={{ fontSize: '15px', color: C.text, lineHeight: 1.7, marginBottom: '22px', fontStyle: 'italic' }}>"{perfume.description}"</p>
+            <p style={{ fontSize: '15px', color: C.text, lineHeight: 1.7, marginBottom: '22px', fontStyle: 'italic' }}>{perfume.description}</p>
             <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Koku Notaları</h3>
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
               {[

@@ -110,6 +110,10 @@ export function AuthProvider({ children }) {
       const userData = await fetchOrCreateUserDoc(fresh);
       if (!userData) { setUser(null); return; } // deleted hesap → çıkış yapıldı
       const provider = fresh.providerData[0]?.providerId || 'password';
+      // Yeni sekme veya sayfa yenilemesinde inaktivite sayacını sıfırla.
+      // Yoksa kullanıcı başka bir browser sekmesinde 10+ dk geçirirse bu sekme
+      // eski timestamp'i görüp tüm sekmeleri otomatik logout eder.
+      localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
       setUser({
         ...userData,
         uid: fresh.uid,

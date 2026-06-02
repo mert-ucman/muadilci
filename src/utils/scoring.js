@@ -7,6 +7,10 @@ const C_PRODUCT = 10;
 //          marka ortalamasına çekilir. 5 → 5 puanlı üründe %50/%50
 const C_BRAND = 5;
 
+// MIN_REVIEWS: En İyiler listesine girebilmek için gereken minimum onaylı yorum sayısı.
+//              C_PRODUCT/2 = 5 → bu noktada puan %33 güvenilir, listeye girmeye yeterli.
+const MIN_REVIEWS = 5;
+
 // ── Yardımcı ─────────────────────────────────────────────────────────────────
 
 function bayesianAvg(itemAvg, itemCount, globalMean, C) {
@@ -54,7 +58,7 @@ export function calcAllMuadilScores(muadils, allComments) {
     const ok = allComments.filter(
       (c) => c.muadilPerfumeId === m.id && c.status === 'approved'
     );
-    if (!ok.length) continue;
+    if (ok.length < MIN_REVIEWS) continue;
     const overall = ok.reduce((s, c) => s + (c.similarity + c.projection + c.longevity) / 3, 0) / ok.length;
     rawScores.set(m.id, {
       avgScore: parseFloat(overall.toFixed(1)),

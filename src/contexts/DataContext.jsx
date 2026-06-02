@@ -276,8 +276,12 @@ export function DataProvider({ children }) {
         pendingUpdate: null,
         updatedAt: submittedAt ?? serverTimestamp(),
       });
+      setComments((prev) => prev.map((c) => c.id === id
+        ? { ...c, status: 'approved', text, similarity, projection, longevity, recommend: recommend ?? null, pendingUpdate: null }
+        : c));
     } else {
       await updateDoc(docRef('reviews', id), { status: 'approved' });
+      setComments((prev) => prev.map((c) => c.id === id ? { ...c, status: 'approved' } : c));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
@@ -309,6 +313,7 @@ export function DataProvider({ children }) {
     const review = reviewSnap.data();
     if (review.status === 'pending_update') {
       await updateDoc(docRef('reviews', id), { status: 'approved', pendingUpdate: null });
+      setComments((prev) => prev.map((c) => c.id === id ? { ...c, status: 'approved', pendingUpdate: null } : c));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
@@ -333,6 +338,7 @@ export function DataProvider({ children }) {
       }
     } else {
       await deleteDoc(docRef('reviews', id));
+      setComments((prev) => prev.filter((c) => c.id !== id));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
