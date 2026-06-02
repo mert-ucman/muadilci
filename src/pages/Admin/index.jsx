@@ -1655,6 +1655,8 @@ export function AdminPanel() {
   // ─── Export ───────────────────────────────────────────────────────────────
   const [exportModal, setExportModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showFloatingRefresh, setShowFloatingRefresh] = useState(false);
+  const refreshBtnRef = useRef(null);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -1666,6 +1668,18 @@ export function AdminPanel() {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    setShowFloatingRefresh(false);
+    const el = refreshBtnRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowFloatingRefresh(!entry.isIntersecting),
+      { threshold: 1.0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [tab]);
 
   const getExportData = () => {
     if (tab === 'perfumes') {
@@ -1777,53 +1791,37 @@ export function AdminPanel() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', minHeight: 'calc(100vh - 80px)' }}>
+      {/* ── Yatay sekme barı ─────────────────────────────────────────────── */}
+      <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, zIndex: 50 }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 32px', display: 'flex', flexWrap: 'wrap', gap: '0' }}>
+          {TABS.map(({ k, l, icon }) => {
+            const active = tab === k;
+            return (
+              <button key={k} onClick={() => setTab(k)} style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                padding: '13px 16px',
+                border: 'none', borderBottom: `2px solid ${active ? C.gold : 'transparent'}`,
+                background: 'transparent',
+                color: active ? C.gold : C.textMid,
+                fontSize: '13px', fontWeight: active ? 700 : 500,
+                cursor: 'pointer', fontFamily: F,
+                transition: 'color 0.15s, border-color 0.15s',
+                whiteSpace: 'nowrap',
+              }}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.color = C.text; }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.color = C.textMid; }}
+              >
+                <FontAwesomeIcon icon={icon} style={{ fontSize: '12px' }} />
+                {l}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* ── Sidebar (desktop) ──────────────────────────────────────────── */}
-        {!sm && (
-          <aside style={{
-            width: '210px', flexShrink: 0,
-            borderRight: `1px solid ${C.border}`,
-            background: C.card,
-            padding: '20px 0',
-            position: 'sticky', top: 0, height: '100vh', overflowY: 'auto',
-          }}>
-            {TABS.map(({ k, l, icon }) => {
-              const active = tab === k;
-              return (
-                <button key={k} onClick={() => setTab(k)} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  width: '100%', padding: '10px 18px',
-                  border: 'none', background: active ? C.goldBg : 'transparent',
-                  borderLeft: `3px solid ${active ? C.gold : 'transparent'}`,
-                  color: active ? C.gold : C.textMid,
-                  fontSize: '13px', fontWeight: active ? 700 : 500,
-                  cursor: 'pointer', fontFamily: F, textAlign: 'left',
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = C.bg; e.currentTarget.style.color = C.text; } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.textMid; } }}
-                >
-                  <FontAwesomeIcon icon={icon} style={{ fontSize: '13px', width: '16px', flexShrink: 0 }} />
-                  {l}
-                </button>
-              );
-            })}
-          </aside>
-        )}
-
-        {/* ── İçerik alanı ───────────────────────────────────────────────── */}
-        <div style={{ flex: 1, minWidth: 0, padding: sm ? '16px' : '28px 32px', overflowX: 'hidden' }}>
-
-          {/* Mobil: dropdown */}
-          {sm && (
-            <select
-              value={tab}
-              onChange={(e) => setTab(e.target.value)}
-              style={{ width: '100%', marginBottom: '18px', height: '42px', padding: '0 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: C.card, color: C.navy, fontSize: '14px', fontWeight: 700, fontFamily: F, cursor: 'pointer', outline: 'none' }}>
-              {TABS.map(({ k, l }) => <option key={k} value={k}>{l}</option>)}
-            </select>
-          )}
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        {/* ── İçerik alanı ─────────────────────────────────────────────────── */}
+        <div style={{ padding: sm ? '16px' : '28px 32px', overflowX: 'auto' }}>
 
         {/* Dashboard */}
         {tab === 'dashboard' && (
@@ -2076,7 +2074,7 @@ export function AdminPanel() {
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
                   </button>
-                  <button onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
+                  <button ref={refreshBtnRef} onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
@@ -2787,6 +2785,31 @@ export function AdminPanel() {
           </div>
         )}
       </Modal>
+
+      {/* ── Sabit Yenile Butonu (scroll aşıldığında) ── */}
+      {showFloatingRefresh && (
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          style={{
+            position: 'fixed', bottom: '28px', left: '24px',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '10px 20px', borderRadius: '50px',
+            background: C.navy, color: '#fff',
+            border: 'none', cursor: refreshing ? 'default' : 'pointer',
+            fontSize: '13px', fontWeight: 700, fontFamily: F,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+            opacity: refreshing ? 0.75 : 1,
+            transition: 'left 0.2s ease, opacity 0.15s',
+            zIndex: 100,
+          }}
+        >
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}>
+            <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          {refreshing ? 'Yenileniyor…' : 'Yenile'}
+        </button>
+      )}
     </div>
   );
 }
