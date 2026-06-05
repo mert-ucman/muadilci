@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, query, orderBy, limit, startAfter, getDocs, onSnapshot, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useRouter } from '@/contexts/RouterContext';
-import { useData } from '@/contexts/DataContext';
 import { Badge } from '@/components/ui';
 import { C, F } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,8 +18,6 @@ const TYPE_CONFIG = {
   logout:         { label: 'Çıkış',   color: 'orange'},
 };
 
-const STATUS_LABEL = { pending: 'Bekliyor', approved: 'Onaylandı', rejected: 'Reddedildi', pending_update: 'Güncelleme Bekliyor' };
-const STATUS_COLOR = { pending: 'orange', approved: 'green', rejected: 'red', pending_update: 'orange' };
 
 function formatDate(ts) {
   if (!ts) return '—';
@@ -117,7 +114,6 @@ function ActiveUsersPanel() {
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
 export function ActivityTab() {
   const { navigate } = useRouter();
-  const { comments } = useData();
 
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -148,11 +144,7 @@ export function ActivityTab() {
 
   useEffect(() => { fetchLogs(true); }, [sortDir]);
 
-  const enriched = useMemo(() => logs.map((log) => {
-    if (log.type !== 'review_created') return log;
-    const review = comments.find((c) => c.id === log.reviewId);
-    return { ...log, currentStatus: review?.status || 'pending' };
-  }), [logs, comments]);
+  const enriched = useMemo(() => logs, [logs]);
 
   const filtered = useMemo(() => enriched.filter((log) => {
     if (typeFilter !== 'all' && log.type !== typeFilter) return false;
@@ -224,7 +216,7 @@ export function ActivityTab() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: C.surface, borderBottom: `1px solid ${C.border}` }}>
-                  {['Kullanıcı', 'Tür', 'Detay', 'Durum', 'Tarih'].map((h) => (
+                  {['Kullanıcı', 'Tür', 'Detay', 'Tarih'].map((h) => (
                     <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: C.textMuted, letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
@@ -285,16 +277,6 @@ export function ActivityTab() {
                           <span style={{ color: C.textMid }}>Çıkış yaptı</span>
                         ) : (
                           <span style={{ color: C.textMid }}>—</span>
-                        )}
-                      </td>
-
-                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
-                        {log.type === 'review_created' ? (
-                          <Badge color={STATUS_COLOR[log.currentStatus] || 'orange'}>
-                            {STATUS_LABEL[log.currentStatus] || 'Bekliyor'}
-                          </Badge>
-                        ) : (
-                          <span style={{ fontSize: '12px', color: C.textLight }}>—</span>
                         )}
                       </td>
 

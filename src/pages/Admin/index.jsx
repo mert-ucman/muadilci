@@ -494,7 +494,7 @@ function PerfumeEditModal({ perfume, brands, onClose, onDelete, onSave }) {
     <Modal open onClose={onClose} title={`Parfüm Düzenle: ${perfume.name}`} width="560px">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         <Input label="Parfüm Adı *" value={ef.name} onChange={(e) => setEf({ ...ef, name: e.target.value })} />
-        <Input label="Slug" value={ef.slug} onChange={(e) => setEf({ ...ef, slug: e.target.value })} />
+        <Input label="Slug" value={ef.slug} onChange={(e) => setEf({ ...ef, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
         <Select label="Marka *" value={ef.brandId} onChange={(e) => setEf({ ...ef, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Cinsiyet" value={ef.gender} onChange={(e) => setEf({ ...ef, gender: e.target.value })} options={[{ value: '', label: '—' }, ...['Erkek', 'Kadın', 'Unisex'].map((g) => ({ value: g, label: g }))]} />
         <Input label="Çıkış Yılı" type="number" value={ef.year} onChange={(e) => setEf({ ...ef, year: e.target.value })} />
@@ -545,7 +545,7 @@ function MuadilEditModal({ muadil, brands, perfumes, onClose, onDelete, onSave }
     <Modal open onClose={onClose} title={`Muadil Düzenle: ${muadil.name}`} width="540px">
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         <Input label="Muadil Adı *" value={emf.name} onChange={(e) => setEmf({ ...emf, name: e.target.value })} />
-        <Input label="Slug" value={emf.slug} onChange={(e) => setEmf({ ...emf, slug: e.target.value })} />
+        <Input label="Slug" value={emf.slug} onChange={(e) => setEmf({ ...emf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
         <Select label="Muadil Marka *" value={emf.brandId} onChange={(e) => setEmf({ ...emf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Hedef Orijinal *" value={emf.targetPerfumeId} onChange={(e) => {
           const p = perfumes.find((x) => String(x.id) === e.target.value);
@@ -611,7 +611,7 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
       <Modal open onClose={onClose} title={`Marka Düzenle: ${brand.name}`} width="540px">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           <Input label="Marka Adı *" value={ebf.name} onChange={(e) => setEbf({ ...ebf, name: e.target.value })} />
-          <Input label="Slug" value={ebf.slug} onChange={(e) => setEbf({ ...ebf, slug: e.target.value })} />
+          <Input label="Slug" value={ebf.slug} onChange={(e) => setEbf({ ...ebf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
           <Select label="Tür" value={ebf.type} onChange={(e) => setEbf({ ...ebf, type: e.target.value })} options={[{ value: 'original', label: 'Orijinal' }, { value: 'muadil', label: 'Muadil' }]} />
           <Input label="Logo Kısaltma" value={ebf.logo} onChange={(e) => setEbf({ ...ebf, logo: e.target.value })} />
           <Input label="Köken" value={ebf.origin} onChange={(e) => setEbf({ ...ebf, origin: e.target.value })} />
@@ -719,7 +719,7 @@ function AddBrandModal({ brands, onClose, onAdd }) {
       <Modal open onClose={onClose} title={`Yeni ${bf.type === 'original' ? 'Orijinal' : 'Muadil'} Marka Ekle`} width="540px">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           <Input label="Marka Adı *" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} />
-          <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value })} />
+          <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
           <Input label="Logo Kısaltma" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} />
           <Input label="Köken" value={bf.origin} onChange={(e) => setBf({ ...bf, origin: e.target.value })} />
           <Input label="Kuruluş Yılı" type="number" value={bf.founded} onChange={(e) => setBf({ ...bf, founded: e.target.value })} />
@@ -1057,6 +1057,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
   const [target, setTarget] = useState(null);
   const [srcOpen, setSrcOpen] = useState(false);
   const [tgtOpen, setTgtOpen] = useState(false);
+  const [mergeRefreshing, setMergeRefreshing] = useState(false);
   const srcRef = useRef(null);
   const tgtRef = useRef(null);
 
@@ -1240,9 +1241,12 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <div style={{ fontWeight: 800, fontSize: '17px', color: C.navy }}>Parfüm Birleştirme</div>
           {onRefresh && (
-            <button onClick={onRefresh} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
-              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              Yenile
+            <button
+              onClick={async () => { setMergeRefreshing(true); try { await onRefresh(); } finally { setMergeRefreshing(false); } }}
+              disabled={mergeRefreshing}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: mergeRefreshing ? 'default' : 'pointer', fontFamily: F, opacity: mergeRefreshing ? 0.6 : 1 }}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: mergeRefreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              {mergeRefreshing ? 'Yenileniyor…' : 'Yenile'}
             </button>
           )}
         </div>
@@ -1485,7 +1489,7 @@ export function AdminPanel() {
     }
     const ids = [...selectedIds];
     if (tab === 'original-brands' || tab === 'muadil-brands') await Promise.all(ids.map((id) => { const b = brands.find((x) => x.id === id); return deleteBrand(id, b?.type); }));
-    else if (tab === 'perfumes') await Promise.all(ids.map(deletePerfume));
+    else if (tab === 'perfumes') await Promise.all(ids.map((id) => deletePerfume(id, true)));
     else if (tab === 'muadil') await Promise.all(ids.map(deleteMuadil));
     setSelectedIds(new Set());
     closeBulkDel();
@@ -1661,7 +1665,7 @@ export function AdminPanel() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      if (tab === 'perfumes') await refreshPerfumes();
+      if (tab === 'perfumes') await Promise.all([refreshPerfumes(), refreshMuadils()]);
       else if (tab === 'muadil') await refreshMuadils();
       else if (tab === 'original-brands' || tab === 'muadil-brands') { await refreshPerfumes(); await refreshMuadils(); }
     } finally {
@@ -2127,14 +2131,14 @@ export function AdminPanel() {
                     {pageItems.map((p) => (
                       <tr key={p.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(p.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(p.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(p.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
+                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
                         <td style={{ ...tdStyle, width: '70px', padding: '0 4px' }}>
                           <div style={{ display: 'flex', gap: '4px' }}>
                             <CopyBtn text={p.name} title="Parfüm adını kopyala" />
                             <CopyBtn text={`${p.brandName} ${p.name}`} title="Marka + parfüm adını kopyala" variant="brand" />
                           </div>
                         </td>
-                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${p.brandSlug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{p.brandName}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${p.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{p.brandName}</a></td>
                         <td style={{ ...tdStyle, fontSize: '12px', color: C.gold }}>/{p.brandSlug}/{p.slug}</td>
                         <td style={tdStyle}><GenderBadge gender={p.gender} /></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.green, fontWeight: 600 }}>{p.muadilCount}</td>
@@ -2251,9 +2255,9 @@ export function AdminPanel() {
                     {pageItems.map((m) => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(m.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(m.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(m.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelect(m.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{m.name}</a></td>
-                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${m.brandSlug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${m.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.brandName}</a></td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{(() => { const tp = perfumes.find((x) => String(x.id) === String(m.targetPerfumeId)); return tp ? <a href={`/${tp.brandSlug}/${tp.slug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/${tp.brandSlug}/${tp.slug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.targetBrandName} — {m.targetPerfumeName}</a> : <span>{m.targetBrandName} — {m.targetPerfumeName}</span>; })()}</td>
+                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{m.name}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${m.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${m.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.brandName}</a></td>
+                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{(() => { const tp = perfumes.find((x) => String(x.id) === String(m.targetPerfumeId)); return tp ? <a href={`/${tp.brandSlug}/${tp.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${tp.brandSlug}/${tp.slug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.targetBrandName} — {m.targetPerfumeName}</a> : <span>{m.targetBrandName} — {m.targetPerfumeName}</span>; })()}</td>
                         <td style={tdStyle}>{m.overall >= 0 ? <Badge color="gold">{m.overall}/10</Badge> : <span style={{ fontSize: '12px', color: C.textLight }}>—</span>}</td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.commentCount}</td>
                         <td style={tdStyle}>
@@ -2547,29 +2551,67 @@ export function AdminPanel() {
       </Modal>
 
       {/* Toplu Silme Şifre Modalı */}
-      <Modal open={bulkDel.open} onClose={closeBulkDel} title="Toplu Silme Onayı" width="420px">
-        <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
-          <strong>{selectedIds.size} kayıt</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için admin şifrenizi girin.
-        </div>
-        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
-        <input
-          key={bulkDel.open}
-          ref={bulkDelPwRef}
-          type="password"
-          onChange={() => { if (bulkDel.error) setBulkDel((s) => ({ ...s, error: '' })); }}
-          onKeyDown={(e) => e.key === 'Enter' && !bulkDel.loading && handleBulkDelete()}
-          placeholder="Şifrenizi girin"
-          autoFocus
-          style={{ width: '100%', padding: '10px 14px', border: `1px solid ${bulkDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
-        />
-        {bulkDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{bulkDel.error}</div>}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
-          <Btn variant="ghost" onClick={closeBulkDel} disabled={bulkDel.loading}>İptal</Btn>
-          <Btn variant="danger" onClick={handleBulkDelete} disabled={bulkDel.loading}>
-            {bulkDel.loading ? 'Siliniyor…' : `${selectedIds.size} Kaydı Sil`}
-          </Btn>
-        </div>
-      </Modal>
+      {(() => {
+        const selPerfumes = tab === 'perfumes'
+          ? basePerfumes.filter((p) => selectedIds.has(p.id))
+          : [];
+        const totalMuadils = selPerfumes.reduce((acc, p) => acc + (p.muadilCount || 0), 0);
+        return (
+          <Modal open={bulkDel.open} onClose={closeBulkDel} title="Toplu Silme Onayı" width="460px">
+            <div style={{ marginBottom: '14px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+              {tab === 'perfumes' ? (
+                <>
+                  <strong>{selectedIds.size} parfüm</strong>
+                  {totalMuadils > 0 && <> ve bağlı <strong>{totalMuadils} muadil</strong></>}
+                  {' '}kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için admin şifrenizi girin.
+                </>
+              ) : (
+                <><strong>{selectedIds.size} kayıt</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için admin şifrenizi girin.</>
+              )}
+            </div>
+
+            {tab === 'perfumes' && selPerfumes.length > 0 && (
+              <div style={{ marginBottom: '14px', border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
+                {selPerfumes.map((p, i) => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: i < selPerfumes.length - 1 ? `1px solid ${C.borderLight}` : 'none', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: '11px', color: C.textLight }}>{p.brandName}</div>
+                    </div>
+                    <div style={{ flexShrink: 0, marginLeft: '12px' }}>
+                      {p.muadilCount > 0
+                        ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700, color: C.red }}>{p.muadilCount} muadil silinecek</span>
+                        : <span style={{ fontSize: '11px', color: C.textLight }}>muadil yok</span>
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <input
+              key={bulkDel.open}
+              ref={bulkDelPwRef}
+              type="password"
+              onChange={() => { if (bulkDel.error) setBulkDel((s) => ({ ...s, error: '' })); }}
+              onKeyDown={(e) => e.key === 'Enter' && !bulkDel.loading && handleBulkDelete()}
+              placeholder="Şifrenizi girin"
+              autoFocus
+              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${bulkDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
+            />
+            {bulkDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{bulkDel.error}</div>}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+              <Btn variant="ghost" onClick={closeBulkDel} disabled={bulkDel.loading}>İptal</Btn>
+              <Btn variant="danger" onClick={handleBulkDelete} disabled={bulkDel.loading}>
+                {bulkDel.loading ? 'Siliniyor…' : tab === 'perfumes'
+                  ? `${selectedIds.size} Parfüm${totalMuadils > 0 ? ` + ${totalMuadils} Muadil` : ''} Sil`
+                  : `${selectedIds.size} Kaydı Sil`}
+              </Btn>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* Yorum Silme Şifre Modalı (tekli + çoklu) */}
       <Modal open={revDel.open} onClose={closeRevDel} title={revDel.ids.length > 1 ? 'Yorumları Sil' : 'Yorumu Sil'} width="420px">
