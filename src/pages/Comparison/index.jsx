@@ -69,6 +69,7 @@ function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel,
       <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
+      {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
       {submitError && <div style={{ fontSize: '13px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>{submitError}</div>}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
@@ -417,9 +418,9 @@ export function ComparisonPage({ queryParams }) {
                     : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
                   return (
                     <div key={c.id} style={{
-                      border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : C.border}`,
+                      border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
                       borderRadius: '12px', padding: '14px 16px',
-                      background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : C.card,
+                      background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
                       position: 'relative', overflow: 'hidden',
                     }}>
                       {/* Admin şerit */}
@@ -457,6 +458,8 @@ export function ComparisonPage({ queryParams }) {
                               )}
                             </div>
                             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
+                              {c.status === 'pending_update' && <Badge color="orange">Güncelleme Bekliyor</Badge>}
                               <span style={{ fontSize: '11px', color: C.textLight }}>{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
                               {!isDeleted && user?.uid === c.userId && (
                                 confirmDeleteId === c.id
