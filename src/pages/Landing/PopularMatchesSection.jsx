@@ -13,14 +13,20 @@ export function PopularMatchesSection() {
     .slice(0, 3);
 
   return (
-    <div style={{ background: '#f7f8fc', padding: sm ? '48px 16px' : '72px 32px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap', gap: '12px' }}>
+    <div className="bg-[#f7f8fc]" style={{ padding: sm ? '48px 16px' : '72px 32px' }}>
+      <div className="max-w-[1100px] mx-auto">
+        <div className="flex justify-between items-end mb-8 flex-wrap gap-3">
           <div>
-            <span style={{ display: 'inline-block', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '20px', padding: '5px 16px', fontSize: '12px', fontWeight: 700, color: C.gold, marginBottom: '10px' }}>POPÜLER EŞLEŞMELER</span>
-            <h2 style={{ fontSize: 'clamp(20px,3vw,32px)', fontWeight: 900, color: C.navy }}>En çok incelenen muadiller</h2>
+            <div className="inline-flex items-center justify-center bg-(--color-gold-bg) border border-(--color-gold-border) rounded-[20px] px-4 py-[5px] text-[12px] font-bold text-(--color-gold) mb-[10px]">
+              POPÜLER EŞLEŞMELER
+            </div>
+            <h2 className="text-[clamp(20px,3vw,32px)] font-black text-(--color-navy)">En çok incelenen muadiller</h2>
           </div>
-          <button onClick={() => navigate('/karsilastir')} style={{ background: 'transparent', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '9px 18px', color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+          <button
+            onClick={() => navigate('/karsilastir')}
+            className="bg-transparent border border-(--color-border) rounded-[10px] px-[18px] py-[9px] text-(--color-text-mid) text-[13px] font-semibold cursor-pointer"
+            style={{ fontFamily: F }}
+          >
             Tümünü Gör →
           </button>
         </div>
@@ -32,27 +38,34 @@ export function PopularMatchesSection() {
               <div
                 key={mp.id}
                 onClick={() => navigate(`/karsilastir?orijinal=${mp.targetPerfumeId}&muadil=${mp.id}`)}
-                style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: '16px', padding: '20px', cursor: 'pointer', transition: 'transform .2s,box-shadow .2s', boxShadow: C.shadow }}
+                className="bg-white border border-(--color-border) rounded-[16px] p-5 cursor-pointer transition-[transform,box-shadow] duration-200"
+                style={{ boxShadow: C.shadow }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = C.shadowMd; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = C.shadow; }}
               >
-                <div style={{ marginBottom: '14px' }}>
-                  <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy }}>{mp.targetBrandName} {mp.targetPerfumeName} vs {mp.brandName} {mp.name}</div>
+                <div className="mb-[14px]">
+                  <div className="font-bold text-[15px] text-(--color-navy)">{mp.targetBrandName} {mp.targetPerfumeName} vs {mp.brandName} {mp.name}</div>
                 </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span style={{ fontSize: '12px', color: C.textMid }}>Muadil Genel Puanı</span>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: sc.overall !== null ? C.gold : C.textLight }}>
+                <div className="mb-2">
+                  <div className="flex justify-between mb-[5px]">
+                    <span className="text-[12px] text-(--color-text-mid)">Muadil Genel Puanı</span>
+                    <span className="text-[12px] font-bold" style={{ color: sc.overall !== null ? C.gold : C.textLight }}>
                       {sc.overall !== null ? `${sc.overall}/10` : 'Henüz puan yok'}
                     </span>
                   </div>
-                  <div style={{ height: '5px', background: C.borderLight, borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: sc.overall !== null ? `${(sc.overall / 10) * 100}%` : '0%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, borderRadius: '3px' }} />
+                  <div className="h-[5px] bg-(--color-border-light) rounded-[3px] overflow-hidden">
+                    <div
+                      className="h-full rounded-[3px]"
+                      style={{
+                        width: sc.overall !== null ? `${(sc.overall / 10) * 100}%` : '0%',
+                        background: `linear-gradient(90deg,${C.gold},${C.goldLight})`,
+                      }}
+                    />
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: `1px solid ${C.borderLight}` }}>
-                  <span style={{ fontSize: '12px', color: C.textLight }}>{sc.count} kullanıcı yorumu</span>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: C.gold }}>Karşılaştır →</span>
+                <div className="flex justify-between items-center mt-3 pt-[10px] border-t border-(--color-border-light)">
+                  <span className="text-[12px] text-(--color-text-light)">{sc.count} kullanıcı yorumu</span>
+                  <span className="text-[12px] font-semibold text-(--color-gold)">Karşılaştır →</span>
                 </div>
               </div>
             );

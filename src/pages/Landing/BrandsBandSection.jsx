@@ -30,16 +30,7 @@ function BrandChip({ b, navigate }) {
     <div
       onClick={() => navigate(`/marka/${b.slug}`)}
       onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '8px',
-        background: '#fff',
-        border: `1px solid ${C.border}`,
-        borderRadius: '40px', padding: '5px 18px 5px 5px',
-        cursor: 'pointer',
-        flexShrink: 0,
-        boxShadow: '0 1px 4px rgba(184,150,90,.08)',
-        transition: 'box-shadow .15s, border-color .15s',
-      }}
+      className="flex items-center gap-2 bg-white border border-(--color-border) rounded-[40px] py-[5px] pr-[18px] pl-[5px] cursor-pointer shrink-0 shadow-[0_1px_4px_rgba(184,150,90,.08)] transition-[box-shadow,border-color] duration-150"
       onMouseEnter={(e) => {
         e.currentTarget.style.boxShadow = '0 4px 14px rgba(184,150,90,.22)';
         e.currentTarget.style.borderColor = C.goldBorder;
@@ -49,15 +40,10 @@ function BrandChip({ b, navigate }) {
         e.currentTarget.style.borderColor = C.border;
       }}
     >
-      <div style={{
-        width: '34px', height: '34px', borderRadius: '50%',
-        background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        overflow: 'hidden', flexShrink: 0,
-      }}>
-        <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      <div className="w-[34px] h-[34px] rounded-full bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center overflow-hidden shrink-0">
+        <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
       </div>
-      <span style={{ fontSize: '13px', fontWeight: 600, color: C.textMid, letterSpacing: '.01em', whiteSpace: 'nowrap' }}>{b.name}</span>
+      <span className="text-[13px] font-semibold text-(--color-text-mid) tracking-[.01em] whitespace-nowrap">{b.name}</span>
     </div>
   );
 }
@@ -66,9 +52,9 @@ function MarqueeRow({ items, direction, navigate }) {
   const doubled = [...items, ...items];
   const duration = Math.max(30, items.length * 2.5);
   return (
-    <div style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '120px', zIndex: 2, background: 'linear-gradient(to right, #faf9f7 0%, transparent 100%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '120px', zIndex: 2, background: 'linear-gradient(to left, #faf9f7 0%, transparent 100%)', pointerEvents: 'none' }} />
+    <div className="relative overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-[120px] z-[2] bg-gradient-to-r from-[#faf9f7] to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-[120px] z-[2] bg-gradient-to-l from-[#faf9f7] to-transparent pointer-events-none" />
       <div className={direction === 'ltr' ? 'marquee-ltr' : 'marquee-rtl'} style={{ gap: '10px', paddingLeft: '10px', '--marquee-duration': `${duration}s` }}>
         {doubled.map((b, i) => (
           <BrandChip key={`${b.id}-${i}`} b={b} navigate={navigate} />
@@ -90,14 +76,14 @@ export function BrandsBandSection() {
   if (!originals.length && !muadils.length) return null;
 
   return (
-    <div style={{ background: '#faf9f7', padding: sm ? '28px 0' : '48px 0', borderTop: `1px solid ${C.border}` }}>
+    <div className="bg-[#faf9f7] border-t border-(--color-border)" style={{ padding: sm ? '28px 0' : '48px 0' }}>
       <style>{MARQUEE_STYLE}</style>
 
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <span style={{ fontSize: '11px', color: C.textLight, fontWeight: 700, letterSpacing: '.14em' }}>DESTEKLENEN MARKALAR</span>
+      <div className="text-center mb-7">
+        <span className="text-[11px] text-(--color-text-light) font-bold tracking-[.14em]">DESTEKLENEN MARKALAR</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="flex flex-col gap-3">
         {/* Orijinal markalar — sağdan sola (ltr animasyon) */}
         {originals.length > 0 && <MarqueeRow items={originals} direction="ltr" navigate={navigate} />}
 

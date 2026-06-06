@@ -53,55 +53,42 @@ function ActiveUsersPanel() {
   }, []);
 
   return (
-    <div style={{
-      border: `1px solid ${C.greenBorder}`,
-      borderRadius: '12px',
-      background: C.greenBg,
-      padding: '16px 20px',
-      marginBottom: '24px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: presence.length ? '14px' : 0 }}>
-        <FontAwesomeIcon icon={faCircle} style={{ fontSize: '8px', color: C.green, animation: 'pulse 2s infinite' }} />
-        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }`}</style>
-        <span style={{ fontWeight: 700, fontSize: '14px', color: C.text }}>
+    <div className="border border-(--color-green-border) rounded-xl bg-(--color-green-bg) px-5 py-4 mb-6">
+      <div className={`flex items-center gap-2 ${presence.length ? 'mb-[14px]' : ''}`}>
+        <FontAwesomeIcon icon={faCircle} className="text-[8px] text-(--color-green) animate-pulse" />
+        <span className="font-bold text-sm text-(--color-text)">
           Aktif Kullanıcılar
         </span>
-        <span style={{ fontSize: '12px', color: C.textLight }}>— son 5 dakika</span>
-        <span style={{
-          marginLeft: 'auto', minWidth: '24px', height: '24px', borderRadius: '12px',
-          background: presence.length ? C.green : C.textLight,
-          color: '#fff', fontSize: '12px', fontWeight: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px',
-        }}>{presence.length}</span>
+        <span className="text-xs text-(--color-text-light)">— son 5 dakika</span>
+        <div
+          className="ml-auto min-w-6 h-6 rounded-xl text-white text-xs font-bold flex items-center justify-center px-1.5"
+          style={{ background: presence.length ? C.green : C.textLight }}
+        >{presence.length}</div>
       </div>
 
       {presence.length === 0 ? (
-        <div style={{ fontSize: '13px', color: C.textLight }}>Şu anda aktif kullanıcı yok.</div>
+        <div className="text-sm text-(--color-text-light)">Şu anda aktif kullanıcı yok.</div>
       ) : (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="flex flex-wrap gap-[10px]">
           {presence.map((p) => (
             <div key={p.id}
               onClick={() => p.userUsername && navigate(`/@${p.userUsername}`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                background: '#fff', border: `1px solid ${C.greenBorder}`,
-                borderRadius: '20px', padding: '5px 12px 5px 6px',
-                cursor: p.userUsername ? 'pointer' : 'default',
-                transition: 'box-shadow 0.15s',
-              }}
+              className="flex items-center gap-2 bg-white border border-(--color-green-border) rounded-[20px] py-[5px] pr-3 pl-1.5 transition-shadow duration-150"
+              style={{ cursor: p.userUsername ? 'pointer' : 'default' }}
               onMouseEnter={e => { if (p.userUsername) e.currentTarget.style.boxShadow = `0 2px 8px ${C.greenBorder}`; }}
               onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
             >
               {/* Avatar */}
-              <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#fff', position: 'relative' }}>
+              <div className="w-[26px] h-[26px] rounded-full overflow-hidden shrink-0 flex items-center justify-center text-[11px] font-bold text-white relative"
+                style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}>
                 {p.photoURL
-                  ? <img src={p.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  ? <img src={p.photoURL} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
                   : (p.userName?.[0]?.toUpperCase() || '?')}
-                <span style={{ position: 'absolute', bottom: '0px', right: '0px', width: '8px', height: '8px', borderRadius: '50%', background: C.green, border: '1.5px solid #fff' }} />
+                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-(--color-green) border-[1.5px] border-white" />
               </div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, lineHeight: 1.2 }}>{p.userName}</div>
-                <div style={{ fontSize: '10px', color: C.textLight }}>{timeAgo(p.lastSeen)}</div>
+                <div className="text-xs font-bold text-(--color-navy) leading-[1.2]">{p.userName}</div>
+                <div className="text-[10px] text-(--color-text-light)">{timeAgo(p.lastSeen)}</div>
               </div>
             </div>
           ))}
@@ -162,22 +149,22 @@ export function ActivityTab() {
       <ActiveUsersPanel />
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '18px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1 1 220px', minWidth: '180px' }}>
+      <div className="flex gap-[10px] mb-[18px] flex-wrap items-center">
+        <div className="relative flex-[1_1_220px] min-w-[180px]">
           <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"
-            style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            className="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Kullanıcı adı veya içerik ara..."
-            style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '30px', padding: '8px 12px 8px 30px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, outline: 'none', fontFamily: F }}
+            className="w-full box-border pl-[30px] pr-3 py-2 border border-(--color-border) rounded-lg text-[13px] text-(--color-text) outline-none font-[family-name:var(--font-body)]"
           />
         </div>
 
         <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-          style={{ border: `1px solid ${C.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', color: C.text, background: C.card, outline: 'none', cursor: 'pointer', fontFamily: F }}>
+          className="border border-(--color-border) rounded-lg px-3 py-2 text-[13px] text-(--color-text) bg-(--color-card) outline-none cursor-pointer font-[family-name:var(--font-body)]">
           <option value="all">Tüm Hareketler</option>
           <option value="review_created">Yorum</option>
           <option value="list_created">Liste</option>
@@ -186,38 +173,37 @@ export function ActivityTab() {
         </select>
 
         <select value={sortDir} onChange={(e) => setSortDir(e.target.value)}
-          style={{ border: `1px solid ${C.border}`, borderRadius: '8px', padding: '8px 12px', fontSize: '13px', color: C.text, background: C.card, outline: 'none', cursor: 'pointer', fontFamily: F }}>
+          className="border border-(--color-border) rounded-lg px-3 py-2 text-[13px] text-(--color-text) bg-(--color-card) outline-none cursor-pointer font-[family-name:var(--font-body)]">
           <option value="desc">Yeniden Eskiye</option>
           <option value="asc">Eskiden Yeniye</option>
         </select>
 
-        <button onClick={() => fetchLogs(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', border: `1px solid ${C.border}`, borderRadius: '8px', background: C.card, color: C.textMid, fontSize: '13px', cursor: 'pointer', fontFamily: F }}>
-          <FontAwesomeIcon icon={faRotateRight} style={{ fontSize: '12px' }} />
+        <button onClick={() => fetchLogs(true)} className="flex items-center gap-1.5 px-[14px] py-2 border border-(--color-border) rounded-lg bg-(--color-card) text-(--color-text-mid) text-[13px] cursor-pointer font-[family-name:var(--font-body)]">
+          <FontAwesomeIcon icon={faRotateRight} className="text-xs" />
           Yenile
         </button>
 
-        <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto' }}>{filtered.length} sonuç</span>
+        <span className="text-xs text-(--color-text-light) ml-auto">{filtered.length} sonuç</span>
       </div>
 
       {/* Tablo */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>
-          <div style={{ width: '28px', height: '28px', border: '3px solid #e5e7eb', borderTop: `3px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div className="text-center py-[60px] text-(--color-text-light)">
+          <div className="w-7 h-7 border-[3px] border-[#e5e7eb] border-t-(--color-gold) rounded-full animate-spin mx-auto mb-3" />
           Yükleniyor...
         </div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: C.textLight, fontSize: '14px' }}>
+        <div className="text-center py-[60px] text-(--color-text-light) text-sm">
           Hareket bulunamadı.
         </div>
       ) : (
         <>
-          <div style={{ border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <div className="border border-(--color-border) rounded-xl overflow-hidden">
+            <table className="w-full border-collapse text-[13px]">
               <thead>
-                <tr style={{ background: C.surface, borderBottom: `1px solid ${C.border}` }}>
+                <tr className="bg-(--color-surface) border-b border-(--color-border)">
                   {['Kullanıcı', 'Tür', 'Detay', 'Tarih'].map((h) => (
-                    <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: C.textMuted, letterSpacing: '.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} className="px-[14px] py-[10px] text-left text-[11px] font-bold text-(--color-text-muted) tracking-[.08em] uppercase whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -225,62 +211,64 @@ export function ActivityTab() {
                 {filtered.map((log, i) => {
                   const cfg = TYPE_CONFIG[log.type] || { label: log.type, color: 'gold' };
                   return (
-                    <tr key={log.id} style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${C.borderLight}` : 'none', transition: 'background 0.15s' }}
+                    <tr key={log.id}
+                      className="transition-colors duration-150"
+                      style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}
                       onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
                       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
 
-                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
+                      <td className="px-[14px] py-3 whitespace-nowrap">
                         {log.userUsername ? (
                           <a href={`/@${log.userUsername}`}
                             onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/@${log.userUsername}`); }}
-                            style={{ fontWeight: 700, color: C.gold, textDecoration: 'none', fontSize: '13px' }}
+                            className="font-bold text-(--color-gold) no-underline text-[13px]"
                             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
                           >{log.userName}</a>
                         ) : (
-                          <span style={{ fontWeight: 600, color: C.text }}>{log.userName || '—'}</span>
+                          <span className="font-semibold text-(--color-text)">{log.userName || '—'}</span>
                         )}
                       </td>
 
-                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
+                      <td className="px-[14px] py-3 whitespace-nowrap">
                         <Badge color={cfg.color}>{cfg.label}</Badge>
                       </td>
 
-                      <td style={{ padding: '12px 14px', maxWidth: '360px' }}>
+                      <td className="px-[14px] py-3 max-w-[360px]">
                         {log.type === 'review_created' ? (
-                          <span style={{ color: C.text }}>
+                          <span className="text-(--color-text)">
                             <strong>{log.targetBrandName} {log.targetPerfumeName}</strong>
-                            {log.muadilName && <span style={{ color: C.textMid }}> — {log.muadilName}</span>}
+                            {log.muadilName && <span className="text-(--color-text-mid)"> — {log.muadilName}</span>}
                             {' '}karşılaştırmasına yorum yaptı
                             {log.perfumeUrl && (
                               <a href={log.perfumeUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.perfumeUrl); }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle', display: 'inline-block' }}>
-                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{ fontSize: '11px' }} />
+                                className="bg-transparent border-none cursor-pointer text-(--color-gold) ml-1.5 p-0.5 align-middle inline-block">
+                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[11px]" />
                               </a>
                             )}
                           </span>
                         ) : log.type === 'list_created' ? (
-                          <span style={{ color: C.text }}>
+                          <span className="text-(--color-text)">
                             <strong>"{log.listTitle}"</strong> listesini oluşturdu
                             {log.listUrl && log.userUsername && (
                               <a href={log.listUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.listUrl); }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle', display: 'inline-block' }}>
-                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{ fontSize: '11px' }} />
+                                className="bg-transparent border-none cursor-pointer text-(--color-gold) ml-1.5 p-0.5 align-middle inline-block">
+                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[11px]" />
                               </a>
                             )}
                           </span>
                         ) : log.type === 'login' ? (
-                          <span style={{ color: C.textMid }}>
+                          <span className="text-(--color-text-mid)">
                             {log.method === 'google' ? 'Google ile' : 'E-posta ile'} giriş yaptı
                           </span>
                         ) : log.type === 'logout' ? (
-                          <span style={{ color: C.textMid }}>Çıkış yaptı</span>
+                          <span className="text-(--color-text-mid)">Çıkış yaptı</span>
                         ) : (
-                          <span style={{ color: C.textMid }}>—</span>
+                          <span className="text-(--color-text-mid)">—</span>
                         )}
                       </td>
 
-                      <td style={{ padding: '12px 14px', whiteSpace: 'nowrap', color: C.textMid, fontSize: '12px' }}>
+                      <td className="px-[14px] py-3 whitespace-nowrap text-(--color-text-mid) text-xs">
                         {formatDate(log.createdAt)}
                       </td>
                     </tr>
@@ -291,9 +279,10 @@ export function ActivityTab() {
           </div>
 
           {hasMore && (
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <div className="text-center mt-4">
               <button onClick={() => fetchLogs(false)} disabled={loadingMore}
-                style={{ padding: '9px 24px', border: `1px solid ${C.border}`, borderRadius: '8px', background: C.card, color: C.textMid, fontSize: '13px', cursor: loadingMore ? 'not-allowed' : 'pointer', fontFamily: F }}>
+                className="px-6 py-[9px] border border-(--color-border) rounded-lg bg-(--color-card) text-(--color-text-mid) text-[13px] font-[family-name:var(--font-body)]"
+                style={{ cursor: loadingMore ? 'not-allowed' : 'pointer' }}>
                 {loadingMore ? 'Yükleniyor...' : 'Daha Fazla Göster'}
               </button>
             </div>

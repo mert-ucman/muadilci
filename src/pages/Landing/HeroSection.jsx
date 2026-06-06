@@ -24,54 +24,46 @@ function CompareCard({ perfumes, muadilPerfumes }) {
   ];
 
   return (
-    <div style={{
-      background: '#fff',
-      border: `1px solid ${C.border}`,
-      borderRadius: '20px',
-      padding: '28px',
-      boxShadow: '0 8px 48px rgba(0,0,0,.07)',
-      width: '100%',
-      maxWidth: '340px',
-    }}>
+    <div className="bg-white border border-(--color-border) rounded-[20px] p-7 shadow-[0_8px_48px_rgba(0,0,0,.07)] w-full max-w-[340px]">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: C.textMuted, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: F }}>Örnek Karşılaştırma</span>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, fontFamily: F }}>8.8 / 10</span>
+      <div className="flex justify-between items-center mb-5">
+        <span className="text-[11px] font-semibold text-(--color-text-muted) tracking-[.1em] uppercase" style={{ fontFamily: F }}>Örnek Karşılaştırma</span>
+        <span className="text-[11px] font-semibold text-(--color-gold)" style={{ fontFamily: F }}>8.8 / 10</span>
       </div>
 
       {/* Two products */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '10px', alignItems: 'center', marginBottom: '22px' }}>
+      <div className="grid gap-[10px] items-center mb-[22px]" style={{ gridTemplateColumns: '1fr auto 1fr' }}>
         {/* Original */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', margin: '0 auto 8px', border: `1px solid ${C.border}`, background: C.surface }}>
-            <img src={origImg} alt={origName} onError={e => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-[10px] overflow-hidden mx-auto mb-2 border border-(--color-border) bg-(--color-surface)">
+            <img src={origImg} alt={origName} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
           </div>
-          <div style={{ fontSize: '9px', fontWeight: 600, color: C.textMuted, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '3px', fontFamily: F }}>Orijinal</div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: C.text, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: F }}>{origName}</div>
+          <div className="text-[9px] font-semibold text-(--color-text-muted) tracking-[.08em] uppercase mb-[3px]" style={{ fontFamily: F }}>Orijinal</div>
+          <div className="text-[11px] font-semibold text-(--color-text) leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: F }}>{origName}</div>
         </div>
 
         {/* VS */}
-        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: '#fff', fontFamily: F, letterSpacing: '.02em', flexShrink: 0 }}>VS</div>
+        <div className="w-7 h-7 rounded-full bg-(--color-text) flex items-center justify-center text-[9px] font-bold text-white shrink-0 tracking-[.02em]" style={{ fontFamily: F }}>VS</div>
 
         {/* Muadil */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '10px', overflow: 'hidden', margin: '0 auto 8px', border: `1px solid ${C.goldBorder}`, background: C.goldBg }}>
-            <img src={muadilImg} alt={muadilName} onError={e => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-[10px] overflow-hidden mx-auto mb-2 border border-(--color-gold-border) bg-(--color-gold-bg)">
+            <img src={muadilImg} alt={muadilName} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
           </div>
-          <div style={{ fontSize: '9px', fontWeight: 600, color: C.gold, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '3px', fontFamily: F }}>Muadil</div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: C.gold, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: F }}>{muadilName}</div>
+          <div className="text-[9px] font-semibold text-(--color-gold) tracking-[.08em] uppercase mb-[3px]" style={{ fontFamily: F }}>Muadil</div>
+          <div className="text-[11px] font-semibold text-(--color-gold) leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: F }}>{muadilName}</div>
         </div>
       </div>
 
       {/* Score bars */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="flex flex-col gap-[10px]">
         {bars.map(bar => (
           <div key={bar.label}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-              <span style={{ fontSize: '11px', color: C.textLight, fontFamily: F }}>{bar.label}</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: bar.color, fontFamily: F }}>{bar.value}</span>
+            <div className="flex justify-between mb-[5px]">
+              <span className="text-[11px] text-(--color-text-light)" style={{ fontFamily: F }}>{bar.label}</span>
+              <span className="text-[11px] font-semibold" style={{ color: bar.color, fontFamily: F }}>{bar.value}</span>
             </div>
-            <div style={{ height: '3px', background: C.borderLight, borderRadius: '2px', overflow: 'hidden' }}>
+            <div className="h-[3px] bg-(--color-border-light) rounded-[2px] overflow-hidden">
               <div style={{ height: '100%', width: `${bar.value * 10}%`, background: bar.color, borderRadius: '2px', transition: 'width 1.2s cubic-bezier(.22,1,.36,1)' }} />
             </div>
           </div>
@@ -79,9 +71,9 @@ function CompareCard({ perfumes, muadilPerfumes }) {
       </div>
 
       {/* Footer stat */}
-      <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '11px', color: C.textLight, fontFamily: F }}>Topluluk değerlendirmesi</span>
-        <div style={{ display: 'flex', gap: '2px' }}>
+      <div className="mt-[18px] pt-4 border-t border-(--color-border-light) flex justify-between items-center">
+        <span className="text-[11px] text-(--color-text-light)" style={{ fontFamily: F }}>Topluluk değerlendirmesi</span>
+        <div className="flex gap-[2px]">
           {[1,2,3,4,5].map(i => (
             <svg key={i} width="10" height="10" viewBox="0 0 24 24" fill={i <= 4 ? C.gold : C.borderLight} xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -108,44 +100,37 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
   return (
     <div style={{ animation: 'fadeUp 0.7s cubic-bezier(.22,1,.36,1) both' }}>
       {/* Eyebrow label */}
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
-        <div style={{ width: '20px', height: '1px', background: C.gold }} />
-        <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>
+      <div className="inline-flex items-center gap-2 mb-7">
+        <div className="w-5 h-px bg-(--color-gold)" />
+        <span className="text-[11px] font-semibold text-(--color-gold) tracking-[.12em] uppercase" style={{ fontFamily: F }}>
           Muadilci
-</span>
+        </span>
       </div>
 
       {/* Headline — Cormorant Garamond, editorial weight */}
-      <h1 style={{
-        fontFamily: FH,
-        fontSize: 'clamp(44px, 5.5vw, 80px)',
-        fontWeight: 400,
-        color: C.text,
-        lineHeight: 1.05,
-        letterSpacing: '-0.01em',
-        marginBottom: '24px',
-      }}>
+      <h1
+        className="font-normal text-(--color-text) leading-[1.05] tracking-[-0.01em] mb-6"
+        style={{
+          fontFamily: FH,
+          fontSize: 'clamp(44px, 5.5vw, 80px)',
+        }}
+      >
         Lüks kokuyu,<br />
-        <em style={{ color: C.gold, fontStyle: 'italic' }}>en yakın</em><br />
+        <em className="text-(--color-gold) italic">en yakın</em><br />
         muadiliyle keşfet.
       </h1>
 
       {/* Subtext */}
-      <p style={{ fontSize: '16px', color: C.textMid, lineHeight: 1.75, marginBottom: '36px', maxWidth: '400px', fontFamily: F, fontWeight: 400 }}>
+      <p className="text-[16px] text-(--color-text-mid) leading-[1.75] mb-9 max-w-[400px] font-normal" style={{ fontFamily: F }}>
         Chanel, Dior, Tom Ford ve daha fazlasının orijinaline en yakın muadillerini bul. Gerçek kullanıcı yorumlarıyla karşılaştır.
       </p>
 
       {/* CTA buttons */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '52px' }}>
+      <div className="flex gap-3 flex-wrap mb-[52px]">
         <button
           onClick={() => navigate('/karsilastir')}
-          style={{
-            background: C.text, border: 'none',
-            borderRadius: '8px', padding: '13px 28px',
-            color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: F,
-            cursor: 'pointer', letterSpacing: '.01em',
-            transition: 'background 0.2s, transform 0.15s',
-          }}
+          className="bg-(--color-text) border-none rounded-[8px] px-7 py-[13px] text-white text-[14px] font-semibold cursor-pointer tracking-[.01em] transition-[background,transform] duration-200"
+          style={{ fontFamily: F }}
           onMouseEnter={e => { e.currentTarget.style.background = C.gold; e.currentTarget.style.transform = 'translateY(-1px)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = C.text; e.currentTarget.style.transform = 'none'; }}
         >
@@ -153,14 +138,8 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
         </button>
         <button
           onClick={() => navigate('/kayit')}
-          style={{
-            background: 'none',
-            border: `1px solid ${C.border}`,
-            borderRadius: '8px', padding: '13px 28px',
-            color: C.textMid, fontSize: '14px', fontWeight: 500, fontFamily: F,
-            cursor: 'pointer', letterSpacing: '.01em',
-            transition: 'border-color 0.2s, color 0.2s',
-          }}
+          className="bg-transparent border border-(--color-border) rounded-[8px] px-7 py-[13px] text-(--color-text-mid) text-[14px] font-medium cursor-pointer tracking-[.01em] transition-[border-color,color] duration-200"
+          style={{ fontFamily: F }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.text; e.currentTarget.style.color = C.text; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
         >
@@ -169,11 +148,11 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: 'flex', gap: '36px', flexWrap: 'wrap' }}>
+      <div className="flex gap-9 flex-wrap">
         {stats.map(({ n, l }) => (
           <div key={l}>
-            <div style={{ fontFamily: FH, fontSize: '32px', fontWeight: 500, color: C.text, lineHeight: 1, letterSpacing: '-0.02em' }}>{n}+</div>
-            <div style={{ fontSize: '12px', color: C.textLight, marginTop: '4px', fontFamily: F, letterSpacing: '.02em' }}>{l}</div>
+            <div className="text-[32px] font-medium text-(--color-text) leading-none tracking-[-0.02em]" style={{ fontFamily: FH }}>{n}+</div>
+            <div className="text-[12px] text-(--color-text-light) mt-1 tracking-[.02em]" style={{ fontFamily: F }}>{l}</div>
           </div>
         ))}
       </div>
@@ -212,21 +191,21 @@ export function HeroSection() {
   /* No slider images → editorial two-column layout */
   if (total === 0) {
     return (
-      <section style={{
-        background: C.bg,
-        padding: lg ? '60px 20px 72px' : '80px 48px 96px',
-        borderBottom: `1px solid ${C.borderLight}`,
-      }}>
-        <div style={{
-          maxWidth: '1200px', margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: lg ? '1fr' : '1fr 1fr',
-          gap: '64px',
-          alignItems: 'center',
-        }}>
+      <section
+        className="bg-(--color-bg) border-b border-(--color-border-light)"
+        style={{ padding: lg ? '60px 20px 72px' : '80px 48px 96px' }}
+      >
+        <div
+          className="max-w-[1200px] mx-auto items-center"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: lg ? '1fr' : '1fr 1fr',
+            gap: '64px',
+          }}
+        >
           <HeroText navigate={navigate} brands={brands} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
           {!lg && (
-            <div style={{ display: 'flex', justifyContent: 'center', animation: 'fadeUp 0.9s 0.2s cubic-bezier(.22,1,.36,1) both' }}>
+            <div className="flex justify-center" style={{ animation: 'fadeUp 0.9s 0.2s cubic-bezier(.22,1,.36,1) both' }}>
               <CompareCard perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
             </div>
           )}
@@ -238,37 +217,21 @@ export function HeroSection() {
   /* Has slider images → full-bleed with overlay */
   return (
     <section
-      style={{ position: 'relative', overflow: 'hidden', height: lg ? '65vh' : 'calc(100vh - 192px)', minHeight: '520px' }}
+      className="relative overflow-hidden"
+      style={{ height: lg ? '65vh' : 'calc(100vh - 192px)', minHeight: '520px' }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* Top horizontal marquee strip */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0, right: 0,
-        zIndex: 6,
-        padding: '10px 0',
-        borderBottom: '1px solid rgba(184,147,90,0.2)',
-        background: 'rgba(0,0,0,0.25)',
-        backdropFilter: 'blur(6px)',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-      }}>
-        <div style={{
-          display: 'inline-block',
-          animation: 'heroMarquee 22s linear infinite',
-        }}>
+      <div className="absolute top-0 left-0 right-0 z-[6] py-[10px] border-b border-[rgba(184,147,90,0.2)] bg-[rgba(0,0,0,0.25)] backdrop-blur-[6px] overflow-hidden whitespace-nowrap">
+        <div className="inline-block" style={{ animation: 'heroMarquee 22s linear infinite' }}>
           {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
-            <span key={i} style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.55)',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              fontFamily: F,
-              marginRight: '64px',
-            }}>
-              <span style={{ color: C.gold, marginRight: '64px' }}>✦</span>
+            <span
+              key={i}
+              className="text-[11px] font-medium text-white/55 tracking-[0.18em] uppercase mr-16"
+              style={{ fontFamily: F }}
+            >
+              <span className="text-(--color-gold) mr-16">✦</span>
               {t}
             </span>
           ))}
@@ -276,35 +239,55 @@ export function HeroSection() {
       </div>
 
       {/* Slides */}
-      <div style={{ display: 'flex', width: '100%', height: '100%', transform: `translateX(-${current * 100}%)`, transition: 'transform .6s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}>
+      <div
+        className="flex w-full h-full"
+        style={{ transform: `translateX(-${current * 100}%)`, transition: 'transform .6s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}
+      >
         {visibleSlides.map((img, i) => (
-          <div key={img.id} style={{ position: 'relative', flexShrink: 0, width: '100vw', minWidth: '100vw', height: '100%', overflow: 'hidden' }}>
-            <img src={img.src} alt={img.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div key={img.id} className="relative shrink-0 w-screen min-w-[100vw] h-full overflow-hidden">
+            <img src={img.src} alt={img.name} className="absolute inset-0 w-full h-full object-cover" />
             {/* Overlay — editorial: gradient from left dark, right lighter */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(100deg, rgba(10,8,6,.88) 0%, rgba(10,8,6,.55) 55%, rgba(10,8,6,.15) 100%)' }} />
+            <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(10,8,6,.88)_0%,rgba(10,8,6,.55)_55%,rgba(10,8,6,.15)_100%)]" />
             {i === 0 && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: lg ? '52px 28px' : '52px 80px' }}>
-                <div style={{ width: '100%', maxWidth: '600px' }}>
+              <div
+                className="absolute inset-0 flex items-center"
+                style={{ padding: lg ? '52px 28px' : '52px 80px' }}
+              >
+                <div className="w-full max-w-[600px]">
                   {/* Eyebrow */}
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
-                    <div style={{ width: '20px', height: '1px', background: C.gold }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: C.gold, letterSpacing: '.12em', textTransform: 'uppercase', fontFamily: F }}>Muadilci</span>
+                  <div className="inline-flex items-center gap-2 mb-6">
+                    <div className="w-5 h-px bg-(--color-gold)" />
+                    <span className="text-[11px] font-semibold text-(--color-gold) tracking-[.12em] uppercase" style={{ fontFamily: F }}>Muadilci</span>
                   </div>
-                  <h1 style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)', fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '20px' }}>
-                    Lüks kokuyu,<br /><em style={{ color: C.gold, fontStyle: 'italic' }}>en yakın</em><br />muadiliyle keşfet.
+                  <h1
+                    className="font-normal text-white leading-[1.05] tracking-[-0.01em] mb-5"
+                    style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)' }}
+                  >
+                    Lüks kokuyu,<br /><em className="text-(--color-gold) italic">en yakın</em><br />muadiliyle keşfet.
                   </h1>
-                  <p style={{ fontSize: '16px', color: 'rgba(255,255,255,.65)', lineHeight: 1.7, marginBottom: '32px', maxWidth: '420px', fontFamily: F }}>
+                  <p className="text-[16px] text-white/65 leading-[1.7] mb-8 max-w-[420px]" style={{ fontFamily: F }}>
                     Chanel, Dior, Tom Ford ve daha fazlasının orijinaline en yakın muadillerini bul.
                   </p>
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <button onClick={() => navigate('/karsilastir')} style={{ background: C.gold, border: 'none', borderRadius: '8px', padding: '13px 28px', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: F, cursor: 'pointer', transition: 'background 0.2s' }}
+                  <div className="flex gap-3 flex-wrap">
+                    <button
+                      onClick={() => navigate('/karsilastir')}
+                      className="bg-(--color-gold) border-none rounded-[8px] px-7 py-[13px] text-white text-[14px] font-semibold cursor-pointer transition-[background] duration-200"
+                      style={{ fontFamily: F }}
                       onMouseEnter={e => e.currentTarget.style.background = C.goldDeep}
-                      onMouseLeave={e => e.currentTarget.style.background = C.gold}>Karşılaştırmaya Başla</button>
-                    <button onClick={() => navigate('/kayit')} style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.25)', borderRadius: '8px', padding: '13px 28px', color: '#fff', fontSize: '14px', fontWeight: 500, fontFamily: F, cursor: 'pointer', transition: 'background 0.2s, border-color 0.2s' }}
+                      onMouseLeave={e => e.currentTarget.style.background = C.gold}
+                    >
+                      Karşılaştırmaya Başla
+                    </button>
+                    <button
+                      onClick={() => navigate('/kayit')}
+                      className="bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
+                      style={{ fontFamily: F }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}>Ücretsiz Üye Ol</button>
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
+                    >
+                      Ücretsiz Üye Ol
+                    </button>
                   </div>
-
                 </div>
               </div>
             )}
@@ -313,32 +296,15 @@ export function HeroSection() {
       </div>
 
       {/* Bottom horizontal marquee strip */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0, left: 0, right: 0,
-        zIndex: 6,
-        padding: '10px 0',
-        borderTop: '1px solid rgba(184,147,90,0.2)',
-        background: 'rgba(0,0,0,0.25)',
-        backdropFilter: 'blur(6px)',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-      }}>
-        <div style={{
-          display: 'inline-block',
-          animation: 'heroMarqueeReverse 22s linear infinite',
-        }}>
+      <div className="absolute bottom-0 left-0 right-0 z-[6] py-[10px] border-t border-[rgba(184,147,90,0.2)] bg-[rgba(0,0,0,0.25)] backdrop-blur-[6px] overflow-hidden whitespace-nowrap">
+        <div className="inline-block" style={{ animation: 'heroMarqueeReverse 22s linear infinite' }}>
           {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
-            <span key={i} style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.55)',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              fontFamily: F,
-              marginRight: '64px',
-            }}>
-              <span style={{ color: C.gold, marginRight: '64px' }}>✦</span>
+            <span
+              key={i}
+              className="text-[11px] font-medium text-white/55 tracking-[0.18em] uppercase mr-16"
+              style={{ fontFamily: F }}
+            >
+              <span className="text-(--color-gold) mr-16">✦</span>
               {t}
             </span>
           ))}
@@ -347,72 +313,78 @@ export function HeroSection() {
 
       {/* Arrows */}
       {total > 1 && ['prev','next'].map(dir => (
-        <button key={dir} onClick={dir === 'prev' ? prev : next} style={{ position: 'absolute', [dir === 'prev' ? 'left' : 'right']: '20px', top: '50%', transform: 'translateY(-50%)', zIndex: 4, width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)', transition: 'background 0.2s' }}
+        <button
+          key={dir}
+          onClick={dir === 'prev' ? prev : next}
+          className="absolute top-1/2 -translate-y-1/2 z-[4] w-10 h-10 rounded-full bg-white/10 border border-white/20 text-white cursor-pointer flex items-center justify-center backdrop-blur-[4px] transition-[background] duration-200"
+          style={{ [dir === 'prev' ? 'left' : 'right']: '20px' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.2)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}>
+          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}
+        >
           <svg width="16" height="16" fill="none" stroke="#fff" strokeWidth="1.5" viewBox="0 0 24 24"><path d={dir === 'prev' ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'} /></svg>
         </button>
       ))}
 
       {/* Dots */}
       {total > 1 && (
-        <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 4, display: 'flex', gap: '8px' }}>
+        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-[4] flex gap-2">
           {visibleSlides.map((_, i) => (
-            <button key={i} onClick={() => setCurrent(i)} style={{ width: i === current ? '20px' : '6px', height: '6px', borderRadius: '3px', border: 'none', background: i === current ? C.gold : 'rgba(255,255,255,.4)', cursor: 'pointer', padding: 0, transition: 'all .3s' }} />
+            <button
+              key={i}
+              onClick={() => setCurrent(i)}
+              className="h-[6px] rounded-[3px] border-none cursor-pointer p-0 transition-all duration-300"
+              style={{ width: i === current ? '20px' : '6px', background: i === current ? C.gold : 'rgba(255,255,255,.4)' }}
+            />
           ))}
         </div>
       )}
 
       {/* Luxury frame overlay */}
-      <div style={{ position: 'absolute', inset: '18px', zIndex: 5, pointerEvents: 'none' }}>
+      <div className="absolute inset-[18px] z-[5] pointer-events-none">
         {/* Inner border */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          border: '1px solid rgba(184,147,90,0.25)',
-          borderRadius: '2px',
-        }} />
+        <div className="absolute inset-0 border border-[rgba(184,147,90,0.25)] rounded-[2px]" />
 
         {/* Corner TL */}
-        <div style={{ position: 'absolute', top: -1, left: -1 }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '40px', height: '1.5px', background: C.gold }} />
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        <div className="absolute top-[-1px] left-[-1px]">
+          <div className="absolute top-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
+          <div className="absolute top-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
         </div>
         {/* Corner TR */}
-        <div style={{ position: 'absolute', top: -1, right: -1 }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '40px', height: '1.5px', background: C.gold }} />
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        <div className="absolute top-[-1px] right-[-1px]">
+          <div className="absolute top-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
+          <div className="absolute top-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
         </div>
         {/* Corner BL */}
-        <div style={{ position: 'absolute', bottom: -1, left: -1 }}>
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '40px', height: '1.5px', background: C.gold }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        <div className="absolute bottom-[-1px] left-[-1px]">
+          <div className="absolute bottom-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
+          <div className="absolute bottom-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
         </div>
         {/* Corner BR */}
-        <div style={{ position: 'absolute', bottom: -1, right: -1 }}>
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '40px', height: '1.5px', background: C.gold }} />
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '1.5px', height: '40px', background: C.gold }} />
+        <div className="absolute bottom-[-1px] right-[-1px]">
+          <div className="absolute bottom-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
+          <div className="absolute bottom-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
         </div>
 
         {/* Mid-side ornaments */}
-        <div style={{ position: 'absolute', top: '50%', left: -1, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
-          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        <div className="absolute top-1/2 left-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
+          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
         </div>
-        <div style={{ position: 'absolute', top: '50%', right: -1, transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
-          <div style={{ width: '1.5px', height: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        <div className="absolute top-1/2 right-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
+          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
         </div>
-        <div style={{ position: 'absolute', left: '50%', top: -1, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
-          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        <div className="absolute left-1/2 top-[-1px] -translate-x-1/2 flex items-center gap-1">
+          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
         </div>
-        <div style={{ position: 'absolute', left: '50%', bottom: -1, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
-          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold, opacity: 0.7 }} />
-          <div style={{ height: '1.5px', width: '20px', background: 'rgba(184,147,90,0.4)' }} />
+        <div className="absolute left-1/2 bottom-[-1px] -translate-x-1/2 flex items-center gap-1">
+          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
         </div>
       </div>
     </section>

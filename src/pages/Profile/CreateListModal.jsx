@@ -152,24 +152,20 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
 
       {/* Bilgi uyarısı */}
       {!infoDismissed && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: '#eff6ff', border: '1px solid #bfdbfe',
-          borderRadius: '8px', padding: '9px 12px', marginBottom: '16px',
-        }}>
-          <svg width="15" height="15" fill="none" stroke="#3b82f6" strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+        <div className="flex items-center gap-[10px] bg-[#eff6ff] border border-[#bfdbfe] rounded-lg p-[9px_12px] mb-4">
+          <svg width="15" height="15" fill="none" stroke="#3b82f6" strokeWidth="2" viewBox="0 0 24 24" className="shrink-0">
             <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span style={{ flex: 1, fontSize: '12px', color: '#1d4ed8', fontFamily: F }}>
+          <span className="flex-1 text-[12px] text-[#1d4ed8]" style={{ fontFamily: F }}>
             Sadece muadilleri olan parfümler listelenir.
           </span>
-          <button onClick={() => setInfoDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#93c5fd', fontSize: '16px', lineHeight: 1, padding: '0 2px', flexShrink: 0 }}>×</button>
+          <button onClick={() => setInfoDismissed(true)} className="bg-transparent border-0 cursor-pointer text-[#93c5fd] text-base leading-none shrink-0 p-[0_2px]">×</button>
         </div>
       )}
 
       {/* Başlık */}
-      <div style={{ marginBottom: '18px' }}>
-        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px', letterSpacing: '.03em' }}>LİSTE BAŞLIĞI</label>
+      <div className="mb-[18px]">
+        <label className="block text-[12px] font-semibold text-(--color-text-mid) mb-[6px] tracking-[.03em]">LİSTE BAŞLIĞI</label>
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -187,11 +183,17 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
       </div>
 
       {/* Kategori seçimi */}
-      <div style={{ marginBottom: '18px' }}>
-        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px', letterSpacing: '.03em' }}>KATEGORİ</label>
-        <div style={{ display: 'flex', gap: '10px' }}>
+      <div className="mb-[18px]">
+        <label className="block text-[12px] font-semibold text-(--color-text-mid) mb-2 tracking-[.03em]">KATEGORİ</label>
+        <div className="flex gap-[10px]">
           {[{ v: 'original', l: 'Orijinal Parfümler' }, { v: 'muadil', l: 'Muadil Parfümler' }].map(({ v, l }) => (
-            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer', padding: '8px 14px', borderRadius: '8px', border: `1px solid ${category === v ? C.gold : C.border}`, background: category === v ? C.goldBg : 'transparent', transition: 'all 0.15s' }}>
+            <label key={v} style={{
+              display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer',
+              padding: '8px 14px', borderRadius: '8px',
+              border: `1px solid ${category === v ? C.gold : C.border}`,
+              background: category === v ? C.goldBg : 'transparent',
+              transition: 'all 0.15s',
+            }}>
               <input
                 type="radio"
                 name="list-category"
@@ -209,22 +211,22 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
       </div>
 
       {/* Parfümler başlık */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, letterSpacing: '.03em' }}>
+      <div className="flex justify-between items-center mb-[10px]">
+        <label className="text-[12px] font-semibold text-(--color-text-mid) tracking-[.03em]">
           PARFÜMLER ({rows.length}/{MAX_ITEMS})
         </label>
         {hasCustom && (
-          <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '6px', background: '#fffbeb', color: '#b45309', border: '1px solid #fcd34d' }}>
-            ⚠ Listede olmayan parfüm var
-          </span>
+          <div className="inline-flex items-center justify-center text-[11px] font-semibold px-2 py-[3px] rounded-[6px] bg-[#fffbeb] text-[#b45309] border border-[#fcd34d]">
+            <p className="m-0 p-0 w-max">Listede olmayan parfüm var</p>
+          </div>
         )}
       </div>
 
       {/* Satırlar */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+      <div className="flex flex-col gap-2 mb-[10px]">
         {rows.map((row, idx) => (
-          <div key={row._id} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: C.textLight, fontWeight: 700, minWidth: '20px', textAlign: 'right', flexShrink: 0 }}>{idx + 1}</span>
+          <div key={row._id} className="flex gap-[6px] items-center">
+            <span className="text-[12px] text-(--color-text-light) font-bold min-w-[20px] text-right shrink-0">{idx + 1}</span>
 
             {row.isCustom ? (
               <CustomInputs row={row} idx={idx} updateRow={updateRow} />
@@ -246,7 +248,7 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
               </>
             )}
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: C.textLight, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <label className="flex items-center gap-1 text-[11px] text-(--color-text-light) cursor-pointer whitespace-nowrap shrink-0">
               <input
                 type="checkbox"
                 checked={row.isCustom}
@@ -257,9 +259,8 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
             </label>
 
             {rows.length > 1 && (
-              <button onClick={() => removeRow(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: '2px 4px', flexShrink: 0, transition: 'color 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.color = C.red}
-                onMouseLeave={e => e.currentTarget.style.color = C.textLight}
+              <button onClick={() => removeRow(idx)}
+                className="bg-transparent border-0 cursor-pointer text-(--color-text-light) text-base leading-none p-[2px_4px] shrink-0 transition-colors duration-150 hover:text-(--color-red)"
               >×</button>
             )}
           </div>
@@ -267,21 +268,21 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
       </div>
 
       {rows.length < MAX_ITEMS && (
-        <button onClick={addRow} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', padding: '8px', borderRadius: '8px', border: `1px dashed ${C.border}`, background: 'transparent', color: C.textMid, fontSize: '13px', fontFamily: F, cursor: 'pointer', justifyContent: 'center', marginBottom: '16px', transition: 'border-color 0.15s, color 0.15s' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
+        <button onClick={addRow}
+          className="flex items-center gap-[6px] w-full p-2 rounded-lg border border-dashed border-(--color-border) bg-transparent text-(--color-text-mid) text-[13px] cursor-pointer justify-center mb-4 transition-colors duration-150 hover:border-(--color-gold) hover:text-(--color-gold)"
+          style={{ fontFamily: F }}
         >
-          <span style={{ fontSize: '16px', fontWeight: 700 }}>+</span> Parfüm Ekle
+          <span className="text-base font-bold">+</span> Parfüm Ekle
         </button>
       )}
 
       {err && (
-        <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '8px', padding: '9px 13px', color: C.red, fontSize: '13px', marginBottom: '12px' }}>
-          ⚠ {err}
+        <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-lg p-[9px_13px] text-(--color-red) text-[13px] mb-3">
+          {err}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+      <div className="flex gap-2 justify-end">
         <Btn variant="secondary" onClick={onClose} disabled={saving}>İptal</Btn>
         <Btn onClick={handleSave} disabled={saving}>
           {saving ? 'Kaydediliyor...' : editMode ? 'Güncelle' : 'Listeyi Kaydet'}

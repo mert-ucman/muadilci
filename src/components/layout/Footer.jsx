@@ -7,9 +7,9 @@ import logoDark from '@/img/logos/logo-dark-minified.png';
 
 function Section({ title, children }) {
   return (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>{title}</div>
-      <div style={{ fontSize: '13px', color: C.textMid, lineHeight: 1.8 }}>{children}</div>
+    <div className="mb-5">
+      <div className="text-[14px] font-bold mb-[6px]" style={{ color: C.navy }}>{title}</div>
+      <div className="text-[13px] leading-[1.8]" style={{ color: C.textMid }}>{children}</div>
     </div>
   );
 }
@@ -34,23 +34,33 @@ export function Footer() {
   ];
 
   return (
-    <footer style={{ background: '#fff', borderTop: `1px solid ${C.border}`, fontFamily: F }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: xs ? '48px 20px 32px' : sm ? '56px 24px 36px' : '64px 48px 40px' }}>
+    <footer className="bg-white border-t border-border" style={{ fontFamily: F }}>
+      <div
+        className="max-w-[1280px] mx-auto"
+        style={{ padding: xs ? '48px 20px 32px' : sm ? '56px 24px 36px' : '64px 48px 40px' }}
+      >
 
-        <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : '2fr 1fr 1fr', gap: xs ? '40px' : '56px', marginBottom: '56px' }}>
+        <div
+          className="grid gap-[56px] mb-14"
+          style={{
+            gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : '2fr 1fr 1fr',
+            gap: xs ? '40px' : '56px',
+          }}
+        >
 
           {/* Logo + tagline */}
           <div>
-            <div style={{ cursor: 'pointer', marginBottom: '16px' }} onClick={() => navigate('/')}>
-              <img src={logoDark} alt="muadilci" style={{ height: '56px', width: 'auto' }} />
+            <div className="cursor-pointer mb-4" onClick={() => navigate('/')}>
+              <img src={logoDark} alt="muadilci" className="h-14 w-auto" />
             </div>
-            <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.75, maxWidth: '240px', fontWeight: 400 }}>
+            <p className="text-[13px] leading-[1.75] max-w-[240px] font-normal" style={{ color: C.textLight }}>
               Dünya'nın lüks parfüm muadillerini keşfet, karşılaştır ve en iyisini bul.
             </p>
             <a
               href="https://www.instagram.com/muadilciapp"
               target="_blank" rel="noopener noreferrer"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '20px', padding: '8px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, textDecoration: 'none', transition: 'border-color 0.2s, background 0.2s' }}
+              className="inline-flex items-center gap-2 mt-5 px-[14px] py-2 rounded-[8px] no-underline transition-[border-color,background] duration-200"
+              style={{ border: `1px solid ${C.border}` }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = C.goldBg; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = 'transparent'; }}
             >
@@ -59,19 +69,28 @@ export function Footer() {
                 <circle cx="12" cy="12" r="4" />
                 <circle cx="17.5" cy="6.5" r="1" fill={C.textMid} stroke="none" />
               </svg>
-              <span style={{ fontSize: '12px', fontWeight: 500, color: C.textMid }}>@muadilciapp</span>
+              <span className="text-[12px] font-medium" style={{ color: C.textMid }}>@muadilciapp</span>
             </a>
           </div>
 
           {/* Keşfet */}
           <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: C.textMuted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '18px' }}>Keşfet</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div
+              className="text-[10px] font-bold uppercase tracking-[.12em] mb-[18px]"
+              style={{ color: C.textMuted }}
+            >
+              Keşfet
+            </div>
+            <div className="flex flex-col gap-3">
               {navLinks.map(({ label, path }) => (
-                <span key={path} onClick={() => navigate(path)}
-                  style={{ fontSize: '13px', color: C.textLight, cursor: 'pointer', transition: 'color 0.15s', width: 'fit-content', fontWeight: 400 }}
+                <span
+                  key={path}
+                  onClick={() => navigate(path)}
+                  className="text-[13px] cursor-pointer transition-[color] duration-150 w-fit font-normal"
+                  style={{ color: C.textLight }}
                   onMouseEnter={e => e.currentTarget.style.color = C.gold}
-                  onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
+                  onMouseLeave={e => e.currentTarget.style.color = C.textLight}
+                >
                   {label}
                 </span>
               ))}
@@ -80,21 +99,34 @@ export function Footer() {
 
           {/* Bilgi */}
           <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: C.textMuted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '18px' }}>Bilgi</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div
+              className="text-[10px] font-bold uppercase tracking-[.12em] mb-[18px]"
+              style={{ color: C.textMuted }}
+            >
+              Bilgi
+            </div>
+            <div className="flex flex-col gap-3">
               {legalLinks.map(({ label, href, onClick }) => (
                 href ? (
-                  <a key={label} href={href}
-                    style={{ fontSize: '13px', color: C.textLight, cursor: 'pointer', transition: 'color 0.15s', width: 'fit-content', textDecoration: 'none', fontWeight: 400 }}
+                  <a
+                    key={label}
+                    href={href}
+                    className="text-[13px] cursor-pointer transition-[color] duration-150 w-fit no-underline font-normal"
+                    style={{ color: C.textLight }}
                     onMouseEnter={e => e.currentTarget.style.color = C.gold}
-                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
+                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}
+                  >
                     {label}
                   </a>
                 ) : (
-                  <span key={label} onClick={onClick || undefined}
-                    style={{ fontSize: '13px', color: C.textLight, cursor: onClick ? 'pointer' : 'default', transition: 'color 0.15s', width: 'fit-content', fontWeight: 400 }}
+                  <span
+                    key={label}
+                    onClick={onClick || undefined}
+                    className="text-[13px] transition-[color] duration-150 w-fit font-normal"
+                    style={{ color: C.textLight, cursor: onClick ? 'pointer' : 'default' }}
                     onMouseEnter={e => { if (onClick) e.currentTarget.style.color = C.gold; }}
-                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}>
+                    onMouseLeave={e => e.currentTarget.style.color = C.textLight}
+                  >
                     {label}
                   </span>
                 )
@@ -104,15 +136,22 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: '24px', display: 'flex', flexDirection: xs ? 'column' : 'row', justifyContent: 'space-between', alignItems: xs ? 'flex-start' : 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: C.textMuted }}>© 2026 muadilci.com — Tüm hakları saklıdır.</span>
-          <span style={{ fontSize: '12px', color: C.textMuted }}>Parfüm dünyasını demokratikleştiriyoruz.</span>
+        <div
+          className="border-t pt-6 flex justify-between items-center gap-2"
+          style={{
+            borderColor: C.borderLight,
+            flexDirection: xs ? 'column' : 'row',
+            alignItems: xs ? 'flex-start' : 'center',
+          }}
+        >
+          <span className="text-[12px]" style={{ color: C.textMuted }}>© 2026 muadilci.com — Tüm hakları saklıdır.</span>
+          <span className="text-[12px]" style={{ color: C.textMuted }}>Parfüm dünyasını demokratikleştiriyoruz.</span>
         </div>
       </div>
 
       {/* Kullanım Koşulları Modalı */}
       <Modal open={showTerms} onClose={() => setShowTerms(false)} title="Kullanım Koşulları" width="620px">
-        <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '18px' }}>Son güncelleme: Mayıs 2026</div>
+        <div className="text-[12px] mb-[18px]" style={{ color: C.textLight }}>Son güncelleme: Mayıs 2026</div>
 
         <Section title="1. Kabul">
           muadilci.com'u kullanarak aşağıdaki koşulları okuduğunuzu ve kabul ettiğinizi beyan etmiş olursunuz. Bu koşulları kabul etmiyorsanız lütfen platformu kullanmayınız.
@@ -169,10 +208,10 @@ export function Footer() {
 
       {/* Gizlilik Politikası Modalı */}
       <Modal open={showPrivacy} onClose={() => setShowPrivacy(false)} title="Gizlilik Politikası" width="620px">
-        <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '14px' }}>Son güncelleme: Mayıs 2026</div>
+        <div className="text-[12px] mb-[14px]" style={{ color: C.textLight }}>Son güncelleme: Mayıs 2026</div>
 
         {/* Hobi sitesi notu */}
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px', fontSize: '13px', color: '#92400e', lineHeight: 1.7 }}>
+        <div className="rounded-[12px] px-4 py-[14px] mb-5 text-[13px] leading-[1.7]" style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e' }}>
           <b>Bilgilendirme:</b> Bu platform hobi amaçlı geliştirilmiştir. Kayıt olurken gerçek e-posta adresinizi kullanmak zorunda değilsiniz. Yeni ve anonim bir e-posta hesabı oluşturarak siteyi kullanabilirsiniz. Kişisel verilerinizin gizliliği sizin elinizde.
         </div>
 
@@ -192,7 +231,7 @@ export function Footer() {
           — Şifreniz hiçbir zaman platformla paylaşılmaz; kimlik doğrulama tamamen Google altyapısı üzerinden yürütülür.<br />
           — Alınan veriler hesabınızı oluşturmak ve tanımlamak dışında kullanılmaz.<br />
           — Google ile giriş yapmak istemiyorsanız anonim bir e-posta ile standart kayıt yöntemini kullanabilirsiniz.<br />
-          — Google'ın kendi gizlilik politikası için: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.navy, fontWeight: 600 }}>policies.google.com/privacy</a>
+          — Google'ın kendi gizlilik politikası için: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold" style={{ color: C.navy }}>policies.google.com/privacy</a>
         </Section>
 
         <Section title="4. Verilerin Kullanım Amacı">

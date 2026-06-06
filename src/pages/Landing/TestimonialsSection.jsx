@@ -27,7 +27,7 @@ const TESTIMONIALS = [
 
 function Stars({ rating, light }) {
   return (
-    <div style={{ display: 'flex', gap: '4px' }}>
+    <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map(i => (
         <svg key={i} width="11" height="11" viewBox="0 0 24 24"
           fill={i <= rating ? C.gold : light ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.15)'}
@@ -42,46 +42,31 @@ function Stars({ rating, light }) {
 function TestimonialCard({ t, i }) {
   const [hovered, setHovered] = useState(false);
   const cardRef = useRef(null);
-  const lineRef = useRef(null);
   const { xs } = useW();
 
   return (
     <div
       ref={cardRef}
-      className={`sr sr-d${i + 1}`}
+      className={`sr sr-d${i + 1} relative rounded-[20px] flex flex-col overflow-hidden transition-[background,border-color] duration-[400ms] cursor-default`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        position: 'relative',
         background: hovered ? 'rgba(184,147,90,.06)' : 'rgba(255,255,255,.03)',
         border: `1px solid ${hovered ? 'rgba(184,147,90,.35)' : 'rgba(255,255,255,.08)'}`,
-        borderRadius: '20px',
         padding: xs ? '24px 20px 20px' : '48px 40px 40px',
-        display: 'flex',
-        flexDirection: 'column',
         gap: '0',
-        overflow: 'hidden',
-        transition: 'background 0.4s, border-color 0.4s',
-        cursor: 'default',
       }}
     >
       {/* Large index number — shrinks on hover */}
-      <div style={{
-        position: 'absolute',
-        top: '-12px',
-        right: '24px',
-        fontFamily: FH,
-        fontSize: '100px',
-        fontWeight: 200,
-        color: hovered ? 'rgba(184,147,90,.2)' : 'rgba(255,255,255,.06)',
-        lineHeight: 1,
-        userSelect: 'none',
-        letterSpacing: '-0.04em',
-        transform: hovered ? 'scale(0.56)' : 'scale(1)',
-        transformOrigin: 'top right',
-        transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
-        pointerEvents: 'none',
-      }}>
+      <div
+        className="absolute top-[-12px] right-6 font-extralight leading-none select-none tracking-[-0.04em] text-[100px] pointer-events-none transition-[transform,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          fontFamily: FH,
+          color: hovered ? 'rgba(184,147,90,.2)' : 'rgba(255,255,255,.06)',
+          transform: hovered ? 'scale(0.56)' : 'scale(1)',
+          transformOrigin: 'top right',
+        }}
+      >
         {t.index}
       </div>
 
@@ -92,78 +77,79 @@ function TestimonialCard({ t, i }) {
 
       {/* Decorative quote — large on idle, smaller on hover */}
       {!xs && (
-        <div style={{
-          fontFamily: FH,
-          fontSize: '80px',
-          color: hovered ? C.gold : 'rgba(255,255,255,.08)',
-          lineHeight: 0.7,
-          userSelect: 'none',
-          marginBottom: '20px',
-          transform: hovered ? 'scale(0.6)' : 'scale(1)',
-          transformOrigin: 'left center',
-          transition: 'transform 0.5s cubic-bezier(0.16,1,0.3,1), color 0.4s',
-        }}>
+        <div
+          className="leading-[0.7] select-none transition-[transform,color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] mb-5 text-[80px]"
+          style={{
+            fontFamily: FH,
+            color: hovered ? C.gold : 'rgba(255,255,255,.08)',
+            transform: hovered ? 'scale(0.6)' : 'scale(1)',
+            transformOrigin: 'left center',
+          }}
+        >
           "
         </div>
       )}
 
       {/* Text */}
-      <p style={{
-        fontSize: xs ? '13px' : '14px',
-        color: hovered ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.45)',
-        lineHeight: 1.7,
-        fontFamily: F,
-        fontWeight: 300,
-        fontStyle: 'italic',
-        flexGrow: 1,
-        transition: 'color 0.4s',
-        marginBottom: xs ? '16px' : '32px',
-      }}>
+      <p
+        className="leading-[1.7] font-light italic grow transition-colors duration-[400ms]"
+        style={{
+          fontSize: xs ? '13px' : '14px',
+          color: hovered ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.45)',
+          fontFamily: F,
+          marginBottom: xs ? '16px' : '32px',
+        }}
+      >
         {t.text}
       </p>
 
       {/* Bottom line — animates on hover */}
-      <div style={{
-        height: '1px',
-        background: hovered ? `linear-gradient(to right, ${C.gold}, transparent)` : 'rgba(255,255,255,.08)',
-        marginBottom: xs ? '12px' : '24px',
-        transition: 'background 0.5s',
-      }} />
+      <div
+        className="h-px transition-[background] duration-500"
+        style={{
+          background: hovered ? `linear-gradient(to right, ${C.gold}, transparent)` : 'rgba(255,255,255,.08)',
+          marginBottom: xs ? '12px' : '24px',
+        }}
+      />
 
       {/* Author */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{
-          width: '38px', height: '38px',
-          borderRadius: '50%',
-          background: hovered ? C.gold : 'rgba(255,255,255,.1)',
-          border: `1px solid ${hovered ? C.gold : 'rgba(255,255,255,.15)'}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '14px',
-          color: hovered ? '#fff' : 'rgba(255,255,255,.6)',
-          fontWeight: 600,
-          flexShrink: 0,
-          fontFamily: FH,
-          transition: 'background 0.4s, color 0.4s, border-color 0.4s',
-        }}>
+      <div className="flex items-center gap-[14px]">
+        <div
+          className="w-[38px] h-[38px] rounded-full flex items-center justify-center text-[14px] font-semibold shrink-0 transition-[background,color,border-color] duration-[400ms]"
+          style={{
+            background: hovered ? C.gold : 'rgba(255,255,255,.1)',
+            border: `1px solid ${hovered ? C.gold : 'rgba(255,255,255,.15)'}`,
+            color: hovered ? '#fff' : 'rgba(255,255,255,.6)',
+            fontFamily: FH,
+          }}
+        >
           {t.av}
         </div>
         <div>
-          <div style={{ fontWeight: 500, fontSize: '14px', color: hovered ? '#fff' : 'rgba(255,255,255,.7)', fontFamily: F, transition: 'color 0.3s' }}>{t.name}</div>
-          <div style={{ fontSize: '11px', color: hovered ? C.gold : 'rgba(255,255,255,.3)', fontFamily: F, letterSpacing: '.04em', marginTop: '2px', transition: 'color 0.3s' }}>{t.role}</div>
+          <div
+            className="font-medium text-[14px] transition-colors duration-300"
+            style={{ color: hovered ? '#fff' : 'rgba(255,255,255,.7)', fontFamily: F }}
+          >
+            {t.name}
+          </div>
+          <div
+            className="text-[11px] tracking-[.04em] mt-[2px] transition-colors duration-300"
+            style={{ color: hovered ? C.gold : 'rgba(255,255,255,.3)', fontFamily: F }}
+          >
+            {t.role}
+          </div>
         </div>
       </div>
 
       {/* Hover glow corner */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0, right: 0,
-        width: hovered ? '140px' : '0px',
-        height: hovered ? '140px' : '0px',
-        borderRadius: '0 0 20px 0',
-        background: 'radial-gradient(circle at bottom right, rgba(184,147,90,.15) 0%, transparent 70%)',
-        transition: 'width 0.6s cubic-bezier(0.16,1,0.3,1), height 0.6s cubic-bezier(0.16,1,0.3,1)',
-        pointerEvents: 'none',
-      }} />
+      <div
+        className="absolute bottom-0 right-0 rounded-[0_0_20px_0] pointer-events-none transition-[width,height] duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          width: hovered ? '140px' : '0px',
+          height: hovered ? '140px' : '0px',
+          background: 'radial-gradient(circle at bottom right, rgba(184,147,90,.15) 0%, transparent 70%)',
+        }}
+      />
     </div>
   );
 }
@@ -225,72 +211,39 @@ export function TestimonialsSection() {
   return (
     <section
       ref={sectionRef}
-      style={{
-        background: C.text,
-        overflow: 'hidden',
-        borderBottom: '1px solid rgba(255,255,255,.06)',
-        position: 'relative',
-      }}
+      className="bg-(--color-text) overflow-hidden border-b border-white/[.06] relative"
     >
       {/* Full-section leaf background */}
       <img
         src={leafBg}
         alt=""
         aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center',
-          opacity: 0.08,
-          pointerEvents: 'none',
-          userSelect: 'none',
-          filter: 'grayscale(30%)',
-          zIndex: 0,
-        }}
+        className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none z-0"
+        style={{ opacity: 0.08, filter: 'grayscale(30%)' }}
       />
 
       {/* Atmospheric glow */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'radial-gradient(ellipse 60% 40% at 20% 60%, rgba(184,147,90,.05) 0%, transparent 70%)',
-      }} />
+      <div className="absolute inset-0 pointer-events-none z-[1] bg-[radial-gradient(ellipse_60%_40%_at_20%_60%,rgba(184,147,90,.05)_0%,transparent_70%)]" />
 
       {/* ── Scrolling marquee strip ── */}
-      <div style={{
-        borderBottom: '1px solid rgba(255,255,255,.06)',
-        padding: '14px 0',
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        position: 'relative',
-        zIndex: 2,
-      }}>
-        <div ref={marqueeRef} style={{ display: 'inline-block' }}>
+      <div className="border-b border-white/[.06] py-[14px] overflow-hidden whitespace-nowrap relative z-[2]">
+        <div ref={marqueeRef} className="inline-block">
           {marqueeText.map((txt, i) => (
-            <span key={i} style={{
-              fontFamily: F,
-              fontSize: '11px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,.45)',
-              letterSpacing: '.22em',
-              textTransform: 'uppercase',
-              marginRight: '0',
-            }}>
+            <span
+              key={i}
+              className="text-[11px] font-bold text-white/45 tracking-[.22em] uppercase"
+              style={{ fontFamily: F }}
+            >
               {txt}
             </span>
           ))}
           {/* Duplicate for seamless loop */}
           {marqueeText.map((txt, i) => (
-            <span key={`b${i}`} style={{
-              fontFamily: F,
-              fontSize: '11px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,.45)',
-              letterSpacing: '.22em',
-              textTransform: 'uppercase',
-            }}>
+            <span
+              key={`b${i}`}
+              className="text-[11px] font-bold text-white/45 tracking-[.22em] uppercase"
+              style={{ fontFamily: F }}
+            >
               {txt}
             </span>
           ))}
@@ -298,36 +251,21 @@ export function TestimonialsSection() {
       </div>
 
       {/* ── Main content ── */}
-      <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        display: 'grid',
-        position: 'relative',
-        zIndex: 2,
-        gridTemplateColumns: xs || sm ? '1fr' : '80px 1fr',
-        position: 'relative',
-      }}>
+      <div
+        className="max-w-[1400px] mx-auto relative z-[2]"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: xs || sm ? '1fr' : '80px 1fr',
+        }}
+      >
 
         {/* Left vertical text strip */}
         {!xs && !sm && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRight: '1px solid rgba(255,255,255,.06)',
-            padding: '0',
-          }}>
-            <div style={{
-              transform: 'rotate(-90deg)',
-              whiteSpace: 'nowrap',
-              fontSize: '10px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,.18)',
-              letterSpacing: '.25em',
-              textTransform: 'uppercase',
-              fontFamily: F,
-              userSelect: 'none',
-            }}>
+          <div className="flex items-center justify-center border-r border-white/[.06]">
+            <div
+              className="whitespace-nowrap text-[10px] font-bold text-white/[.18] tracking-[.25em] uppercase select-none"
+              style={{ transform: 'rotate(-90deg)', fontFamily: F }}
+            >
               KULLANICI DENEYİMLERİ — MUADILCI
             </div>
           </div>
@@ -336,52 +274,55 @@ export function TestimonialsSection() {
         <div style={{ padding: xs || sm ? '64px 20px' : '88px 64px' }}>
 
           {/* Header */}
-          <div className="sr" style={{ marginBottom: '72px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-              <div style={{ width: '28px', height: '1px', background: C.gold }} />
-              <span style={{ fontSize: '10px', fontWeight: 700, color: C.gold, letterSpacing: '.2em', textTransform: 'uppercase', fontFamily: F }}>
+          <div className="sr mb-[72px]">
+            <div className="inline-flex items-center gap-[10px] mb-6">
+              <div className="w-7 h-px bg-(--color-gold)" />
+              <span
+                className="text-[10px] font-bold text-(--color-gold) tracking-[.2em] uppercase"
+                style={{ fontFamily: F }}
+              >
                 Kullanıcıların Söyledikleri
               </span>
             </div>
 
             <h2
               ref={headingRef}
+              className="font-light text-white leading-[1.0] tracking-[-0.02em] m-0"
               style={{
                 fontFamily: FH,
                 fontSize: xs ? '52px' : sm ? '64px' : 'clamp(64px, 6vw, 96px)',
-                fontWeight: 300,
-                color: '#fff',
-                lineHeight: 1.0,
-                letterSpacing: '-0.02em',
-                margin: 0,
               }}
             >
               Gerçek<br />
               kullanıcılar,<br />
-              <em style={{ fontStyle: 'italic', color: C.gold, fontWeight: 400 }}>
+              <em className="italic text-(--color-gold) font-normal">
                 gerçek<br />deneyimler.
               </em>
             </h2>
           </div>
 
           {/* Cards grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(3, 1fr)',
-            gap: '16px',
-          }}>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(3, 1fr)',
+            }}
+          >
             {TESTIMONIALS.map((t, i) => (
               <TestimonialCard key={t.name} t={t} i={i} />
             ))}
           </div>
 
           {/* Bottom decorative line */}
-          <div className="sr" style={{ marginTop: '64px', display: 'flex', alignItems: 'center', gap: '24px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,.08)' }} />
-            <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,.2)', letterSpacing: '.2em', textTransform: 'uppercase', fontFamily: F }}>
+          <div className="sr mt-16 flex items-center gap-6">
+            <div className="flex-1 h-px bg-white/[.08]" />
+            <span
+              className="text-[10px] font-bold text-white/20 tracking-[.2em] uppercase"
+              style={{ fontFamily: F }}
+            >
               Muadilci Topluluğu
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,.08)' }} />
+            <div className="flex-1 h-px bg-white/[.08]" />
           </div>
         </div>
       </div>

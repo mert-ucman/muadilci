@@ -12,19 +12,11 @@ const VARIANTS = {
 export function Badge({ children, color = 'gold' }) {
   const t = VARIANTS[color] || VARIANTS.gold;
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: t.bg,
-      border: `1px solid ${t.border}`,
-      borderRadius: '20px',
-      padding: '3px 10px',
-      fontSize: '12px',
-      fontWeight: 600,
-      color: t.text,
-    }}>
-      <p style={{ margin: 0, padding: 0, width: 'max-content' }}>{children}</p>
+    <div
+      className="inline-flex items-center justify-center rounded-[20px] px-[10px] py-[3px] text-[12px] font-semibold"
+      style={{ background: t.bg, border: `1px solid ${t.border}`, color: t.text }}
+    >
+      <p className="m-0 p-0 w-max">{children}</p>
     </div>
   );
 }

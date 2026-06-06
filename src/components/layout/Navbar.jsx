@@ -68,32 +68,31 @@ export function Navbar() {
   return (
     <>
       {/* ── Main nav ─────────────────────────────────────────────────── */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 200,
-        background: scrolled ? 'rgba(250,250,248,0.97)' : '#FAFAF8',
-        borderBottom: `1px solid ${scrolled ? C.border : C.borderLight}`,
-        backdropFilter: scrolled ? 'blur(12px) saturate(160%)' : 'none',
-        transition: 'background 0.3s, border-color 0.3s, backdrop-filter 0.3s',
-      }}>
-        <div style={{
-          maxWidth: '1280px', margin: '0 auto',
-          padding: lg ? '0 20px' : '0 48px',
-          height: '96px',
-          display: 'flex', alignItems: 'center', gap: '32px',
-        }}>
+      <nav
+        className="sticky top-0 z-[200] transition-[background,border-color,backdrop-filter] duration-300"
+        style={{
+          background: scrolled ? 'rgba(250,250,248,0.97)' : '#FAFAF8',
+          borderBottom: `1px solid ${scrolled ? C.border : C.borderLight}`,
+          backdropFilter: scrolled ? 'blur(12px) saturate(160%)' : 'none',
+        }}
+      >
+        <div
+          className="max-w-[1280px] mx-auto h-24 flex items-center gap-8"
+          style={{ padding: lg ? '0 20px' : '0 48px' }}
+        >
 
           {/* Logo */}
           <a
             href="/#/"
             onClick={e => { e.preventDefault(); navigate('/'); }}
-            style={{ flexShrink: 0, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
+            className="shrink-0 no-underline flex items-center"
           >
-            <img src={logoDark} alt="muadilci" style={{ height: '68px', width: 'auto' }} />
+            <img src={logoDark} alt="muadilci" className="h-[68px] w-auto" />
           </a>
 
           {/* Desktop nav links */}
           {!lg && (
-            <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
+            <div className="flex gap-[2px] flex-1">
               {navLinks.map(link => {
                 const isActive = basePath === link.u;
                 return (
@@ -101,43 +100,30 @@ export function Navbar() {
                     key={link.u}
                     href={`/#${link.u}`}
                     onClick={e => { e.preventDefault(); navigate(link.u); }}
+                    className="relative inline-flex items-center no-underline px-[14px] py-[6px] text-[14px] transition-[color] duration-200 bg-transparent border-none cursor-pointer"
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: '6px 14px',
-                      fontSize: '14px',
                       fontWeight: isActive ? 600 : 400,
                       color: isActive ? C.gold : C.textMid,
-                      cursor: 'pointer',
                       fontFamily: F,
                       letterSpacing: isActive ? '0' : '0.01em',
-                      position: 'relative',
-                      transition: 'color 0.2s',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = C.text; }}
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = C.textMid; }}
                   >
                     {link.l}
                     {link.badge > 0 && (
-                      <span style={{
-                        position: 'absolute', top: '-2px', right: '2px',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        minWidth: '16px', height: '16px', borderRadius: '8px',
-                        background: C.gold, color: '#fff',
-                        fontSize: '9px', fontWeight: 700, padding: '0 4px',
-                        lineHeight: 1,
-                      }}>
+                      <span
+                        className="absolute top-[-2px] right-[2px] inline-flex items-center justify-center min-w-[16px] h-4 rounded-[8px] text-white text-[9px] font-bold px-1 leading-none"
+                        style={{ background: C.gold }}
+                      >
                         {link.badge > 99 ? '99+' : link.badge}
                       </span>
                     )}
                     {isActive && (
-                      <span style={{
-                        position: 'absolute', bottom: 0, left: '14px', right: '14px',
-                        height: '1px', background: C.gold, borderRadius: '1px',
-                      }} />
+                      <span
+                        className="absolute bottom-0 left-[14px] right-[14px] h-px rounded-[1px]"
+                        style={{ background: C.gold }}
+                      />
                     )}
                   </a>
                 );
@@ -145,20 +131,20 @@ export function Navbar() {
             </div>
           )}
 
-          {lg && <div style={{ flex: 1 }} />}
+          {lg && <div className="flex-1" />}
 
           {/* Desktop search */}
           {!lg && (
-            <div style={{ position: 'relative' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                width: '240px', height: '36px',
-                background: C.surface, border: `1px solid ${searchOpen ? C.gold : C.border}`,
-                borderRadius: '8px', padding: '0 12px',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-                boxShadow: searchOpen ? `0 0 0 3px ${C.goldBg}` : 'none',
-              }}>
-                <svg width="13" height="13" fill="none" stroke={searchOpen ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+            <div className="relative">
+              <div
+                className="flex items-center gap-2 w-[240px] h-9 rounded-[8px] px-3 transition-[border-color,box-shadow] duration-200"
+                style={{
+                  background: C.surface,
+                  border: `1px solid ${searchOpen ? C.gold : C.border}`,
+                  boxShadow: searchOpen ? `0 0 0 3px ${C.goldBg}` : 'none',
+                }}
+              >
+                <svg width="13" height="13" fill="none" stroke={searchOpen ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" className="shrink-0">
                   <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
                 </svg>
                 <input
@@ -167,42 +153,65 @@ export function Navbar() {
                   onFocus={() => setSearchOpen(true)}
                   onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
                   placeholder="Parfüm veya marka ara..."
-                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', color: C.text, background: 'transparent', fontFamily: F }}
+                  className="flex-1 border-none outline-none text-[13px] bg-transparent"
+                  style={{ color: C.text, fontFamily: F }}
                 />
                 {searchQ && (
-                  <button onClick={() => setSearchQ('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+                  <button
+                    onClick={() => setSearchQ('')}
+                    className="bg-transparent border-none cursor-pointer text-base leading-none p-0"
+                    style={{ color: C.textLight }}
+                  >
+                    ×
+                  </button>
                 )}
               </div>
 
               {searchOpen && searchQ.length > 1 && (
-                <div className="scale-in" style={{
-                  position: 'absolute', right: 0, top: 'calc(100% + 6px)', width: '320px',
-                  background: C.card, border: `1px solid ${C.border}`,
-                  borderRadius: '12px', boxShadow: C.shadowMd, zIndex: 300, overflow: 'hidden',
-                }}>
+                <div
+                  className="scale-in absolute right-0 top-[calc(100%+6px)] w-[320px] rounded-[12px] z-[300] overflow-hidden"
+                  style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: C.shadowMd }}
+                >
                   {filtered.length > 0 ? (
                     <>
-                      <div style={{ padding: '10px 14px 4px', fontSize: '10px', fontWeight: 600, color: C.textMuted, letterSpacing: '.1em', textTransform: 'uppercase' }}>Sonuçlar</div>
+                      <div
+                        className="px-[14px] pt-[10px] pb-1 text-[10px] font-semibold uppercase tracking-[.1em]"
+                        style={{ color: C.textMuted }}
+                      >
+                        Sonuçlar
+                      </div>
                       {filtered.map((item, i) => (
                         <div
                           key={i}
                           onMouseDown={() => { navigate(item.url); setSearchOpen(false); setSearchQ(''); }}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 14px', cursor: 'pointer', gap: '10px', transition: 'background 0.15s' }}
+                          className="flex justify-between items-center px-[14px] py-[9px] cursor-pointer gap-[10px] transition-[background] duration-150"
                           onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: item.type === 'Marka' ? '50%' : '6px', overflow: 'hidden', flexShrink: 0, background: C.surface, border: `1px solid ${C.border}` }}>
-                              <img src={item.image || noImage} alt={item.label} onError={e => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div className="flex items-center gap-[10px] min-w-0">
+                            <div
+                              className="w-[30px] h-[30px] overflow-hidden shrink-0"
+                              style={{
+                                borderRadius: item.type === 'Marka' ? '50%' : '6px',
+                                background: C.surface,
+                                border: `1px solid ${C.border}`,
+                              }}
+                            >
+                              <img src={item.image || noImage} alt={item.label} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                             </div>
-                            <span style={{ fontSize: '13px', color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+                            <span
+                              className="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap"
+                              style={{ color: C.text }}
+                            >
+                              {item.label}
+                            </span>
                           </div>
                           <Badge color={item.type === 'Parfüm' ? 'gold' : 'blue'}>{item.type}</Badge>
                         </div>
                       ))}
                     </>
                   ) : (
-                    <div style={{ padding: '20px', textAlign: 'center', color: C.textLight, fontSize: '13px' }}>
+                    <div className="p-5 text-center text-[13px]" style={{ color: C.textLight }}>
                       "<strong>{searchQ}</strong>" için sonuç bulunamadı
                     </div>
                   )}
@@ -213,65 +222,61 @@ export function Navbar() {
 
           {/* Desktop bildirim zili */}
           {!lg && user && !isAdmin && (
-            <div data-notif-root style={{ position: 'relative' }}>
+            <div data-notif-root className="relative">
               <button
                 onClick={() => { setNotifOpen(!notifOpen); setMenuOpen(false); if (!notifOpen && unreadNotifCount > 0) markAllNotificationsRead(); }}
+                className="relative bg-transparent rounded-[8px] w-9 h-9 flex items-center justify-center cursor-pointer transition-[color,border-color] duration-200"
                 style={{
-                  position: 'relative', background: 'none',
                   border: `1px solid ${notifOpen ? C.gold : C.border}`,
-                  borderRadius: '8px', width: '36px', height: '36px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', color: notifOpen ? C.gold : C.textMid,
-                  transition: 'color 0.2s, border-color 0.2s',
+                  color: notifOpen ? C.gold : C.textMid,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
                 onMouseLeave={e => { if (!notifOpen) { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; } }}
               >
-                <FontAwesomeIcon icon={faBell} style={{ fontSize: '13px' }} />
+                <FontAwesomeIcon icon={faBell} className="text-[13px]" />
                 {unreadNotifCount > 0 && (
-                  <span style={{
-                    position: 'absolute', top: '-6px', right: '-6px',
-                    minWidth: '18px', height: '18px', borderRadius: '9px',
-                    background: C.gold, color: '#fff',
-                    fontSize: '11px', fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px', border: '2px solid #FAFAF8',
-                  }}>
+                  <span
+                    className="absolute top-[-6px] right-[-6px] min-w-[18px] h-[18px] rounded-[9px] text-white text-[11px] font-bold flex items-center justify-center px-1 border-2 border-[#FAFAF8]"
+                    style={{ background: C.gold }}
+                  >
                     {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
                   </span>
                 )}
               </button>
 
               {notifOpen && (
-                <div className="fade-in" style={{
-                  position: 'absolute', right: 0, top: 'calc(100% + 6px)',
-                  background: C.card, border: `1px solid ${C.border}`,
-                  borderRadius: '12px', width: '320px',
-                  boxShadow: C.shadowMd, overflow: 'hidden', zIndex: 300,
-                  display: 'flex', flexDirection: 'column',
-                }}>
-                  <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '44px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: C.text, flexShrink: 0 }}>Bildirimler</span>
+                <div
+                  className="fade-in absolute right-0 top-[calc(100%+6px)] rounded-[12px] w-[320px] z-[300] overflow-hidden flex flex-col"
+                  style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: C.shadowMd }}
+                >
+                  <div
+                    className="px-[14px] py-[10px] flex items-center justify-between gap-2 min-h-[44px]"
+                    style={{ borderBottom: `1px solid ${C.border}` }}
+                  >
+                    <span className="text-[13px] font-bold shrink-0" style={{ color: C.text }}>Bildirimler</span>
                     {notifications.length > 0 && !confirmClear && (
                       <button
                         onClick={() => setConfirmClear(true)}
-                        style={{ background: 'none', border: 'none', fontSize: '11px', color: C.red, cursor: 'pointer', fontFamily: F, fontWeight: 600, flexShrink: 0 }}
+                        className="bg-transparent border-none text-[11px] cursor-pointer font-semibold shrink-0"
+                        style={{ color: C.red, fontFamily: F }}
                       >
                         Tümünü Temizle
                       </button>
                     )}
                     {confirmClear && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '11px', color: C.red, fontWeight: 500 }}>Geri alınamaz!</span>
+                      <div className="flex items-center gap-[6px] flex-1 justify-end">
+                        <span className="text-[11px] font-medium" style={{ color: C.red }}>Geri alınamaz!</span>
                         <button
                           onClick={() => { clearAllNotifications(); setConfirmClear(false); }}
-                          style={{ background: C.red, border: 'none', borderRadius: '5px', padding: '3px 8px', fontSize: '11px', fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}
+                          className="border-none rounded-[5px] px-2 py-[3px] text-[11px] font-bold text-white cursor-pointer"
+                          style={{ background: C.red, fontFamily: F }}
                         >
                           Evet
                         </button>
                         <button
                           onClick={() => setConfirmClear(false)}
-                          style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '5px', padding: '3px 8px', fontSize: '11px', color: C.textMid, cursor: 'pointer', fontFamily: F }}
+                          className="rounded-[5px] px-2 py-[3px] text-[11px] cursor-pointer"
+                          style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid, fontFamily: F }}
                         >
                           İptal
                         </button>
@@ -279,14 +284,14 @@ export function Navbar() {
                     )}
                   </div>
                   <div
-                    style={{ overflowY: 'auto', height: '280px' }}
+                    className="overflow-y-auto h-[280px]"
                     onScroll={(e) => {
                       const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
                       if (scrollTop + clientHeight >= scrollHeight - 20 && notifHasMore) loadMoreNotifications();
                     }}
                   >
                     {notifications.length === 0 ? (
-                      <div style={{ padding: '32px 16px', textAlign: 'center', color: C.textLight, fontSize: '13px' }}>
+                      <div className="px-4 py-8 text-center text-[13px]" style={{ color: C.textLight }}>
                         Henüz bildirim yok
                       </div>
                     ) : notifications.map((n) => {
@@ -308,33 +313,42 @@ export function Navbar() {
                               }
                             }
                           }}
+                          className="px-4 py-[11px] cursor-pointer flex items-start gap-[10px] transition-[background] duration-150"
                           style={{
-                            padding: '11px 16px', cursor: 'pointer',
                             borderBottom: `1px solid ${C.borderLight}`,
                             background: isUnread ? C.goldBg : 'transparent',
-                            transition: 'background 0.15s',
-                            display: 'flex', alignItems: 'flex-start', gap: '10px',
                           }}
                           onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
                           onMouseLeave={e => e.currentTarget.style.background = isUnread ? C.goldBg : 'transparent'}
                         >
                           {n.type === 'review_approved' ? (
-                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <FontAwesomeIcon icon={faCheck} style={{ fontSize: '10px', color: C.green }} />
+                            <div
+                              className="w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center"
+                              style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}` }}
+                            >
+                              <FontAwesomeIcon icon={faCheck} className="text-[10px]" style={{ color: C.green }} />
                             </div>
                           ) : n.type === 'review_rejected' ? (
-                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, background: C.redBg, border: `1px solid ${C.redBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <FontAwesomeIcon icon={faXmark} style={{ fontSize: '10px', color: C.red }} />
+                            <div
+                              className="w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center"
+                              style={{ background: C.redBg, border: `1px solid ${C.redBorder}` }}
+                            >
+                              <FontAwesomeIcon icon={faXmark} className="text-[10px]" style={{ color: C.red }} />
                             </div>
                           ) : (
-                            <div style={{
-                              width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0, marginTop: '5px',
-                              background: isUnread ? C.gold : 'transparent',
-                              border: isUnread ? 'none' : `1px solid ${C.border}`,
-                            }} />
+                            <div
+                              className="w-[7px] h-[7px] rounded-full shrink-0 mt-[5px]"
+                              style={{
+                                background: isUnread ? C.gold : 'transparent',
+                                border: isUnread ? 'none' : `1px solid ${C.border}`,
+                              }}
+                            />
                           )}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '12px', fontWeight: isUnread ? 600 : 400, color: C.text, lineHeight: 1.5 }}>
+                          <div className="flex-1 min-w-0">
+                            <div
+                              className="text-[12px] leading-[1.5]"
+                              style={{ fontWeight: isUnread ? 600 : 400, color: C.text }}
+                            >
                               {n.type === 'new_review'
                                 ? `Yeni yorum: ${n.authorName}${n.muadilName ? ` — ${n.muadilName}` : ''}`
                                 : n.type === 'review_updated'
@@ -355,7 +369,7 @@ export function Navbar() {
                               }
                             </div>
                             {n.createdAt?.seconds && (
-                              <div style={{ fontSize: '11px', color: C.textLight, marginTop: '2px' }}>
+                              <div className="text-[11px] mt-[2px]" style={{ color: C.textLight }}>
                                 {new Date(n.createdAt.seconds * 1000).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             )}
@@ -371,37 +385,46 @@ export function Navbar() {
 
           {/* Desktop user menu */}
           {!lg && user && (
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '5px 10px 5px 6px', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                className="flex items-center gap-2 bg-transparent rounded-[8px] px-[10px] py-[5px] pl-[6px] cursor-pointer transition-[border-color] duration-200"
+                style={{ border: `1px solid ${C.border}` }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
                 onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
               >
-                <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: '#fff', fontWeight: 600, overflow: 'hidden', flexShrink: 0 }}>
+                <div
+                  className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-[11px] text-white font-semibold overflow-hidden shrink-0"
+                  style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}
+                >
                   {user.photoURL
-                    ? <img src={user.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                    ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
                     : user.name?.[0]?.toUpperCase()}
                 </div>
-                <span style={{ fontSize: '13px', fontWeight: 500, color: C.text, fontFamily: F }}>{user.name}</span>
+                <span className="text-[13px] font-medium" style={{ color: C.text, fontFamily: F }}>{user.name}</span>
                 <svg width="10" height="10" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
               </button>
 
               {menuOpen && (
-                <div className="fade-in" style={{ position: 'absolute', right: 0, top: 'calc(100% + 6px)', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', minWidth: '176px', boxShadow: C.shadowMd, overflow: 'hidden', zIndex: 300 }}>
+                <div
+                  className="fade-in absolute right-0 top-[calc(100%+6px)] rounded-[12px] min-w-[176px] z-[300] overflow-hidden"
+                  style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: C.shadowMd }}
+                >
                   {[
                     { l: 'Profilim',     u: '/profil' },
                     { l: 'Favorilerim',  u: '/profil?tab=favorites' },
                     { l: 'Yorumlarım',   u: '/profil?tab=reviews' },
                   ].map(({ l, u }) => (
                     <a key={u} href={`/#${u}`} onClick={e => { e.preventDefault(); navigate(u); setMenuOpen(false); }}
-                      style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', textAlign: 'left', fontSize: '13px', color: C.text, cursor: 'pointer', fontFamily: F, textDecoration: 'none' }}
+                      className="block w-full px-4 py-[10px] bg-transparent text-left text-[13px] cursor-pointer no-underline"
+                      style={{ color: C.text, fontFamily: F }}
                       onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
                       onMouseLeave={e => e.currentTarget.style.background = 'none'}>{l}</a>
                   ))}
-                  <div style={{ height: '1px', background: C.borderLight }} />
+                  <div className="h-px" style={{ background: C.borderLight }} />
                   <button onClick={() => { logout(); navigate('/'); setMenuOpen(false); }}
-                    style={{ display: 'block', width: '100%', padding: '10px 16px', background: 'none', border: 'none', textAlign: 'left', fontSize: '13px', color: C.red, cursor: 'pointer', fontFamily: F }}
+                    className="block w-full px-4 py-[10px] bg-transparent border-none text-left text-[13px] cursor-pointer"
+                    style={{ color: C.red, fontFamily: F }}
                     onMouseEnter={e => e.currentTarget.style.background = C.redBg}
                     onMouseLeave={e => e.currentTarget.style.background = 'none'}>Çıkış Yap</button>
                 </div>
@@ -411,50 +434,29 @@ export function Navbar() {
 
           {/* Desktop auth buttons */}
           {!lg && !user && (
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div className="flex gap-[10px] items-center">
               <button
                 onClick={() => navigate('/giris')}
-                style={{
-                  background: 'none',
-                  border: `1px solid ${C.border}`,
-                  padding: '8px 18px',
-                  borderRadius: '10px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: C.textMid,
-                  cursor: 'pointer',
-                  fontFamily: F,
-                  display: 'flex', alignItems: 'center', gap: '7px',
-                  transition: 'color 0.2s, border-color 0.2s',
-                  letterSpacing: '0.02em',
-                }}
+                className="bg-transparent rounded-[10px] px-[18px] py-2 text-[13px] font-medium cursor-pointer flex items-center gap-[7px] transition-[color,border-color] duration-200 tracking-[0.02em]"
+                style={{ border: `1px solid ${C.border}`, color: C.textMid, fontFamily: F }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.gold; e.currentTarget.style.borderColor = C.gold; }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
               >
-                <FontAwesomeIcon icon={faRightToBracket} style={{ fontSize: '12px' }} />
+                <FontAwesomeIcon icon={faRightToBracket} className="text-[12px]" />
                 Giriş Yap
               </button>
               <button
                 onClick={() => navigate('/kayit')}
+                className="border-none rounded-[10px] px-5 py-2 text-[13px] font-semibold text-white cursor-pointer flex items-center gap-[7px] transition-[background,transform,box-shadow] duration-200 tracking-[0.02em]"
                 style={{
                   background: `linear-gradient(135deg, ${C.text} 0%, #2a2218 100%)`,
-                  border: 'none',
-                  padding: '8px 20px',
-                  borderRadius: '10px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontFamily: F,
-                  display: 'flex', alignItems: 'center', gap: '7px',
-                  transition: 'background 0.2s, transform 0.15s, box-shadow 0.2s',
-                  letterSpacing: '0.02em',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  fontFamily: F,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${C.gold} 0%, ${C.goldLight} 100%)`; e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 4px 16px rgba(184,147,90,0.3)`; }}
                 onMouseLeave={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${C.text} 0%, #2a2218 100%)`; e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'; }}
               >
-                <FontAwesomeIcon icon={faUserPlus} style={{ fontSize: '12px' }} />
+                <FontAwesomeIcon icon={faUserPlus} className="text-[12px]" />
                 Üye Ol
               </button>
             </div>
@@ -464,11 +466,12 @@ export function Navbar() {
           {lg && (
             <button
               onClick={() => openDrawer()}
-              style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'none', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: C.text, transition: 'border-color 0.2s, color 0.2s' }}
+              className="w-10 h-10 rounded-[10px] bg-transparent flex items-center justify-center cursor-pointer shrink-0 transition-[border-color,color] duration-200"
+              style={{ border: `1px solid ${C.border}`, color: C.text }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.text; }}
             >
-              <FontAwesomeIcon icon={faBars} style={{ fontSize: '15px' }} />
+              <FontAwesomeIcon icon={faBars} className="text-[15px]" />
             </button>
           )}
         </div>
@@ -477,17 +480,33 @@ export function Navbar() {
       {/* ── Mobile drawer ────────────────────────────────────────────── */}
       {lg && mobileOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 500, background: drawerVisible ? 'rgba(0,0,0,.35)' : 'rgba(0,0,0,0)', backdropFilter: drawerVisible ? 'blur(4px)' : 'none', transition: 'background 0.3s, backdrop-filter 0.3s' }}
+          className="fixed inset-0 z-[500] transition-[background,backdrop-filter] duration-300"
+          style={{
+            background: drawerVisible ? 'rgba(0,0,0,.35)' : 'rgba(0,0,0,0)',
+            backdropFilter: drawerVisible ? 'blur(4px)' : 'none',
+          }}
           onClick={() => closeDrawer()}
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '100%', background: C.card, boxShadow: C.shadowLg, display: 'flex', flexDirection: 'column', transform: drawerVisible ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.48s cubic-bezier(0.22,1,0.36,1)' }}
+            className="absolute top-0 right-0 w-[280px] h-full flex flex-col transition-transform duration-[480ms]"
+            style={{
+              background: C.card,
+              boxShadow: C.shadowLg,
+              transitionTimingFunction: 'cubic-bezier(0.22,1,0.36,1)',
+              transform: drawerVisible ? 'translateX(0)' : 'translateX(100%)',
+            }}
           >
             {/* Drawer header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: `1px solid ${C.border}` }}>
-              <img src={logoDark} alt="muadilci" style={{ height: '32px', width: 'auto' }} />
-              <button onClick={() => closeDrawer()} style={{ width: '34px', height: '34px', borderRadius: '8px', background: C.surface, border: `1px solid ${C.border}`, cursor: 'pointer', color: C.textMid, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1, transition: 'color 0.2s, border-color 0.2s' }}
+            <div
+              className="flex items-center justify-between px-5 py-[18px]"
+              style={{ borderBottom: `1px solid ${C.border}` }}
+            >
+              <img src={logoDark} alt="muadilci" className="h-8 w-auto" />
+              <button
+                onClick={() => closeDrawer()}
+                className="w-[34px] h-[34px] rounded-[8px] cursor-pointer flex items-center justify-center p-0 leading-none transition-[color,border-color] duration-200"
+                style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}
                 onMouseEnter={e => { e.currentTarget.style.color = C.text; e.currentTarget.style.borderColor = C.text; }}
                 onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
               >
@@ -498,16 +517,35 @@ export function Navbar() {
             </div>
 
             {/* Mobile search */}
-            <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.border}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: C.surface, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '0 12px', height: '38px' }}>
+            <div className="px-5 py-[14px]" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <div
+                className="flex items-center gap-2 rounded-[8px] px-3 h-[38px]"
+                style={{ background: C.surface, border: `1px solid ${C.border}` }}
+              >
                 <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Ara..." style={{ flex: 1, border: 'none', outline: 'none', fontSize: '14px', color: C.text, background: 'transparent', fontFamily: F }} />
+                <input
+                  value={searchQ}
+                  onChange={e => setSearchQ(e.target.value)}
+                  placeholder="Ara..."
+                  className="flex-1 border-none outline-none text-[14px] bg-transparent"
+                  style={{ color: C.text, fontFamily: F }}
+                />
               </div>
               {searchQ.length > 1 && filtered.length > 0 && (
-                <div style={{ marginTop: '8px', border: `1px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden' }}>
+                <div
+                  className="mt-2 rounded-[8px] overflow-hidden"
+                  style={{ border: `1px solid ${C.border}` }}
+                >
                   {filtered.map((item, i) => (
-                    <div key={i} onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
-                      style={{ padding: '10px 12px', fontSize: '13px', color: C.text, cursor: 'pointer', borderBottom: i < filtered.length - 1 ? `1px solid ${C.borderLight}` : 'none' }}>
+                    <div
+                      key={i}
+                      onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
+                      className="px-3 py-[10px] text-[13px] cursor-pointer"
+                      style={{
+                        color: C.text,
+                        borderBottom: i < filtered.length - 1 ? `1px solid ${C.borderLight}` : 'none',
+                      }}
+                    >
                       {item.label}
                     </div>
                   ))}
@@ -516,13 +554,26 @@ export function Navbar() {
             </div>
 
             {/* Mobile nav links */}
-            <div style={{ flex: 1, padding: '10px 12px', overflowY: 'auto' }}>
+            <div className="flex-1 px-3 py-[10px] overflow-y-auto">
               {navLinks.map(link => (
-                <a key={link.u} href={`/#${link.u}`} onClick={e => { e.preventDefault(); handleNav(link.u); }}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 14px', borderRadius: '8px', background: basePath === link.u ? C.goldBg : 'transparent', color: basePath === link.u ? C.gold : C.text, fontSize: '15px', fontWeight: basePath === link.u ? 600 : 400, cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '2px', textDecoration: 'none' }}>
+                <a
+                  key={link.u}
+                  href={`/#${link.u}`}
+                  onClick={e => { e.preventDefault(); handleNav(link.u); }}
+                  className="flex items-center justify-between w-full px-[14px] py-3 rounded-[8px] text-[15px] cursor-pointer text-left no-underline mb-[2px]"
+                  style={{
+                    background: basePath === link.u ? C.goldBg : 'transparent',
+                    color: basePath === link.u ? C.gold : C.text,
+                    fontWeight: basePath === link.u ? 600 : 400,
+                    fontFamily: F,
+                  }}
+                >
                   <span>{link.l}</span>
                   {link.badge > 0 && (
-                    <span style={{ minWidth: '20px', height: '20px', borderRadius: '10px', background: C.gold, color: '#fff', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+                    <span
+                      className="min-w-[20px] h-5 rounded-[10px] text-white text-[11px] font-bold flex items-center justify-center px-[5px]"
+                      style={{ background: C.gold }}
+                    >
                       {link.badge > 99 ? '99+' : link.badge}
                     </span>
                   )}
@@ -531,36 +582,67 @@ export function Navbar() {
             </div>
 
             {/* Mobile user section */}
-            <div style={{ padding: '14px 20px', borderTop: `1px solid ${C.border}` }}>
+            <div className="px-5 py-[14px]" style={{ borderTop: `1px solid ${C.border}` }}>
               {user ? (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 600, flexShrink: 0, overflow: 'hidden' }}>
-                      {user.photoURL ? <img src={user.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.currentTarget.style.display = 'none'; }} /> : user.name?.[0]?.toUpperCase()}
+                  <div className="flex items-center gap-[10px] mb-3">
+                    <div
+                      className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-[13px] text-white font-semibold shrink-0 overflow-hidden"
+                      style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}
+                    >
+                      {user.photoURL
+                        ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                        : user.name?.[0]?.toUpperCase()}
                     </div>
                     <div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: C.text }}>{user.name}</div>
-                      <div style={{ fontSize: '12px', color: C.gold }}>{roleLabel[user.role]}</div>
+                      <div className="text-[14px] font-semibold" style={{ color: C.text }}>{user.name}</div>
+                      <div className="text-[12px]" style={{ color: C.gold }}>{roleLabel[user.role]}</div>
                     </div>
                   </div>
-                  <a href="/#/profil" onClick={e => { e.preventDefault(); handleNav('/profil'); }} style={{ display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: F, marginBottom: '6px', textDecoration: 'none' }}>Profilim</a>
-                  <button onClick={() => { logout(); handleNav('/'); }} style={{ display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px', border: 'none', background: C.redBg, color: C.red, fontSize: '14px', cursor: 'pointer', textAlign: 'left', fontFamily: F }}>Çıkış Yap</button>
+                  <a
+                    href="/#/profil"
+                    onClick={e => { e.preventDefault(); handleNav('/profil'); }}
+                    className="block w-full px-[14px] py-[10px] rounded-[8px] text-[14px] cursor-pointer text-left no-underline mb-[6px]"
+                    style={{ border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontFamily: F }}
+                  >
+                    Profilim
+                  </a>
+                  <button
+                    onClick={() => { logout(); handleNav('/'); }}
+                    className="block w-full px-[14px] py-[10px] rounded-[8px] border-none text-[14px] cursor-pointer text-left"
+                    style={{ background: C.redBg, color: C.red, fontFamily: F }}
+                  >
+                    Çıkış Yap
+                  </button>
                 </>
               ) : (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => handleNav('/giris')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: F }}>Giriş Yap</button>
-                  <button onClick={() => handleNav('/kayit')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: 'none', background: C.text, color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>Üye Ol</button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleNav('/giris')}
+                    className="flex-1 px-0 py-[10px] rounded-[8px] text-[14px] font-medium cursor-pointer"
+                    style={{ border: `1px solid ${C.border}`, background: C.surface, color: C.text, fontFamily: F }}
+                  >
+                    Giriş Yap
+                  </button>
+                  <button
+                    onClick={() => handleNav('/kayit')}
+                    className="flex-1 px-0 py-[10px] rounded-[8px] border-none text-[14px] font-semibold text-white cursor-pointer"
+                    style={{ background: C.text, fontFamily: F }}
+                  >
+                    Üye Ol
+                  </button>
                 </div>
               )}
             </div>
 
             {/* Instagram */}
-            <div style={{ padding: '12px 20px 20px', borderTop: `1px solid ${C.border}` }}>
+            <div className="px-5 pt-3 pb-5" style={{ borderTop: `1px solid ${C.border}` }}>
               <a
                 href="https://www.instagram.com/muadilciapp"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: C.textLight, fontSize: '13px', fontFamily: F, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
+                className="inline-flex items-center gap-2 text-[13px] font-medium no-underline transition-[color] duration-200"
+                style={{ color: C.textLight, fontFamily: F }}
                 onMouseEnter={e => e.currentTarget.style.color = C.gold}
                 onMouseLeave={e => e.currentTarget.style.color = C.textLight}
               >

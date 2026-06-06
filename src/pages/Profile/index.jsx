@@ -57,17 +57,16 @@ const isReserved = (key) => RESERVED_WORDS.some((w) => key.includes(w)) || conta
 
 function UsernameStatus({ status }) {
   if (status === 'checking') return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
-      <div style={{ width: '10px', height: '10px', border: '2px solid #e2e8f0', borderTop: '2px solid #b8973a', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-      <span style={{ fontSize: '12px', color: '#718096' }}>Kontrol ediliyor...</span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="flex items-center gap-[5px] mt-1">
+      <div className="w-[10px] h-[10px] rounded-full border-2 border-[#e2e8f0] border-t-[#b8973a] animate-spin" />
+      <span className="text-[12px] text-[#718096]">Kontrol ediliyor...</span>
     </div>
   );
-  if (status === 'available') return <div style={{ fontSize: '12px', color: '#38a169', marginTop: '4px', fontWeight: 600 }}>✓ Kullanıcı adı müsait</div>;
-  if (status === 'taken') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>✗ Bu kullanıcı adı alınmış</div>;
-  if (status === 'invalid') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>3–20 karakter, yalnızca harf, rakam, _ ve -</div>;
-  if (status === 'reserved') return <div style={{ fontSize: '12px', color: '#e53e3e', marginTop: '4px' }}>✗ Bu kullanıcı adı kullanılamaz</div>;
-  if (status === 'same') return <div style={{ fontSize: '12px', color: '#718096', marginTop: '4px' }}>Mevcut kullanıcı adınızla aynı</div>;
+  if (status === 'available') return <div className="text-[12px] text-[#38a169] mt-1 font-semibold">Kullanıcı adı müsait</div>;
+  if (status === 'taken') return <div className="text-[12px] text-[#e53e3e] mt-1">Bu kullanıcı adı alınmış</div>;
+  if (status === 'invalid') return <div className="text-[12px] text-[#e53e3e] mt-1">3–20 karakter, yalnızca harf, rakam, _ ve -</div>;
+  if (status === 'reserved') return <div className="text-[12px] text-[#e53e3e] mt-1">Bu kullanıcı adı kullanılamaz</div>;
+  if (status === 'same') return <div className="text-[12px] text-[#718096] mt-1">Mevcut kullanıcı adınızla aynı</div>;
   return null;
 }
 
@@ -95,17 +94,17 @@ function ProfileInfoForm({ user, onSave }) {
 
   return (
     <>
-      {saved && <div style={{ background: '#f0fff4', border: '1px solid #9ae6b4', borderRadius: '10px', padding: '11px 16px', color: '#276749', marginBottom: '14px', fontSize: '13px' }}>Bilgileriniz kaydedildi.</div>}
-      {saveErr && <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '11px 16px', color: '#c53030', marginBottom: '14px', fontSize: '13px' }}>{saveErr}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#1a202c' }}>Kişisel Bilgiler</h3>
+      {saved && <div className="bg-[#f0fff4] border border-[#9ae6b4] rounded-[10px] p-[11px_16px] text-[#276749] mb-[14px] text-[13px]">Bilgileriniz kaydedildi.</div>}
+      {saveErr && <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] p-[11px_16px] text-[#c53030] mb-[14px] text-[13px]">{saveErr}</div>}
+      <div className="flex justify-between items-center mb-[18px]">
+        <h3 className="text-[20px] font-extrabold text-(--color-navy)">Kişisel Bilgiler</h3>
         {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
       </div>
       <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: toTitleCase(e.target.value) }))} disabled={!edit} />
       <Input label="E-posta" type="email" value={user?.email || ''} disabled={true} />
       <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} rows={3} disabled={!edit} />
       {edit && (
-        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+        <div className="flex gap-2 mt-1">
           <Btn size="sm" onClick={save} disabled={saveLoading}>{saveLoading ? 'Kaydediliyor...' : 'Kaydet'}</Btn>
           <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', bio: user?.bio || '' }); }}>İptal</Btn>
         </div>
@@ -169,9 +168,11 @@ export function ProfilePage({ queryParams }) {
   }, [newUsername, usernameEdit]);
 
   if (!user) return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-      <div style={{ fontSize: '48px' }}>🔒</div>
-      <h2 style={{ fontSize: '22px', fontWeight: 900, color: C.navy }}>Giriş Gerekli</h2>
+    <div className="min-h-screen bg-(--color-bg) flex flex-col items-center justify-center gap-4">
+      <div className="text-[48px]">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h2 className="text-[22px] font-black text-(--color-navy)">Giriş Gerekli</h2>
       <Btn onClick={() => navigate('/giris')}>Giriş Yap</Btn>
     </div>
   );
@@ -274,16 +275,16 @@ export function ProfilePage({ queryParams }) {
   const px = xs ? '16px' : sm ? '20px' : w >= 1280 ? '48px' : '32px';
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg }}>
+    <div className="min-h-screen bg-(--color-bg)">
       {/* Fotoğraf kırpma modalı */}
       {cropSrc && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '420px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,.4)' }}>
-            <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 800, fontSize: '15px', color: C.navy }}>Profil Fotoğrafı</span>
-              <button onClick={handleCropCancel} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: C.textLight, lineHeight: 1, padding: '0 4px' }}>×</button>
+        <div className="fixed inset-0 bg-black/75 z-[600] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[20px] w-full max-w-[420px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,.4)]">
+            <div className="p-[14px_18px] border-b border-(--color-border) flex justify-between items-center">
+              <span className="font-extrabold text-[15px] text-(--color-navy)">Profil Fotoğrafı</span>
+              <button onClick={handleCropCancel} className="bg-transparent border-0 text-[22px] cursor-pointer text-(--color-text-light) leading-none p-[0_4px]">×</button>
             </div>
-            <div style={{ position: 'relative', height: '300px', background: '#1a1a1a' }}>
+            <div className="relative h-[300px] bg-[#1a1a1a]">
               <Cropper
                 image={cropSrc}
                 crop={crop}
@@ -296,26 +297,26 @@ export function ProfilePage({ queryParams }) {
                 onCropComplete={onCropComplete}
               />
             </div>
-            <div style={{ padding: '14px 18px' }}>
+            <div className="p-[14px_18px]">
               {/* Zoom slider */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div className="flex items-center gap-[10px] mb-3">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ flex: 1, accentColor: C.gold, cursor: 'pointer' }} />
+                <input type="range" min={1} max={3} step={0.05} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 cursor-pointer" style={{ accentColor: C.gold }} />
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
               </div>
               {/* Gereksinimler */}
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <div className="flex gap-3 flex-wrap mb-3">
                 {[`Maks. ${MAX_MB} MB`, 'JPG · PNG · WEBP', 'Kare kırpılır'].map((t) => (
-                  <span key={t} style={{ fontSize: '11px', color: C.textLight, background: C.bg, borderRadius: '6px', padding: '3px 8px', border: `1px solid ${C.border}` }}>{t}</span>
+                  <span key={t} className="text-[11px] text-(--color-text-light) bg-(--color-bg) rounded-[6px] px-2 py-[3px] border border-(--color-border)">{t}</span>
                 ))}
               </div>
               {/* Hata */}
               {cropErr && (
-                <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '8px', padding: '8px 12px', color: '#c53030', fontSize: '12px', marginBottom: '10px' }}>
-                  ⚠ {cropErr}
+                <div className="bg-[#fff5f5] border border-[#fc8181] rounded-lg p-[8px_12px] text-[#c53030] text-[12px] mb-[10px]">
+                  {cropErr}
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <div className="flex gap-2 justify-end">
                 <Btn variant="secondary" size="sm" onClick={handleCropCancel} disabled={cropLoading}>İptal</Btn>
                 <Btn size="sm" onClick={handleCropSave} disabled={cropLoading}>
                   {cropLoading ? 'Kaydediliyor...' : 'Kırp ve Kaydet'}
@@ -328,17 +329,19 @@ export function ProfilePage({ queryParams }) {
 
       {/* Hesap silme onay modalı */}
       <Modal open={showDeleteModal} onClose={() => { setShowDeleteModal(false); setDeleteErr(''); }} title="Hesabı Kalıcı Olarak Sil" width="440px">
-        <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fff5f5', border: '2px solid #fc8181', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '24px' }}>⚠</div>
-          <p style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Emin misiniz?</p>
-          <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.7, marginBottom: '16px' }}>
-            <strong style={{ color: C.text }}>{user.email}</strong> hesabı ve tüm verileriniz kalıcı olarak silinecek. Yorumlarınız <strong>"Silinmiş Kullanıcı"</strong> adıyla anonim kalır. Bu işlem geri alınamaz.
+        <div className="text-center py-2 pb-4">
+          <div className="w-14 h-14 rounded-full bg-[#fff5f5] border-2 border-[#fc8181] flex items-center justify-center mx-auto mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <p className="text-[15px] font-bold text-(--color-navy) mb-2">Emin misiniz?</p>
+          <p className="text-[13px] text-(--color-text-light) leading-[1.7] mb-4">
+            <strong className="text-(--color-text)">{user.email}</strong> hesabı ve tüm verileriniz kalıcı olarak silinecek. Yorumlarınız <strong>"Silinmiş Kullanıcı"</strong> adıyla anonim kalır. Bu işlem geri alınamaz.
           </p>
 
           {/* Şifreli kullanıcılar için şifre doğrulama */}
           {!isGoogleUser && (
-            <div style={{ textAlign: 'left', marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.navy, marginBottom: '6px' }}>Onaylamak için şifrenizi girin</label>
+            <div className="text-left mb-[14px]">
+              <label className="block text-[13px] font-semibold text-(--color-navy) mb-[6px]">Onaylamak için şifrenizi girin</label>
               <input
                 key={showDeleteModal}
                 ref={deletePassRef}
@@ -354,17 +357,17 @@ export function ProfilePage({ queryParams }) {
 
           {/* Google kullanıcıları için bilgi */}
           {isGoogleUser && (
-            <div style={{ background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '10px 14px', fontSize: '12px', color: C.textLight, lineHeight: 1.6, marginBottom: '14px', textAlign: 'left' }}>
-              🔒 Güvenlik için, silme işleminden önce Google ile kimliğinizi doğrulamanız istenecek.
+            <div className="bg-(--color-surface) border border-(--color-border) rounded-[10px] p-[10px_14px] text-[12px] text-(--color-text-light) leading-[1.6] mb-[14px] text-left">
+              Güvenlik için, silme işleminden önce Google ile kimliğinizi doğrulamanız istenecek.
             </div>
           )}
 
           {deleteErr && (
-            <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '10px 14px', color: '#c53030', fontSize: '13px', marginBottom: '14px', textAlign: 'left' }}>
-              ⚠ {deleteErr}
+            <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] p-[10px_14px] text-[#c53030] text-[13px] mb-[14px] text-left">
+              {deleteErr}
             </div>
           )}
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '6px' }}>
+          <div className="flex gap-[10px] justify-center mt-[6px]">
             <Btn variant="secondary" onClick={() => { setShowDeleteModal(false); setDeleteErr(''); }}>Vazgeç</Btn>
             <Btn variant="danger" onClick={handleDeleteAccount} disabled={deleteLoading}>
               {deleteLoading ? 'Siliniyor...' : 'Evet, Hesabımı Sil'}
@@ -377,7 +380,7 @@ export function ProfilePage({ queryParams }) {
       <div style={{ background: `linear-gradient(135deg,${C.navy},${C.navyLight})`, padding: sm ? '28px 16px' : '40px 32px' }}>
         <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
           {/* Avatar */}
-          <div style={{ position: 'relative', flexShrink: 0 }}
+          <div className="relative shrink-0"
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
           >
@@ -386,16 +389,16 @@ export function ProfilePage({ queryParams }) {
               style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', border: '3px solid rgba(255,255,255,.25)' }}
             >
               {user.photoURL
-                ? <img src={user.photoURL} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                 : <svg width={sm ? 22 : 28} height={sm ? 22 : 28} viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
               }
               {(avatarHover || photoLoading) && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                <div className="absolute inset-0 bg-black/45 flex flex-col items-center justify-center gap-[3px]">
                   {photoLoading
-                    ? <div style={{ width: '18px', height: '18px', border: '2px solid rgba(255,255,255,.4)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    ? <div className="w-[18px] h-[18px] rounded-full border-2 border-white/40 border-t-white animate-spin" />
                     : <>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        {!sm && <span style={{ fontSize: '9px', color: 'rgba(255,255,255,.9)', fontWeight: 700, letterSpacing: '.02em' }}>{user.photoURL ? 'Değiştir' : 'Ekle'}</span>}
+                        {!sm && <span className="text-[9px] text-white/90 font-bold tracking-[.02em]">{user.photoURL ? 'Değiştir' : 'Ekle'}</span>}
                       </>
                   }
                 </div>
@@ -404,15 +407,16 @@ export function ProfilePage({ queryParams }) {
             {user.photoURL && !photoLoading && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeletePhoto(); }}
-                style={{ position: 'absolute', top: '0px', right: '0px', width: '20px', height: '20px', borderRadius: '50%', background: '#e53e3e', border: '2px solid rgba(255,255,255,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '12px', color: '#fff', fontFamily: F, lineHeight: 1, padding: 0 }}
+                className="absolute top-0 right-0 w-5 h-5 rounded-full bg-[#e53e3e] border-2 border-white/40 flex items-center justify-center cursor-pointer text-[12px] text-white leading-none p-0"
+                style={{ fontFamily: F }}
               >×</button>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: sm ? '20px' : '26px', fontWeight: 900, color: '#fff', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</div>
-            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}><Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge></div>
+          <div className="flex-1 min-w-0">
+            <div style={{ fontSize: sm ? '20px' : '26px' }} className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap">{user.name}</div>
+            <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
+            <div className="flex gap-2 mt-2"><Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge></div>
           </div>
           <Btn variant="danger" size={sm ? 'sm' : 'md'} onClick={() => { logout(); navigate('/'); }}>Çıkış Yap</Btn>
         </div>
@@ -420,12 +424,12 @@ export function ProfilePage({ queryParams }) {
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: sm ? '20px 16px' : `28px ${px}` }}>
         {photoErr && (
-          <div style={{ background: '#fff5f5', border: '1px solid #fc8181', borderRadius: '10px', padding: '10px 14px', color: '#c53030', fontSize: '13px', marginBottom: '16px' }}>
-            ⚠ {photoErr}
+          <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] p-[10px_14px] text-[#c53030] text-[13px] mb-4">
+            {photoErr}
           </div>
         )}
         {/* Tabs — scrollable on mobile */}
-        <div className="tabs-scroll" style={{ borderBottom: `1px solid ${C.border}`, marginBottom: '28px' }}>
+        <div className="tabs-scroll border-b border-(--color-border) mb-7">
           {[{ k: 'info', l: 'Bilgilerim' }, { k: 'favorites', l: 'Favorilerim' }, { k: 'reviews', l: 'Yorumlarım' }, { k: 'lists', l: 'Listelerim' }].map(({ k, l }) => (
             <button key={k} onClick={() => setTab(k)}
               style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === k ? C.gold : 'transparent'}`, padding: '10px 16px', color: tab === k ? C.gold : C.textMid, fontSize: '14px', fontWeight: tab === k ? 700 : 500, cursor: 'pointer', fontFamily: F, marginBottom: '-1px', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -435,30 +439,30 @@ export function ProfilePage({ queryParams }) {
         </div>
 
         {tab === 'info' && (
-          <div style={{ maxWidth: '480px' }}>
+          <div className="max-w-[480px]">
             <ProfileInfoForm user={user} onSave={(name, bio) => updateUser(user.uid, { name, bio })} />
 
             {user.role !== 'admin' && (
               <>
                 {/* Kullanıcı Adı Bölümü */}
-                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy }}>Kullanıcı Adı</h3>
+                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                  <div className="flex justify-between items-center mb-[14px]">
+                    <h3 className="text-[18px] font-bold text-(--color-navy)">Kullanıcı Adı</h3>
                     {!usernameEdit && (
                       <Btn variant="ghost" size="sm" onClick={() => { setUnErr(''); setNewUsername(user?.username || ''); setUnStatus(''); setUsernameEdit(true); }}>Değiştir</Btn>
                     )}
                   </div>
-                  {unSaved && <div style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.green, marginBottom: '12px', fontSize: '13px' }}>Kullanıcı adı güncellendi. Tüm yorumlarınız yeni adınızla görünecek.</div>}
-                  {unErr && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, marginBottom: '12px', fontSize: '13px' }}>⚠ {unErr}</div>}
+                  {unSaved && <div className="bg-(--color-green-bg) border border-(--color-green-border) rounded-[10px] p-[10px_14px] text-(--color-green) mb-3 text-[13px]">Kullanıcı adı güncellendi. Tüm yorumlarınız yeni adınızla görünecek.</div>}
+                  {unErr && <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-[10px] p-[10px_14px] text-(--color-red) mb-3 text-[13px]">{unErr}</div>}
                   {!usernameEdit ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '15px', color: C.textLight }}>@</span>
-                      <span style={{ fontSize: '15px', fontWeight: 700, color: C.text }}>{user?.username || <span style={{ color: C.textLight, fontStyle: 'italic', fontWeight: 400 }}>Henüz belirlenmedi</span>}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[15px] text-(--color-text-light)">@</span>
+                      <span className="text-[15px] font-bold text-(--color-text)">{user?.username || <span className="text-(--color-text-light) italic font-normal">Henüz belirlenmedi</span>}</span>
                     </div>
                   ) : (
                     <>
-                      <div style={{ position: 'relative', marginBottom: '4px' }}>
-                        <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#718096', pointerEvents: 'none' }}>@</span>
+                      <div className="relative mb-1">
+                        <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-sm text-[#718096] pointer-events-none">@</span>
                         <input
                           value={newUsername}
                           onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
@@ -473,26 +477,26 @@ export function ProfilePage({ queryParams }) {
                         />
                       </div>
                       <UsernameStatus status={unStatus} />
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <div className="flex gap-2 mt-[10px]">
                         <Btn size="sm" onClick={saveUsername} disabled={unLoading || (unStatus !== 'available' && unStatus !== 'same')}>
                           {unLoading ? 'Kaydediliyor...' : 'Kaydet'}
                         </Btn>
                         <Btn variant="secondary" size="sm" onClick={() => { setUsernameEdit(false); setUnErr(''); setUnStatus(''); }}>İptal</Btn>
                       </div>
-                      <p style={{ fontSize: '11px', color: '#718096', marginTop: '8px', lineHeight: 1.5 }}>
+                      <p className="text-[11px] text-[#718096] mt-2 leading-[1.5]">
                         Kullanıcı adınızı değiştirirseniz tüm yorumlarınız otomatik olarak yeni adınızla güncellenir.
                       </p>
                     </>
                   )}
                 </div>
 
-                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Şifre Değiştir</h3>
+                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                  <h3 className="text-[18px] font-bold text-(--color-navy) mb-3">Şifre Değiştir</h3>
                   <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>
                 </div>
-                <div style={{ marginTop: '32px', paddingTop: '22px', borderTop: `1px solid ${C.border}` }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#c53030', marginBottom: '6px' }}>Tehlikeli Bölge</h3>
-                  <p style={{ fontSize: '13px', color: C.textLight, marginBottom: '14px', lineHeight: 1.6 }}>
+                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                  <h3 className="text-[18px] font-bold text-[#c53030] mb-[6px]">Tehlikeli Bölge</h3>
+                  <p className="text-[13px] text-(--color-text-light) mb-[14px] leading-[1.6]">
                     Hesabınızı kalıcı olarak silmek istiyorsanız aşağıdaki butona tıklayın. Bu işlem geri alınamaz.
                   </p>
                   <Btn variant="danger" onClick={() => setShowDeleteModal(true)}>Hesabımı Kalıcı Olarak Sil</Btn>
@@ -515,21 +519,25 @@ export function ProfilePage({ queryParams }) {
           const hasAny = favBrands.length || favPerfumes.length || favMuadils.length || favComps.length;
 
           if (!hasAny) return (
-            <div style={{ textAlign: 'center', padding: sm ? '40px 20px' : '60px', color: C.textLight }}>
-              <div style={{ fontSize: '40px', marginBottom: '12px' }}>🤍</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, color: C.navy, marginBottom: '8px' }}>Henüz favori eklenmedi</div>
+            <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>
+              <div className="text-[40px] mb-3">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              </div>
+              <div className="text-[16px] font-semibold text-(--color-navy) mb-2">Henüz favori eklenmedi</div>
               <Btn onClick={() => navigate('/markalar')}>Keşfetmeye Başla</Btn>
             </div>
           );
 
           const grid = { display: 'grid', gridTemplateColumns: xs ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))', gap: '12px' };
           const FavBtn = ({ onClick }) => (
-            <button onClick={onClick} style={{ position: 'absolute', top: '10px', right: '10px', width: '26px', height: '26px', borderRadius: '50%', border: `1px solid ${C.redBorder}`, background: C.redBg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px' }}>❤️</button>
+            <button onClick={onClick} className="absolute top-[10px] right-[10px] w-[26px] h-[26px] rounded-full border border-(--color-red-border) bg-(--color-red-bg) flex items-center justify-center cursor-pointer text-[13px]">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill={C.red} stroke={C.red} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
           );
 
           const SectionTitle = ({ title, color, count }) => (
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: color }} />
+            <h3 className="text-[15px] font-bold text-(--color-navy) mb-[14px] flex items-center gap-2">
+              <span className="inline-block w-[10px] h-[10px] rounded-full" style={{ background: color }} />
               {title} ({count})
             </h3>
           );
@@ -537,19 +545,19 @@ export function ProfilePage({ queryParams }) {
           return (
             <div>
               {origFavBrands.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
+                <div className="mb-7">
                   <SectionTitle title="Orijinal Markalar" color={C.gold} count={origFavBrands.length} />
                   <div style={grid}>
                     {origFavBrands.map((b) => (
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.gold, flexShrink: 0, overflow: 'hidden' }}>
-                            <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="flex gap-3 items-center">
+                          <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.goldBg, borderColor: C.goldBorder, color: C.gold }}>
+                            <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
                           </div>
-                          <div style={{ paddingRight: '24px', minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FH }}>{b.name}</div>
-                            <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
+                          <div className="pr-6 min-w-0">
+                            <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>
+                            <div className="text-xs text-(--color-text-mid)">{b.origin} · {b.founded}</div>
                           </div>
                         </div>
                       </Card>
@@ -559,19 +567,19 @@ export function ProfilePage({ queryParams }) {
               )}
 
               {muadilFavBrands.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
+                <div className="mb-7">
                   <SectionTitle title="Muadil Markalar" color={C.green} count={muadilFavBrands.length} />
                   <div style={grid}>
                     {muadilFavBrands.map((b) => (
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
-                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: C.green, flexShrink: 0, overflow: 'hidden' }}>
-                            <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="flex gap-3 items-center">
+                          <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.greenBg, borderColor: C.greenBorder, color: C.green }}>
+                            <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
                           </div>
-                          <div style={{ paddingRight: '24px', minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '14px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: FH }}>{b.name}</div>
-                            <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin} · {b.founded}</div>
+                          <div className="pr-6 min-w-0">
+                            <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>
+                            <div className="text-xs text-(--color-text-mid)">{b.origin} · {b.founded}</div>
                           </div>
                         </div>
                       </Card>
@@ -581,14 +589,14 @@ export function ProfilePage({ queryParams }) {
               )}
 
               {favPerfumes.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
+                <div className="mb-7">
                   <SectionTitle title="Orijinal Parfümler" color={C.gold} count={favPerfumes.length} />
                   <div style={grid}>
                     {favPerfumes.map((p) => (
                       <Card key={p.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/${p.brandSlug}/${p.slug}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); togglePerfumeFavorite(user.uid || user.id, p.id); }} />
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, paddingRight: '28px', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                        <div style={{ fontSize: '12px', color: C.textMid }}>{p.brandName} · {p.year}</div>
+                        <div className="font-bold text-sm text-(--color-navy) pr-7 mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
+                        <div className="text-xs text-(--color-text-mid)">{p.brandName} · {p.year}</div>
                       </Card>
                     ))}
                   </div>
@@ -596,15 +604,15 @@ export function ProfilePage({ queryParams }) {
               )}
 
               {favMuadils.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
+                <div className="mb-7">
                   <SectionTitle title="Muadil Parfümler" color={C.green} count={favMuadils.length} />
                   <div style={grid}>
                     {favMuadils.map((m) => (
                       <Card key={m.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(user.uid || user.id, m.id); }} />
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, paddingRight: '28px', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                        <div style={{ fontSize: '12px', color: C.green, fontWeight: 600, marginBottom: '2px' }}>{m.brandName}</div>
-                        <div style={{ fontSize: '12px', color: C.textLight }}>→ {m.targetBrandName} {m.targetPerfumeName}</div>
+                        <div className="font-bold text-sm text-(--color-navy) pr-7 mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{m.name}</div>
+                        <div className="text-xs font-semibold mb-[2px]" style={{ color: C.green }}>{m.brandName}</div>
+                        <div className="text-xs text-(--color-text-light)">→ {m.targetBrandName} {m.targetPerfumeName}</div>
                       </Card>
                     ))}
                   </div>
@@ -612,7 +620,7 @@ export function ProfilePage({ queryParams }) {
               )}
 
               {favComps.length > 0 && (
-                <div style={{ marginBottom: '28px' }}>
+                <div className="mb-7">
                   <SectionTitle title="Karşılaştırmalar" color={C.navy} count={favComps.length} />
                   <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : 'repeat(auto-fill,minmax(240px,1fr))', gap: '12px' }}>
                     {favComps.map(({ origId, muadilId }) => {
@@ -622,15 +630,15 @@ export function ProfilePage({ queryParams }) {
                       return (
                         <Card key={`${origId}_${muadilId}`} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${origId}&muadil=${muadilId}`)}>
                           <FavBtn onClick={(e) => { e.stopPropagation(); toggleCompFavorite(user.uid || user.id, origId, muadilId); }} />
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '28px' }}>
+                          <div className="flex flex-col gap-[6px] pr-7">
                             <div>
-                              <div style={{ fontSize: '11px', color: C.textLight, fontWeight: 600, marginBottom: '2px' }}>ORİJİNAL</div>
-                              <div style={{ fontWeight: 700, fontSize: '13px', color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{orig.brandName} — {orig.name}</div>
+                              <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">ORİJİNAL</div>
+                              <div className="font-bold text-[13px] text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap">{orig.brandName} — {orig.name}</div>
                             </div>
-                            <div style={{ height: '1px', background: C.borderLight }} />
+                            <div className="h-px bg-(--color-border-light)" />
                             <div>
-                              <div style={{ fontSize: '11px', color: C.textLight, fontWeight: 600, marginBottom: '2px' }}>MUADİL</div>
-                              <div style={{ fontWeight: 700, fontSize: '13px', color: C.green, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{muadil.brandName} — {muadil.name}</div>
+                              <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">MUADİL</div>
+                              <div className="font-bold text-[13px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: C.green }}>{muadil.brandName} — {muadil.name}</div>
                             </div>
                           </div>
                         </Card>
@@ -644,38 +652,40 @@ export function ProfilePage({ queryParams }) {
         })()}
 
         {tab === 'reviews' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {!myComments.length && <div style={{ textAlign: 'center', padding: sm ? '40px 20px' : '60px', color: C.textLight }}>Henüz yorum yapmadınız.</div>}
+          <div className="flex flex-col gap-3">
+            {!myComments.length && <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>Henüz yorum yapmadınız.</div>}
             {myComments.map((c) => {
               const mp = muadilPerfumes.find((m) => m.id === c.muadilPerfumeId || m.id === c.muadilId);
               return (
                 <Card key={c.id} style={{ padding: sm ? '14px 16px' : '18px 22px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 700, color: C.navy, fontSize: '15px', flex: 1, minWidth: 0 }}>{mp ? `${mp.brandName} — ${mp.name}` : 'Parfüm'}</span>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+                  <div className="flex justify-between items-start mb-2 gap-2 flex-wrap">
+                    <span className="font-bold text-(--color-navy) text-[15px] flex-1 min-w-0">{mp ? `${mp.brandName} — ${mp.name}` : 'Parfüm'}</span>
+                    <div className="flex gap-2 items-center shrink-0">
                       <Badge color={c.status === 'approved' ? 'green' : 'orange'}>{c.status === 'approved' ? 'Yayında' : 'Onay Bekliyor'}</Badge>
-                      <span style={{ fontSize: '12px', color: C.textLight }}>{c.date}</span>
+                      <span className="text-xs text-(--color-text-light)">{c.date}</span>
                       {confirmDeleteCommentId === c.id
-                        ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        ? <span className="flex gap-1 items-center">
                             <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteCommentId(null); }}
-                              style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Sil</button>
+                              className="text-[11px] font-bold text-white bg-[#e53e3e] border-0 rounded-[5px] px-2 py-[2px] cursor-pointer"
+                              style={{ fontFamily: F }}>Sil</button>
                             <button onClick={() => setConfirmDeleteCommentId(null)}
-                              style={{ fontSize: '11px', color: C.textMid, background: '#f0f0f0', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Vazgeç</button>
+                              className="text-[11px] text-(--color-text-mid) bg-[#f0f0f0] border-0 rounded-[5px] px-2 py-[2px] cursor-pointer"
+                              style={{ fontFamily: F }}>Vazgeç</button>
                           </span>
                         : <button onClick={() => setConfirmDeleteCommentId(c.id)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: C.textLight, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                            className="bg-transparent border-0 cursor-pointer p-[2px] text-(--color-text-light) flex items-center opacity-60"
                             title="Yorumu sil">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                           </button>
                       }
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: C.textMid, marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <div className="flex gap-[10px] text-xs text-(--color-text-mid) mb-2 flex-wrap">
                     <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
                     <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
                     <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
                   </div>
-                  <p style={{ fontSize: '14px', color: C.text, lineHeight: 1.6 }}>{c.text}</p>
+                  <p className="text-sm text-(--color-text) leading-[1.6]">{c.text}</p>
                 </Card>
               );
             })}

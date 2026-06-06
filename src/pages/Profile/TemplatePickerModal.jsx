@@ -50,38 +50,28 @@ export function TemplatePickerModal({ open, onClose, onSelect }) {
 
   return (
     <Modal open={open} onClose={onClose} title="Liste Başlığı Oluştur" width="520px">
-      <p style={{ fontSize: '13px', color: C.textLight, marginBottom: '20px' }}>
+      <p className="text-[13px] text-(--color-text-light) mb-5">
         Dropdownlardan seçerek başlığını oluştur, ya da boş liste ile devam et.
       </p>
 
       {/* Başlık oluşturucu */}
-      <div style={{
-        display: 'flex', flexWrap: 'wrap', alignItems: 'center',
-        gap: '8px', padding: '16px 18px',
-        background: C.surface, borderRadius: '12px',
-        border: `1px solid ${C.border}`, marginBottom: '20px',
-      }}>
+      <div className="flex flex-wrap items-center gap-2 p-4 bg-(--color-surface) rounded-xl border border-(--color-border) mb-5">
         <TitleDropdown value={qualifier} options={OPTIONS.qualifier} onChange={setQualifier} />
         <TitleDropdown value={count}     options={OPTIONS.count}     onChange={setCount} />
         <TitleDropdown value={season}    options={OPTIONS.season}    onChange={setSeason} />
         <TitleDropdown value={category}  options={OPTIONS.category}  onChange={setCategory} />
-        <span style={{ fontSize: '15px', fontWeight: 700, color: C.text, fontFamily: F }}>
+        <span className="text-[15px] font-bold text-(--color-text)" style={{ fontFamily: F }}>
           Parfümü
         </span>
       </div>
 
       {/* Önizleme */}
-      <div style={{
-        padding: '10px 14px', borderRadius: '8px',
-        background: C.goldBg, border: `1px solid ${C.goldBorder}`,
-        fontSize: '13px', color: C.textMid, marginBottom: '20px',
-        display: 'flex', alignItems: 'center', gap: '8px',
-      }}>
-        <span style={{ fontSize: '11px', fontWeight: 700, color: C.gold, letterSpacing: '.08em', textTransform: 'uppercase' }}>Başlık</span>
-        <span style={{ fontWeight: 700, color: C.text }}>{generatedTitle}</span>
+      <div className="p-[10px_14px] rounded-lg bg-(--color-gold-bg) border border-(--color-gold-border) text-[13px] text-(--color-text-mid) mb-5 flex items-center gap-2">
+        <span className="text-[11px] font-bold text-(--color-gold) tracking-[.08em] uppercase">Başlık</span>
+        <span className="font-bold text-(--color-text)">{generatedTitle}</span>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+      <div className="flex gap-2 justify-end">
         <Btn variant="secondary" onClick={() => { onSelect(''); onClose(); }}>
           Boş Liste
         </Btn>

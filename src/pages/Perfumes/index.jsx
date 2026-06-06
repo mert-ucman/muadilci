@@ -220,14 +220,6 @@ export function PerfumesPage() {
 
   const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
-
-  const btnStyle = (active) => ({
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    width: '34px', height: '34px', borderRadius: '8px', border: `1px solid ${C.border}`,
-    background: active ? C.navy : C.card, color: active ? '#fff' : C.textMid,
-    cursor: 'pointer', transition: 'all .15s', flexShrink: 0,
-  });
-
   const sortOpts = pTab === 'original' ? ORIG_SORT_OPTS : MUADIL_SORT_OPTS;
   const cols     = pTab === 'original' ? ORIG_COLS : MUADIL_COLS;
 
@@ -241,20 +233,27 @@ export function PerfumesPage() {
       else if (pages[pages.length - 1] !== '...') pages.push('...');
     }
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '24px', flexWrap: 'wrap' }}>
-        <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
-          style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>
+      <div className="flex justify-center items-center gap-[6px] mt-6 flex-wrap">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={safePage === 1}
+          className="px-[14px] py-[6px] rounded-lg text-[13px]"
+          style={{ border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontFamily: F }}>
           ‹ Önceki
         </button>
         {pages.map((p, i) => p === '...'
-          ? <span key={`e${i}`} style={{ padding: '6px 4px', color: C.textLight }}>…</span>
+          ? <span key={`e${i}`} className="px-1 py-[6px] text-[--color-text-light]">…</span>
           : <button key={p} onClick={() => setPage(p)}
-              style={{ width: '34px', height: '34px', borderRadius: '8px', border: `1px solid ${p === safePage ? C.navy : C.border}`, background: p === safePage ? C.navy : C.card, color: p === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontFamily: F, fontWeight: p === safePage ? 700 : 400 }}>
+              className="w-[34px] h-[34px] rounded-lg text-[13px]"
+              style={{ border: `1px solid ${p === safePage ? C.navy : C.border}`, background: p === safePage ? C.navy : C.card, color: p === safePage ? '#fff' : C.text, cursor: 'pointer', fontFamily: F, fontWeight: p === safePage ? 700 : 400 }}>
               {p}
             </button>
         )}
-        <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
-          style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={safePage === totalPages}
+          className="px-[14px] py-[6px] rounded-lg text-[13px]"
+          style={{ border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontFamily: F }}>
           Sonraki ›
         </button>
       </div>
@@ -262,55 +261,68 @@ export function PerfumesPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '4px' }}>Parfümler</h1>
-        <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '22px' }}>Orijinal parfümler ve muadilleri</p>
+    <div className="min-h-screen bg-(--color-bg)" style={{ padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div className="max-w-[1320px] mx-auto">
+        <h1 className="font-black text-(--color-navy) mb-1" style={{ fontSize: sm ? '22px' : '26px' }}>Parfümler</h1>
+        <p className="text-(--color-text-light) text-[14px] mb-[22px]">Orijinal parfümler ve muadilleri</p>
 
         {/* Üst toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+        <div className="flex items-center justify-between flex-wrap gap-[10px] mb-4">
           {/* Tab */}
-          <div style={{ display: 'flex', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px' }}>
+          <div className="flex gap-1 bg-(--color-card) border border-(--color-border) rounded-xl p-1">
             {[['original', 'Orijinal'], ['muadil', 'Muadil']].map(([v, l]) => (
               <button key={v} onClick={() => switchTab(v)}
-                style={{ padding: sm ? '8px 16px' : '8px 20px', borderRadius: '9px', border: 'none', background: pTab === v ? C.navy : 'transparent', color: pTab === v ? '#fff' : C.textMid, fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .2s' }}>
+                className="rounded-[9px] border-none text-[14px] font-semibold cursor-pointer transition-all duration-200"
+                style={{ padding: sm ? '8px 16px' : '8px 20px', background: pTab === v ? C.navy : 'transparent', color: pTab === v ? '#fff' : C.textMid, fontFamily: F }}>
                 {l}
               </button>
             ))}
           </div>
 
           {/* Sıralama + Sayfa başına + Görünüm */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2 flex-wrap">
             <select value={sort} onChange={(e) => switchSort(e.target.value)}
-              style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none' }}>
+              className="h-[34px] px-[10px] rounded-lg text-[13px] cursor-pointer outline-none"
+              style={{ border: `1px solid ${C.border}`, background: C.card, color: C.text, fontFamily: F }}>
               {sortOpts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '0 6px', height: '34px' }}>
+            <div className="flex items-center gap-1 h-[34px] px-[6px] rounded-lg"
+              style={{ background: C.card, border: `1px solid ${C.border}` }}>
               {PER_PAGE_OPTS.map((n) => (
                 <button key={n} onClick={() => switchPerPage(n)}
-                  style={{ padding: '3px 7px', borderRadius: '6px', border: 'none', background: perPage === n ? C.navy : 'transparent', color: perPage === n ? '#fff' : C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .15s' }}>
+                  className="px-[7px] py-[3px] rounded-md border-none text-[12px] font-semibold cursor-pointer transition-all duration-150"
+                  style={{ background: perPage === n ? C.navy : 'transparent', color: perPage === n ? '#fff' : C.textMid, fontFamily: F }}>
                   {n}
                 </button>
               ))}
             </div>
 
-            <button style={btnStyle(view === 'grid')} onClick={() => setView('grid')}><IconGrid /></button>
-            <button style={btnStyle(view === 'list')} onClick={() => setView('list')}><IconList /></button>
+            <button
+              className="flex items-center justify-center w-[34px] h-[34px] rounded-lg cursor-pointer transition-all duration-150 shrink-0"
+              style={{ border: `1px solid ${C.border}`, background: view === 'grid' ? C.navy : C.card, color: view === 'grid' ? '#fff' : C.textMid }}
+              onClick={() => setView('grid')}><IconGrid /></button>
+            <button
+              className="flex items-center justify-center w-[34px] h-[34px] rounded-lg cursor-pointer transition-all duration-150 shrink-0"
+              style={{ border: `1px solid ${C.border}`, background: view === 'list' ? C.navy : C.card, color: view === 'list' ? '#fff' : C.textMid }}
+              onClick={() => setView('list')}><IconList /></button>
           </div>
         </div>
 
         {/* Arama + Filtreler */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '18px', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '160px', position: 'relative' }}>
-            <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: C.textLight }} width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-            <input value={search} onChange={(e) => switchSearch(e.target.value)} placeholder="Ara..." style={{ width: '100%', border: `1px solid ${C.border}`, borderRadius: '10px', padding: '10px 14px 10px 38px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', fontFamily: F }} />
+        <div className="flex gap-[10px] mb-[18px] flex-wrap">
+          <div className="flex-1 min-w-[160px] relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-(--color-text-light)" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <input value={search} onChange={(e) => switchSearch(e.target.value)} placeholder="Ara..."
+              className="w-full rounded-[10px] py-[10px] pr-[14px] pl-[38px] text-[14px] outline-none box-border"
+              style={{ border: `1px solid ${C.border}`, fontFamily: F }} />
           </div>
           {pTab === 'original' && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <div className="flex gap-[6px] flex-wrap">
               {['all', 'Erkek', 'Kadın', 'Unisex'].map((g) => (
                 <button key={g} onClick={() => switchFilter(g)}
-                  style={{ padding: '9px 12px', border: `1px solid ${filter === g ? C.gold : C.border}`, borderRadius: '10px', background: filter === g ? C.goldBg : 'transparent', color: filter === g ? C.gold : C.textMid, fontSize: '13px', fontWeight: filter === g ? 700 : 400, cursor: 'pointer', fontFamily: F }}>
+                  className="px-3 py-[9px] rounded-[10px] text-[13px] cursor-pointer"
+                  style={{ border: `1px solid ${filter === g ? C.gold : C.border}`, background: filter === g ? C.goldBg : 'transparent', color: filter === g ? C.gold : C.textMid, fontWeight: filter === g ? 700 : 400, fontFamily: F }}>
                   {g === 'all' ? 'Tümü' : g}
                 </button>
               ))}
@@ -318,10 +330,11 @@ export function PerfumesPage() {
           )}
           {pTab === 'muadil' && (
             <>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <div className="flex gap-[6px] flex-wrap">
                 {['all', 'Erkek', 'Kadın', 'Unisex'].map((g) => (
                   <button key={g} onClick={() => { setGenderFilterM(g); setPage(1); }}
-                    style={{ padding: '9px 12px', border: `1px solid ${genderFilterM === g ? C.gold : C.border}`, borderRadius: '10px', background: genderFilterM === g ? C.goldBg : 'transparent', color: genderFilterM === g ? C.gold : C.textMid, fontSize: '13px', fontWeight: genderFilterM === g ? 700 : 400, cursor: 'pointer', fontFamily: F }}>
+                    className="px-3 py-[9px] rounded-[10px] text-[13px] cursor-pointer"
+                    style={{ border: `1px solid ${genderFilterM === g ? C.gold : C.border}`, background: genderFilterM === g ? C.goldBg : 'transparent', color: genderFilterM === g ? C.gold : C.textMid, fontWeight: genderFilterM === g ? 700 : 400, fontFamily: F }}>
                     {g === 'all' ? 'Tümü' : g}
                   </button>
                 ))}
@@ -329,7 +342,8 @@ export function PerfumesPage() {
               <select
                 value={scoreFilter}
                 onChange={(e) => { setScoreFilter(e.target.value); setPage(1); }}
-                style={{ height: '42px', padding: '0 12px', borderRadius: '10px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
+                className="h-[42px] px-3 rounded-[10px] text-[13px] cursor-pointer outline-none"
+                style={{ border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontFamily: F, fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
               >
                 <option value="all">Tüm Puanlar</option>
                 <optgroup label="Sadece">
@@ -349,9 +363,9 @@ export function PerfumesPage() {
         </div>
 
         {/* Toplam + sayfa bilgisi */}
-        <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-          <span>Toplam <strong style={{ color: C.navy }}>{activeList.length}</strong> parfüm</span>
-          <span style={{ color: C.textLight }}>{(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, activeList.length)} gösteriliyor · Sayfa {safePage}/{totalPages}</span>
+        <div className="text-[13px] text-(--color-text-mid) mb-[14px] flex items-center justify-between flex-wrap gap-[6px]">
+          <span>Toplam <strong className="text-(--color-navy)">{activeList.length}</strong> parfüm</span>
+          <span className="text-(--color-text-light)">{(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, activeList.length)} gösteriliyor · Sayfa {safePage}/{totalPages}</span>
         </div>
 
         {/* Grid View */}
@@ -362,26 +376,38 @@ export function PerfumesPage() {
               const uid = user?.uid || user?.id;
               return (
                 <Card key={p.id} hover style={{ padding: '0', cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => navigate(`/${p.brandSlug}/${p.slug}`)}>
-                  <button onClick={(e) => { e.stopPropagation(); togglePerfumeFavorite(uid, p.id); }} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1, width: '30px', height: '30px', borderRadius: '50%', border: `1px solid ${isPerfumeFavorite(uid, p.id) ? C.goldBorder : C.border}`, background: isPerfumeFavorite(uid, p.id) ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><FontAwesomeIcon icon={faHeart} style={{ color: isPerfumeFavorite(uid, p.id) ? C.gold : C.textLight, fontSize: '13px' }} /></button>
-                  <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#f0f0f0' }}>
-                    <img src={p.image || noImage} alt={p.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); togglePerfumeFavorite(uid, p.id); }}
+                    className="absolute top-[10px] right-[10px] z-[1] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer"
+                    style={{ border: `1px solid ${isPerfumeFavorite(uid, p.id) ? C.goldBorder : C.border}`, background: isPerfumeFavorite(uid, p.id) ? C.goldBg : '#fff' }}>
+                    <FontAwesomeIcon icon={faHeart} style={{ color: isPerfumeFavorite(uid, p.id) ? C.gold : C.textLight, fontSize: '13px' }} />
+                  </button>
+                  <div className="w-full overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: '4/3' }}>
+                    <img src={p.image || noImage} alt={p.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                   </div>
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 400, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{p.name}</div>
-                    <div style={{ fontSize: '12px', color: C.textMid, marginBottom: '8px' }}>{p.brandName} · {p.year}</div>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  <div className="p-[12px_14px]">
+                    <div className="font-normal text-(--color-navy) mb-[2px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: sm ? '13px' : '15px', fontFamily: "'Inter', sans-serif" }}>{p.name}</div>
+                    <div className="text-[12px] text-(--color-text-mid) mb-2">{p.brandName} · {p.year}</div>
+                    <div className="flex gap-1 flex-wrap mb-[10px]">
                       <GenderBadge gender={p.gender} />
-                      {mc > 0 && <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}` }}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{mc} muadil</p></div>}
+                      {mc > 0 && (
+                        <div className="inline-flex items-center justify-center px-2 py-[2px] rounded-[20px] text-[11px] font-semibold"
+                          style={{ background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}` }}>
+                          <p className="m-0 p-0 w-max">{mc} muadil</p>
+                        </div>
+                      )}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${C.borderLight}`, gap: '6px' }}>
-                      <span style={{ fontSize: '11px', color: C.textLight, display: 'flex', alignItems: 'center', gap: '3px' }}><FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px', color: C.gold }} /> {(p.likes || 0).toLocaleString()}</span>
+                    <div className="flex justify-between items-center pt-2 gap-[6px]" style={{ borderTop: `1px solid ${C.borderLight}` }}>
+                      <span className="text-[11px] text-(--color-text-light) flex items-center gap-[3px]">
+                        <FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px', color: C.gold }} /> {(p.likes || 0).toLocaleString()}
+                      </span>
                       {mc > 0 && !sm && <Btn size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/karsilastir?orijinal=${p.id}`); }}>Karşılaştır</Btn>}
                     </div>
                   </div>
                 </Card>
               );
             })}
-            {!pageItems.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
+            {!pageItems.length && <div className="col-span-full text-center py-[60px] text-(--color-text-light)">Sonuç bulunamadı.</div>}
           </div>
         )}
 
@@ -392,44 +418,49 @@ export function PerfumesPage() {
               const uid = user?.uid || user?.id;
               return (
                 <Card key={m.id} hover style={{ padding: '0', cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`)}>
-                  <button onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }} style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1, width: '30px', height: '30px', borderRadius: '50%', border: `1px solid ${isMuadilFavorite(uid, m.id) ? C.goldBorder : C.border}`, background: isMuadilFavorite(uid, m.id) ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><FontAwesomeIcon icon={faHeart} style={{ color: isMuadilFavorite(uid, m.id) ? C.gold : C.textLight, fontSize: '13px' }} /></button>
-                  <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', background: '#f0f0f0' }}>
-                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }}
+                    className="absolute top-[10px] right-[10px] z-[1] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer"
+                    style={{ border: `1px solid ${isMuadilFavorite(uid, m.id) ? C.goldBorder : C.border}`, background: isMuadilFavorite(uid, m.id) ? C.goldBg : '#fff' }}>
+                    <FontAwesomeIcon icon={faHeart} style={{ color: isMuadilFavorite(uid, m.id) ? C.gold : C.textLight, fontSize: '13px' }} />
+                  </button>
+                  <div className="w-full overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: '4/3' }}>
+                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                   </div>
-                  <div style={{ padding: '12px 14px' }}>
-                    <div style={{ fontSize: sm ? '13px' : '15px', fontWeight: 400, color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
-                    <div style={{ fontSize: '13px', color: C.green, fontWeight: 600, marginBottom: '2px' }}>{m.brandName}</div>
-                    <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>→ {m.targetBrandName} {m.targetPerfumeName}</div>
-                    <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div className="p-[12px_14px]">
+                    <div className="font-normal text-(--color-navy) mb-[2px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: sm ? '13px' : '15px', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
+                    <div className="text-[13px] font-semibold mb-[2px]" style={{ color: C.green }}>{m.brandName}</div>
+                    <div className="text-[12px] text-(--color-text-light) mb-[10px]">→ {m.targetBrandName} {m.targetPerfumeName}</div>
+                    <div className="mb-[10px] flex flex-col gap-[5px]">
                       {[['Benzerlik', ms?.scent], ['Yayılım', ms?.projection], ['Kalıcılık', ms?.longevity]].map(([label, val]) => (
                         <div key={label}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                            <span style={{ fontSize: '10px', color: C.textLight }}>{label}</span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: scoreColor(val ?? null) }}>{val != null ? `${val}/10` : '—'}</span>
+                          <div className="flex justify-between mb-[2px]">
+                            <span className="text-[10px] text-(--color-text-light)">{label}</span>
+                            <span className="text-[10px] font-bold" style={{ color: scoreColor(val ?? null) }}>{val != null ? `${val}/10` : '—'}</span>
                           </div>
-                          <div style={{ height: '3px', background: C.borderLight, borderRadius: '2px', overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: val != null ? `${val * 10}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)', borderRadius: '2px', transition: 'width .3s' }} />
+                          <div className="h-[3px] rounded-sm overflow-hidden" style={{ background: C.borderLight }}>
+                            <div className="h-full rounded-sm transition-[width] duration-300" style={{ width: val != null ? `${val * 10}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)' }} />
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${C.borderLight}` }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
+                    <div className="flex justify-between items-center pt-2" style={{ borderTop: `1px solid ${C.borderLight}` }}>
+                      <span className="text-[12px] font-bold" style={{ color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
                       <Btn size="sm" variant="ghost">Karşılaştır →</Btn>
                     </div>
                   </div>
                 </Card>
               );
             })}
-            {!pageItems.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
+            {!pageItems.length && <div className="col-span-full text-center py-[60px] text-(--color-text-light)">Sonuç bulunamadı.</div>}
           </div>
         )}
 
         {/* List View */}
         {view === 'list' && (
           <Card style={{ overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table className="w-full min-w-[620px] border-collapse">
               <thead>
                 <tr style={{ background: C.bg }}>
                   {cols.map(({ key, label }) => {
@@ -437,15 +468,16 @@ export function PerfumesPage() {
                     const dir = active ? (listSortDir === 'asc' ? '↑' : '↓') : '↕';
                     return (
                       <th key={key} onClick={() => handleListSort(key)}
-                        style={{ padding: '10px 14px', textAlign: key === 'name' || key === 'brand' || key === 'targetPerf' || key === 'targetBrand' ? 'left' : 'center', fontSize: '11px', fontWeight: 700, color: active ? C.navy : C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        className="px-[14px] py-[10px] text-[11px] font-bold uppercase tracking-[.05em] whitespace-nowrap cursor-pointer select-none"
+                        style={{ textAlign: key === 'name' || key === 'brand' || key === 'targetPerf' || key === 'targetBrand' ? 'left' : 'center', color: active ? C.navy : C.textMid, borderBottom: `1px solid ${C.border}` }}>
+                        <span className="inline-flex items-center gap-1">
                           {label}
-                          <span style={{ fontSize: '12px', color: active ? C.navy : C.border, fontWeight: 900 }}>{dir}</span>
+                          <span className="text-[12px] font-black" style={{ color: active ? C.navy : C.border }}>{dir}</span>
                         </span>
                       </th>
                     );
                   })}
-                  <th style={{ padding: '10px 14px', borderBottom: `1px solid ${C.border}`, fontSize: '11px', fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', textAlign: 'center' }}>Favori</th>
+                  <th className="px-[14px] py-[10px] text-[11px] font-bold text-center uppercase tracking-[.05em] text-(--color-text-mid)" style={{ borderBottom: `1px solid ${C.border}` }}>Favori</th>
                 </tr>
               </thead>
               <tbody>
@@ -457,52 +489,60 @@ export function PerfumesPage() {
                   return (
                     <tr key={item.id}
                       onClick={() => isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`)}
-                      style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background .1s' }}
+                      className="cursor-pointer transition-[background] duration-100"
+                      style={{ borderBottom: `1px solid ${C.borderLight}` }}
                       onMouseEnter={(e) => e.currentTarget.style.background = C.bg}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                       {/* Parfüm / Muadil adı */}
-                      <td style={{ padding: '10px 14px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#f0f0f0', overflow: 'hidden', flexShrink: 0 }}>
-                            <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <td className="px-[14px] py-[10px]">
+                        <div className="flex items-center gap-[10px]">
+                          <div className="w-[38px] h-[38px] rounded-lg bg-[#f0f0f0] overflow-hidden shrink-0">
+                            <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                           </div>
-                          <span style={{ fontWeight: 400, fontSize: '14px', color: C.navy, fontFamily: "'Inter', sans-serif" }}>{item.name}</span>
+                          <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{item.name}</span>
                         </div>
                       </td>
                       {/* Marka */}
-                      <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.brandName}</td>
+                      <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid)">{item.brandName}</td>
                       {isOrig ? (
                         <>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}><GenderBadge gender={item.gender} /></td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{item.year || '—'}</td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                            <span style={{ display: 'inline-block', background: mc > 0 ? C.greenBg : C.bg, color: mc > 0 ? C.green : C.textLight, border: `1px solid ${mc > 0 ? C.greenBorder : C.border}`, borderRadius: '20px', padding: '2px 10px', fontSize: '12px', fontWeight: 700 }}>{mc} muadil</span>
+                          <td className="px-[14px] py-[10px] text-center"><GenderBadge gender={item.gender} /></td>
+                          <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid) text-center">{item.year || '—'}</td>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <div className="inline-flex items-center justify-center px-[10px] py-[2px] rounded-[20px] text-[12px] font-bold"
+                              style={{ background: mc > 0 ? C.greenBg : C.bg, color: mc > 0 ? C.green : C.textLight, border: `1px solid ${mc > 0 ? C.greenBorder : C.border}` }}>
+                              <p className="m-0 p-0 w-max">{mc} muadil</p>
+                            </div>
                           </td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}><FontAwesomeIcon icon={faHeart} style={{ fontSize: '11px', color: C.gold, marginRight: '4px' }} />{(item.likes || 0).toLocaleString()}</td>
+                          <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid) text-center">
+                            <FontAwesomeIcon icon={faHeart} style={{ fontSize: '11px', color: C.gold, marginRight: '4px' }} />{(item.likes || 0).toLocaleString()}
+                          </td>
                         </>
                       ) : (
                         <>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetPerfumeName || '—'}</td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: C.textMid }}>{item.targetBrandName || '—'}</td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}><GenderBadge gender={item.gender} /></td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
+                          <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid)">{item.targetPerfumeName || '—'}</td>
+                          <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid)">{item.targetBrandName || '—'}</td>
+                          <td className="px-[14px] py-[10px] text-center"><GenderBadge gender={item.gender} /></td>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <span className="font-bold text-[13px]" style={{ color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
                           </td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.projection ?? null) }}>{ms?.projection != null ? `${ms.projection}/10` : '—'}</span>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <span className="font-bold text-[13px]" style={{ color: scoreColor(ms?.projection ?? null) }}>{ms?.projection != null ? `${ms.projection}/10` : '—'}</span>
                           </td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.longevity ?? null) }}>{ms?.longevity != null ? `${ms.longevity}/10` : '—'}</span>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <span className="font-bold text-[13px]" style={{ color: scoreColor(ms?.longevity ?? null) }}>{ms?.longevity != null ? `${ms.longevity}/10` : '—'}</span>
                           </td>
-                          <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                            <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <span className="font-bold text-[13px]" style={{ color: scoreColor(ms?.overall ?? null) }}>{ms?.overall != null ? `${ms.overall}/10` : '—'}</span>
                           </td>
                         </>
                       )}
                       {/* Aksiyon */}
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => isOrig ? togglePerfumeFavorite(uid, item.id) : toggleMuadilFavorite(uid, item.id)}
-                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${(isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBorder : C.border}`, background: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', margin: '0 auto' }}>
+                      <td className="px-[14px] py-[10px] text-center" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => isOrig ? togglePerfumeFavorite(uid, item.id) : toggleMuadilFavorite(uid, item.id)}
+                          className="w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer mx-auto"
+                          style={{ border: `1px solid ${(isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBorder : C.border}`, background: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBg : '#fff' }}>
                           <FontAwesomeIcon icon={faHeart} style={{ fontSize: '12px', color: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.gold : C.textLight }} />
                         </button>
                       </td>
@@ -512,7 +552,7 @@ export function PerfumesPage() {
               </tbody>
             </table>
             </div>
-            {!pageItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
+            {!pageItems.length && <div className="text-center py-[60px] text-(--color-text-light)">Sonuç bulunamadı.</div>}
           </Card>
         )}
 

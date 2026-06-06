@@ -4,9 +4,9 @@ import { C } from '@/constants/theme';
 export function Input({ label, value, onChange, placeholder, type = 'text', disabled }) {
   const [foc, setFoc] = useState(false);
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div className="mb-4">
       {label && (
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>
+        <label className="block text-[13px] font-semibold text-[#4A4A4A] mb-[6px]">
           {label}
         </label>
       )}
@@ -18,16 +18,11 @@ export function Input({ label, value, onChange, placeholder, type = 'text', disa
         disabled={disabled}
         onFocus={() => setFoc(true)}
         onBlur={() => setFoc(false)}
+        className="w-full rounded-[10px] px-[14px] py-[10px] text-[14px] outline-none transition-[border-color] duration-200"
         style={{
-          width: '100%',
           border: `1px solid ${foc ? C.gold : C.border}`,
-          borderRadius: '10px',
-          padding: '10px 14px',
-          fontSize: '14px',
           color: C.text,
           background: disabled ? '#f9f9f9' : C.card,
-          outline: 'none',
-          transition: 'border-color .2s',
         }}
       />
     </div>

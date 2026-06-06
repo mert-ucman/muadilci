@@ -87,7 +87,11 @@ export function PerfumeDetailPage({ params }) {
     });
   }, [muadillerWithScores, sortKey, sortDir]);
 
-  if (!perfume) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Parfüm bulunamadı.</div>;
+  if (!perfume) return (
+    <div className="px-[60px] py-[60px] text-center text-[color:var(--color-text-light)]">
+      Parfüm bulunamadı.
+    </div>
+  );
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => d === 'desc' ? 'asc' : 'desc');
@@ -104,37 +108,64 @@ export function PerfumeDetailPage({ params }) {
   const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <div
+      className="min-h-screen bg-(--color-bg)"
+      style={{ padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}
+    >
+      <div className="max-w-[1100px] mx-auto">
 
         {/* Üst bar: Geri Dön + Breadcrumb */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '22px', flexWrap: 'wrap' }}>
-          <button onClick={() => goBack(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '7px 14px', color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, flexShrink: 0, transition: 'all .15s' }}
+        <div className="flex items-center gap-[14px] mb-[22px] flex-wrap">
+          <button
+            onClick={() => goBack(`/marka/${perfume.brandSlug}`)}
+            onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
+            className="inline-flex items-center gap-[7px] bg-(--color-card) border border-(--color-border) rounded-[10px] px-[14px] py-[7px] text-(--color-text-mid) text-[13px] font-semibold cursor-pointer shrink-0 transition-all duration-150"
+            style={{ fontFamily: F }}
             onMouseEnter={(e) => { e.currentTarget.style.background = C.bg; e.currentTarget.style.borderColor = C.navy; e.currentTarget.style.color = C.navy; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}>
-            <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '12px' }} />
+            onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="text-[12px]" />
             Geri Dön
           </button>
-          <div style={{ display: 'flex', gap: '6px', fontSize: '13px', color: C.textLight, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: C.gold }}>Ana Sayfa</span>
+          <div className="flex gap-[6px] text-[13px] text-(--color-text-light) items-center flex-wrap">
+            <span onClick={() => navigate('/')} className="cursor-pointer text-(--color-gold)">Ana Sayfa</span>
             <span>/</span>
-            <span onClick={() => navigate(`/marka/${perfume.brandSlug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }} style={{ cursor: 'pointer', color: C.gold }}>{perfume.brandName}</span>
+            <span
+              onClick={() => navigate(`/marka/${perfume.brandSlug}`)}
+              onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${perfume.brandSlug}`, '_blank'); } }}
+              className="cursor-pointer text-(--color-gold)"
+            >
+              {perfume.brandName}
+            </span>
             <span>/</span>
-            <span style={{ color: C.text, fontWeight: 600 }}>{perfume.name}</span>
+            <span className="text-(--color-text) font-semibold">{perfume.name}</span>
           </div>
         </div>
 
         {/* Üst kart */}
-        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '260px 1fr', gap: '24px', marginBottom: '32px' }}>
+        <div
+          className="grid gap-[24px] mb-[32px]"
+          style={{ gridTemplateColumns: sm ? '1fr' : '260px 1fr' }}
+        >
           <Card style={{ padding: '0', overflow: 'hidden' }}>
-            <div style={{ width: '100%', aspectRatio: sm ? '16/9' : '4/3', background: `linear-gradient(135deg,${C.goldBg},#fff)`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={perfume.images?.[0]?.src || noImage} alt={perfume.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div
+              className="w-full overflow-hidden flex items-center justify-center"
+              style={{
+                aspectRatio: sm ? '16/9' : '4/3',
+                background: `linear-gradient(135deg,${C.goldBg},#fff)`,
+              }}
+            >
+              <img
+                src={perfume.images?.[0]?.src || noImage}
+                alt={perfume.name}
+                onError={(e) => { e.currentTarget.src = noImage; }}
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div style={{ padding: '16px 18px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 600, color: C.navy, marginBottom: '3px', fontFamily: "'Inter', sans-serif" }}>{perfume.name}</div>
-              <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '12px' }}>{perfume.brandName}</div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div className="px-[18px] py-[16px]">
+              <div className="text-[18px] font-semibold text-(--color-navy) mb-[3px]" style={{ fontFamily: "'Inter', sans-serif" }}>{perfume.name}</div>
+              <div className="text-[13px] text-(--color-text-mid) mb-[12px]">{perfume.brandName}</div>
+              <div className="flex gap-[8px] flex-wrap">
                 <GenderBadge gender={perfume.gender} />
                 <Badge color="gold">{perfume.year}</Badge>
               </div>
@@ -144,25 +175,36 @@ export function PerfumeDetailPage({ params }) {
             </div>
           </Card>
 
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: sm ? '18px' : '24px' }}>
-            <h1 style={{ fontSize: 'clamp(24px,4vw,44px)', fontWeight: 600, color: C.navy, marginBottom: '8px', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}>{perfume.name}</h1>
-            <div style={{ fontSize: '15px', color: C.textMid, marginBottom: '16px' }}>{perfume.brandName} · Est. {perfume.year}</div>
-            <p style={{ fontSize: '15px', color: C.text, lineHeight: 1.7, marginBottom: '22px', fontStyle: 'italic' }}>{perfume.description}</p>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Koku Notaları</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '10px' }}>
+          <div
+            className="bg-(--color-card) border border-(--color-border) rounded-[16px]"
+            style={{ padding: sm ? '18px' : '24px' }}
+          >
+            <h1
+              className="font-semibold text-(--color-navy) mb-[8px]"
+              style={{ fontSize: 'clamp(24px,4vw,44px)', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}
+            >
+              {perfume.name}
+            </h1>
+            <div className="text-[15px] text-(--color-text-mid) mb-[16px]">{perfume.brandName} · Est. {perfume.year}</div>
+            <p className="text-[15px] text-(--color-text) leading-[1.7] mb-[22px] italic">{perfume.description}</p>
+            <h3 className="text-[15px] font-bold text-(--color-navy) mb-[12px]">Koku Notaları</h3>
+            <div
+              className="grid gap-[10px]"
+              style={{ gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr' }}
+            >
               {[
                 ['Üst Notalar',  faArrowUp,   perfume.notes?.top   || [], C.goldBg,  C.goldBorder,  C.gold],
                 ['Kalp Notaları',faHeart,     perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
                 ['Dip Notalar',  faArrowDown, perfume.notes?.base  || [], C.greenBg, C.greenBorder, C.green],
               ].map(([l, icon, notes, bg, border, col]) => (
-                <div key={l} style={{ background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                <div key={l} style={{ background: bg, border: `1px solid ${border}` }} className="rounded-[12px] p-[12px]">
+                  <div className="flex items-center gap-[5px] mb-[8px]">
                     <FontAwesomeIcon icon={icon} style={{ fontSize: '11px', color: col }} />
                     <span style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase' }}>{l}</span>
                   </div>
                   {notes.map((n) => (
-                    <div key={n} style={{ fontSize: '13px', color: C.text, marginBottom: '4px', display: 'flex', gap: '5px', alignItems: 'center' }}>
-                      <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: col, flexShrink: 0, display: 'inline-block' }} />
+                    <div key={n} className="text-[13px] text-(--color-text) mb-[4px] flex gap-[5px] items-center">
+                      <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: col }} className="shrink-0 inline-block" />
                       {n}
                     </div>
                   ))}
@@ -173,12 +215,15 @@ export function PerfumeDetailPage({ params }) {
         </div>
 
         {/* Muadil başlık + toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 800, color: C.navy, margin: 0, fontFamily: FH }}>
+        <div className="flex items-center justify-between flex-wrap gap-[10px] mb-[16px]">
+          <h2
+            className="text-[22px] font-extrabold text-(--color-navy) m-0"
+            style={{ fontFamily: FH }}
+          >
             Muadil Parfümler
-            <span style={{ fontSize: '14px', fontWeight: 500, color: C.textLight, marginLeft: '8px', fontFamily: F }}>({muadiller.length})</span>
+            <span className="text-[14px] font-medium text-(--color-text-light) ml-[8px]" style={{ fontFamily: F }}>({muadiller.length})</span>
           </h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex gap-[8px]">
             <button style={btnStyle(view === 'grid')} onClick={() => setView('grid')} title="Izgara görünümü"><IconGrid /></button>
             <button style={btnStyle(view === 'list')} onClick={() => setView('list')} title="Liste görünümü"><IconList /></button>
           </div>
@@ -186,32 +231,40 @@ export function PerfumeDetailPage({ params }) {
 
         {/* Grid View */}
         {view === 'grid' && (
-          <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(260px,1fr))', gap: '16px' }}>
+          <div
+            className="grid gap-[16px]"
+            style={{ gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(260px,1fr))' }}
+          >
             {sorted.map(({ m, ms }) => {
               const uid = user?.uid || user?.id;
               const fav = isMuadilFavorite(uid, m.id);
               return (
                 <Card key={m.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`)}>
-                  <div style={{ width: '100%', aspectRatio: '4/3', background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
+                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }}
-                      style={{ position: 'absolute', top: '10px', right: '10px', width: '30px', height: '30px', borderRadius: '50%', border: `1px solid ${fav ? C.goldBorder : 'rgba(255,255,255,.6)'}`, background: fav ? C.goldBg : 'rgba(255,255,255,.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)', boxShadow: '0 2px 6px rgba(0,0,0,.1)' }}>
+                      className="absolute top-[10px] right-[10px] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer backdrop-blur-[4px] shadow-[0_2px_6px_rgba(0,0,0,.1)]"
+                      style={{
+                        border: `1px solid ${fav ? C.goldBorder : 'rgba(255,255,255,.6)'}`,
+                        background: fav ? C.goldBg : 'rgba(255,255,255,.9)',
+                      }}
+                    >
                       <FontAwesomeIcon icon={faHeart} style={{ fontSize: '12px', color: fav ? C.gold : C.textLight }} />
                     </button>
                   </div>
-                  <div style={{ padding: '14px 16px' }}>
-                    <div style={{ fontWeight: 400, fontSize: '15px', color: C.navy, marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
-                    <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '10px' }}>{m.brandName}</div>
+                  <div className="px-[16px] py-[14px]">
+                    <div className="font-normal text-[15px] text-(--color-navy) mb-[2px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
+                    <div className="text-[13px] text-(--color-text-mid) mb-[10px]">{m.brandName}</div>
                     <ScoreBar label="Koku Yakınlığı" value={ms.scent} empty={ms.scent === null} />
                     <ScoreBar label="Yayılım" value={ms.projection} empty={ms.projection === null} />
                     <ScoreBar label="Kalıcılık" value={ms.longevity} empty={ms.longevity === null} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${C.borderLight}` }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div className="flex justify-between items-center mt-[10px] pt-[10px] border-t border-(--color-border-light)">
+                      <div className="flex flex-col gap-[2px]">
                         <span style={{ fontSize: '12px', fontWeight: 700, color: scoreColor(ms.overall) }}>
                           {ms.overall !== null ? `${ms.overall}/10` : '—'}
                         </span>
-                        <span style={{ fontSize: '11px', color: C.textLight }}>
+                        <span className="text-[11px] text-(--color-text-light)">
                           {ms.count ? `${ms.count} değerlendirme` : 'Henüz yorum yok'}
                         </span>
                       </div>
@@ -221,31 +274,42 @@ export function PerfumeDetailPage({ params }) {
                 </Card>
               );
             })}
-            {!sorted.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: C.textLight }}>Henüz muadil eklenmemiş.</div>}
+            {!sorted.length && (
+              <div className="col-span-full text-center py-[40px] px-[40px] text-(--color-text-light)">
+                Henüz muadil eklenmemiş.
+              </div>
+            )}
           </div>
         )}
 
         {/* List View */}
         {view === 'list' && (
           <Card style={{ overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table style={{ width: '100%', minWidth: '560px', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full min-w-[560px] border-collapse">
               <thead>
-                <tr style={{ background: C.bg }}>
+                <tr className="bg-(--color-bg)">
                   {COLS.map(({ key, label }) => {
                     const active = sortKey === key;
                     const dir = active ? (sortDir === 'desc' ? '↓' : '↑') : '↕';
                     return (
-                      <th key={key} onClick={() => handleSort(key)}
-                        style={{ padding: '10px 14px', textAlign: key === 'brand' || key === 'name' ? 'left' : 'center', fontSize: '11px', fontWeight: 700, color: active ? C.navy : C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <th
+                        key={key}
+                        onClick={() => handleSort(key)}
+                        className="px-[14px] py-[10px] text-[11px] font-bold uppercase tracking-[.05em] border-b border-(--color-border) whitespace-nowrap cursor-pointer select-none"
+                        style={{
+                          textAlign: key === 'brand' || key === 'name' ? 'left' : 'center',
+                          color: active ? C.navy : C.textMid,
+                        }}
+                      >
+                        <span className="inline-flex items-center gap-[4px]">
                           {label}
                           <span style={{ fontSize: '12px', color: active ? C.navy : C.border, fontWeight: 900 }}>{dir}</span>
                         </span>
                       </th>
                     );
                   })}
-                  <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${C.border}` }} />
+                  <th className="px-[14px] py-[10px] text-[11px] font-bold uppercase tracking-[.05em] border-b border-(--color-border) text-(--color-text-mid)" />
                 </tr>
               </thead>
               <tbody>
@@ -253,37 +317,49 @@ export function PerfumeDetailPage({ params }) {
                   const uid = user?.uid || user?.id;
                   const fav = isMuadilFavorite(uid, m.id);
                   return (
-                    <tr key={m.id} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`)}
-                      style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background .1s' }}
+                    <tr
+                      key={m.id}
+                      onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`)}
+                      className="border-b border-(--color-border-light) cursor-pointer transition-[background] duration-100"
                       onMouseEnter={(e) => e.currentTarget.style.background = C.bg}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, fontWeight: 600 }}>{m.brandName}</td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0f0f0', overflow: 'hidden', flexShrink: 0 }}>
-                            <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <td className="px-[14px] py-[12px] text-[13px] text-(--color-text-mid) font-semibold">{m.brandName}</td>
+                      <td className="px-[14px] py-[12px]">
+                        <div className="flex items-center gap-[10px]">
+                          <div className="w-[36px] h-[36px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
+                            <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                           </div>
-                          <span style={{ fontWeight: 400, fontSize: '14px', color: C.navy, fontFamily: "'Inter', sans-serif" }}>{m.name}</span>
+                          <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{m.name}</span>
                         </div>
                       </td>
                       {['scent', 'projection', 'longevity', 'overall'].map((k) => (
-                        <td key={k} style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <td key={k} className="px-[14px] py-[12px] text-center">
                           <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms[k]) }}>
                             {ms[k] !== null ? `${ms[k]}/10` : '—'}
                           </span>
                         </td>
                       ))}
-                      <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                      <td className="px-[14px] py-[12px] text-center">
                         {ms.count
-                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '20px', padding: '2px 10px', fontSize: '12px', fontWeight: 700, color: C.gold }}>{ms.count} kişi</span>
-                          : <span style={{ fontSize: '12px', color: C.textLight, fontStyle: 'italic' }}>—</span>
+                          ? (
+                            <div className="inline-flex items-center gap-[4px] bg-(--color-gold-bg) border border-(--color-gold-border) rounded-[20px] px-[10px] py-[2px] text-[12px] font-bold text-(--color-gold)">
+                              {ms.count} kişi
+                            </div>
+                          )
+                          : <span className="text-[12px] text-(--color-text-light) italic">—</span>
                         }
                       </td>
-                      <td style={{ padding: '12px 14px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                      <td className="px-[14px] py-[12px] text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-[8px] justify-center">
                           <button
                             onClick={() => toggleMuadilFavorite(uid, m.id)}
-                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${fav ? C.goldBorder : C.border}`, background: fav ? C.goldBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                            className="w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer"
+                            style={{
+                              border: `1px solid ${fav ? C.goldBorder : C.border}`,
+                              background: fav ? C.goldBg : '#fff',
+                            }}
+                          >
                             <FontAwesomeIcon icon={faHeart} style={{ fontSize: '12px', color: fav ? C.gold : C.textLight }} />
                           </button>
                           <Btn size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`); }}>Karşılaştır</Btn>
@@ -295,7 +371,11 @@ export function PerfumeDetailPage({ params }) {
               </tbody>
             </table>
             </div>
-            {!sorted.length && <div style={{ textAlign: 'center', padding: '40px', color: C.textLight }}>Henüz muadil eklenmemiş.</div>}
+            {!sorted.length && (
+              <div className="text-center py-[40px] px-[40px] text-(--color-text-light)">
+                Henüz muadil eklenmemiş.
+              </div>
+            )}
           </Card>
         )}
       </div>

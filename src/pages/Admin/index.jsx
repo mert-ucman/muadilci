@@ -26,9 +26,9 @@ function SortTh({ label, sortKey, sort, onSort }) {
   const active = sort.key === sortKey;
   return (
     <th onClick={() => sortKey && onSort(sortKey)} style={{ ...thBase, cursor: sortKey ? 'pointer' : 'default', userSelect: 'none', whiteSpace: 'nowrap', background: active ? '#f0f0f8' : undefined }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+      <span className="inline-flex items-center gap-1">
         {label}
-        {sortKey && <span style={{ fontSize: '11px', color: active ? C.navy : C.textLight, fontWeight: 700 }}>{active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</span>}
+        {sortKey && <span className="text-[11px] font-bold" style={{ color: active ? C.navy : C.textLight }}>{active ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</span>}
       </span>
     </th>
   );
@@ -48,15 +48,15 @@ function SearchBar({ value, onChange, placeholder, count, total, deferred = fals
       debounceRef.current = setTimeout(() => onChange(v), 250);
     };
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: `1px solid ${C.border}`, background: '#fafafa' }}>
-        <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
-          <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textLight }} width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input value={local} onChange={(e) => handleChange(e.target.value)} placeholder={placeholder} style={{ width: '100%', paddingLeft: '32px', paddingRight: local ? '60px' : '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }} />
+      <div className="flex items-center gap-[10px] px-4 py-3 border-b border-(--color-border) bg-[#fafafa]">
+        <div className="relative flex-1 max-w-[340px]">
+          <svg className="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none text-(--color-text-light)" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={local} onChange={(e) => handleChange(e.target.value)} placeholder={placeholder} className="w-full box-border h-[34px] border border-(--color-border) rounded-lg text-[13px] text-(--color-text) bg-white outline-none font-[family-name:var(--font-body)]" style={{ paddingLeft: '32px', paddingRight: local ? '60px' : '10px' }} />
           {local && (
-            <button onClick={() => handleChange('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 6px', borderRadius: '4px' }}>Temizle</button>
+            <button onClick={() => handleChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-(--color-text-light) bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)] px-1.5 py-0.5 rounded">Temizle</button>
           )}
         </div>
-        <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{count} / {total} kayıt</span>
+        <span className="text-xs text-(--color-text-light) ml-auto whitespace-nowrap">{count} / {total} kayıt</span>
       </div>
     );
   }
@@ -65,27 +65,28 @@ function SearchBar({ value, onChange, placeholder, count, total, deferred = fals
   const clear  = () => { setLocal(''); onChange(''); };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: `1px solid ${C.border}`, background: '#fafafa' }}>
-      <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
-        <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: C.textLight }} width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <div className="flex items-center gap-[10px] px-4 py-3 border-b border-(--color-border) bg-[#fafafa]">
+      <div className="relative flex-1 max-w-[340px]">
+        <svg className="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none text-(--color-text-light)" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input
           value={local}
           onChange={(e) => setLocal(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
           placeholder={placeholder}
-          style={{ width: '100%', paddingLeft: '32px', paddingRight: local ? '60px' : '10px', height: '34px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, boxSizing: 'border-box' }}
+          className="w-full box-border h-[34px] border border-(--color-border) rounded-lg text-[13px] text-(--color-text) bg-white outline-none font-[family-name:var(--font-body)]"
+          style={{ paddingLeft: '32px', paddingRight: local ? '60px' : '10px' }}
         />
         {local && (
-          <button onClick={clear} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 6px', borderRadius: '4px' }}>Temizle</button>
+          <button onClick={clear} className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-(--color-text-light) bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)] px-1.5 py-0.5 rounded">Temizle</button>
         )}
       </div>
       <button
         onClick={commit}
-        style={{ height: '34px', padding: '0 16px', background: C.navy, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, fontFamily: F, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+        className="h-[34px] px-4 bg-(--color-navy) text-white border-none rounded-lg text-[13px] font-semibold font-[family-name:var(--font-body)] cursor-pointer whitespace-nowrap shrink-0"
       >
         Ara
       </button>
-      <span style={{ fontSize: '12px', color: C.textLight, marginLeft: 'auto', whiteSpace: 'nowrap' }}>{count} / {total} kayıt</span>
+      <span className="text-xs text-(--color-text-light) ml-auto whitespace-nowrap">{count} / {total} kayıt</span>
     </div>
   );
 }
@@ -99,7 +100,8 @@ function CopyBtn({ text, title = 'Kopyala', variant = 'default' }) {
     <button
       title={title}
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${copied ? colors.copiedBorder : colors.border}`, background: copied ? colors.copiedBg : colors.bg, color: copied ? colors.copiedColor : colors.color, cursor: 'pointer', transition: 'all .15s', flexShrink: 0 }}
+      className="flex items-center justify-center w-7 h-7 rounded-[6px] cursor-pointer transition-all duration-150 shrink-0"
+      style={{ border: `1px solid ${copied ? colors.copiedBorder : colors.border}`, background: copied ? colors.copiedBg : colors.bg, color: copied ? colors.copiedColor : colors.color }}
     >
       {copied
         ? <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -157,9 +159,9 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
 
   return (
     <div>
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 800, color: C.navy, marginBottom: '4px' }}>Ana Sayfa Slider Görselleri</h2>
-        <p style={{ fontSize: '13px', color: C.textLight }}>En fazla {MAX_SLIDER} görsel · Maks. {MAX_SIZE_MB}MB/görsel · Otomatik 1920×800px'e yeniden boyutlandırılır · Sürükle-bırak ile sıra değiştir</p>
+      <div className="mb-5">
+        <h2 className="text-[18px] font-[800] text-(--color-navy) mb-1">Ana Sayfa Slider Görselleri</h2>
+        <p className="text-[13px] text-(--color-text-light)">En fazla {MAX_SLIDER} görsel · Maks. {MAX_SIZE_MB}MB/görsel · Otomatik 1920×800px'e yeniden boyutlandırılır · Sürükle-bırak ile sıra değiştir</p>
       </div>
 
       {sliderImages.length < MAX_SLIDER && (
@@ -168,47 +170,51 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           onClick={() => document.getElementById('slider-file-input').click()}
-          style={{ border: `2px dashed ${dragOver ? C.gold : C.border}`, borderRadius: '14px', padding: '40px', textAlign: 'center', cursor: 'pointer', background: dragOver ? C.goldBg : '#fafafa', transition: 'all .2s', marginBottom: '20px' }}>
-          <input id="slider-file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple style={{ display: 'none' }} onChange={(e) => processFiles(e.target.files)} />
-          <div style={{ fontSize: '36px', marginBottom: '10px' }}>🖼️</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Görselleri buraya sürükleyin veya tıklayın</div>
-          <div style={{ fontSize: '12px', color: C.textLight }}>{sliderImages.length}/{MAX_SLIDER} görsel · JPG, PNG, WebP · Maks. {MAX_SIZE_MB}MB</div>
+          className="rounded-[14px] p-10 text-center cursor-pointer transition-all duration-200 mb-5"
+          style={{ border: `2px dashed ${dragOver ? C.gold : C.border}`, background: dragOver ? C.goldBg : '#fafafa' }}>
+          <input id="slider-file-input" type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => processFiles(e.target.files)} />
+          <div className="text-[36px] mb-[10px]">🖼️</div>
+          <div className="text-[15px] font-bold text-(--color-navy) mb-1.5">Görselleri buraya sürükleyin veya tıklayın</div>
+          <div className="text-xs text-(--color-text-light)">{sliderImages.length}/{MAX_SLIDER} görsel · JPG, PNG, WebP · Maks. {MAX_SIZE_MB}MB</div>
         </div>
       )}
 
       {error && (
-        <div style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px 14px', fontSize: '13px', color: C.red, marginBottom: '16px' }}>{error}</div>
+        <div className="bg-[#fff5f5] border border-[#fecaca] rounded-[10px] px-[14px] py-[10px] text-[13px] text-(--color-red) mb-4">{error}</div>
       )}
 
       {sliderImages.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+        <div className="grid gap-[14px]" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
           {sliderImages.map((img, i) => (
             <div key={img.id} draggable
               onDragStart={() => onDragStartItem(i)}
               onDragOver={(e) => onDragOverItem(e, i)}
               onDragEnd={() => setDragIdx(null)}
-              style={{ borderRadius: '12px', overflow: 'hidden', border: `2px solid ${dragIdx === i ? C.gold : C.border}`, cursor: 'grab', position: 'relative', boxShadow: dragIdx === i ? `0 6px 24px rgba(184,150,90,.35)` : 'none', transition: 'box-shadow .15s', userSelect: 'none' }}>
-              <img src={img.src} alt={img.name} style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', display: 'block', opacity: dragIdx === i ? 0.55 : 1, transition: 'opacity .15s' }} />
-              <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,.6)', borderRadius: '6px', padding: '3px 9px', fontSize: '12px', fontWeight: 800, color: '#fff' }}>{i + 1}</div>
-              <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,.4)', borderRadius: '6px', padding: '3px 7px', fontSize: '13px', color: 'rgba(255,255,255,.7)', cursor: 'grab' }}>⠿</div>
-              <div style={{ padding: '8px 12px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{img.name}</span>
-                <button onClick={() => removeSliderImage(img.id)} style={{ background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '3px 9px', fontSize: '11px', color: C.red, cursor: 'pointer', fontFamily: F, fontWeight: 700, flexShrink: 0 }}>Sil</button>
+              className="rounded-xl overflow-hidden cursor-grab relative transition-shadow duration-150 select-none"
+              style={{ border: `2px solid ${dragIdx === i ? C.gold : C.border}`, boxShadow: dragIdx === i ? `0 6px 24px rgba(184,150,90,.35)` : 'none' }}>
+              <img src={img.src} alt={img.name} className="w-full object-cover block transition-opacity duration-150" style={{ aspectRatio: '16/9', opacity: dragIdx === i ? 0.55 : 1 }} />
+              <div className="absolute top-2 left-2 bg-[rgba(0,0,0,.6)] rounded-[6px] px-[9px] py-[3px] text-xs font-[800] text-white">{i + 1}</div>
+              <div className="absolute top-2 right-2 bg-[rgba(0,0,0,.4)] rounded-[6px] px-[7px] py-[3px] text-[13px] text-[rgba(255,255,255,.7)] cursor-grab">⠿</div>
+              <div className="px-3 py-2 bg-white flex justify-between items-center gap-2">
+                <span className="text-xs text-(--color-text-mid) overflow-hidden text-ellipsis whitespace-nowrap">{img.name}</span>
+                <button onClick={() => removeSliderImage(img.id)} className="bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-[9px] py-[3px] text-[11px] text-(--color-red) cursor-pointer font-[family-name:var(--font-body)] font-bold shrink-0">Sil</button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '7px 12px', background: '#f8f9fb', borderTop: `1px solid ${C.border}` }}>
+              <div className="flex items-center gap-1 px-3 py-[7px] bg-[#f8f9fb]" style={{ borderTop: `1px solid ${C.border}` }}>
                 {[
                   { key: 'showMobile', label: 'Mobil' },
                   { key: 'showTablet', label: 'Tablet' },
                   { key: 'showDesktop', label: 'PC' },
                 ].map(({ key, label }) => (
-                  <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', userSelect: 'none', flex: 1, padding: '3px 6px', borderRadius: '6px', background: img[key] !== false ? '#eef2ff' : 'transparent', border: `1px solid ${img[key] !== false ? '#c7d2fe' : C.border}`, transition: 'all .15s' }}>
+                  <label key={key} className="flex items-center gap-[5px] cursor-pointer select-none flex-1 px-1.5 py-[3px] rounded-[6px] transition-all duration-150"
+                    style={{ background: img[key] !== false ? '#eef2ff' : 'transparent', border: `1px solid ${img[key] !== false ? '#c7d2fe' : C.border}` }}>
                     <input
                       type="checkbox"
                       checked={img[key] !== false}
                       onChange={() => updateSliderImage(img.id, { [key]: img[key] === false })}
-                      style={{ width: '13px', height: '13px', accentColor: C.navy, cursor: 'pointer', flexShrink: 0 }}
+                      className="w-[13px] h-[13px] cursor-pointer shrink-0"
+                      style={{ accentColor: C.navy }}
                     />
-                    <span style={{ fontSize: '11px', fontWeight: img[key] !== false ? 700 : 400, color: img[key] !== false ? C.navy : C.textLight, whiteSpace: 'nowrap' }}>{label}</span>
+                    <span className="text-[11px] whitespace-nowrap" style={{ fontWeight: img[key] !== false ? 700 : 400, color: img[key] !== false ? C.navy : C.textLight }}>{label}</span>
                   </label>
                 ))}
               </div>
@@ -216,7 +222,7 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
           ))}
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '50px', color: C.textLight, fontSize: '14px', background: '#fafafa', borderRadius: '14px', border: `1px dashed ${C.border}` }}>
+        <div className="text-center p-[50px] text-(--color-text-light) text-sm bg-[#fafafa] rounded-[14px]" style={{ border: `1px dashed ${C.border}` }}>
           Henüz görsel eklenmedi. Görsel eklenene kadar landing page varsayılan görünümünü gösterir.
         </div>
       )}
@@ -254,48 +260,49 @@ function FaviconTab({ faviconUrl, updateFavicon }) {
   };
 
   return (
-    <div style={{ maxWidth: '520px' }}>
+    <div className="max-w-[520px]">
       <Card style={{ padding: '28px' }}>
-        <div style={{ fontWeight: 700, fontSize: '16px', color: C.navy, marginBottom: '20px' }}>Favicon Yönetimi</div>
+        <div className="font-bold text-[16px] text-(--color-navy) mb-5">Favicon Yönetimi</div>
 
         {/* Mevcut favicon */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: C.textLight, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Mevcut Favicon</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '12px', border: `1px solid ${C.border}`, background: '#f9f9fb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div className="mb-6">
+          <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Mevcut Favicon</div>
+          <div className="flex items-center gap-[14px]">
+            <div className="w-16 h-16 rounded-xl border border-(--color-border) bg-[#f9f9fb] flex items-center justify-center overflow-hidden">
               {faviconUrl
-                ? <img src={faviconUrl} alt="favicon" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                : <span style={{ fontSize: '11px', color: C.textLight }}>Yok</span>
+                ? <img src={faviconUrl} alt="favicon" className="w-full h-full object-contain" />
+                : <span className="text-[11px] text-(--color-text-light)">Yok</span>
               }
             </div>
-            <div style={{ fontSize: '13px', color: C.textMid }}>
-              {faviconUrl ? <a href={faviconUrl} target="_blank" rel="noopener noreferrer" style={{ color: C.gold, textDecoration: 'none', wordBreak: 'break-all' }}>Mevcut favicon görüntüle</a> : 'Henüz favicon yüklenmedi.'}
+            <div className="text-[13px] text-(--color-text-mid)">
+              {faviconUrl ? <a href={faviconUrl} target="_blank" rel="noopener noreferrer" className="text-(--color-gold) no-underline break-all">Mevcut favicon görüntüle</a> : 'Henüz favicon yüklenmedi.'}
             </div>
           </div>
         </div>
 
         {/* Yeni favicon yükle */}
-        <div style={{ fontSize: '12px', fontWeight: 600, color: C.textLight, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Yeni Favicon Yükle</div>
+        <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Yeni Favicon Yükle</div>
         <div
           onClick={() => document.getElementById('favicon-file-input').click()}
-          style={{ border: `2px dashed ${preview ? C.gold : C.border}`, borderRadius: '12px', padding: '28px', textAlign: 'center', cursor: 'pointer', background: preview ? C.goldBg : '#fafafa', transition: 'all .2s', marginBottom: '14px' }}>
-          <input id="favicon-file-input" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
+          className="rounded-xl p-7 text-center cursor-pointer transition-all duration-200 mb-[14px]"
+          style={{ border: `2px dashed ${preview ? C.gold : C.border}`, background: preview ? C.goldBg : '#fafafa' }}>
+          <input id="favicon-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
           {preview ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-              <img src={preview} alt="preview" style={{ width: '64px', height: '64px', objectFit: 'contain', borderRadius: '8px', border: `1px solid ${C.goldBorder}` }} />
-              <span style={{ fontSize: '12px', color: C.gold, fontWeight: 600 }}>Önizleme — kaydetmek için aşağıdaki butona tıkla</span>
+            <div className="flex flex-col items-center gap-[10px]">
+              <img src={preview} alt="preview" className="w-16 h-16 object-contain rounded-lg" style={{ border: `1px solid ${C.goldBorder}` }} />
+              <span className="text-xs text-(--color-gold) font-semibold">Önizleme — kaydetmek için aşağıdaki butona tıkla</span>
             </div>
           ) : (
             <div>
-              <svg width="28" height="28" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '8px' }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <div style={{ fontSize: '13px', color: C.textMid }}>Tıkla veya sürükle · PNG, ICO, SVG · Maks. 1 MB</div>
+              <svg width="28" height="28" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" className="mb-2 mx-auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div className="text-[13px] text-(--color-text-mid)">Tıkla veya sürükle · PNG, ICO, SVG · Maks. 1 MB</div>
             </div>
           )}
         </div>
 
-        {error && <div style={{ padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red, marginBottom: '14px' }}>{error}</div>}
+        {error && <div className="px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red) mb-[14px]">{error}</div>}
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           {preview && <Btn variant="secondary" onClick={() => { setPreview(null); setError(''); }}>İptal</Btn>}
           <Btn onClick={handleSave} disabled={!preview || uploading}>{uploading ? 'Yükleniyor…' : 'Favicon Kaydet'}</Btn>
         </div>
@@ -338,12 +345,12 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
   };
 
   return (
-    <div style={{ marginTop: '4px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 700, color: C.navy }}>Parfüm Görselleri</div>
-        <div style={{ fontSize: '12px', color: C.textLight }}>JPG · PNG · WebP · maks. {MAX_SIZE_MB}MB · sürükleyerek sırala</div>
+    <div className="mt-1">
+      <div className="flex items-center justify-between mb-[10px]">
+        <div className="text-[13px] font-bold text-(--color-navy)">Parfüm Görselleri</div>
+        <div className="text-xs text-(--color-text-light)">JPG · PNG · WebP · maks. {MAX_SIZE_MB}MB · sürükleyerek sırala</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      <div className="grid grid-cols-3 gap-3">
         {images.map((img, idx) => (
           <div
             key={idx}
@@ -367,21 +374,13 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
               readFile(idx, e.dataTransfer.files[0]);
             }}
             onClick={() => !img && document.getElementById(`perf-img-${idx}`).click()}
+            className="rounded-xl flex flex-col items-center justify-center overflow-hidden relative transition-all duration-150 select-none"
             style={{
               aspectRatio: '4/3',
-              borderRadius: '12px',
               border: `2px ${dragOverIdx === idx ? 'solid' : 'dashed'} ${dragOverIdx === idx ? C.gold : img ? C.goldBorder : C.border}`,
               background: dragOverIdx === idx ? C.goldBg : img ? '#fff' : '#fafafa',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
               cursor: img ? 'grab' : 'pointer',
-              overflow: 'hidden',
-              position: 'relative',
-              transition: 'all .15s',
               opacity: dragSrcIdx === idx ? 0.4 : 1,
-              userSelect: 'none',
               boxShadow: dragOverIdx === idx ? `0 0 0 3px ${C.goldBg}` : 'none',
             }}
           >
@@ -389,41 +388,40 @@ function PerfumeImageSlots({ images, onChange, MAX_SIZE_MB = 2 }) {
               id={`perf-img-${idx}`}
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
+              className="hidden"
               onChange={(e) => { readFile(idx, e.target.files[0]); e.target.value = ''; }}
             />
             {uploadingIdx === idx ? (
-              <div style={{ textAlign: 'center', padding: '10px', pointerEvents: 'none' }}>
-                <div style={{ width: '26px', height: '26px', margin: '0 auto 8px', border: `3px solid ${C.border}`, borderTop: `3px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <div style={{ fontSize: '11px', color: C.textLight }}>Yükleniyor…</div>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <div className="text-center p-[10px] pointer-events-none">
+                <div className="w-[26px] h-[26px] mx-auto mb-2 rounded-full animate-spin" style={{ border: `3px solid ${C.border}`, borderTop: `3px solid ${C.gold}` }} />
+                <div className="text-[11px] text-(--color-text-light)">Yükleniyor…</div>
               </div>
             ) : img ? (
               <>
-                <img src={img.src} alt={img.name} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
-                <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,.6)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 800, color: '#fff' }}>{idx + 1}</div>
+                <img src={img.src} alt={img.name} className="w-full h-full object-cover pointer-events-none" />
+                <div className="absolute top-2 left-2 bg-[rgba(0,0,0,.6)] rounded-[6px] px-2 py-0.5 text-[11px] font-[800] text-white">{idx + 1}</div>
                 <button
                   onClick={(e) => { e.stopPropagation(); setSizeErr(''); const next = [...images]; next[idx] = null; onChange(next); }}
-                  style={{ position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(220,38,38,.9)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '15px', fontFamily: F, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 }}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[rgba(220,38,38,.9)] border-none cursor-pointer text-white text-[15px] font-bold flex items-center justify-center p-0 leading-none"
                 >×</button>
-                <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,.45)', borderRadius: '6px', padding: '3px 7px', fontSize: '12px', color: 'rgba(255,255,255,.85)' }}>⠿</div>
+                <div className="absolute bottom-2 right-2 bg-[rgba(0,0,0,.45)] rounded-[6px] px-[7px] py-[3px] text-xs text-[rgba(255,255,255,.85)]">⠿</div>
               </>
             ) : (
-              <div style={{ textAlign: 'center', padding: '10px', pointerEvents: 'none' }}>
-                <svg width="32" height="32" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" style={{ marginBottom: '8px' }}>
+              <div className="text-center p-[10px] pointer-events-none">
+                <svg width="32" height="32" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" className="mb-2 mx-auto">
                   <rect x="3" y="3" width="18" height="18" rx="3" />
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <path d="m21 15-5-5L5 21" />
                 </svg>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px' }}>Görsel {idx + 1}</div>
-                <div style={{ fontSize: '11px', color: C.textLight }}>Tıkla veya sürükle bırak</div>
+                <div className="text-xs font-semibold text-(--color-text-mid) mb-[3px]">Görsel {idx + 1}</div>
+                <div className="text-[11px] text-(--color-text-light)">Tıkla veya sürükle bırak</div>
               </div>
             )}
           </div>
         ))}
       </div>
       {sizeErr && (
-        <div style={{ marginTop: '8px', fontSize: '12px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '7px 12px' }}>{sizeErr}</div>
+        <div className="mt-2 text-xs text-(--color-red) bg-[#fff5f5] border border-[#fecaca] rounded-lg px-3 py-[7px]">{sizeErr}</div>
       )}
       {cropModal.open && (
         <ImageCropModal
@@ -492,7 +490,7 @@ function PerfumeEditModal({ perfume, brands, onClose, onDelete, onSave }) {
 
   return (
     <Modal open onClose={onClose} title={`Parfüm Düzenle: ${perfume.name}`} width="560px">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Parfüm Adı *" value={ef.name} onChange={(e) => setEf({ ...ef, name: e.target.value })} />
         <Input label="Slug" value={ef.slug} onChange={(e) => setEf({ ...ef, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
         <Select label="Marka *" value={ef.brandId} onChange={(e) => setEf({ ...ef, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))]} />
@@ -503,9 +501,9 @@ function PerfumeEditModal({ perfume, brands, onClose, onDelete, onSave }) {
       <Input label="Kalp Notaları" value={ef.heartNotes} onChange={(e) => setEf({ ...ef, heartNotes: e.target.value })} />
       <Input label="Dip Notalar" value={ef.baseNotes} onChange={(e) => setEf({ ...ef, baseNotes: e.target.value })} />
       <Textarea label="Açıklama" value={ef.description} onChange={(e) => setEf({ ...ef, description: e.target.value })} rows={2} />
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+      <div className="flex gap-2 justify-between">
         <Btn variant="danger" onClick={onDelete}>Sil</Btn>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           <Btn variant="secondary" onClick={onClose}>İptal</Btn>
           <Btn onClick={handleSave} disabled={!ef.name || !ef.brandId}>Kaydet</Btn>
         </div>
@@ -543,7 +541,7 @@ function MuadilEditModal({ muadil, brands, perfumes, onClose, onDelete, onSave }
 
   return (
     <Modal open onClose={onClose} title={`Muadil Düzenle: ${muadil.name}`} width="540px">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Muadil Adı *" value={emf.name} onChange={(e) => setEmf({ ...emf, name: e.target.value })} />
         <Input label="Slug" value={emf.slug} onChange={(e) => setEmf({ ...emf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
         <Select label="Muadil Marka *" value={emf.brandId} onChange={(e) => setEmf({ ...emf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
@@ -553,16 +551,16 @@ function MuadilEditModal({ muadil, brands, perfumes, onClose, onDelete, onSave }
         }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
       </div>
       {emf.gender && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.textMid }}>
-          <span style={{ fontWeight: 600, color: C.textLight, letterSpacing: '.03em', textTransform: 'uppercase', fontSize: '11px' }}>Cinsiyet</span>
-          <span style={{ fontWeight: 700, color: C.navy }}>{emf.gender}</span>
-          <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.textLight }}>Hedef parfümden alındı</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fb] border border-(--color-border) rounded-lg text-[13px] text-(--color-text-mid)">
+          <span className="font-semibold text-(--color-text-light) tracking-[.03em] uppercase text-[11px]">Cinsiyet</span>
+          <span className="font-bold text-(--color-navy)">{emf.gender}</span>
+          <span className="ml-auto text-[11px] text-(--color-text-light)">Hedef parfümden alındı</span>
         </div>
       )}
       <Textarea label="Açıklama" value={emf.description} onChange={(e) => setEmf({ ...emf, description: e.target.value })} rows={3} />
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+      <div className="flex gap-2 justify-between">
         <Btn variant="danger" onClick={onDelete}>Sil</Btn>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           <Btn variant="secondary" onClick={onClose}>İptal</Btn>
           <Btn onClick={handleSave} disabled={!emf.name || !emf.brandId || !emf.targetPerfumeId}>Kaydet</Btn>
         </div>
@@ -609,7 +607,7 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
   return (
     <>
       <Modal open onClose={onClose} title={`Marka Düzenle: ${brand.name}`} width="540px">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div className="grid grid-cols-2 gap-[10px]">
           <Input label="Marka Adı *" value={ebf.name} onChange={(e) => setEbf({ ...ebf, name: e.target.value })} />
           <Input label="Slug" value={ebf.slug} onChange={(e) => setEbf({ ...ebf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
           <Select label="Tür" value={ebf.type} onChange={(e) => setEbf({ ...ebf, type: e.target.value })} options={[{ value: 'original', label: 'Orijinal' }, { value: 'muadil', label: 'Muadil' }]} />
@@ -618,11 +616,12 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
           <Input label="Kuruluş Yılı" type="number" value={ebf.founded} onChange={(e) => setEbf({ ...ebf, founded: e.target.value })} />
         </div>
         {ebf.type === 'original' && (
-          <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px' }}>Parfüm Kategorisi</div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="mt-2">
+            <div className="text-xs font-semibold text-(--color-text-mid) mb-2">Parfüm Kategorisi</div>
+            <div className="flex gap-[10px]">
               {['Designer', 'Niche'].map((cat) => (
-                <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: `1px solid ${ebf.category === cat ? C.navy : C.border}`, borderRadius: '10px', background: ebf.category === cat ? '#f0f0f8' : '#fafafa', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: ebf.category === cat ? C.navy : C.textMid, transition: 'all .15s' }}>
+                <label key={cat} className="flex items-center gap-2 px-4 py-2 rounded-[10px] cursor-pointer text-[13px] font-semibold transition-all duration-150"
+                  style={{ border: `1px solid ${ebf.category === cat ? C.navy : C.border}`, background: ebf.category === cat ? '#f0f0f8' : '#fafafa', color: ebf.category === cat ? C.navy : C.textMid }}>
                   <input type="radio" name="ebf-category" value={cat} checked={ebf.category === cat} onChange={() => setEbf({ ...ebf, category: cat })} style={{ accentColor: C.navy }} />
                   {cat}
                 </label>
@@ -630,17 +629,18 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
             </div>
           </div>
         )}
-        <div style={{ marginTop: '4px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Logo Görseli</div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div className="mt-1">
+          <div className="text-xs font-semibold text-(--color-text-mid) mb-1.5">Logo Görseli</div>
+          <div className="flex gap-3 items-center">
             <div
               onClick={() => document.getElementById('brand-logo-edit').click()}
-              style={{ width: '64px', height: '64px', borderRadius: '12px', border: `2px dashed ${ebf.logoImage ? C.gold : C.border}`, background: ebf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
+              className="w-16 h-16 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
+              style={{ border: `2px dashed ${ebf.logoImage ? C.gold : C.border}`, background: ebf.logoImage ? '#fff' : '#fafafa' }}>
               {ebf.logoImage
-                ? <img src={ebf.logoImage} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span style={{ fontSize: '22px' }}>+</span>}
+                ? <img src={ebf.logoImage} alt="logo" className="w-full h-full object-cover" />
+                : <span className="text-[22px]">+</span>}
             </div>
-            <input id="brand-logo-edit" type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+            <input id="brand-logo-edit" type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
               onChange={(e) => {
                 const file = e.target.files[0];
                 e.target.value = '';
@@ -652,21 +652,21 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
                 reader.onload = (ev) => setCropModal({ open: true, src: ev.target.result });
                 reader.readAsDataURL(file);
               }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
-              {ebf._logoErr && <div style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '5px 10px' }}>{ebf._logoErr}</div>}
-              {ebf.logoImage && <button onClick={() => setEbf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
+            <div className="flex-1">
+              <div className="text-xs text-(--color-text-mid) leading-[1.5]">JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
+              {ebf._logoErr && <div className="mt-1.5 text-xs text-(--color-red) bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-[10px] py-[5px]">{ebf._logoErr}</div>}
+              {ebf.logoImage && <button onClick={() => setEbf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} className="mt-1.5 text-xs text-(--color-red) bg-transparent border-none cursor-pointer p-0 font-[family-name:var(--font-body)]">Görseli kaldır</button>}
             </div>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
+        <div className="grid grid-cols-2 gap-[10px] mt-1">
           <Input label="Web Sitesi" placeholder="https://marka.com" value={ebf.website} onChange={(e) => setEbf({ ...ebf, website: e.target.value })} />
           <Input label="Instagram" placeholder="https://instagram.com/..." value={ebf.instagram} onChange={(e) => setEbf({ ...ebf, instagram: e.target.value })} />
         </div>
         <Textarea label="Açıklama" value={ebf.bio} onChange={(e) => setEbf({ ...ebf, bio: e.target.value })} rows={3} />
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'space-between' }}>
+        <div className="flex gap-2 justify-between">
           <Btn variant="danger" onClick={onDelete}>Sil</Btn>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex gap-2">
             <Btn variant="secondary" onClick={onClose}>İptal</Btn>
             <Btn onClick={handleSave} disabled={!ebf.name}>Kaydet</Btn>
           </div>
@@ -717,7 +717,7 @@ function AddBrandModal({ brands, onClose, onAdd }) {
   return (
     <>
       <Modal open onClose={onClose} title={`Yeni ${bf.type === 'original' ? 'Orijinal' : 'Muadil'} Marka Ekle`} width="540px">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div className="grid grid-cols-2 gap-[10px]">
           <Input label="Marka Adı *" value={bf.name} onChange={(e) => setBf({ ...bf, name: e.target.value })} />
           <Input label="Slug" value={bf.slug} onChange={(e) => setBf({ ...bf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
           <Input label="Logo Kısaltma" value={bf.logo} onChange={(e) => setBf({ ...bf, logo: e.target.value })} />
@@ -725,11 +725,12 @@ function AddBrandModal({ brands, onClose, onAdd }) {
           <Input label="Kuruluş Yılı" type="number" value={bf.founded} onChange={(e) => setBf({ ...bf, founded: e.target.value })} />
         </div>
         {bf.type === 'original' && (
-          <div style={{ marginTop: '8px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '8px' }}>Parfüm Kategorisi</div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="mt-2">
+            <div className="text-xs font-semibold text-(--color-text-mid) mb-2">Parfüm Kategorisi</div>
+            <div className="flex gap-[10px]">
               {['Designer', 'Niche'].map((cat) => (
-                <label key={cat} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: `1px solid ${bf.category === cat ? C.navy : C.border}`, borderRadius: '10px', background: bf.category === cat ? '#f0f0f8' : '#fafafa', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: bf.category === cat ? C.navy : C.textMid, transition: 'all .15s' }}>
+                <label key={cat} className="flex items-center gap-2 px-4 py-2 rounded-[10px] cursor-pointer text-[13px] font-semibold transition-all duration-150"
+                  style={{ border: `1px solid ${bf.category === cat ? C.navy : C.border}`, background: bf.category === cat ? '#f0f0f8' : '#fafafa', color: bf.category === cat ? C.navy : C.textMid }}>
                   <input type="radio" name="bf-category" value={cat} checked={bf.category === cat} onChange={() => setBf({ ...bf, category: cat })} style={{ accentColor: C.navy }} />
                   {cat}
                 </label>
@@ -737,14 +738,15 @@ function AddBrandModal({ brands, onClose, onAdd }) {
             </div>
           </div>
         )}
-        <div style={{ marginTop: '4px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Logo Görseli</div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div className="mt-1">
+          <div className="text-xs font-semibold text-(--color-text-mid) mb-1.5">Logo Görseli</div>
+          <div className="flex gap-3 items-center">
             <div onClick={() => document.getElementById('brand-logo-add').click()}
-              style={{ width: '64px', height: '64px', borderRadius: '50%', border: `2px dashed ${bf.logoImage ? C.gold : C.border}`, background: bf.logoImage ? '#fff' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
-              {bf.logoImage ? <img src={bf.logoImage} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '22px' }}>+</span>}
+              className="w-16 h-16 rounded-full flex items-center justify-center cursor-pointer overflow-hidden shrink-0"
+              style={{ border: `2px dashed ${bf.logoImage ? C.gold : C.border}`, background: bf.logoImage ? '#fff' : '#fafafa' }}>
+              {bf.logoImage ? <img src={bf.logoImage} alt="logo" className="w-full h-full object-cover" /> : <span className="text-[22px]">+</span>}
             </div>
-            <input id="brand-logo-add" type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+            <input id="brand-logo-add" type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
               onChange={(e) => {
                 const file = e.target.files[0]; e.target.value = '';
                 if (!file) return;
@@ -755,20 +757,20 @@ function AddBrandModal({ brands, onClose, onAdd }) {
                 reader.onload = (ev) => setCropModal({ open: true, src: ev.target.result });
                 reader.readAsDataURL(file);
               }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: C.textMid, lineHeight: 1.5 }}>JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
-              {bf._logoErr && <div style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '5px 10px' }}>{bf._logoErr}</div>}
-              {bf.logoImage && <button onClick={() => setBf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} style={{ marginTop: '6px', fontSize: '12px', color: C.red, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: F }}>Görseli kaldır</button>}
+            <div className="flex-1">
+              <div className="text-xs text-(--color-text-mid) leading-[1.5]">JPG, PNG veya WebP · Maks. 2MB<br />Görsel yoksa kısaltma metin olarak gösterilir.</div>
+              {bf._logoErr && <div className="mt-1.5 text-xs text-(--color-red) bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-[10px] py-[5px]">{bf._logoErr}</div>}
+              {bf.logoImage && <button onClick={() => setBf((s) => ({ ...s, logoImage: '', _logoErr: '' }))} className="mt-1.5 text-xs text-(--color-red) bg-transparent border-none cursor-pointer p-0 font-[family-name:var(--font-body)]">Görseli kaldır</button>}
             </div>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
+        <div className="grid grid-cols-2 gap-[10px] mt-1">
           <Input label="Web Sitesi" placeholder="https://marka.com" value={bf.website} onChange={(e) => setBf({ ...bf, website: e.target.value })} />
           <Input label="Instagram" placeholder="https://instagram.com/..." value={bf.instagram} onChange={(e) => setBf({ ...bf, instagram: e.target.value })} />
         </div>
         <Textarea label="Açıklama" value={bf.bio} onChange={(e) => setBf({ ...bf, bio: e.target.value })} rows={3} />
-        {brandErr && <div style={{ marginBottom: '10px', padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red }}>{brandErr}</div>}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        {brandErr && <div className="mb-[10px] px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red)">{brandErr}</div>}
+        <div className="flex gap-2 justify-end">
           <Btn variant="secondary" onClick={onClose}>İptal</Btn>
           <Btn onClick={handleAdd} disabled={!bf.name}>Ekle</Btn>
         </div>
@@ -799,7 +801,7 @@ function AddPerfumeModal({ brands, perfumes, onClose, onAdd }) {
 
   return (
     <Modal open onClose={onClose} title="Yeni Parfüm Ekle" width="560px">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Parfüm Adı *" value={pf.name} onChange={(e) => setPf({ ...pf, name: e.target.value })} placeholder="Sauvage" />
         <Select label="Marka *" value={pf.brandId} onChange={(e) => setPf({ ...pf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Cinsiyet" value={pf.gender} onChange={(e) => setPf({ ...pf, gender: e.target.value })} options={['Erkek', 'Kadın', 'Unisex'].map((g) => ({ value: g, label: g }))} />
@@ -810,8 +812,8 @@ function AddPerfumeModal({ brands, perfumes, onClose, onAdd }) {
       <Input label="Dip Notalar" value={pf.baseNotes} onChange={(e) => setPf({ ...pf, baseNotes: e.target.value })} placeholder="Amber, Misk" />
       <Textarea label="Açıklama" value={pf.description} onChange={(e) => setPf({ ...pf, description: e.target.value })} rows={2} />
       <PerfumeImageSlots images={pf.images} onChange={(imgs) => setPf({ ...pf, images: imgs })} />
-      {perfErr && <div style={{ marginTop: '10px', padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red }}>{perfErr}</div>}
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '24px' }}>
+      {perfErr && <div className="mt-[10px] px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red)">{perfErr}</div>}
+      <div className="flex gap-2 justify-end mt-6">
         <Btn variant="secondary" onClick={onClose}>İptal</Btn>
         <Btn onClick={handleAdd} disabled={!pf.name || !pf.brandId}>Ekle</Btn>
       </div>
@@ -838,7 +840,7 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
 
   return (
     <Modal open onClose={onClose} title="Muadil Parfüm Ekle" width="540px">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div className="grid grid-cols-2 gap-[10px]">
         <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf({ ...mf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => {
           const p = perfumes.find((x) => String(x.id) === e.target.value);
@@ -846,21 +848,21 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
         }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
       </div>
       {mf.gender && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', background: '#f8f9fb', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.textMid }}>
-          <span style={{ fontWeight: 600, color: C.textLight, letterSpacing: '.03em', textTransform: 'uppercase', fontSize: '11px' }}>Cinsiyet</span>
-          <span style={{ fontWeight: 700, color: C.navy }}>{mf.gender}</span>
-          <span style={{ marginLeft: 'auto', fontSize: '11px', color: C.textLight }}>Hedef parfümden alındı</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fb] border border-(--color-border) rounded-lg text-[13px] text-(--color-text-mid)">
+          <span className="font-semibold text-(--color-text-light) tracking-[.03em] uppercase text-[11px]">Cinsiyet</span>
+          <span className="font-bold text-(--color-navy)">{mf.gender}</span>
+          <span className="ml-auto text-[11px] text-(--color-text-light)">Hedef parfümden alındı</span>
         </div>
       )}
       {mf.name && (
-        <div style={{ marginTop: '2px', padding: '8px 12px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '8px', fontSize: '13px', color: C.navy, fontWeight: 600 }}>
-          Muadil adı: <span style={{ color: C.gold }}>{mf.name}</span>
+        <div className="mt-0.5 px-3 py-2 bg-(--color-gold-bg) border border-(--color-gold-border) rounded-lg text-[13px] text-(--color-navy) font-semibold">
+          Muadil adı: <span className="text-(--color-gold)">{mf.name}</span>
         </div>
       )}
       <Textarea label="Açıklama" value={mf.description} onChange={(e) => setMf({ ...mf, description: e.target.value })} rows={3} />
       <PerfumeImageSlots images={mf.images} onChange={(imgs) => setMf({ ...mf, images: imgs })} />
-      {muadilErr && <div style={{ marginTop: '10px', padding: '8px 12px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', color: C.red }}>{muadilErr}</div>}
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '24px' }}>
+      {muadilErr && <div className="mt-[10px] px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red)">{muadilErr}</div>}
+      <div className="flex gap-2 justify-end mt-6">
         <Btn variant="secondary" onClick={onClose}>İptal</Btn>
         <Btn onClick={handleAdd} disabled={!mf.name || !mf.brandId || !mf.targetPerfumeId}>Ekle</Btn>
       </div>
@@ -887,7 +889,7 @@ function ImageCropModal({ src, aspect, outputW, outputH, title, onConfirm, onCan
 
   return (
     <Modal open onClose={onCancel} title={title || 'Görseli Kırp'} width="560px">
-      <div style={{ position: 'relative', width: '100%', height: '320px', background: '#111', borderRadius: '10px', overflow: 'hidden' }}>
+      <div className="relative w-full h-[320px] bg-[#111] rounded-[10px] overflow-hidden">
         <Cropper
           image={src}
           crop={crop}
@@ -898,12 +900,12 @@ function ImageCropModal({ src, aspect, outputW, outputH, title, onConfirm, onCan
           onCropComplete={(_, pixels) => setCroppedAreaPixels(pixels)}
         />
       </div>
-      <div style={{ paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '12px', color: C.textLight, flexShrink: 0 }}>Yakınlaştır</span>
-          <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} style={{ flex: 1, accentColor: C.navy, cursor: 'pointer' }} />
+      <div className="pt-[14px] flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-(--color-text-light) shrink-0">Yakınlaştır</span>
+          <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoom(Number(e.target.value))} className="flex-1 cursor-pointer" style={{ accentColor: C.navy }} />
         </div>
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+        <div className="flex gap-2 justify-end">
           <Btn variant="secondary" onClick={onCancel} disabled={loading}>İptal</Btn>
           <Btn onClick={handleConfirm} disabled={loading || !croppedAreaPixels}>
             {loading ? 'İşleniyor…' : 'Kırp ve Kullan'}
@@ -958,7 +960,7 @@ function GChip({ g }) {
   const s = GENDER_STYLE[g];
   if (!s) return null;
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '1px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{g}</p></div>
+    <div className="inline-flex items-center justify-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold" style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}><p className="m-0 p-0 w-max">{g}</p></div>
   );
 }
 
@@ -966,29 +968,31 @@ function MergePerfDropItem({ p, onSel, muadilCountById }) {
   return (
     <button
       onMouseDown={(e) => { e.preventDefault(); onSel(p); }}
-      style={{ width: '100%', textAlign: 'left', padding: '9px 12px', background: 'none', border: 'none', borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', fontFamily: F, display: 'flex', alignItems: 'center', gap: '10px' }}
+      className="w-full text-left px-3 py-[9px] bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)] flex items-center gap-[10px]"
+      style={{ borderBottom: `1px solid ${C.borderLight}` }}
       onMouseEnter={(e) => (e.currentTarget.style.background = '#f4f4f8')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>{p.name}</div>
-        <div style={{ fontSize: '11px', color: C.textLight }}>{p.brandName}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-semibold text-(--color-text)">{p.name}</div>
+        <div className="text-[11px] text-(--color-text-light)">{p.brandName}</div>
       </div>
       <GChip g={p.gender} />
-      {muadilCountById[p.id] > 0 && <span style={{ fontSize: '11px', color: C.green, fontWeight: 600, flexShrink: 0 }}>{muadilCountById[p.id]}m</span>}
+      {muadilCountById[p.id] > 0 && <span className="text-[11px] text-(--color-green) font-semibold shrink-0">{muadilCountById[p.id]}m</span>}
     </button>
   );
 }
 
 function MergePerfRow({ p, side, muadilCountById }) {
   return (
-    <div style={{ padding: '10px 14px', borderRadius: '10px', border: `2px solid ${side === 'src' ? '#fecaca' : '#bbf7d0'}`, background: side === 'src' ? '#fff5f5' : '#f0fdf4', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: '14px', color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-        <div style={{ fontSize: '12px', color: C.textLight }}>{p.brandName}</div>
+    <div className="px-[14px] py-[10px] rounded-[10px] flex items-center gap-[10px] mt-2"
+      style={{ border: `2px solid ${side === 'src' ? '#fecaca' : '#bbf7d0'}`, background: side === 'src' ? '#fff5f5' : '#f0fdf4' }}>
+      <div className="flex-1 min-w-0">
+        <div className="font-bold text-sm text-(--color-text) whitespace-nowrap overflow-hidden text-ellipsis">{p.name}</div>
+        <div className="text-xs text-(--color-text-light)">{p.brandName}</div>
       </div>
       <GChip g={p.gender} />
-      {muadilCountById[p.id] > 0 && <span style={{ fontSize: '12px', fontWeight: 700, color: C.green, flexShrink: 0 }}>{muadilCountById[p.id]}m</span>}
+      {muadilCountById[p.id] > 0 && <span className="text-xs font-bold text-(--color-green) shrink-0">{muadilCountById[p.id]}m</span>}
     </div>
   );
 }
@@ -1003,29 +1007,30 @@ function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, 
 
   return (
     <div>
-      <div style={{ fontSize: '12px', fontWeight: 700, color: labelColor, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '6px' }}>{label}</div>
-      <div ref={refEl} style={{ position: 'relative' }}>
-        <div style={{ position: 'relative' }}>
-          <svg style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: C.textLight, pointerEvents: 'none' }} width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div className="text-xs font-bold uppercase tracking-[.05em] mb-1.5" style={{ color: labelColor }}>{label}</div>
+      <div ref={refEl} className="relative">
+        <div className="relative">
+          <svg className="absolute left-[10px] top-1/2 -translate-y-1/2 text-(--color-text-light) pointer-events-none" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input
             value={q}
             onChange={(e) => { setQ(e.target.value); setOpen(true); if (!e.target.value) onSel(null); }}
             onFocus={() => { if (q) setOpen(true); }}
             placeholder="Parfüm adı veya marka ara…"
-            style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '32px', paddingRight: q ? '32px' : '10px', height: '38px', border: `1.5px solid ${selected ? (side === 'src' ? '#fca5a5' : '#86efac') : C.border}`, borderRadius: '9px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F }}
+            className="w-full box-border h-[38px] rounded-[9px] text-[13px] text-(--color-text) bg-white outline-none font-[family-name:var(--font-body)]"
+            style={{ paddingLeft: '32px', paddingRight: q ? '32px' : '10px', border: `1.5px solid ${selected ? (side === 'src' ? '#fca5a5' : '#86efac') : C.border}` }}
           />
           {q && (
-            <button onClick={handleClear} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: '2px', display: 'flex', alignItems: 'center' }}>×</button>
+            <button onClick={handleClear} className="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) text-base leading-none p-0.5 flex items-center">×</button>
           )}
         </div>
         {selected && <MergePerfRow p={selected} side={side} muadilCountById={muadilCountById} />}
         {open && hasItems && (
-          <div style={{ position: 'absolute', top: '42px', left: 0, right: 0, background: '#fff', border: `1px solid ${C.border}`, borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,.12)', zIndex: 200, overflow: 'hidden' }}>
+          <div className="absolute top-[42px] left-0 right-0 bg-white border border-(--color-border) rounded-[10px] shadow-[0_6px_24px_rgba(0,0,0,.12)] z-[200] overflow-hidden">
             {hasGrouped ? (
               <>
                 {groupedResults.sameBrand.length > 0 && (
                   <>
-                    <div style={{ padding: '5px 12px 3px', fontSize: '10px', fontWeight: 700, color: C.gold, textTransform: 'uppercase', letterSpacing: '.07em', background: C.goldBg, borderBottom: `1px solid ${C.goldBorder}` }}>
+                    <div className="px-3 pt-[5px] pb-[3px] text-[10px] font-bold text-(--color-gold) uppercase tracking-[.07em] bg-(--color-gold-bg)" style={{ borderBottom: `1px solid ${C.goldBorder}` }}>
                       Aynı Marka
                     </div>
                     {groupedResults.sameBrand.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={handleSel} />)}
@@ -1033,7 +1038,8 @@ function MergePerfSearchBox({ label, labelColor, q, setQ, open, setOpen, refEl, 
                 )}
                 {groupedResults.others.length > 0 && (
                   <>
-                    <div style={{ padding: '5px 12px 3px', fontSize: '10px', fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '.07em', background: '#fff5f5', borderBottom: `1px solid #fecaca`, borderTop: groupedResults.sameBrand.length > 0 ? `1px solid #fecaca` : 'none' }}>
+                    <div className="px-3 pt-[5px] pb-[3px] text-[10px] font-bold text-(--color-red) uppercase tracking-[.07em] bg-[#fff5f5]"
+                      style={{ borderBottom: '1px solid #fecaca', borderTop: groupedResults.sameBrand.length > 0 ? '1px solid #fecaca' : 'none' }}>
                       Diğer Markalar
                     </div>
                     {groupedResults.others.map((p) => <MergePerfDropItem key={p.id} p={p} muadilCountById={muadilCountById} onSel={handleSel} />)}
@@ -1233,26 +1239,25 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
   };
 
   return (
-    <div style={{ maxWidth: '960px' }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-
+    <div className="max-w-[960px]">
       {/* Selector card */}
       <Card style={{ padding: '24px', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <div style={{ fontWeight: 800, fontSize: '17px', color: C.navy }}>Parfüm Birleştirme</div>
+        <div className="flex justify-between items-center mb-1">
+          <div className="font-[800] text-[17px] text-(--color-navy)">Parfüm Birleştirme</div>
           {onRefresh && (
             <button
               onClick={async () => { setMergeRefreshing(true); try { await onRefresh(); } finally { setMergeRefreshing(false); } }}
               disabled={mergeRefreshing}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: mergeRefreshing ? 'default' : 'pointer', fontFamily: F, opacity: mergeRefreshing ? 0.6 : 1 }}>
+              className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]"
+              style={{ cursor: mergeRefreshing ? 'default' : 'pointer', opacity: mergeRefreshing ? 0.6 : 1 }}>
               <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: mergeRefreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
               {mergeRefreshing ? 'Yenileniyor…' : 'Yenile'}
             </button>
           )}
         </div>
-        <div style={{ fontSize: '13px', color: C.textLight, marginBottom: '24px' }}>Solda <b>silinecek</b> (kaynak), sağda <b>korunacak</b> (hedef) parfümü seçin. Muadiller otomatik taşınır; eksik cinsiyet / nota / açıklama kopyalanır.</div>
+        <div className="text-[13px] text-(--color-text-light) mb-6">Solda <b>silinecek</b> (kaynak), sağda <b>korunacak</b> (hedef) parfümü seçin. Muadiller otomatik taşınır; eksik cinsiyet / nota / açıklama kopyalanır.</div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 32px 1fr', gap: '12px', alignItems: 'start' }}>
+        <div className="grid gap-3 items-start" style={{ gridTemplateColumns: '1fr 32px 1fr' }}>
           <MergePerfSearchBox
             label="Silinecek (Kaynak)" labelColor="#dc2626"
             q={srcQ} setQ={setSrcQ} open={srcOpen} setOpen={setSrcOpen}
@@ -1260,7 +1265,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
             onSel={(p) => { setSource(p); if (!p) setSrcQ(''); }}
             selected={source} side="src" muadilCountById={muadilCountById}
           />
-          <div style={{ paddingTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textLight }}>
+          <div className="pt-6 flex items-center justify-center text-(--color-text-light)">
             <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </div>
           <MergePerfSearchBox
@@ -1273,10 +1278,10 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
         </div>
 
         {source && target && source.id === target.id && (
-          <div style={{ marginTop: '12px', fontSize: '13px', color: C.red, textAlign: 'center' }}>Kaynak ve hedef aynı parfüm olamaz.</div>
+          <div className="mt-3 text-[13px] text-(--color-red) text-center">Kaynak ve hedef aynı parfüm olamaz.</div>
         )}
 
-        <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'center' }}>
+        <div className="mt-[18px] flex justify-center">
           <Btn onClick={addPair} disabled={!source || !target || source?.id === target?.id}>
             + Listeye Ekle
           </Btn>
@@ -1286,27 +1291,27 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
       {/* Pending pairs */}
       {pairs.length > 0 && (
         <Card style={{ overflow: 'hidden', marginBottom: '20px' }}>
-          <div style={{ padding: '13px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-            <span style={{ fontWeight: 700, color: C.navy }}>Bekleyen Birleştirmeler <span style={{ fontWeight: 400, fontSize: '13px', color: C.textLight }}>({pairs.length} çift)</span></span>
+          <div className="px-[18px] py-[13px] border-b border-(--color-border) flex items-center justify-between gap-3">
+            <span className="font-bold text-(--color-navy)">Bekleyen Birleştirmeler <span className="font-normal text-[13px] text-(--color-text-light)">({pairs.length} çift)</span></span>
             <Btn onClick={runMerges} disabled={running}>
               {running ? `İşleniyor… ${progress.done}/${progress.total}` : `Tümünü Birleştir (${pairs.length})`}
             </Btn>
           </div>
 
           {running && (
-            <div style={{ padding: '10px 18px', background: '#fffbeb', borderBottom: `1px solid #fde68a`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '16px', height: '16px', border: `2.5px solid #fde68a`, borderTop: `2.5px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-              <div style={{ flex: 1, height: '6px', background: '#fde68a', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: C.gold, borderRadius: '3px', width: `${(progress.done / progress.total) * 100}%`, transition: 'width .3s' }} />
+            <div className="px-[18px] py-[10px] bg-[#fffbeb] border-b border-[#fde68a] flex items-center gap-[10px]">
+              <div className="w-4 h-4 rounded-full animate-spin shrink-0" style={{ border: '2.5px solid #fde68a', borderTop: `2.5px solid ${C.gold}` }} />
+              <div className="flex-1 h-1.5 bg-[#fde68a] rounded-[3px] overflow-hidden">
+                <div className="h-full rounded-[3px] transition-[width] duration-300" style={{ background: C.gold, width: `${(progress.done / progress.total) * 100}%` }} />
               </div>
-              <span style={{ fontSize: '12px', color: '#92400e', flexShrink: 0 }}>{progress.done}/{progress.total}</span>
+              <span className="text-xs text-[#92400e] shrink-0">{progress.done}/{progress.total}</span>
             </div>
           )}
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '560px', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] border-collapse">
               <thead>
-                <tr style={{ background: '#f9f9fb' }}>
+                <tr className="bg-[#f9f9fb]">
                   <th style={{ ...thBase, width: '44%' }}>Silinecek</th>
                   <th style={{ ...thBase, width: '8%', textAlign: 'center' }}></th>
                   <th style={{ ...thBase, width: '44%' }}>Korunacak</th>
@@ -1316,28 +1321,29 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
               <tbody>
                 {pairs.map((pair) => (
                   <tr key={pair.id} style={{ borderBottom: `1px solid ${C.borderLight}` }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626' }}>{pair.source.name}</div>
-                      <div style={{ fontSize: '11px', color: C.textLight, marginBottom: '4px' }}>{pair.source.brandName}</div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <td className="px-[14px] py-[10px]">
+                      <div className="font-semibold text-[13px] text-[#dc2626]">{pair.source.name}</div>
+                      <div className="text-[11px] text-(--color-text-light) mb-1">{pair.source.brandName}</div>
+                      <div className="flex gap-1.5 items-center">
                         <GChip g={pair.source.gender} />
-                        {muadilCountById[pair.source.id] > 0 && <span style={{ fontSize: '11px', color: C.green, fontWeight: 600 }}>{muadilCountById[pair.source.id]} muadil</span>}
+                        {muadilCountById[pair.source.id] > 0 && <span className="text-[11px] text-(--color-green) font-semibold">{muadilCountById[pair.source.id]} muadil</span>}
                       </div>
                     </td>
-                    <td style={{ textAlign: 'center', color: C.textLight, fontSize: '16px' }}>→</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ fontWeight: 600, fontSize: '13px', color: '#16a34a' }}>{pair.target.name}</div>
-                      <div style={{ fontSize: '11px', color: C.textLight, marginBottom: '4px' }}>{pair.target.brandName}</div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <td className="text-center text-(--color-text-light) text-base">→</td>
+                    <td className="px-[14px] py-[10px]">
+                      <div className="font-semibold text-[13px] text-[#16a34a]">{pair.target.name}</div>
+                      <div className="text-[11px] text-(--color-text-light) mb-1">{pair.target.brandName}</div>
+                      <div className="flex gap-1.5 items-center">
                         <GChip g={pair.target.gender} />
-                        {muadilCountById[pair.target.id] > 0 && <span style={{ fontSize: '11px', color: C.green, fontWeight: 600 }}>{muadilCountById[pair.target.id]} muadil</span>}
+                        {muadilCountById[pair.target.id] > 0 && <span className="text-[11px] text-(--color-green) font-semibold">{muadilCountById[pair.target.id]} muadil</span>}
                       </div>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
+                    <td className="text-center">
                       <button
                         onClick={() => removePair(pair.id)}
                         disabled={running}
-                        style={{ background: 'none', border: 'none', cursor: running ? 'default' : 'pointer', color: C.textLight, fontSize: '20px', lineHeight: 1, padding: '4px 8px', borderRadius: '6px', opacity: running ? 0.4 : 1 }}
+                        className="bg-transparent border-none text-[20px] leading-none px-2 py-1 rounded-[6px]"
+                        style={{ cursor: running ? 'default' : 'pointer', color: C.textLight, opacity: running ? 0.4 : 1 }}
                         onMouseEnter={(e) => { if (!running) e.currentTarget.style.color = C.red; }}
                         onMouseLeave={(e) => (e.currentTarget.style.color = C.textLight)}
                       >×</button>
@@ -1353,48 +1359,49 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
       {/* Results */}
       {results && (
         <Card style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '13px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontWeight: 700, color: C.navy }}>Sonuçlar</span>
-            <span style={{ fontSize: '13px', color: C.green, fontWeight: 600 }}>{results.filter((r) => r.status === 'ok').length} başarılı</span>
+          <div className="px-[18px] py-[13px] border-b border-(--color-border) flex items-center gap-3">
+            <span className="font-bold text-(--color-navy)">Sonuçlar</span>
+            <span className="text-[13px] text-(--color-green) font-semibold">{results.filter((r) => r.status === 'ok').length} başarılı</span>
             {results.some((r) => r.status === 'error') && (
-              <span style={{ fontSize: '13px', color: C.red, fontWeight: 600 }}>{results.filter((r) => r.status === 'error').length} hatalı</span>
+              <span className="text-[13px] text-(--color-red) font-semibold">{results.filter((r) => r.status === 'error').length} hatalı</span>
             )}
             {undoData && (
               <button
                 onClick={handleUndo}
                 disabled={undoing}
-                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: undoing ? 'default' : 'pointer', fontFamily: F, opacity: undoing ? 0.6 : 1 }}
+                className="ml-auto flex items-center gap-[5px] px-3 py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]"
+                style={{ cursor: undoing ? 'default' : 'pointer', opacity: undoing ? 0.6 : 1 }}
               >
                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                 {undoing ? 'Geri alınıyor…' : 'Son Birleştirmeyi Geri Al'}
               </button>
             )}
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '560px', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] border-collapse">
               <tbody>
                 {results.map((r, i) => (
                   <tr key={i} style={{ borderBottom: `1px solid ${C.borderLight}`, background: r.status === 'ok' ? '#f0fdf4' : '#fff5f5' }}>
-                    <td style={{ padding: '10px 14px', width: '30%' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#dc2626' }}>{r.source.name}</div>
-                      <div style={{ fontSize: '11px', color: C.textLight }}>{r.source.brandName}</div>
+                    <td className="px-[14px] py-[10px] w-[30%]">
+                      <div className="text-[13px] font-semibold text-[#dc2626]">{r.source.name}</div>
+                      <div className="text-[11px] text-(--color-text-light)">{r.source.brandName}</div>
                     </td>
-                    <td style={{ textAlign: 'center', color: C.textLight, width: '30px' }}>→</td>
-                    <td style={{ padding: '10px 14px', width: '30%' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#16a34a' }}>{r.target.name}</div>
-                      <div style={{ fontSize: '11px', color: C.textLight }}>{r.target.brandName}</div>
+                    <td className="text-center text-(--color-text-light) w-[30px]">→</td>
+                    <td className="px-[14px] py-[10px] w-[30%]">
+                      <div className="text-[13px] font-semibold text-[#16a34a]">{r.target.name}</div>
+                      <div className="text-[11px] text-(--color-text-light)">{r.target.brandName}</div>
                     </td>
-                    <td style={{ padding: '10px 14px', fontSize: '12px', color: C.textMid }}>
+                    <td className="px-[14px] py-[10px] text-xs text-(--color-text-mid)">
                       {r.status === 'ok' ? (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          {r.moved > 0 && <span style={{ color: C.green, fontWeight: 600 }}>+{r.moved} muadil</span>}
-                          {r.skipped > 0 && <span style={{ color: C.textLight }}>{r.skipped} dup. silindi</span>}
-                          {r.inherited?.includes('gender') && <span style={{ color: C.blue }}>cinsiyet kopyalandı</span>}
-                          {r.inherited?.includes('notes') && <span style={{ color: C.blue }}>notalar kopyalandı</span>}
-                          {r.inherited?.includes('description') && <span style={{ color: C.blue }}>açıklama kopyalandı</span>}
+                        <div className="flex gap-2 flex-wrap">
+                          {r.moved > 0 && <span className="text-(--color-green) font-semibold">+{r.moved} muadil</span>}
+                          {r.skipped > 0 && <span className="text-(--color-text-light)">{r.skipped} dup. silindi</span>}
+                          {r.inherited?.includes('gender') && <span className="text-(--color-blue)">cinsiyet kopyalandı</span>}
+                          {r.inherited?.includes('notes') && <span className="text-(--color-blue)">notalar kopyalandı</span>}
+                          {r.inherited?.includes('description') && <span className="text-(--color-blue)">açıklama kopyalandı</span>}
                         </div>
                       ) : (
-                        <span style={{ color: C.red }}>Hata: {r.error}</span>
+                        <span className="text-(--color-red)">Hata: {r.error}</span>
                       )}
                     </td>
                   </tr>
@@ -1734,7 +1741,7 @@ export function AdminPanel() {
     setExportModal(false);
   };
 
-  if (!isAdmin) return <div style={{ padding: '60px', textAlign: 'center', color: C.textLight }}>Erişim yetkisi yok.</div>;
+  if (!isAdmin) return <div className="p-[60px] text-center text-(--color-text-light)">Erişim yetkisi yok.</div>;
 
   const stats = [
     { label: 'Toplam Kullanıcı', val: users.length, icon: faUsers, color: C.blue },
@@ -1784,38 +1791,34 @@ export function AdminPanel() {
   const tdStyle = { padding: '11px 14px' };
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg }}>
-      <div style={{ background: C.navy, padding: sm ? '16px' : '22px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+    <div className="min-h-screen bg-(--color-bg)">
+      <div className="bg-(--color-navy)" style={{ padding: sm ? '16px' : '22px 32px' }}>
+        <div className="max-w-[1280px] mx-auto flex justify-between items-center gap-3">
           <div>
-            <h1 style={{ fontSize: sm ? '18px' : '22px', fontWeight: 900, color: '#fff' }}>Admin Paneli</h1>
-            <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '13px' }}>muadilci.com yönetim merkezi</p>
+            <h1 className="font-[900] text-white" style={{ fontSize: sm ? '18px' : '22px' }}>Admin Paneli</h1>
+            <p className="text-[rgba(255,255,255,.5)] text-[13px]">muadilci.com yönetim merkezi</p>
           </div>
           <Btn variant="ghost" style={{ borderColor: 'rgba(255,255,255,.3)', color: '#fff', flexShrink: 0 }} onClick={() => navigate('/')}>← Siteye Dön</Btn>
         </div>
       </div>
 
       {/* ── Yatay sekme barı ─────────────────────────────────────────────── */}
-      <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 32px', display: 'flex', flexWrap: 'wrap', gap: '0' }}>
+      <div className="bg-(--color-card) border-b border-(--color-border) sticky top-0 z-50">
+        <div className="max-w-[1400px] mx-auto px-8 flex flex-wrap">
           {TABS.map(({ k, l, icon }) => {
             const active = tab === k;
             return (
-              <button key={k} onClick={() => setTab(k)} style={{
-                display: 'flex', alignItems: 'center', gap: '7px',
-                padding: '13px 16px',
-                border: 'none', borderBottom: `2px solid ${active ? C.gold : 'transparent'}`,
-                background: 'transparent',
-                color: active ? C.gold : C.textMid,
-                fontSize: '13px', fontWeight: active ? 700 : 500,
-                cursor: 'pointer', fontFamily: F,
-                transition: 'color 0.15s, border-color 0.15s',
-                whiteSpace: 'nowrap',
-              }}
+              <button key={k} onClick={() => setTab(k)}
+                className="flex items-center gap-[7px] px-4 py-[13px] border-none bg-transparent text-[13px] cursor-pointer font-[family-name:var(--font-body)] transition-[color,border-color] duration-150 whitespace-nowrap"
+                style={{
+                  borderBottom: `2px solid ${active ? C.gold : 'transparent'}`,
+                  color: active ? C.gold : C.textMid,
+                  fontWeight: active ? 700 : 500,
+                }}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.color = C.text; }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.color = C.textMid; }}
               >
-                <FontAwesomeIcon icon={icon} style={{ fontSize: '12px' }} />
+                <FontAwesomeIcon icon={icon} className="text-xs" />
                 {l}
               </button>
             );
@@ -1823,19 +1826,19 @@ export function AdminPanel() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <div className="max-w-[1400px] mx-auto">
         {/* ── İçerik alanı ─────────────────────────────────────────────────── */}
         <div style={{ padding: sm ? '16px' : '28px 32px' }}>
 
         {/* Dashboard */}
         {tab === 'dashboard' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+            <div className="flex justify-end mb-4">
               <a
                 href="https://console.firebase.google.com/project/muadilci-890e4/analytics/overview"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '9px', background: '#FF6D00', color: '#fff', fontSize: '13px', fontWeight: 600, textDecoration: 'none', fontFamily: F, transition: 'opacity .15s' }}
+                className="inline-flex items-center gap-[7px] px-4 py-2 rounded-[9px] bg-[#FF6D00] text-white text-[13px] font-semibold no-underline font-[family-name:var(--font-body)] transition-opacity duration-150"
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.85')}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
               >
@@ -1843,32 +1846,30 @@ export function AdminPanel() {
                 Firebase Analytics
               </a>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: '14px', marginBottom: '26px' }}>
+            <div className="grid gap-[14px] mb-[26px]" style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))' }}>
               {stats.map((s) => (
                 <Card key={s.label} style={{ padding: '18px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '13px', color: C.textLight }}>{s.label}</span>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-[13px] text-(--color-text-light)">{s.label}</span>
                     <FontAwesomeIcon icon={s.icon} style={{ fontSize: '20px', color: s.color, opacity: 0.7 }} />
                   </div>
-                  <div style={{ fontSize: '30px', fontWeight: 900, color: s.color }}>{s.val}</div>
+                  <div className="text-[30px] font-[900]" style={{ color: s.color }}>{s.val}</div>
                 </Card>
               ))}
             </div>
 
-
-
-            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '18px' }}>
+            <div className="grid gap-[18px]" style={{ gridTemplateColumns: sm ? '1fr' : '1fr 1fr' }}>
               <Card style={{ padding: '20px' }}>
-                <h3 style={{ fontWeight: 700, color: C.navy, marginBottom: '12px' }}>Son Kullanıcılar</h3>
+                <h3 className="font-bold text-(--color-navy) mb-3">Son Kullanıcılar</h3>
                 {users.slice(-4).reverse().map((u) => (
-                  <div key={u.id} style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingBottom: '10px', marginBottom: '10px', borderBottom: `1px solid ${C.borderLight}` }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: C.goldBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: C.gold, overflow: 'hidden', flexShrink: 0 }}>
+                  <div key={u.id} className="flex gap-[10px] items-center pb-[10px] mb-[10px]" style={{ borderBottom: `1px solid ${C.borderLight}` }}>
+                    <div className="w-[30px] h-[30px] rounded-full bg-(--color-gold-bg) flex items-center justify-center text-[13px] font-bold text-(--color-gold) overflow-hidden shrink-0">
                       {u.photoURL
-                        ? <img src={u.photoURL} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        ? <img src={u.photoURL} alt={u.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
                       }
                     </div>
-                    <div style={{ flex: 1 }}><div style={{ fontSize: '13px', fontWeight: 600, color: C.text }}>{u.name}</div><div style={{ fontSize: '12px', color: C.textLight }}>{u.email}</div></div>
+                    <div className="flex-1"><div className="text-[13px] font-semibold text-(--color-text)">{u.name}</div><div className="text-xs text-(--color-text-light)">{u.email}</div></div>
                     <Badge color={RC[u.role]}>{RL[u.role]}</Badge>
                   </div>
                 ))}
@@ -1892,32 +1893,33 @@ export function AdminPanel() {
           const submitSearch = () => setUserQuery(userInput);
           return (
             <Card style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-                <span style={{ fontWeight: 700, color: C.navy }}>
+              <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center justify-between flex-wrap gap-[10px]">
+                <span className="font-bold text-(--color-navy)">
                   Kullanıcılar
-                  <span style={{ fontWeight: 400, fontSize: '13px', color: C.textLight, marginLeft: '8px' }}>
+                  <span className="font-normal text-[13px] text-(--color-text-light) ml-2">
                     {q ? `${displayed.length} sonuç` : `Son ${displayed.length} üye`}
                   </span>
                 </span>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <div style={{ position: 'relative' }}>
+                <div className="flex gap-2 items-center">
+                  <div className="relative">
                     <input
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
                       placeholder="İsim veya e-posta ara…"
-                      style={{ height: '34px', padding: '0 10px', paddingRight: userInput ? '60px' : '10px', border: `1px solid ${C.border}`, borderRadius: '8px', fontSize: '13px', color: C.text, background: '#fff', outline: 'none', fontFamily: F, width: '220px' }}
+                      className="h-[34px] border border-(--color-border) rounded-lg text-[13px] text-(--color-text) bg-white outline-none font-[family-name:var(--font-body)] w-[220px]"
+                      style={{ padding: '0 10px', paddingRight: userInput ? '60px' : '10px' }}
                     />
                     {userInput && (
-                      <button onClick={() => { setUserInput(''); setUserQuery(''); }} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: C.textLight, background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '2px 4px' }}>Temizle</button>
+                      <button onClick={() => { setUserInput(''); setUserQuery(''); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-(--color-text-light) bg-transparent border-none cursor-pointer font-[family-name:var(--font-body)] px-1 py-0.5">Temizle</button>
                     )}
                   </div>
                   <Btn size="sm" onClick={submitSearch}>Ara</Btn>
                 </div>
               </div>
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse' }}>
-                  <thead><tr style={{ background: '#f9f9fb' }}>
+              <div className="overflow-x-auto scroll-x">
+                <table className="w-full min-w-[700px] border-collapse">
+                  <thead><tr className="bg-[#f9f9fb]">
                     <th style={thBase}>Kullanıcı</th>
                     <th style={thBase}>E-posta</th>
                     <th style={thBase}>Rol</th>
@@ -1930,17 +1932,18 @@ export function AdminPanel() {
                     {displayed.map((u) => (
                       <tr key={u.id} style={{ borderBottom: `1px solid ${C.borderLight}`, opacity: u.deleted ? 0.6 : 1 }} onMouseEnter={(e) => (e.currentTarget.style.background = '#fafafa')} onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}>
                         <td style={tdStyle}>
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#fff', fontWeight: 700, overflow: 'hidden', flexShrink: 0 }}>
+                          <div className="flex gap-[10px] items-center">
+                            <div className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-xs text-white font-bold overflow-hidden shrink-0"
+                              style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}>
                               {u.photoURL
-                                ? <img src={u.photoURL} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                ? <img src={u.photoURL} alt={u.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                                 : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
                               }
                             </div>
-                            <button onClick={() => setSelUser(u)} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontFamily: F }}>{u.name || '—'}</button>
+                            <button onClick={() => setSelUser(u)} className="font-semibold text-sm text-(--color-navy) bg-transparent border-none cursor-pointer underline font-[family-name:var(--font-body)]">{u.name || '—'}</button>
                           </div>
                         </td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{u.email}</td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{u.email}</td>
                         <td style={tdStyle}><Badge color={RC[u.role] || 'gold'}>{RL[u.role] || u.role}</Badge></td>
                         <td style={tdStyle}>
                           {u.deleted
@@ -1948,14 +1951,14 @@ export function AdminPanel() {
                             : <Badge color={u.role === 'admin' || u.active ? 'green' : 'red'}>{u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'}</Badge>
                           }
                         </td>
-                        <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid, whiteSpace: 'nowrap' }}>{fmtTs(u.createdAt)}</td>
-                        <td style={{ ...tdStyle, fontSize: '12px', color: u.deletedAt ? '#e55' : C.textLight, whiteSpace: 'nowrap' }}>{fmtTs(u.deletedAt)}</td>
+                        <td className="px-[14px] py-[11px] text-xs text-(--color-text-mid) whitespace-nowrap">{fmtTs(u.createdAt)}</td>
+                        <td className="px-[14px] py-[11px] text-xs whitespace-nowrap" style={{ color: u.deletedAt ? '#e55' : C.textLight }}>{fmtTs(u.deletedAt)}</td>
                         <td style={tdStyle}>
                           {u.role !== 'admin' && !u.deleted && (
                             sm ? (
                               <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => setUam({ open: true, user: u, step: 'actions', action: null, loading: false, error: '' })}>İşlem Yap</Btn>
                             ) : (
-                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                              <div className="flex gap-1.5 flex-wrap">
                                 <Btn size="sm" variant={u.role === 'moderator' ? 'orange' : 'navy'} onClick={() => updateUser(u.id, { role: u.role === 'moderator' ? 'user' : 'moderator' })}>{u.role === 'moderator' ? 'Mod. Al' : 'Mod. Ver'}</Btn>
                                 <Btn size="sm" variant={u.active ? 'danger' : 'success'} onClick={() => updateUser(u.id, { active: !u.active })}>{u.active ? 'Dondur' : 'Aktif Et'}</Btn>
                                 <Btn size="sm" variant="danger" onClick={() => setUam({ open: true, user: u, step: 'confirm', action: 'delete', loading: false, error: '' })}>Sil</Btn>
@@ -1965,7 +1968,7 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!displayed.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
+                    {!displayed.length && <tr><td colSpan={7} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -1980,28 +1983,28 @@ export function AdminPanel() {
           const sorted = isOrig ? sortedOrigBrands : sortedMuadilBrands;
           return (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div className="flex justify-between items-center mb-[14px]">
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
                 <Btn onClick={() => { setBf({ name: '', slug: '', type: isOrig ? 'original' : 'muadil', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' }); setShowBM(true); }}>+ Marka Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontWeight: 700, color: C.navy }}>{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span>
-                  <button onClick={() => setExportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3">
+                  <span className="font-bold text-(--color-navy)">{isOrig ? 'Orijinal Markalar' : 'Muadil Markalar'}</span>
+                  <button onClick={() => setExportModal(true)} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
                   </button>
-                  <button onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
+                  <button onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
                 </div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Marka adı veya köken ara…" count={sorted.length} total={baseBrands.length} />
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '580px', borderCollapse: 'collapse' }}>
-                  <thead><tr style={{ background: '#f9f9fb' }}>
+                <div className="overflow-x-auto scroll-x">
+                <table className="w-full min-w-[580px] border-collapse">
+                  <thead><tr className="bg-[#f9f9fb]">
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((b) => selectedIds.has(b.id))} onChange={() => toggleAll(sorted.map((b) => b.id))} />
                     </th>
@@ -2015,31 +2018,41 @@ export function AdminPanel() {
                   <tbody>
                     {sorted.map((b) => (
                       <tr key={b.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(b.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(b.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(b.id) ? '#fffbeb' : 'transparent'; }}>
-                        <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(b.id)} onChange={() => toggleSelect(b.id)} /></td>
-                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><a href={`/marka/${b.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${b.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{b.name}</a><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{b.origin}</td>
+                        <td className="px-[14px] py-[11px] w-[40px]"><input type="checkbox" checked={selectedIds.has(b.id)} onChange={() => toggleSelect(b.id)} /></td>
+                        <td style={tdStyle}>
+                          <div className="flex gap-[10px] items-center">
+                            <div className="w-[30px] h-[30px] rounded-[7px] bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center text-[10px] font-bold text-(--color-gold) overflow-hidden">
+                              {b.logoImage ? <img src={b.logoImage} alt={b.name} className="w-full h-full object-cover" /> : b.logo}
+                            </div>
+                            <div>
+                              <a href={`/marka/${b.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${b.slug}`); }} className="font-semibold text-sm text-(--color-navy) cursor-pointer no-underline">{b.name}</a>
+                              <div className="text-[11px] text-(--color-text-light)">/{b.slug}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{b.origin}</td>
                         {isOrig && (
                           <td style={tdStyle}>
                             {b.category && (
-                              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
-                                <p style={{ margin: 0, padding: 0, width: 'max-content' }}>{b.category}</p>
+                              <div className="inline-flex items-center justify-center gap-1 px-[10px] py-[3px] rounded-[20px] text-xs font-semibold" style={{ background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
+                                <p className="m-0 p-0 w-max">{b.category}</p>
                               </div>
                             )}
                           </td>
                         )}
-                        <td style={tdStyle}><span style={{ fontSize: '15px', fontWeight: 700, color: b.perfumeCount > 0 ? C.gold : C.textLight }}>{b.perfumeCount}</span></td>
+                        <td style={tdStyle}><span className="text-[15px] font-bold" style={{ color: b.perfumeCount > 0 ? C.gold : C.textLight }}>{b.perfumeCount}</span></td>
                         <td style={tdStyle}><Badge color={b.active ? 'green' : 'red'}>{b.active ? 'Aktif' : 'Pasif'}</Badge></td>
                         <td style={tdStyle}>
                           {sm ? (
                             <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam({ ...b, type: b.type }, 'brand')}>İşlem Yap</Btn>
                           ) : (
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                              <button onClick={() => updateBrand(b.id, { active: !b.active })} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>{b.active ? 'Pasif Et' : 'Aktif Et'}</button>
-                              <button onClick={() => openEditBrand(b)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                            <div className="flex gap-1.5 flex-wrap">
+                              <button onClick={() => updateBrand(b.id, { active: !b.active })} className="px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">{b.active ? 'Pasif Et' : 'Aktif Et'}</button>
+                              <button onClick={() => openEditBrand(b)} title="Düzenle" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-navy) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
                                 Düzenle
                               </button>
-                              <button onClick={() => setDelTarget({ id: b.id, name: b.name, type: 'brand', brandType: b.type })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: '1px solid #fecaca', background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                              <button onClick={() => setDelTarget({ id: b.id, name: b.name, type: 'brand', brandType: b.type })} title="Sil" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-[#fecaca] bg-[#fff5f5] text-(--color-red) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 Sil
                               </button>
@@ -2048,7 +2061,7 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!sorted.length && <tr><td colSpan={isOrig ? 7 : 6} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
+                    {!sorted.length && <tr><td colSpan={isOrig ? 7 : 6} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
                 </div>
@@ -2065,57 +2078,57 @@ export function AdminPanel() {
           const pageItems = sorted.slice((safePage - 1) * PERF_PER_PAGE, safePage * PERF_PER_PAGE);
           return (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div className="flex justify-between items-center mb-[14px]">
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
                 <Btn onClick={() => setShowPM(true)}>+ Parfüm Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, color: C.navy }}>Orijinal Parfümler</span>
-                  <button onClick={() => setExportModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3 flex-wrap">
+                  <span className="font-bold text-(--color-navy)">Orijinal Parfümler</span>
+                  <button onClick={() => setExportModal(true)} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
                   </button>
-                  <button ref={refreshBtnRef} onClick={handleRefresh} disabled={refreshing} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.textMid, fontSize: '12px', fontWeight: 600, cursor: refreshing ? 'default' : 'pointer', fontFamily: F, opacity: refreshing ? 0.6 : 1 }}>
+                  <button ref={refreshBtnRef} onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
                   {(() => {
                       const list = ['', ...perfBrandList];
                       const idx = list.indexOf(perfBrandFilter);
-                      const btnBase = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: 'none', background: 'transparent', cursor: 'pointer', color: C.textMid, padding: 0, transition: 'color .15s' };
                       return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', border: `1.5px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
-                            <button onClick={() => { setPerfBrandFilter(list[(idx - 1 + list.length) % list.length]); setPerfPage(1); }} title="Önceki marka" style={{ ...btnBase, borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
-                              <FontAwesomeIcon icon={faChevronUp} style={{ fontSize: '9px' }} />
+                        <div className="flex items-center gap-1.5 ml-auto">
+                          <div className="flex flex-col border-[1.5px] border-(--color-border) rounded-lg overflow-hidden bg-white">
+                            <button onClick={() => { setPerfBrandFilter(list[(idx - 1 + list.length) % list.length]); setPerfPage(1); }} title="Önceki marka" className="flex items-center justify-center w-[22px] h-[22px] border-none bg-transparent cursor-pointer p-0 transition-colors duration-150 text-(--color-text-mid)" style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronUp} className="text-[9px]" />
                             </button>
-                            <button onClick={() => { setPerfBrandFilter(list[(idx + 1) % list.length]); setPerfPage(1); }} title="Sonraki marka" style={btnBase} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
-                              <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '9px' }} />
+                            <button onClick={() => { setPerfBrandFilter(list[(idx + 1) % list.length]); setPerfPage(1); }} title="Sonraki marka" className="flex items-center justify-center w-[22px] h-[22px] border-none bg-transparent cursor-pointer p-0 transition-colors duration-150 text-(--color-text-mid)" onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronDown} className="text-[9px]" />
                             </button>
                           </div>
                           <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                           <select
                             value={perfBrandFilter}
                             onChange={(e) => { setPerfBrandFilter(e.target.value); setPerfPage(1); }}
-                            style={{ height: '32px', border: `1.5px solid ${perfBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: perfBrandFilter ? C.navy : C.textLight, background: perfBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: perfBrandFilter ? 700 : 400 }}
+                            className="h-8 rounded-lg text-[13px] px-[10px] font-[family-name:var(--font-body)] cursor-pointer outline-none"
+                            style={{ border: `1.5px solid ${perfBrandFilter ? C.navy : C.border}`, color: perfBrandFilter ? C.navy : C.textLight, background: perfBrandFilter ? '#eef2ff' : '#fff', fontWeight: perfBrandFilter ? 700 : 400 }}
                           >
                             <option value="">Tüm Markalar</option>
                             {perfBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
                           </select>
                           {perfBrandFilter && (
-                            <button onClick={() => { setPerfBrandFilter(''); setPerfPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
+                            <button onClick={() => { setPerfBrandFilter(''); setPerfPage(1); }} className="flex items-center justify-center w-6 h-6 rounded-full border-none bg-[#e5e7eb] cursor-pointer text-(--color-text) text-sm leading-none font-[family-name:var(--font-body)]">×</button>
                           )}
                         </div>
                       );
                   })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setPerfPage(1); }} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
-                  <thead><tr style={{ background: '#f9f9fb' }}>
+                <div className="overflow-x-auto scroll-x">
+                <table className="w-full min-w-[620px] border-collapse">
+                  <thead><tr className="bg-[#f9f9fb]">
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((p) => selectedIds.has(p.id))} onChange={() => toggleAll(sorted.map((p) => p.id))} />
                     </th>
@@ -2130,28 +2143,28 @@ export function AdminPanel() {
                   <tbody>
                     {pageItems.map((p) => (
                       <tr key={p.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(p.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(p.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(p.id) ? '#fffbeb' : 'transparent'; }}>
-                        <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{p.name}</a></td>
-                        <td style={{ ...tdStyle, width: '70px', padding: '0 4px' }}>
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                        <td className="px-[14px] py-[11px] w-[40px]"><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} /></td>
+                        <td style={tdStyle}><a href={`/${p.brandSlug}/${p.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${p.brandSlug}/${p.slug}`); }} className="font-semibold text-sm text-(--color-navy) cursor-pointer no-underline">{p.name}</a></td>
+                        <td className="px-1 py-[11px] w-[70px]">
+                          <div className="flex gap-1">
                             <CopyBtn text={p.name} title="Parfüm adını kopyala" />
                             <CopyBtn text={`${p.brandName} ${p.name}`} title="Marka + parfüm adını kopyala" variant="brand" />
                           </div>
                         </td>
-                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${p.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{p.brandName}</a></td>
-                        <td style={{ ...tdStyle, fontSize: '12px', color: C.gold }}>/{p.brandSlug}/{p.slug}</td>
+                        <td className="px-[14px] py-[11px] text-[13px]"><a href={`/marka/${p.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${p.brandSlug}`); }} className="text-[13px] text-(--color-text-mid) cursor-pointer no-underline">{p.brandName}</a></td>
+                        <td className="px-[14px] py-[11px] text-xs text-(--color-gold)">/{p.brandSlug}/{p.slug}</td>
                         <td style={tdStyle}><GenderBadge gender={p.gender} /></td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.green, fontWeight: 600 }}>{p.muadilCount}</td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-green) font-semibold">{p.muadilCount}</td>
                         <td style={tdStyle}>
                           {sm ? (
                             <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam(p, 'perfume')}>İşlem Yap</Btn>
                           ) : (
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button onClick={() => openEditPerf(p)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => openEditPerf(p)} title="Düzenle" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-navy) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
                                 Düzenle
                               </button>
-                              <button onClick={() => setDelTarget({ id: p.id, name: p.name, type: 'perfume' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                              <button onClick={() => setDelTarget({ id: p.id, name: p.name, type: 'perfume' })} title="Sil" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-[#fecaca] bg-[#fff5f5] text-(--color-red) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 Sil
                               </button>
@@ -2160,21 +2173,21 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!sorted.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
+                    {!sorted.length && <tr><td colSpan={7} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
                 </div>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${C.border}`, flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: C.textLight }}>{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <button onClick={() => setPerfPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+                  <div className="flex justify-between items-center px-[18px] py-3 border-t border-(--color-border) flex-wrap gap-2">
+                    <span className="text-xs text-(--color-text-light)">{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
+                    <div className="flex gap-1 items-center">
+                      <button onClick={() => setPerfPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-(--color-card) text-[13px] font-[family-name:var(--font-body)]" style={{ color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer' }}>‹</button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => { if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…'); acc.push(n); return acc; }, []).map((n, i) => n === '…' ? (
-                        <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight, fontSize: '13px' }}>…</span>
+                        <span key={`e${i}`} className="px-1 text-(--color-text-light) text-[13px]">…</span>
                       ) : (
-                        <button key={n} onClick={() => setPerfPage(n)} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+                        <button key={n} onClick={() => setPerfPage(n)} className="px-[10px] py-[5px] rounded-[7px] text-[13px] cursor-pointer font-[family-name:var(--font-body)]" style={{ border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, fontWeight: n === safePage ? 700 : 400 }}>{n}</button>
                       ))}
-                      <button onClick={() => setPerfPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+                      <button onClick={() => setPerfPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-(--color-card) text-[13px] font-[family-name:var(--font-body)]" style={{ color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer' }}>›</button>
                     </div>
                   </div>
                 )}
@@ -2198,49 +2211,49 @@ export function AdminPanel() {
           const pageItems = sorted.slice((safePage - 1) * PERF_PER_PAGE, safePage * PERF_PER_PAGE);
           return (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div className="flex justify-between items-center mb-[14px]">
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
                 <Btn onClick={() => setShowMM(true)}>+ Muadil Parfüm Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 700, color: C.navy }}>Muadil Parfümler</span>
+                <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3 flex-wrap">
+                  <span className="font-bold text-(--color-navy)">Muadil Parfümler</span>
                   {(() => {
                       const list = ['', ...muadilBrandList];
                       const idx = list.indexOf(muadilBrandFilter);
-                      const btnBase = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: 'none', background: 'transparent', cursor: 'pointer', color: C.textMid, padding: 0, transition: 'color .15s' };
                       return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', border: `1.5px solid ${C.border}`, borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
-                            <button onClick={() => { setMuadilBrandFilter(list[(idx - 1 + list.length) % list.length]); setMuadilPage(1); }} title="Önceki marka" style={{ ...btnBase, borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
-                              <FontAwesomeIcon icon={faChevronUp} style={{ fontSize: '9px' }} />
+                        <div className="flex items-center gap-1.5 ml-auto">
+                          <div className="flex flex-col border-[1.5px] border-(--color-border) rounded-lg overflow-hidden bg-white">
+                            <button onClick={() => { setMuadilBrandFilter(list[(idx - 1 + list.length) % list.length]); setMuadilPage(1); }} title="Önceki marka" className="flex items-center justify-center w-[22px] h-[22px] border-none bg-transparent cursor-pointer p-0 transition-colors duration-150 text-(--color-text-mid)" style={{ borderBottom: `1px solid ${C.border}` }} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronUp} className="text-[9px]" />
                             </button>
-                            <button onClick={() => { setMuadilBrandFilter(list[(idx + 1) % list.length]); setMuadilPage(1); }} title="Sonraki marka" style={btnBase} onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
-                              <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '9px' }} />
+                            <button onClick={() => { setMuadilBrandFilter(list[(idx + 1) % list.length]); setMuadilPage(1); }} title="Sonraki marka" className="flex items-center justify-center w-[22px] h-[22px] border-none bg-transparent cursor-pointer p-0 transition-colors duration-150 text-(--color-text-mid)" onMouseEnter={e => e.currentTarget.style.color = C.gold} onMouseLeave={e => e.currentTarget.style.color = C.textMid}>
+                              <FontAwesomeIcon icon={faChevronDown} className="text-[9px]" />
                             </button>
                           </div>
                           <svg width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                           <select
                             value={muadilBrandFilter}
                             onChange={(e) => { setMuadilBrandFilter(e.target.value); setMuadilPage(1); }}
-                            style={{ height: '32px', border: `1.5px solid ${muadilBrandFilter ? C.navy : C.border}`, borderRadius: '8px', fontSize: '13px', color: muadilBrandFilter ? C.navy : C.textLight, background: muadilBrandFilter ? '#eef2ff' : '#fff', padding: '0 10px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: muadilBrandFilter ? 700 : 400 }}
+                            className="h-8 rounded-lg text-[13px] px-[10px] font-[family-name:var(--font-body)] cursor-pointer outline-none"
+                            style={{ border: `1.5px solid ${muadilBrandFilter ? C.navy : C.border}`, color: muadilBrandFilter ? C.navy : C.textLight, background: muadilBrandFilter ? '#eef2ff' : '#fff', fontWeight: muadilBrandFilter ? 700 : 400 }}
                           >
                             <option value="">Tüm Markalar</option>
                             {muadilBrandList.map((b) => <option key={b} value={b}>{b}</option>)}
                           </select>
                           {muadilBrandFilter && (
-                            <button onClick={() => { setMuadilBrandFilter(''); setMuadilPage(1); }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: '#e5e7eb', cursor: 'pointer', color: C.text, fontSize: '14px', lineHeight: 1, fontFamily: F }}>×</button>
+                            <button onClick={() => { setMuadilBrandFilter(''); setMuadilPage(1); }} className="flex items-center justify-center w-6 h-6 rounded-full border-none bg-[#e5e7eb] cursor-pointer text-(--color-text) text-sm leading-none font-[family-name:var(--font-body)]">×</button>
                           )}
                         </div>
                       );
                   })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setMuadilPage(1); }} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                <table style={{ width: '100%', minWidth: '680px', borderCollapse: 'collapse' }}>
-                  <thead><tr style={{ background: '#f9f9fb' }}>
+                <div className="overflow-x-auto scroll-x">
+                <table className="w-full min-w-[680px] border-collapse">
+                  <thead><tr className="bg-[#f9f9fb]">
                     <th style={{ ...thBase, width: '40px' }}>
                       <input type="checkbox" checked={sorted.length > 0 && sorted.every((m) => selectedIds.has(m.id))} onChange={() => toggleAll(sorted.map((m) => m.id))} />
                     </th>
@@ -2254,22 +2267,22 @@ export function AdminPanel() {
                   <tbody>
                     {pageItems.map((m) => (
                       <tr key={m.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(m.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(m.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(m.id) ? '#fffbeb' : 'transparent'; }}>
-                        <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelect(m.id)} /></td>
-                        <td style={{ ...tdStyle, fontWeight: 600, fontSize: '14px' }}><a href={`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{m.name}</a></td>
-                        <td style={{ ...tdStyle, fontSize: '13px' }}><a href={`/marka/${m.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${m.brandSlug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.brandName}</a></td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{(() => { const tp = perfumes.find((x) => String(x.id) === String(m.targetPerfumeId)); return tp ? <a href={`/${tp.brandSlug}/${tp.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${tp.brandSlug}/${tp.slug}`); }} style={{ fontSize: '13px', color: C.textMid, cursor: 'pointer', textDecoration: 'none' }}>{m.targetBrandName} — {m.targetPerfumeName}</a> : <span>{m.targetBrandName} — {m.targetPerfumeName}</span>; })()}</td>
-                        <td style={tdStyle}>{m.overall >= 0 ? <Badge color="gold">{m.overall}/10</Badge> : <span style={{ fontSize: '12px', color: C.textLight }}>—</span>}</td>
-                        <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{m.commentCount}</td>
+                        <td className="px-[14px] py-[11px] w-[40px]"><input type="checkbox" checked={selectedIds.has(m.id)} onChange={() => toggleSelect(m.id)} /></td>
+                        <td style={tdStyle}><a href={`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`); }} className="font-semibold text-sm text-(--color-navy) cursor-pointer no-underline">{m.name}</a></td>
+                        <td className="px-[14px] py-[11px] text-[13px]"><a href={`/marka/${m.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${m.brandSlug}`); }} className="text-[13px] text-(--color-text-mid) cursor-pointer no-underline">{m.brandName}</a></td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{(() => { const tp = perfumes.find((x) => String(x.id) === String(m.targetPerfumeId)); return tp ? <a href={`/${tp.brandSlug}/${tp.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/${tp.brandSlug}/${tp.slug}`); }} className="text-[13px] text-(--color-text-mid) cursor-pointer no-underline">{m.targetBrandName} — {m.targetPerfumeName}</a> : <span>{m.targetBrandName} — {m.targetPerfumeName}</span>; })()}</td>
+                        <td style={tdStyle}>{m.overall >= 0 ? <Badge color="gold">{m.overall}/10</Badge> : <span className="text-xs text-(--color-text-light)">—</span>}</td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{m.commentCount}</td>
                         <td style={tdStyle}>
                           {sm ? (
                             <Btn size="sm" variant="navy" style={{ whiteSpace: 'nowrap' }} onClick={() => openIam(m, 'muadil')}>İşlem Yap</Btn>
                           ) : (
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button onClick={() => openEditMuadil(m)} title="Düzenle" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: '#fff', color: C.navy, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => openEditMuadil(m)} title="Düzenle" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-navy) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
                                 Düzenle
                               </button>
-                              <button onClick={() => setDelTarget({ id: m.id, name: m.name, type: 'muadil' })} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F }}>
+                              <button onClick={() => setDelTarget({ id: m.id, name: m.name, type: 'muadil' })} title="Sil" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-[#fecaca] bg-[#fff5f5] text-(--color-red) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 Sil
                               </button>
@@ -2278,21 +2291,21 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!sorted.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>Sonuç bulunamadı.</td></tr>}
+                    {!sorted.length && <tr><td colSpan={7} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
                 </div>
                 {totalPages > 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${C.border}`, flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: C.textLight }}>{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      <button onClick={() => setMuadilPage(p => Math.max(1, p - 1))} disabled={safePage === 1} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+                  <div className="flex justify-between items-center px-[18px] py-3 border-t border-(--color-border) flex-wrap gap-2">
+                    <span className="text-xs text-(--color-text-light)">{(safePage - 1) * PERF_PER_PAGE + 1}–{Math.min(safePage * PERF_PER_PAGE, sorted.length)} / {sorted.length} kayıt</span>
+                    <div className="flex gap-1 items-center">
+                      <button onClick={() => setMuadilPage(p => Math.max(1, p - 1))} disabled={safePage === 1} className="px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-(--color-card) text-[13px] font-[family-name:var(--font-body)]" style={{ color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer' }}>‹</button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => { if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…'); acc.push(n); return acc; }, []).map((n, i) => n === '…' ? (
-                        <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight, fontSize: '13px' }}>…</span>
+                        <span key={`e${i}`} className="px-1 text-(--color-text-light) text-[13px]">…</span>
                       ) : (
-                        <button key={n} onClick={() => setMuadilPage(n)} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+                        <button key={n} onClick={() => setMuadilPage(n)} className="px-[10px] py-[5px] rounded-[7px] text-[13px] cursor-pointer font-[family-name:var(--font-body)]" style={{ border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, fontWeight: n === safePage ? 700 : 400 }}>{n}</button>
                       ))}
-                      <button onClick={() => setMuadilPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} style={{ padding: '5px 10px', borderRadius: '7px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+                      <button onClick={() => setMuadilPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} className="px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-(--color-card) text-[13px] font-[family-name:var(--font-body)]" style={{ color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer' }}>›</button>
                     </div>
                   </div>
                 )}
@@ -2303,7 +2316,7 @@ export function AdminPanel() {
 
         {/* Tüm Yorumlar */}
         {tab === 'reviews' && (() => {
-          const dateInputStyle = { padding: '9px 12px', border: `1px solid ${C.border}`, borderRadius: '9px', fontSize: '13px', fontFamily: F, color: C.text, background: '#fff', outline: 'none' };
+          const dateInputStyle = { border: `1px solid ${C.border}` };
           const q = search.toLowerCase();
           const filtered = revList.filter((r) => !q || (r.userName || '').toLowerCase().includes(q) || (r.text || '').toLowerCase().includes(q));
           const fmtDate = (ts) => ts?.toDate ? ts.toDate().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -2317,37 +2330,37 @@ export function AdminPanel() {
             <div>
               {/* Tarih aralığı seçici */}
               <Card style={{ padding: '16px 18px', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
+                <div className="flex flex-wrap gap-3 items-end">
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Başlangıç Tarihi</div>
-                    <input type="date" value={revRange.start} max={revRange.end} onChange={(e) => setRevRange((s) => ({ ...s, start: e.target.value }))} style={dateInputStyle} />
+                    <div className="text-xs font-bold text-(--color-navy) mb-1.5">Başlangıç Tarihi</div>
+                    <input type="date" value={revRange.start} max={revRange.end} onChange={(e) => setRevRange((s) => ({ ...s, start: e.target.value }))} className="px-3 py-[9px] rounded-[9px] text-[13px] font-[family-name:var(--font-body)] text-(--color-text) bg-white outline-none" style={dateInputStyle} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Bitiş Tarihi</div>
-                    <input type="date" value={revRange.end} min={revRange.start} max={_today} onChange={(e) => setRevRange((s) => ({ ...s, end: e.target.value }))} style={dateInputStyle} />
+                    <div className="text-xs font-bold text-(--color-navy) mb-1.5">Bitiş Tarihi</div>
+                    <input type="date" value={revRange.end} min={revRange.start} max={_today} onChange={(e) => setRevRange((s) => ({ ...s, end: e.target.value }))} className="px-3 py-[9px] rounded-[9px] text-[13px] font-[family-name:var(--font-body)] text-(--color-text) bg-white outline-none" style={dateInputStyle} />
                   </div>
                   <Btn variant="primary" onClick={loadReviews} disabled={revLoading}>{revLoading ? 'Getiriliyor…' : 'Yorumları Getir'}</Btn>
-                  {revLoaded && !revLoading && <span style={{ fontSize: '12px', color: C.textLight }}>Bu aralıkta {revList.length} yorum bulundu.</span>}
+                  {revLoaded && !revLoading && <span className="text-xs text-(--color-text-light)">Bu aralıkta {revList.length} yorum bulundu.</span>}
                 </div>
-                <p style={{ fontSize: '12px', color: C.textLight, marginTop: '12px', lineHeight: 1.5 }}>
-                  💡 Sunucuyu yormamak için yalnızca seçtiğiniz tarih aralığındaki yorumlar getirilir. Kapatılmış/silinmiş hesapların yorumları da bu listede görünür ve silinebilir.
+                <p className="text-xs text-(--color-text-light) mt-3 leading-[1.5]">
+                  Sunucuyu yormamak için yalnızca seçtiğiniz tarih aralığındaki yorumlar getirilir. Kapatılmış/silinmiş hesapların yorumları da bu listede görünür ve silinebilir.
                 </p>
-                {revError && <div style={{ fontSize: '12px', color: C.red, marginTop: '8px' }}>{revError}</div>}
+                {revError && <div className="text-xs text-(--color-red) mt-2">{revError}</div>}
               </Card>
 
               {revLoaded && (
                 <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <div className="flex justify-between items-center mb-[14px]">
                     {selectedIds.size > 0 ? (
                       <Btn variant="danger" onClick={() => openRevDel([...selectedIds])}>Seçilenleri Sil ({selectedIds.size})</Btn>
                     ) : <div />}
                   </div>
                   <Card style={{ overflow: 'hidden' }}>
-                    <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}><span style={{ fontWeight: 700, color: C.navy }}>Yorumlar</span></div>
+                    <div className="px-[18px] py-[14px] border-b border-(--color-border)"><span className="font-bold text-(--color-navy)">Yorumlar</span></div>
                     <SearchBar value={search} onChange={setSearch} placeholder="Kullanıcı adı veya yorum içeriği ara…" count={filtered.length} total={revList.length} />
-                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', minWidth: '760px', borderCollapse: 'collapse' }}>
-                      <thead><tr style={{ background: '#f9f9fb' }}>
+                    <div className="overflow-x-auto scroll-x">
+                    <table className="w-full min-w-[760px] border-collapse">
+                      <thead><tr className="bg-[#f9f9fb]">
                         <th style={{ ...thBase, width: '40px' }}>
                           <input type="checkbox" checked={allSel} onChange={() => toggleAll(filtered.map((r) => r.id))} />
                         </th>
@@ -2361,21 +2374,21 @@ export function AdminPanel() {
                       <tbody>
                         {filtered.map((r) => (
                           <tr key={r.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(r.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(r.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(r.id) ? '#fffbeb' : 'transparent'; }}>
-                            <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} /></td>
-                            <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid, whiteSpace: 'nowrap' }}>{fmtDate(r.createdAt)}</td>
-                            <td style={{ ...tdStyle, fontSize: '13px', color: C.text, fontWeight: 600, whiteSpace: 'nowrap' }}>{r.userName || '—'}</td>
-                            <td style={{ ...tdStyle, fontSize: '12px', color: C.textMid }}>{muadilName(r)}</td>
-                            <td style={{ ...tdStyle, fontSize: '13px', color: C.text, maxWidth: '340px', lineHeight: 1.5 }}>{r.text || <span style={{ color: C.textLight }}>—</span>}</td>
+                            <td className="px-[14px] py-[11px] w-[40px]"><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} /></td>
+                            <td className="px-[14px] py-[11px] text-xs text-(--color-text-mid) whitespace-nowrap">{fmtDate(r.createdAt)}</td>
+                            <td className="px-[14px] py-[11px] text-[13px] text-(--color-text) font-semibold whitespace-nowrap">{r.userName || '—'}</td>
+                            <td className="px-[14px] py-[11px] text-xs text-(--color-text-mid)">{muadilName(r)}</td>
+                            <td className="px-[14px] py-[11px] text-[13px] text-(--color-text) max-w-[340px] leading-[1.5]">{r.text || <span className="text-(--color-text-light)">—</span>}</td>
                             <td style={tdStyle}><Badge color={r.status === 'approved' ? 'green' : 'orange'}>{r.status === 'approved' ? 'Onaylı' : 'Beklemede'}</Badge></td>
                             <td style={tdStyle}>
-                              <button onClick={() => openRevDel([r.id])} title="Sil" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', borderRadius: '7px', border: `1px solid #fecaca`, background: '#fff5f5', color: C.red, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F, whiteSpace: 'nowrap' }}>
+                              <button onClick={() => openRevDel([r.id])} title="Sil" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-[#fecaca] bg-[#fff5f5] text-(--color-red) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)] whitespace-nowrap">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                 Sil
                               </button>
                             </td>
                           </tr>
                         ))}
-                        {!filtered.length && <tr><td colSpan={7} style={{ ...tdStyle, textAlign: 'center', color: C.textLight, padding: '32px' }}>{revList.length ? 'Aramayla eşleşen yorum yok.' : 'Bu tarih aralığında yorum bulunamadı.'}</td></tr>}
+                        {!filtered.length && <tr><td colSpan={7} className="px-[14px] py-8 text-center text-(--color-text-light)">{revList.length ? 'Aramayla eşleşen yorum yok.' : 'Bu tarih aralığında yorum bulunamadı.'}</td></tr>}
                       </tbody>
                     </table>
                     </div>
@@ -2420,7 +2433,7 @@ export function AdminPanel() {
       {/* Kayıt İşlem Modalı (mobil) */}
       <Modal open={iam.open} onClose={closeIam} title={iam.item ? `${iam.item.name} için işlem yap` : ''} width="360px">
         {iam.item && iam.step === 'actions' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-[10px]">
             {iam.itemType === 'brand' && (
               <Btn variant="secondary" onClick={() => { updateBrand(iam.item.id, { active: !iam.item.active }); closeIam(); }}>
                 {iam.item.active ? 'Pasif Et' : 'Aktif Et'}
@@ -2437,12 +2450,13 @@ export function AdminPanel() {
         )}
         {iam.item && iam.step === 'confirm' && (
           <div>
-            <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+            <div className="mb-4 px-4 py-3 bg-[#fff5f5] border border-[#fecaca] rounded-[10px] text-[13px] text-(--color-red) leading-[1.6]">
               <strong>"{iam.item.name}"</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz.
               {iam.withMuadils && <><br /><strong>Dikkat:</strong> Bağlı bulunduğu muadillerle birlikte silinecektir.</>}
             </div>
             {iam.itemType === 'perfume' && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', padding: '10px 14px', background: iam.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${iam.withMuadils ? '#fecaca' : C.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: iam.withMuadils ? C.red : C.textMid, transition: 'all .15s' }}>
+              <label className="flex items-center gap-[10px] mb-[14px] px-[14px] py-[10px] rounded-[10px] cursor-pointer text-[13px] font-semibold transition-all duration-150"
+                style={{ background: iam.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${iam.withMuadils ? '#fecaca' : C.border}`, color: iam.withMuadils ? C.red : C.textMid }}>
                 <input
                   type="checkbox"
                   checked={iam.withMuadils}
@@ -2450,12 +2464,13 @@ export function AdminPanel() {
                     if (iamPwRef.current) iamPwRef.current.value = '';
                     setIam((s) => ({ ...s, withMuadils: e.target.checked, error: '' }));
                   }}
-                  style={{ width: '16px', height: '16px', accentColor: C.red, cursor: 'pointer', flexShrink: 0 }}
+                  className="w-4 h-4 cursor-pointer shrink-0"
+                  style={{ accentColor: C.red }}
                 />
                 Bağlı muadil parfümleri de sil ({muadilPerfumes.filter((m) => String(m.targetPerfumeId) === String(iam.item.id)).length} adet)
               </label>
             )}
-            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
             <input
               key={iam.item?.id + iam.withMuadils}
               ref={iamPwRef}
@@ -2464,10 +2479,11 @@ export function AdminPanel() {
               onKeyDown={(e) => e.key === 'Enter' && !iam.loading && handleIamDelete()}
               placeholder="Şifrenizi girin"
               autoFocus
-              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${iam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+              className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-1.5"
+              style={{ border: `1px solid ${iam.error ? C.red : C.border}` }}
             />
-            {iam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{iam.error}</div>}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+            {iam.error && <div className="text-xs text-(--color-red) mb-[10px]">{iam.error}</div>}
+            <div className="flex gap-[10px] mt-4 justify-end">
               <Btn variant="ghost" onClick={() => setIam((s) => ({ ...s, step: 'actions', error: '' }))} disabled={iam.loading}>Geri</Btn>
               <Btn variant="danger" onClick={handleIamDelete} disabled={iam.loading}>
                 {iam.loading ? 'Siliniyor…' : 'Evet, Sil'}
@@ -2480,7 +2496,7 @@ export function AdminPanel() {
       {/* Kullanıcı İşlem Modalı (mobil) */}
       <Modal open={uam.open} onClose={closeUam} title={uam.step === 'deleted' ? 'Kullanıcı Silindi' : (uam.user ? `${uam.user.name} için işlem yap` : '')} width="400px">
         {uam.user && uam.step === 'actions' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-[10px]">
             <Btn variant={uam.user.role === 'moderator' ? 'orange' : 'navy'} onClick={() => openUamConfirm('mod')}>
               {uam.user.role === 'moderator' ? 'Moderatörlüğü Al' : 'Moderatör Yap'}
             </Btn>
@@ -2492,12 +2508,12 @@ export function AdminPanel() {
         )}
         {uam.user && uam.step === 'confirm' && (
           <div>
-            <div style={{ marginBottom: '16px', padding: '12px 16px', background: uam.action === 'delete' ? '#fff5f5' : '#fffbeb', border: `1px solid ${uam.action === 'delete' ? '#fecaca' : '#fde68a'}`, borderRadius: '10px', fontSize: '13px', color: uam.action === 'delete' ? C.red : C.orange, lineHeight: 1.6 }}>
+            <div className="mb-4 px-4 py-3 rounded-[10px] text-[13px] leading-[1.6]" style={{ background: uam.action === 'delete' ? '#fff5f5' : '#fffbeb', border: `1px solid ${uam.action === 'delete' ? '#fecaca' : '#fde68a'}`, color: uam.action === 'delete' ? C.red : C.orange }}>
               {uam.action === 'mod' && `${uam.user.name} kullanıcısının moderatör rolü ${uam.user.role === 'moderator' ? 'alınacak' : 'verilecek'}.`}
               {uam.action === 'freeze' && `${uam.user.name} hesabı ${uam.user.active ? 'dondurulacak' : 'aktif edilecek'}.`}
               {uam.action === 'delete' && `${uam.user.name} kalıcı olarak silinecek. Bu işlem geri alınamaz.`}
             </div>
-            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
             <input
               key={uam.user?.id + uam.action}
               ref={uamPwRef}
@@ -2506,10 +2522,11 @@ export function AdminPanel() {
               onKeyDown={(e) => e.key === 'Enter' && !uam.loading && handleUamSubmit()}
               placeholder="Şifrenizi girin"
               autoFocus
-              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${uam.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+              className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-1.5"
+              style={{ border: `1px solid ${uam.error ? C.red : C.border}` }}
             />
-            {uam.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{uam.error}</div>}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+            {uam.error && <div className="text-xs text-(--color-red) mb-[10px]">{uam.error}</div>}
+            <div className="flex gap-[10px] mt-4 justify-end">
               <Btn variant={uam.action === 'delete' ? 'danger' : 'primary'} onClick={handleUamSubmit} disabled={uam.loading}>
                 {uam.loading ? 'İşleniyor…' : 'Onayla'}
               </Btn>
@@ -2517,10 +2534,10 @@ export function AdminPanel() {
           </div>
         )}
         {uam.step === 'deleted' && (
-          <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>✅</div>
-            <p style={{ fontSize: '15px', fontWeight: 700, color: C.navy, marginBottom: '6px' }}>Kullanıcı silindi</p>
-            <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.6, marginBottom: '20px' }}>
+          <div className="text-center py-2 pb-1">
+            <div className="text-[40px] mb-3">✅</div>
+            <p className="text-[15px] font-bold text-(--color-navy) mb-1.5">Kullanıcı silindi</p>
+            <p className="text-[13px] text-(--color-text-light) leading-[1.6] mb-5">
               Hesap, yorumlar ve tüm veriler başarıyla temizlendi.
             </p>
             <Btn variant="primary" onClick={closeUam} style={{ width: '100%', justifyContent: 'center' }}>Tamam</Btn>
@@ -2530,8 +2547,8 @@ export function AdminPanel() {
 
       {/* Export Modalı */}
       <Modal open={exportModal} onClose={() => setExportModal(false)} title="Listeyi Dışa Aktar" width="360px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ fontSize: '13px', color: C.textMid, marginBottom: '4px' }}>
+        <div className="flex flex-col gap-[10px]">
+          <p className="text-[13px] text-(--color-text-mid) mb-1">
             Şu an görünen <strong>{
               tab === 'perfumes' ? sortedPerfs.length :
               tab === 'original-brands' ? sortedOrigBrands.length :
@@ -2558,7 +2575,7 @@ export function AdminPanel() {
         const totalMuadils = selPerfumes.reduce((acc, p) => acc + (p.muadilCount || 0), 0);
         return (
           <Modal open={bulkDel.open} onClose={closeBulkDel} title="Toplu Silme Onayı" width="460px">
-            <div style={{ marginBottom: '14px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+            <div className="mb-[14px] px-4 py-3 bg-[#fff5f5] border border-[#fecaca] rounded-[10px] text-[13px] text-(--color-red) leading-[1.6]">
               {tab === 'perfumes' ? (
                 <>
                   <strong>{selectedIds.size} parfüm</strong>
@@ -2571,17 +2588,17 @@ export function AdminPanel() {
             </div>
 
             {tab === 'perfumes' && selPerfumes.length > 0 && (
-              <div style={{ marginBottom: '14px', border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden', maxHeight: '220px', overflowY: 'auto' }}>
+              <div className="mb-[14px] border border-(--color-border) rounded-[10px] overflow-hidden max-h-[220px] overflow-y-auto">
                 {selPerfumes.map((p, i) => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: i < selPerfumes.length - 1 ? `1px solid ${C.borderLight}` : 'none', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: C.navy, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                      <div style={{ fontSize: '11px', color: C.textLight }}>{p.brandName}</div>
+                  <div key={p.id} className="flex items-center justify-between px-[14px] py-2" style={{ borderBottom: i < selPerfumes.length - 1 ? `1px solid ${C.borderLight}` : 'none', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-bold text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
+                      <div className="text-[11px] text-(--color-text-light)">{p.brandName}</div>
                     </div>
-                    <div style={{ flexShrink: 0, marginLeft: '12px' }}>
+                    <div className="shrink-0 ml-3">
                       {p.muadilCount > 0
-                        ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 700, color: C.red }}>{p.muadilCount} muadil silinecek</span>
-                        : <span style={{ fontSize: '11px', color: C.textLight }}>muadil yok</span>
+                        ? <div className="inline-flex items-center justify-center gap-1 bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-2 py-0.5 text-[11px] font-bold text-(--color-red)"><p className="m-0 p-0 w-max">{p.muadilCount} muadil silinecek</p></div>
+                        : <span className="text-[11px] text-(--color-text-light)">muadil yok</span>
                       }
                     </div>
                   </div>
@@ -2589,7 +2606,7 @@ export function AdminPanel() {
               </div>
             )}
 
-            <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+            <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
             <input
               key={bulkDel.open}
               ref={bulkDelPwRef}
@@ -2598,10 +2615,11 @@ export function AdminPanel() {
               onKeyDown={(e) => e.key === 'Enter' && !bulkDel.loading && handleBulkDelete()}
               placeholder="Şifrenizi girin"
               autoFocus
-              style={{ width: '100%', padding: '10px 14px', border: `1px solid ${bulkDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
+              className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-2"
+              style={{ border: `1px solid ${bulkDel.error ? C.red : C.border}` }}
             />
-            {bulkDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{bulkDel.error}</div>}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+            {bulkDel.error && <div className="text-xs text-(--color-red) mb-3">{bulkDel.error}</div>}
+            <div className="flex gap-[10px] mt-4 justify-end">
               <Btn variant="ghost" onClick={closeBulkDel} disabled={bulkDel.loading}>İptal</Btn>
               <Btn variant="danger" onClick={handleBulkDelete} disabled={bulkDel.loading}>
                 {bulkDel.loading ? 'Siliniyor…' : tab === 'perfumes'
@@ -2615,10 +2633,10 @@ export function AdminPanel() {
 
       {/* Yorum Silme Şifre Modalı (tekli + çoklu) */}
       <Modal open={revDel.open} onClose={closeRevDel} title={revDel.ids.length > 1 ? 'Yorumları Sil' : 'Yorumu Sil'} width="420px">
-        <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '10px', fontSize: '13px', color: C.red, lineHeight: 1.6 }}>
+        <div className="mb-4 px-4 py-3 bg-[#fff5f5] border border-[#fecaca] rounded-[10px] text-[13px] text-(--color-red) leading-[1.6]">
           <strong>{revDel.ids.length} yorum</strong> kalıcı olarak silinecek. Bu işlem geri alınamaz. Devam etmek için admin şifrenizi girin.
         </div>
-        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+        <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
         <input
           key={revDel.open + revDel.ids.join()}
           ref={revDelPwRef}
@@ -2627,10 +2645,11 @@ export function AdminPanel() {
           onKeyDown={(e) => e.key === 'Enter' && !revDel.loading && handleRevDelete()}
           placeholder="Şifrenizi girin"
           autoFocus
-          style={{ width: '100%', padding: '10px 14px', border: `1px solid ${revDel.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
+          className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-2"
+          style={{ border: `1px solid ${revDel.error ? C.red : C.border}` }}
         />
-        {revDel.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '12px' }}>{revDel.error}</div>}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+        {revDel.error && <div className="text-xs text-(--color-red) mb-3">{revDel.error}</div>}
+        <div className="flex gap-[10px] mt-4 justify-end">
           <Btn variant="ghost" onClick={closeRevDel} disabled={revDel.loading}>İptal</Btn>
           <Btn variant="danger" onClick={handleRevDelete} disabled={revDel.loading}>
             {revDel.loading ? 'Siliniyor…' : `${revDel.ids.length} Yorumu Sil`}
@@ -2644,49 +2663,50 @@ export function AdminPanel() {
           const uc = comments.filter((c) => c.userId === selUser.id);
           return (
             <>
-              <div style={{ display: 'flex', gap: '14px', alignItems: 'center', padding: '14px', background: C.goldBg, borderRadius: '12px', border: `1px solid ${C.goldBorder}`, marginBottom: '18px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#fff', fontWeight: 700, flexShrink: 0, overflow: 'hidden' }}>
+              <div className="flex gap-[14px] items-center p-[14px] bg-(--color-gold-bg) rounded-xl border border-(--color-gold-border) mb-[18px]">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-[18px] text-white font-bold shrink-0 overflow-hidden"
+                  style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}>
                   {(selUser.photoURL || (selUser.avatar?.startsWith?.('http') ? selUser.avatar : null))
-                    ? <img src={selUser.photoURL || selUser.avatar} alt={selUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    ? <img src={selUser.photoURL || selUser.avatar} alt={selUser.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                     : (selUser.avatar?.length === 1 ? selUser.avatar : selUser.name?.[0]?.toUpperCase() || '?')
                   }
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '16px', color: C.navy }}>{selUser.name}</div>
-                  <div style={{ fontSize: '13px', color: C.textMid }}>{selUser.email}</div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                <div className="flex-1">
+                  <div className="font-bold text-[16px] text-(--color-navy)">{selUser.name}</div>
+                  <div className="text-[13px] text-(--color-text-mid)">{selUser.email}</div>
+                  <div className="flex gap-2 mt-1.5 flex-wrap">
                     <Badge color={RC[selUser.role]}>{RL[selUser.role]}</Badge>
                     <Badge color={selUser.role === 'admin' || selUser.active ? 'green' : 'red'}>{selUser.role === 'admin' || selUser.active ? 'Aktif' : 'Dondurulmuş'}</Badge>
                   </div>
                 </div>
               </div>
-              <div style={{ marginBottom: '18px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '10px', letterSpacing: '.05em' }}>OTURUM BİLGİLERİ</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div className="mb-[18px]">
+                <div className="text-xs font-bold text-(--color-navy) mb-[10px] tracking-[.05em]">OTURUM BİLGİLERİ</div>
+                <div className="grid grid-cols-2 gap-2">
                   {[['Son Giriş', '—'], ['Son Çıkış', '—'], ['Katılım Tarihi', selUser.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || '—'], ['Toplam Yorum', uc.length]].map(([k, v]) => (
-                    <div key={k} style={{ background: '#f9f9fb', borderRadius: '10px', padding: '10px 14px', border: `1px solid ${C.border}` }}>
-                      <div style={{ fontSize: '11px', color: C.textLight, marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.05em' }}>{k}</div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: C.text }}>{v}</div>
+                    <div key={k} className="bg-[#f9f9fb] rounded-[10px] px-[14px] py-[10px] border border-(--color-border)">
+                      <div className="text-[11px] text-(--color-text-light) mb-[3px] uppercase tracking-[.05em]">{k}</div>
+                      <div className="text-sm font-semibold text-(--color-text)">{v}</div>
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '10px', letterSpacing: '.05em' }}>YORUMLARI ({uc.length})</div>
-                {!uc.length && <div style={{ textAlign: 'center', padding: '20px', color: C.textLight, fontSize: '14px', background: '#f9f9fb', borderRadius: '10px' }}>Henüz yorum yapmamış.</div>}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflow: 'auto' }}>
+                <div className="text-xs font-bold text-(--color-navy) mb-[10px] tracking-[.05em]">YORUMLARI ({uc.length})</div>
+                {!uc.length && <div className="text-center p-5 text-(--color-text-light) text-sm bg-[#f9f9fb] rounded-[10px]">Henüz yorum yapmamış.</div>}
+                <div className="flex flex-col gap-2 max-h-[220px] overflow-auto">
                   {uc.map((c) => {
                     const mp = muadilPerfumes.find((m) => m.id === c.muadilPerfumeId);
                     return (
-                      <div key={c.id} style={{ border: `1px solid ${c.status === 'pending' ? C.goldBorder : C.border}`, borderRadius: '10px', padding: '12px 14px', background: c.status === 'pending' ? C.goldBg : '#fff' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', flexWrap: 'wrap', gap: '6px' }}>
-                          <span style={{ fontWeight: 600, fontSize: '13px', color: C.navy }}>{mp ? `${mp.brandName} — ${mp.name}` : 'Parfüm'}</span>
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div key={c.id} className="rounded-[10px] px-[14px] py-3" style={{ border: `1px solid ${c.status === 'pending' ? C.goldBorder : C.border}`, background: c.status === 'pending' ? C.goldBg : '#fff' }}>
+                        <div className="flex justify-between mb-[5px] flex-wrap gap-1.5">
+                          <span className="font-semibold text-[13px] text-(--color-navy)">{mp ? `${mp.brandName} — ${mp.name}` : 'Parfüm'}</span>
+                          <div className="flex gap-1.5 items-center">
                             <Badge color={c.status === 'approved' ? 'green' : 'orange'}>{c.status === 'approved' ? 'Yayında' : 'Bekliyor'}</Badge>
-                            <span style={{ fontSize: '11px', color: C.textLight }}>{c.date}</span>
+                            <span className="text-[11px] text-(--color-text-light)">{c.date}</span>
                           </div>
                         </div>
-                        <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.5 }}>{c.text}</p>
+                        <p className="text-[13px] text-(--color-text) leading-[1.5]">{c.text}</p>
                       </div>
                     );
                   })}
@@ -2763,19 +2783,19 @@ export function AdminPanel() {
       <Modal open={!!delTarget} onClose={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false }); }} title="Silme Onayı" width="400px">
         {delTarget && (
           <div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: '#fff5f5', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-[52px] h-[52px] rounded-full bg-[#fff5f5] border border-[#fecaca] flex items-center justify-center mb-3">
                 <svg width="24" height="24" fill="none" stroke={C.red} strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: C.navy, marginBottom: '6px', textAlign: 'center' }}>Emin misiniz?</div>
-              <div style={{ fontSize: '14px', color: C.textMid, textAlign: 'center', lineHeight: 1.6 }}>
-                <span style={{ fontWeight: 600, color: C.text }}>"{delTarget.name}"</span> kalıcı olarak silinecek. Bu işlem geri alınamaz.
-                {delBrandPw.withMuadils && <><br /><span style={{ color: C.red, fontWeight: 700 }}>Dikkat:</span> Bağlı bulunduğu muadillerle birlikte silinecektir.</>}
+              <div className="text-[16px] font-bold text-(--color-navy) mb-1.5 text-center">Emin misiniz?</div>
+              <div className="text-sm text-(--color-text-mid) text-center leading-[1.6]">
+                <span className="font-semibold text-(--color-text)">"{delTarget.name}"</span> kalıcı olarak silinecek. Bu işlem geri alınamaz.
+                {delBrandPw.withMuadils && <><br /><span className="text-(--color-red) font-bold">Dikkat:</span> Bağlı bulunduğu muadillerle birlikte silinecektir.</>}
               </div>
             </div>
             {delTarget.type === 'brand' ? (
               <>
-                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+                <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
                 <input
                   key={delTarget.id}
                   ref={delBrandPwRef}
@@ -2791,10 +2811,11 @@ export function AdminPanel() {
                   }}
                   placeholder="Şifrenizi girin"
                   autoFocus
-                  style={{ width: '100%', padding: '10px 14px', border: `1px solid ${delBrandPw.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+                  className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-1.5"
+                  style={{ border: `1px solid ${delBrandPw.error ? C.red : C.border}` }}
                 />
-                {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                {delBrandPw.error && <div className="text-xs text-(--color-red) mb-[10px]">{delBrandPw.error}</div>}
+                <div className="flex gap-[10px] mt-4 justify-end">
                   <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '' }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
                   <Btn variant="danger" disabled={delBrandPw.loading} onClick={async () => {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
@@ -2808,7 +2829,8 @@ export function AdminPanel() {
             ) : (
               <>
                 {delTarget.type === 'perfume' && (
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px', padding: '10px 14px', background: delBrandPw.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${delBrandPw.withMuadils ? '#fecaca' : C.border}`, borderRadius: '10px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: delBrandPw.withMuadils ? C.red : C.textMid, transition: 'all .15s' }}>
+                  <label className="flex items-center gap-[10px] mb-[14px] px-[14px] py-[10px] rounded-[10px] cursor-pointer text-[13px] font-semibold transition-all duration-150"
+                    style={{ background: delBrandPw.withMuadils ? '#fff5f5' : '#f9f9fb', border: `1px solid ${delBrandPw.withMuadils ? '#fecaca' : C.border}`, color: delBrandPw.withMuadils ? C.red : C.textMid }}>
                     <input
                       type="checkbox"
                       checked={delBrandPw.withMuadils}
@@ -2816,12 +2838,13 @@ export function AdminPanel() {
                         if (delBrandPwRef.current) delBrandPwRef.current.value = '';
                         setDelBrandPw((s) => ({ ...s, withMuadils: e.target.checked, error: '' }));
                       }}
-                      style={{ width: '16px', height: '16px', accentColor: C.red, cursor: 'pointer', flexShrink: 0 }}
+                      className="w-4 h-4 cursor-pointer shrink-0"
+                      style={{ accentColor: C.red }}
                     />
                     Bağlı muadil parfümleri de sil ({muadilPerfumes.filter((m) => String(m.targetPerfumeId) === String(delTarget.id)).length} adet)
                   </label>
                 )}
-                <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: C.navy }}>Admin Şifresi</div>
+                <div className="mb-2 text-[13px] font-semibold text-(--color-navy)">Admin Şifresi</div>
                 <input
                   key={delTarget.id + delBrandPw.withMuadils}
                   ref={delBrandPwRef}
@@ -2838,10 +2861,11 @@ export function AdminPanel() {
                   }}
                   placeholder="Şifrenizi girin"
                   autoFocus
-                  style={{ width: '100%', padding: '10px 14px', border: `1px solid ${delBrandPw.error ? C.red : C.border}`, borderRadius: '10px', fontSize: '14px', fontFamily: F, outline: 'none', boxSizing: 'border-box', marginBottom: '6px' }}
+                  className="w-full px-[14px] py-[10px] rounded-[10px] text-sm font-[family-name:var(--font-body)] outline-none box-border mb-1.5"
+                  style={{ border: `1px solid ${delBrandPw.error ? C.red : C.border}` }}
                 />
-                {delBrandPw.error && <div style={{ fontSize: '12px', color: C.red, marginBottom: '10px' }}>{delBrandPw.error}</div>}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+                {delBrandPw.error && <div className="text-xs text-(--color-red) mb-[10px]">{delBrandPw.error}</div>}
+                <div className="flex gap-[10px] mt-4 justify-end">
                   <Btn variant="secondary" onClick={() => { setDelTarget(null); setDelBrandPw({ loading: false, error: '', withMuadils: false }); }} disabled={delBrandPw.loading}>Vazgeç</Btn>
                   <Btn variant="danger" disabled={delBrandPw.loading} onClick={async () => {
                     setDelBrandPw((s) => ({ ...s, loading: true, error: '' }));
@@ -2863,18 +2887,8 @@ export function AdminPanel() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          style={{
-            position: 'fixed', bottom: '28px', left: '24px',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '10px 20px', borderRadius: '50px',
-            background: C.navy, color: '#fff',
-            border: 'none', cursor: refreshing ? 'default' : 'pointer',
-            fontSize: '13px', fontWeight: 700, fontFamily: F,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-            opacity: refreshing ? 0.75 : 1,
-            transition: 'left 0.2s ease, opacity 0.15s',
-            zIndex: 100,
-          }}
+          className="fixed bottom-7 left-6 flex items-center gap-2 px-5 py-[10px] rounded-[50px] bg-(--color-navy) text-white border-none font-bold text-[13px] font-[family-name:var(--font-body)] shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-[left,opacity] duration-200 z-[100]"
+          style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.75 : 1 }}
         >
           <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}>
             <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>

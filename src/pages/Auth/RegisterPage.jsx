@@ -6,7 +6,6 @@ import { containsProfanity } from '@/utils/profanity';
 import { Btn } from '@/components/ui';
 import { AuthLayout, GoogleBtn, Divider, EyeIcon } from './AuthLayout';
 import { TermsModal } from './TermsModal';
-import { C } from '@/constants/theme';
 
 const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
 
@@ -37,18 +36,39 @@ function PasswordStrength({ pass, touched }) {
   const passed = PASS_RULES.map((r) => r.test(pass));
   const score = passed.filter(Boolean).length;
   return (
-    <div style={{ marginTop: '-8px', marginBottom: '14px' }}>
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+    <div className="-mt-2 mb-[14px]">
+      <div className="flex gap-1 mb-2">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} style={{ flex: 1, height: '4px', borderRadius: '2px', background: i < score ? STRENGTH_COLORS[score] : C.border, transition: 'background .25s' }} />
+          <div
+            key={i}
+            className="flex-1 h-1 rounded-[2px] transition-[background] duration-200"
+            style={{ background: i < score ? STRENGTH_COLORS[score] : 'var(--color-border)' }}
+          />
         ))}
-        {score > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: STRENGTH_COLORS[score], marginLeft: '6px', whiteSpace: 'nowrap' }}>{STRENGTH_LABELS[score]}</span>}
+        {score > 0 && (
+          <span
+            className="text-[11px] font-bold ml-[6px] whitespace-nowrap"
+            style={{ color: STRENGTH_COLORS[score] }}
+          >
+            {STRENGTH_LABELS[score]}
+          </span>
+        )}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px' }}>
+      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
         {PASS_RULES.map((r, i) => (
-          <div key={r.key} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ fontSize: '12px', color: passed[i] ? '#38a169' : C.textLight, fontWeight: 700 }}>{passed[i] ? '✓' : '○'}</span>
-            <span style={{ fontSize: '11px', color: passed[i] ? '#38a169' : C.textLight }}>{r.label}</span>
+          <div key={r.key} className="flex items-center gap-[5px]">
+            <span
+              className="text-[12px] font-bold"
+              style={{ color: passed[i] ? '#38a169' : 'var(--color-text-light)' }}
+            >
+              {passed[i] ? '✓' : '○'}
+            </span>
+            <span
+              className="text-[11px]"
+              style={{ color: passed[i] ? '#38a169' : 'var(--color-text-light)' }}
+            >
+              {r.label}
+            </span>
           </div>
         ))}
       </div>
@@ -63,23 +83,26 @@ function isPasswordValid(p) {
 // Kullanıcı adı durum göstergesi
 function UsernameStatus({ status }) {
   if (status === 'checking') return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
-      <div style={{ width: '10px', height: '10px', border: `2px solid ${C.border}`, borderTop: `2px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-      <span style={{ fontSize: '12px', color: C.textLight }}>Kontrol ediliyor...</span>
+    <div className="flex items-center gap-[5px] mt-1">
+      <div
+        className="w-[10px] h-[10px] rounded-full border-2 border-(--color-border)"
+        style={{ borderTopColor: 'var(--color-gold)', animation: 'spin 0.7s linear infinite' }}
+      />
+      <span className="text-[12px] text-(--color-text-light)">Kontrol ediliyor...</span>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
   if (status === 'available') return (
-    <div style={{ fontSize: '12px', color: '#38a169', marginTop: '4px', fontWeight: 600 }}>✓ Kullanıcı adı müsait</div>
+    <div className="text-[12px] mt-1 font-semibold" style={{ color: '#38a169' }}>✓ Kullanıcı adı müsait</div>
   );
   if (status === 'taken') return (
-    <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>✗ Bu kullanıcı adı alınmış</div>
+    <div className="text-[12px] text-(--color-red) mt-1">✗ Bu kullanıcı adı alınmış</div>
   );
   if (status === 'invalid') return (
-    <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>3–20 karakter, yalnızca harf, rakam, _ ve -</div>
+    <div className="text-[12px] text-(--color-red) mt-1">3–20 karakter, yalnızca harf, rakam, _ ve -</div>
   );
   if (status === 'reserved') return (
-    <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>✗ Bu kullanıcı adı kullanılamaz</div>
+    <div className="text-[12px] text-(--color-red) mt-1">✗ Bu kullanıcı adı kullanılamaz</div>
   );
   return null;
 }
@@ -171,19 +194,8 @@ export function RegisterPage() {
     }
   };
 
-  const inpStyle = (foc, hasErr) => ({
-    width: '100%',
-    border: `1px solid ${hasErr ? '#f0b8b0' : foc ? C.gold : C.border}`,
-    borderRadius: '10px', padding: '10px 14px', fontSize: '14px',
-    color: C.text, outline: 'none', transition: 'border-color .2s',
-  });
-  const unameBorderColor = usernameStatus === 'available' ? '#38a169' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? '#f0b8b0' : fU ? C.gold : C.border;
-  const passStyle = (foc) => ({
-    width: '100%',
-    border: `1px solid ${foc ? C.gold : C.border}`,
-    borderRadius: '10px', padding: '10px 44px 10px 14px', fontSize: '14px',
-    color: C.text, outline: 'none', transition: 'border-color .2s',
-  });
+  const inpClass = 'w-full rounded-[10px] px-[14px] py-[10px] text-[14px] text-(--color-text) outline-none transition-[border-color] duration-200';
+  const unameBorderColor = usernameStatus === 'available' ? '#38a169' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'var(--color-red-border)' : fU ? 'var(--color-gold)' : 'var(--color-border)';
 
   return (
     <>
@@ -193,26 +205,47 @@ export function RegisterPage() {
         <Divider />
 
         {/* Ad Soyad */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Ad Soyad</label>
-          <input value={name} onChange={(e) => setName(toTitleCase(e.target.value))} onFocus={() => setFN(true)} onBlur={() => setFN(false)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fN, false)} />
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Ad Soyad</label>
+          <input
+            value={name}
+            onChange={(e) => setName(toTitleCase(e.target.value))}
+            onFocus={() => setFN(true)}
+            onBlur={() => setFN(false)}
+            onKeyDown={(e) => e.key === 'Enter' && submit()}
+            placeholder=""
+            className={inpClass}
+            style={{ border: `1px solid ${fN ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+          />
         </div>
 
         {/* E-posta */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>E-posta</label>
-          <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }} onFocus={() => setFE(true)} onBlur={(e) => { setFE(false); validateEmail(e.target.value); }} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={inpStyle(fE, !!emailErr)} />
-          {emailErr && <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>⚠ {emailErr}</div>}
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">E-posta</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }}
+            onFocus={() => setFE(true)}
+            onBlur={(e) => { setFE(false); validateEmail(e.target.value); }}
+            onKeyDown={(e) => e.key === 'Enter' && submit()}
+            placeholder=""
+            className={inpClass}
+            style={{ border: `1px solid ${emailErr ? 'var(--color-red-border)' : fE ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+          />
+          {emailErr && (
+            <div className="text-[12px] text-(--color-red) mt-1">{emailErr}</div>
+          )}
         </div>
 
         {/* Kullanıcı Adı */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
             Kullanıcı Adı
-            <span style={{ fontSize: '11px', fontWeight: 400, color: C.textLight, marginLeft: '6px' }}>harf, rakam, _ ve - kullanabilirsiniz</span>
+            <span className="text-[11px] font-normal text-(--color-text-light) ml-[6px]">harf, rakam, _ ve - kullanabilirsiniz</span>
           </label>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: C.textLight, pointerEvents: 'none' }}>@</span>
+          <div className="relative">
+            <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[14px] text-(--color-text-light) pointer-events-none">@</span>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
@@ -221,18 +254,33 @@ export function RegisterPage() {
               onKeyDown={(e) => e.key === 'Enter' && submit()}
               placeholder=""
               maxLength={20}
-              style={{ ...inpStyle(fU, false), paddingLeft: '28px', border: `1px solid ${unameBorderColor}` }}
+              className={inpClass}
+              style={{ paddingLeft: '28px', border: `1px solid ${unameBorderColor}` }}
             />
           </div>
           <UsernameStatus status={usernameStatus} />
         </div>
 
         {/* Şifre */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Şifre</label>
-          <div style={{ position: 'relative' }}>
-            <input type={showP ? 'text' : 'password'} value={pass} onChange={(e) => setPass(e.target.value)} onFocus={() => { setFP(true); setPassTouched(true); }} onBlur={() => setFP(false)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={passStyle(fP)} />
-            <button type="button" onClick={() => setShowP((s) => !s)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, display: 'flex', padding: '4px' }}>
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre</label>
+          <div className="relative">
+            <input
+              type={showP ? 'text' : 'password'}
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              onFocus={() => { setFP(true); setPassTouched(true); }}
+              onBlur={() => setFP(false)}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
+              placeholder=""
+              className={inpClass}
+              style={{ paddingRight: '44px', border: `1px solid ${fP ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowP((s) => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) flex p-1"
+            >
               <EyeIcon open={showP} />
             </button>
           </div>
@@ -241,36 +289,72 @@ export function RegisterPage() {
         <PasswordStrength pass={pass} touched={passTouched} />
 
         {/* Şifre Tekrar */}
-        <div style={{ marginBottom: '14px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Şifre Tekrar</label>
-          <div style={{ position: 'relative' }}>
-            <input type={showC ? 'text' : 'password'} value={confirm} onChange={(e) => setConfirm(e.target.value)} onFocus={() => setFC(true)} onBlur={() => setFC(false)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="" style={passStyle(fC)} />
-            <button type="button" onClick={() => setShowC((s) => !s)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, display: 'flex', padding: '4px' }}>
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre Tekrar</label>
+          <div className="relative">
+            <input
+              type={showC ? 'text' : 'password'}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              onFocus={() => setFC(true)}
+              onBlur={() => setFC(false)}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
+              placeholder=""
+              className={inpClass}
+              style={{ paddingRight: '44px', border: `1px solid ${fC ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowC((s) => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) flex p-1"
+            >
               <EyeIcon open={showC} />
             </button>
           </div>
           {confirm && pass !== confirm && (
-            <div style={{ fontSize: '12px', color: C.red, marginTop: '4px' }}>⚠ Şifreler eşleşmiyor.</div>
+            <div className="text-[12px] text-(--color-red) mt-1">Şifreler eşleşmiyor.</div>
           )}
         </div>
 
         {/* Kullanım şartları */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '14px' }}>
-          <button type="button" onClick={() => setAgreed((s) => !s)}
-            style={{ width: '18px', height: '18px', minWidth: '18px', borderRadius: '5px', border: `2px solid ${agreed ? C.gold : C.border}`, background: agreed ? C.gold : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '1px', flexShrink: 0 }}>
-            {agreed && <span style={{ color: '#fff', fontSize: '11px', fontWeight: 900, lineHeight: 1 }}>✓</span>}
+        <div className="flex gap-[10px] items-start mb-[14px]">
+          <button
+            type="button"
+            onClick={() => setAgreed((s) => !s)}
+            className="w-[18px] h-[18px] min-w-[18px] rounded-[5px] cursor-pointer flex items-center justify-center mt-[1px] shrink-0"
+            style={{
+              border: `2px solid ${agreed ? 'var(--color-gold)' : 'var(--color-border)'}`,
+              background: agreed ? 'var(--color-gold)' : 'transparent',
+            }}
+          >
+            {agreed && <span className="text-white text-[11px] font-black leading-none">✓</span>}
           </button>
-          <span style={{ fontSize: '13px', color: C.textMid, lineHeight: 1.5 }}>
-            <span onClick={() => setShowTerms(true)} style={{ color: C.gold, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}>Kullanım Şartları</span>'nı okudum ve kabul ediyorum
+          <span className="text-[13px] text-(--color-text-mid) leading-[1.5]">
+            <span
+              onClick={() => setShowTerms(true)}
+              className="text-(--color-gold) cursor-pointer underline underline-offset-[2px]"
+            >
+              Kullanım Şartları
+            </span>'nı okudum ve kabul ediyorum
           </span>
         </div>
 
-        {err && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, fontSize: '13px', marginBottom: '12px' }}>⚠ {err}</div>}
+        {err && (
+          <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-[10px] px-[14px] py-[10px] text-(--color-red) text-[13px] mb-3">
+            {err}
+          </div>
+        )}
         <Btn onClick={submit} disabled={loading} style={{ width: '100%', justifyContent: 'center', marginBottom: '14px' }} size="lg">
           {loading ? 'Kayıt olunuyor...' : 'Üye Ol'}
         </Btn>
-        <div style={{ textAlign: 'center', fontSize: '13px', color: C.textMid }}>
-          Zaten üye misin? <span onClick={() => navigate('/giris')} style={{ color: C.gold, fontWeight: 700, cursor: 'pointer' }}>Giriş Yap</span>
+        <div className="text-center text-[13px] text-(--color-text-mid)">
+          Zaten üye misin?{' '}
+          <span
+            onClick={() => navigate('/giris')}
+            className="text-(--color-gold) font-bold cursor-pointer"
+          >
+            Giriş Yap
+          </span>
         </div>
       </AuthLayout>
     </>

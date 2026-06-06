@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { Btn } from '@/components/ui';
 import { AuthLayout, GoogleBtn, Divider, EyeIcon, signUpBg } from './AuthLayout';
-import { C } from '@/constants/theme';
 
 export function LoginPage() {
   const { loginWithEmail, loginWithGoogle } = useAuth();
@@ -54,12 +53,7 @@ export function LoginPage() {
     }
   };
 
-  const inpStyle = (foc) => ({
-    width: '100%',
-    border: `1px solid ${foc ? C.gold : C.border}`,
-    borderRadius: '10px', padding: '10px 14px', fontSize: '14px',
-    color: C.text, outline: 'none', transition: 'border-color .2s',
-  });
+  const inpClass = 'w-full rounded-[10px] px-[14px] py-[10px] text-[14px] text-(--color-text) outline-none transition-[border-color] duration-200';
 
   return (
     <AuthLayout
@@ -71,8 +65,8 @@ export function LoginPage() {
       <GoogleBtn label="Google ile Giriş Yap" onClick={handleGoogle} loading={googleLoading} />
       <Divider />
 
-      <div style={{ marginBottom: '14px' }}>
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>
+      <div className="mb-[14px]">
+        <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
           E-posta veya Kullanıcı Adı
         </label>
         <input
@@ -83,13 +77,14 @@ export function LoginPage() {
           onKeyDown={(e) => e.key === 'Enter' && submit()}
           placeholder=""
           autoComplete="username"
-          style={inpStyle(fId)}
+          className={inpClass}
+          style={{ border: `1px solid ${fId ? 'var(--color-gold)' : 'var(--color-border)'}` }}
         />
       </div>
 
-      <div style={{ marginBottom: '6px' }}>
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: C.textMid, marginBottom: '6px' }}>Şifre</label>
-        <div style={{ position: 'relative' }}>
+      <div className="mb-[6px]">
+        <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre</label>
+        <div className="relative">
           <input
             type={showP ? 'text' : 'password'}
             value={pass}
@@ -98,24 +93,47 @@ export function LoginPage() {
             onBlur={() => setFPass(false)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
             placeholder=""
-            style={{ ...inpStyle(fPass), padding: '10px 44px 10px 14px' }}
+            className={inpClass}
+            style={{
+              paddingRight: '44px',
+              border: `1px solid ${fPass ? 'var(--color-gold)' : 'var(--color-border)'}`,
+            }}
           />
-          <button type="button" onClick={() => setShowP((s) => !s)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, display: 'flex', alignItems: 'center', padding: '4px' }}>
+          <button
+            type="button"
+            onClick={() => setShowP((s) => !s)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) flex items-center p-1"
+          >
             <EyeIcon open={showP} />
           </button>
         </div>
       </div>
 
-      <div style={{ textAlign: 'right', marginBottom: '16px' }}>
-        <span onClick={() => navigate('/sifre-sifirla')} style={{ fontSize: '13px', color: C.gold, cursor: 'pointer', fontWeight: 600 }}>Şifremi unuttum</span>
+      <div className="text-right mb-4">
+        <span
+          onClick={() => navigate('/sifre-sifirla')}
+          className="text-[13px] text-(--color-gold) cursor-pointer font-semibold"
+        >
+          Şifremi unuttum
+        </span>
       </div>
 
-      {err && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, fontSize: '13px', marginBottom: '12px' }}>⚠ {err}</div>}
+      {err && (
+        <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-[10px] px-[14px] py-[10px] text-(--color-red) text-[13px] mb-3">
+          {err}
+        </div>
+      )}
       <Btn onClick={submit} disabled={loading} style={{ width: '100%', justifyContent: 'center', marginBottom: '14px' }} size="lg">
         {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
       </Btn>
-      <div style={{ textAlign: 'center', fontSize: '13px', color: C.textMid }}>
-        Hesabın yok mu? <span onClick={() => navigate('/kayit')} style={{ color: C.gold, fontWeight: 700, cursor: 'pointer' }}>Üye Ol</span>
+      <div className="text-center text-[13px] text-(--color-text-mid)">
+        Hesabın yok mu?{' '}
+        <span
+          onClick={() => navigate('/kayit')}
+          className="text-(--color-gold) font-bold cursor-pointer"
+        >
+          Üye Ol
+        </span>
       </div>
     </AuthLayout>
   );

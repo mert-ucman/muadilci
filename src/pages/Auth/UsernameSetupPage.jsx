@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { C, F } from '@/constants/theme';
 import { Btn } from '@/components/ui';
 
 const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
@@ -53,82 +52,60 @@ export function UsernameSetupPage() {
     }
   };
 
-  const availColor  = avail === true ? '#276749' : avail === false ? '#c53030' : C.textLight;
-  const availBg     = avail === true ? '#f0fff4' : avail === false ? '#fff5f5' : C.surface;
-  const availBorder = avail === true ? '#9ae6b4' : avail === false ? '#fc8181' : C.border;
+  const availColor  = avail === true ? '#276749' : avail === false ? '#c53030' : 'var(--color-text-light)';
+  const availBg     = avail === true ? '#f0fff4' : avail === false ? '#fff5f5' : 'var(--color-surface)';
+  const availBorder = avail === true ? '#9ae6b4' : avail === false ? '#fc8181' : 'var(--color-border)';
   const availMsg    = avail === true ? 'Kullanıcı adı müsait'
     : avail === 'checking' ? 'Kontrol ediliyor...'
     : avail === false ? 'Bu kullanıcı adı alınmış ya da geçersiz'
     : '';
 
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '20px', fontFamily: F,
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: '20px',
-        boxShadow: '0 8px 40px rgba(0,0,0,.1)',
-        padding: '48px 40px', maxWidth: '440px', width: '100%',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          width: '88px', height: '88px', borderRadius: '50%',
-          background: C.goldBg, border: `2px solid ${C.goldBorder}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 24px', color: C.gold,
-        }}>
+    <div className="min-h-screen bg-(--color-bg) flex items-center justify-center p-5 font-[--font-body]">
+      <div className="bg-white rounded-[20px] shadow-[0_8px_40px_rgba(0,0,0,.1)] px-10 py-12 max-w-[440px] w-full text-center">
+        <div className="w-[88px] h-[88px] rounded-full bg-(--color-gold-bg) border-2 border-(--color-gold-border) flex items-center justify-center mx-auto mb-6 text-(--color-gold)">
           <AtIcon />
         </div>
 
-        <h1 style={{ fontSize: '22px', fontWeight: 900, color: C.navy, marginBottom: '10px' }}>
+        <h1 className="text-[22px] font-black text-(--color-navy) mb-[10px]">
           Kullanıcı Adı Seç
         </h1>
-        <p style={{ fontSize: '14px', color: C.textMid, lineHeight: 1.7, marginBottom: '28px' }}>
+        <p className="text-[14px] text-(--color-text-mid) leading-[1.7] mb-7">
           Google ile giriş yaptın. Devam etmek için bir kullanıcı adı seçmen gerekiyor.
         </p>
 
-        <div style={{ textAlign: 'left', marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '6px', letterSpacing: '.05em', textTransform: 'uppercase' }}>
+        <div className="text-left mb-5">
+          <label className="block text-[12px] font-semibold text-(--color-text-mid) mb-[6px] tracking-[.05em] uppercase">
             Kullanıcı Adı
           </label>
-          <div style={{
-            display: 'flex', alignItems: 'center',
-            border: `1px solid ${username.length >= 3 ? availBorder : C.border}`,
-            borderRadius: '10px', overflow: 'hidden',
-            background: username.length >= 3 ? availBg : '#fff',
-            transition: 'border-color 0.2s, background 0.2s',
-          }}>
-            <span style={{ padding: '0 12px', color: C.textLight, fontSize: '15px', fontWeight: 500, userSelect: 'none' }}>@</span>
+          <div
+            className="flex items-center rounded-[10px] overflow-hidden transition-[border-color,background] duration-200"
+            style={{
+              border: `1px solid ${username.length >= 3 ? availBorder : 'var(--color-border)'}`,
+              background: username.length >= 3 ? availBg : '#fff',
+            }}
+          >
+            <span className="px-3 text-(--color-text-light) text-[15px] font-medium select-none">@</span>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
               placeholder="kullanici_adi"
               maxLength={20}
-              style={{
-                flex: 1, border: 'none', outline: 'none',
-                padding: '12px 12px 12px 0',
-                fontSize: '15px', color: C.text, background: 'transparent', fontFamily: F,
-              }}
+              className="flex-1 border-none outline-none py-3 pr-3 text-[15px] text-(--color-text) bg-transparent font-[--font-body]"
             />
           </div>
           {availMsg && (
-            <p style={{ fontSize: '12px', color: availColor, marginTop: '6px', textAlign: 'left' }}>
+            <p className="text-[12px] mt-[6px] text-left" style={{ color: availColor }}>
               {availMsg}
             </p>
           )}
-          <p style={{ fontSize: '11px', color: C.textLight, marginTop: '5px' }}>
+          <p className="text-[11px] text-(--color-text-light) mt-[5px]">
             3-20 karakter. Harf, rakam, _ ve - kullanılabilir.
           </p>
         </div>
 
         {err && (
-          <div style={{
-            background: '#fff5f5', border: '1px solid #fc8181',
-            borderRadius: '10px', padding: '10px 14px',
-            color: '#c53030', fontSize: '13px', marginBottom: '16px', textAlign: 'left',
-          }}>
+          <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] px-[14px] py-[10px] text-[#c53030] text-[13px] mb-4 text-left">
             {err}
           </div>
         )}
@@ -144,11 +121,7 @@ export function UsernameSetupPage() {
 
         <button
           onClick={() => logout()}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '13px', color: C.textLight, fontFamily: F,
-            textDecoration: 'underline', textUnderlineOffset: '3px',
-          }}
+          className="bg-transparent border-none cursor-pointer text-[13px] text-(--color-text-light) font-[--font-body] underline underline-offset-[3px]"
         >
           Farklı bir hesapla giriş yap
         </button>

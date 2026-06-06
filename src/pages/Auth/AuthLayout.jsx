@@ -1,5 +1,5 @@
 import { useRouter } from '@/contexts/RouterContext';
-import { C, FH } from '@/constants/theme';
+import { FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { useW } from '@/hooks/useW';
 import logoDark from '@/img/logos/logo-dark-minified.png';
@@ -20,59 +20,31 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
   useSeo({ title: title || 'Hesap', noindex: true });
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: C.bg,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 24px',
-    }}>
-      <div style={{
-        display: 'flex',
-        width: '100%',
-        maxWidth: '920px',
-        borderRadius: '24px',
-        overflow: 'hidden',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.13)',
-      }}>
+    <div className="min-h-screen bg-(--color-bg) flex items-center justify-center px-6 py-10">
+      <div className="flex w-full max-w-[920px] rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.13)]">
 
-        {/* ── Sol panel: görsel ─────────────────────────────────────── */}
+        {/* Left panel: visual */}
         {!lg && (
-          <div style={{
-            width: '400px',
-            minHeight: '560px',
-            flexShrink: 0,
-            position: 'relative',
-            backgroundImage: `url(${bgImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center top',
-          }}>
-            {/* karartma gradyanı */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(170deg, rgba(15,10,5,0.18) 0%, rgba(18,12,4,0.80) 65%)',
-            }} />
+          <div
+            className="w-[400px] min-h-[560px] shrink-0 relative bg-cover bg-[center_top]"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          >
+            {/* Darkening gradient */}
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(170deg, rgba(15,10,5,0.18) 0%, rgba(18,12,4,0.80) 65%)' }} />
 
-            {/* metin */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              padding: '40px 36px',
-            }}>
-
-              <h2 style={{
-                fontFamily: FH,
-                fontSize: '30px',
-                fontWeight: 400,
-                color: '#fff',
-                lineHeight: 1.32,
-                marginBottom: '18px',
-                letterSpacing: '-0.01em',
-              }}>
+            {/* Text */}
+            <div className="absolute bottom-0 left-0 right-0 p-10" style={{ padding: '40px 36px' }}>
+              <h2
+                style={{
+                  fontFamily: FH,
+                  fontSize: '30px',
+                  fontWeight: 400,
+                  color: '#fff',
+                  lineHeight: 1.32,
+                  marginBottom: '18px',
+                  letterSpacing: '-0.01em',
+                }}
+              >
                 {headline}
               </h2>
               <p style={{
@@ -90,31 +62,16 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
           </div>
         )}
 
-        {/* ── Sağ panel: form ───────────────────────────────────────── */}
-        <div style={{
-          flex: 1,
-          background: '#FAFAF8',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: lg ? '40px 28px' : '40px 44px',
-          position: 'relative',
-        }}>
-          {/* Ana sayfa butonu */}
+        {/* Right panel: form */}
+        <div
+          className="flex-1 bg-[#FAFAF8] flex flex-col items-center justify-center relative"
+          style={{ padding: lg ? '40px 28px' : '40px 44px' }}
+        >
+          {/* Home button */}
           <button
             onClick={() => navigate('/')}
-            style={{
-              position: 'absolute', top: '18px', left: '18px',
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'none', border: `1px solid ${C.border}`,
-              borderRadius: '8px', padding: '6px 12px',
-              fontSize: '12px', color: C.textMid, cursor: 'pointer',
-              fontFamily: 'Nunito, sans-serif', fontWeight: 600,
-              transition: 'color 0.2s, border-color 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = C.gold; e.currentTarget.style.borderColor = C.gold; }}
-            onMouseLeave={e => { e.currentTarget.style.color = C.textMid; e.currentTarget.style.borderColor = C.border; }}
+            className="absolute top-[18px] left-[18px] flex items-center gap-[6px] bg-transparent border border-(--color-border) rounded-lg px-3 py-[6px] text-[12px] text-(--color-text-mid) cursor-pointer font-semibold transition-[color,border-color] duration-200 hover:text-(--color-gold) hover:border-(--color-gold)"
+            style={{ fontFamily: 'Nunito, sans-serif' }}
           >
             <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M19 12H5M12 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -124,26 +81,20 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
 
           <div
             onClick={() => navigate('/')}
-            style={{ cursor: 'pointer', marginBottom: '24px' }}
+            className="cursor-pointer mb-6"
           >
             <img
               src={logoDark}
               alt="muadilci"
-              style={{ height: '72px', objectFit: 'contain', display: 'block' }}
+              className="h-[72px] object-contain block"
             />
           </div>
 
-          <div style={{ width: '100%', maxWidth: '360px' }}>
-            <h1 style={{
-              fontSize: '22px', fontWeight: 900, color: C.navy,
-              marginBottom: '6px', textAlign: 'center',
-            }}>
+          <div className="w-full max-w-[360px]">
+            <h1 className="text-[22px] font-black text-(--color-navy) mb-[6px] text-center">
               {title}
             </h1>
-            <p style={{
-              color: C.textLight, fontSize: '13px',
-              textAlign: 'center', marginBottom: '24px',
-            }}>
+            <p className="text-(--color-text-light) text-[13px] text-center mb-6">
               {subtitle}
             </p>
             {children}
@@ -160,17 +111,14 @@ export function GoogleBtn({ label, onClick, loading }) {
     <button
       onClick={onClick}
       disabled={loading}
+      className="w-full border border-(--color-border) rounded-[10px] py-[11px] flex items-center justify-center gap-[10px] text-[14px] font-semibold text-(--color-text) cursor-pointer mb-[14px] transition-[background,opacity] duration-150 disabled:cursor-not-allowed"
       style={{
-        width: '100%', border: `1px solid ${C.border}`, borderRadius: '10px',
-        padding: '11px', background: loading ? '#f5f5f5' : C.card,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        gap: '10px', fontSize: '14px', fontWeight: 600, color: C.text,
-        cursor: loading ? 'not-allowed' : 'pointer',
-        fontFamily: 'Nunito,sans-serif', marginBottom: '14px',
+        background: loading ? '#f5f5f5' : 'var(--color-card)',
         opacity: loading ? 0.7 : 1,
+        fontFamily: 'Nunito,sans-serif',
       }}
       onMouseEnter={(e) => !loading && (e.currentTarget.style.background = '#f9f9f9')}
-      onMouseLeave={(e) => !loading && (e.currentTarget.style.background = C.card)}
+      onMouseLeave={(e) => !loading && (e.currentTarget.style.background = 'var(--color-card)')}
     >
       <svg width="18" height="18" viewBox="0 0 24 24">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -185,10 +133,10 @@ export function GoogleBtn({ label, onClick, loading }) {
 
 export function Divider() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '14px 0' }}>
-      <div style={{ flex: 1, height: '1px', background: C.border }} />
-      <span style={{ fontSize: '12px', color: C.textLight, fontWeight: 500 }}>VEYA</span>
-      <div style={{ flex: 1, height: '1px', background: C.border }} />
+    <div className="flex items-center gap-3 my-[14px]">
+      <div className="flex-1 h-px bg-(--color-border)" />
+      <span className="text-[12px] text-(--color-text-light) font-medium">VEYA</span>
+      <div className="flex-1 h-px bg-(--color-border)" />
     </div>
   );
 }

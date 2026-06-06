@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { Card } from '@/components/ui';
 import { calcScores } from '@/utils/scoring';
-import { C, F, FH } from '@/constants/theme';
+import { C, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
 
@@ -169,6 +169,7 @@ export function BrandsPage() {
   const safePage   = Math.min(page, totalPages);
   const pageItems  = sorted.slice((safePage - 1) * perPage, safePage * perPage);
 
+  // Dynamic view-toggle button style (active state depends on state)
   const btnStyle = (active) => ({
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     width: '34px', height: '34px', borderRadius: '8px', border: `1px solid ${C.border}`,
@@ -177,27 +178,53 @@ export function BrandsPage() {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '4px' }}>Markalar</h1>
-        <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '22px' }}>Orijinal ve muadil parfüm evleri</p>
+    <div
+      className="min-h-screen bg-(--color-bg)"
+      style={{ padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}
+    >
+      <div className="max-w-[1320px] mx-auto">
+        <h1
+          className="font-black text-(--color-navy) mb-1"
+          style={{ fontSize: sm ? '22px' : '26px' }}
+        >
+          Markalar
+        </h1>
+        <p className="text-(--color-text-light) text-[14px] mb-[22px]">Orijinal ve muadil parfüm evleri</p>
 
         {/* Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+        <div className="flex items-center justify-between mb-[14px] flex-wrap gap-[10px]">
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '4px' }}>
+          <div className="flex gap-1 bg-(--color-card) border border-(--color-border) rounded-[12px] p-1">
             {[['original', 'Orijinal Markalar'], ['muadil', 'Muadil Markalar']].map(([v, l]) => (
-              <button key={v} onClick={() => switchTab(v)} style={{ padding: sm ? '8px 14px' : '8px 22px', borderRadius: '9px', border: 'none', background: tab === v ? C.navy : 'transparent', color: tab === v ? '#fff' : C.textMid, fontSize: sm ? '13px' : '14px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .2s' }}>{l}</button>
+              <button
+                key={v}
+                onClick={() => switchTab(v)}
+                className="rounded-[9px] border-none cursor-pointer font-semibold transition-all duration-200 font-[--font-body]"
+                style={{
+                  padding: sm ? '8px 14px' : '8px 22px',
+                  background: tab === v ? C.navy : 'transparent',
+                  color: tab === v ? '#fff' : C.textMid,
+                  fontSize: sm ? '13px' : '14px',
+                }}
+              >
+                {l}
+              </button>
             ))}
           </div>
 
           {/* Sort + Per-page + View */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2 flex-wrap">
             {!isOrig && (
               <select
                 value={scoreFilter}
                 onChange={e => { setScoreFilter(e.target.value); setPage(1); }}
-                style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`, background: scoreFilter !== 'all' ? C.goldBg : C.card, color: scoreFilter !== 'all' ? C.gold : C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none', fontWeight: scoreFilter !== 'all' ? 700 : 400 }}
+                className="h-[34px] px-[10px] rounded-[8px] text-[13px] cursor-pointer outline-none font-[--font-body]"
+                style={{
+                  border: `1px solid ${scoreFilter !== 'all' ? C.gold : C.border}`,
+                  background: scoreFilter !== 'all' ? C.goldBg : C.card,
+                  color: scoreFilter !== 'all' ? C.gold : C.text,
+                  fontWeight: scoreFilter !== 'all' ? 700 : 400,
+                }}
               >
                 <option value="all">Tüm Puanlar</option>
                 <optgroup label="Sadece">
@@ -216,15 +243,22 @@ export function BrandsPage() {
             <select
               value={sort}
               onChange={e => switchSort(e.target.value)}
-              style={{ height: '34px', padding: '0 10px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.text, fontSize: '13px', fontFamily: F, cursor: 'pointer', outline: 'none' }}
+              className="h-[34px] px-[10px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-(--color-text) text-[13px] cursor-pointer outline-none font-[--font-body]"
             >
               {(isOrig ? SORT_OPTIONS_ORIG : SORT_OPTIONS_MUADIL).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '0 6px', height: '34px' }}>
+            <div className="flex items-center gap-1 bg-(--color-card) border border-(--color-border) rounded-[8px] px-[6px] h-[34px]">
               {PER_PAGE_OPTS.map(n => (
-                <button key={n} onClick={() => switchPerPage(n)}
-                  style={{ padding: '3px 7px', borderRadius: '6px', border: 'none', background: perPage === n ? C.navy : 'transparent', color: perPage === n ? '#fff' : C.textMid, fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .15s' }}>
+                <button
+                  key={n}
+                  onClick={() => switchPerPage(n)}
+                  className="px-[7px] py-[3px] rounded-[6px] border-none cursor-pointer text-[12px] font-semibold transition-all duration-150 font-[--font-body]"
+                  style={{
+                    background: perPage === n ? C.navy : 'transparent',
+                    color: perPage === n ? '#fff' : C.textMid,
+                  }}
+                >
                   {n}
                 </button>
               ))}
@@ -240,57 +274,93 @@ export function BrandsPage() {
         </div>
 
         {/* Search */}
-        <div style={{ marginBottom: '14px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            background: C.card, border: `1px solid ${searchQ ? C.gold : C.border}`,
-            borderRadius: '10px', padding: '0 14px', height: '40px',
-            maxWidth: '400px',
-            boxShadow: searchQ ? `0 0 0 3px ${C.goldBg}` : 'none',
-            transition: 'border-color 0.2s, box-shadow 0.2s',
-          }}>
-            <svg width="13" height="13" fill="none" stroke={searchQ ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+        <div className="mb-[14px]">
+          <div
+            className="flex items-center gap-2 bg-(--color-card) rounded-[10px] px-[14px] h-10 max-w-[400px] transition-[border-color,box-shadow] duration-200"
+            style={{
+              border: `1px solid ${searchQ ? C.gold : C.border}`,
+              boxShadow: searchQ ? `0 0 0 3px ${C.goldBg}` : 'none',
+            }}
+          >
+            <svg width="13" height="13" fill="none" stroke={searchQ ? C.gold : C.textLight} strokeWidth="2" viewBox="0 0 24 24" className="shrink-0">
               <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
             <input
               value={searchQ}
               onChange={e => handleSearch(e.target.value)}
               placeholder="Marka adı veya köken ara..."
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: '13px', color: C.text, background: 'transparent', fontFamily: F }}
+              className="flex-1 border-none outline-none text-[13px] text-(--color-text) bg-transparent font-[--font-body]"
             />
             {searchQ && (
-              <button onClick={() => handleSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.textLight, fontSize: '16px', lineHeight: 1, padding: 0 }}>×</button>
+              <button
+                onClick={() => handleSearch('')}
+                className="bg-transparent border-none cursor-pointer text-(--color-text-light) text-[16px] leading-none p-0"
+              >
+                ×
+              </button>
             )}
           </div>
         </div>
 
-        {/* Toplam + sayfa bilgisi */}
-        <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-          <span>Toplam <strong style={{ color: C.navy }}>{sorted.length}</strong> marka</span>
-          {sorted.length > 0 && <span style={{ color: C.textLight }}>{(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, sorted.length)} gösteriliyor · Sayfa {safePage}/{totalPages}</span>}
+        {/* Total + page info */}
+        <div className="text-[13px] text-(--color-text-mid) mb-[14px] flex items-center justify-between flex-wrap gap-[6px]">
+          <span>Toplam <strong className="text-(--color-navy)">{sorted.length}</strong> marka</span>
+          {sorted.length > 0 && (
+            <span className="text-(--color-text-light)">
+              {(safePage - 1) * perPage + 1}–{Math.min(safePage * perPage, sorted.length)} gösteriliyor · Sayfa {safePage}/{totalPages}
+            </span>
+          )}
         </div>
 
         {/* Grid View */}
         {view === 'grid' && (
-          <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))', gap: '14px' }}>
+          <div
+            className="grid gap-[14px]"
+            style={{ gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(230px,1fr))' }}
+          >
             {pageItems.map(b => (
-              <Card key={b.id} hover style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
+              <Card
+                key={b.id}
+                hover
+                style={{ padding: sm ? '16px' : '22px', cursor: 'pointer', position: 'relative' }}
+                onClick={() => navigate(`/marka/${b.slug}`)}
+                onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
+              >
                 <button
                   onClick={e => { e.stopPropagation(); toggleBrandFavorite(user?.uid || user?.id, b.id); }}
-                  style={{ position: 'absolute', top: '10px', right: '10px', width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBorder : C.border}`, background: isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px', transition: 'all .15s' }}
-                  title={user ? (isBrandFavorite(user?.uid || user?.id, b.id) ? 'Favoriden çıkar' : 'Favoriye ekle') : 'Giriş yapın'}>
+                  className="absolute top-[10px] right-[10px] w-7 h-7 rounded-full flex items-center justify-center cursor-pointer text-[13px] transition-all duration-150"
+                  style={{
+                    border: `1px solid ${isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBorder : C.border}`,
+                    background: isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBg : '#fff',
+                  }}
+                  title={user ? (isBrandFavorite(user?.uid || user?.id, b.id) ? 'Favoriden çıkar' : 'Favoriye ekle') : 'Giriş yapın'}
+                >
                   {isBrandFavorite(user?.uid || user?.id, b.id) ? '❤️' : '🤍'}
                 </button>
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                  <div style={{ width: sm ? '38px' : '46px', height: sm ? '38px' : '46px', borderRadius: '50%', background: isOrig ? C.goldBg : C.greenBg, border: `1px solid ${isOrig ? C.goldBorder : '#E2D088'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: isOrig ? C.gold : C.green, flexShrink: 0, overflow: 'hidden' }}>
-                    <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div className="flex gap-3 items-center mb-3">
+                  <div
+                    className="rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden"
+                    style={{
+                      width: sm ? '38px' : '46px',
+                      height: sm ? '38px' : '46px',
+                      background: isOrig ? C.goldBg : C.greenBg,
+                      border: `1px solid ${isOrig ? C.goldBorder : '#E2D088'}`,
+                      color: isOrig ? C.gold : C.green,
+                    }}
+                  >
+                    <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
                   </div>
-                  <div style={{ paddingRight: '24px', minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: sm ? '14px' : '16px', color: C.navy, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FH }}>{b.name}</div>
-                    <div style={{ fontSize: '12px', color: C.textMid }}>{b.origin}{isOrig && b.founded ? ` · ${b.founded}` : ''}</div>
+                  <div className="pr-6 min-w-0">
+                    <div
+                      className="font-semibold text-(--color-navy) whitespace-nowrap overflow-hidden text-ellipsis font-[--font-display]"
+                      style={{ fontSize: sm ? '14px' : '16px' }}
+                    >
+                      {b.name}
+                    </div>
+                    <div className="text-[12px] text-(--color-text-mid)">{b.origin}{isOrig && b.founded ? ` · ${b.founded}` : ''}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: '12px', color: C.textLight, paddingTop: '10px', borderTop: `1px solid ${C.borderLight}`, display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="text-[12px] text-(--color-text-light) pt-[10px] border-t border-(--color-border-light) flex gap-3 items-center flex-wrap">
                   <span>♥ {(b.likes || 0).toLocaleString()}</span>
                   {isOrig && <span>{perfumeCountMap[b.id] || 0} parfüm</span>}
                   {isOrig && <span>{muadilCountMap[b.id] || 0} muadil</span>}
@@ -298,9 +368,9 @@ export function BrandsPage() {
                   {!isOrig && (() => {
                     const sc = brandScoreMap[b.id];
                     return (
-                      <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ fontSize: '11px', color: C.textLight }}>Puan</span>
-                        <span style={{ fontWeight: 800, fontSize: '13px', color: scoreColor(sc) }}>
+                      <span className="ml-auto flex items-center gap-[5px]">
+                        <span className="text-[11px] text-(--color-text-light)">Puan</span>
+                        <span className="font-extrabold text-[13px]" style={{ color: scoreColor(sc) }}>
                           {sc != null ? `${sc}/10` : '—'}
                         </span>
                       </span>
@@ -309,31 +379,58 @@ export function BrandsPage() {
                 </div>
               </Card>
             ))}
-            {!sorted.length && <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px', color: C.textLight }}>Bu kategoride marka bulunmuyor.</div>}
+            {!sorted.length && (
+              <div className="col-span-full text-center p-[60px] text-(--color-text-light)">
+                Bu kategoride marka bulunmuyor.
+              </div>
+            )}
           </div>
         )}
         {view === 'grid' && totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '28px', flexWrap: 'wrap' }}>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
-              style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+          <div className="flex justify-center items-center gap-[6px] mt-7 flex-wrap">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="px-[14px] py-[6px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-[13px] font-[--font-body]"
+              style={{ color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer' }}
+            >
+              ‹
+            </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => {
               if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
               acc.push(n);
               return acc;
             }, []).map((n, i) => n === '…' ? (
-              <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight }}>…</span>
+              <span key={`e${i}`} className="px-1 text-(--color-text-light)">…</span>
             ) : (
-              <button key={n} onClick={() => setPage(n)}
-                style={{ padding: '6px 11px', borderRadius: '8px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+              <button
+                key={n}
+                onClick={() => setPage(n)}
+                className="px-[11px] py-[6px] rounded-[8px] text-[13px] cursor-pointer font-[--font-body]"
+                style={{
+                  border: `1px solid ${n === safePage ? C.navy : C.border}`,
+                  background: n === safePage ? C.navy : C.card,
+                  color: n === safePage ? '#fff' : C.text,
+                  fontWeight: n === safePage ? 700 : 400,
+                }}
+              >
+                {n}
+              </button>
             ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
-              style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="px-[14px] py-[6px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-[13px] font-[--font-body]"
+              style={{ color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer' }}
+            >
+              ›
+            </button>
           </div>
         )}
 
         {/* List View */}
         {view === 'list' && (() => {
-          // Sütun → sıralama çiftleri (asc, desc)
+          // Column → sort pairs (asc, desc)
           const COL_SORT = {
             'Marka':   ['az',           'za'],
             'Köken':   ['origin_asc',   'origin_desc'],
@@ -365,23 +462,30 @@ export function BrandsPage() {
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            <table style={{ width: '100%', minWidth: '620px', borderCollapse: 'collapse' }}>
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full border-collapse" style={{ minWidth: '620px' }}>
               <thead>
-                <tr style={{ background: C.bg }}>
+                <tr className="bg-(--color-bg)">
                   {columns.map(h => {
                     const sortable = !!COL_SORT[h];
                     const active = colActive(h);
                     const dir = colDir(h);
                     return (
-                      <th key={h}
+                      <th
+                        key={h}
                         onClick={() => handleColSort(h)}
-                        style={{ padding: '10px 14px', textAlign: h === 'Marka' ? 'left' : 'center', fontSize: '11px', fontWeight: 700, color: active ? C.navy : C.textMid, textTransform: 'uppercase', letterSpacing: '.05em', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap', cursor: sortable ? 'pointer' : 'default', userSelect: 'none', transition: 'color .15s' }}
+                        className="px-[14px] py-[10px] text-[11px] font-bold uppercase tracking-[.05em] whitespace-nowrap select-none transition-[color] duration-150"
+                        style={{
+                          textAlign: h === 'Marka' ? 'left' : 'center',
+                          color: active ? C.navy : C.textMid,
+                          borderBottom: `1px solid ${C.border}`,
+                          cursor: sortable ? 'pointer' : 'default',
+                        }}
                       >
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="inline-flex items-center gap-1">
                           {h}
                           {sortable && (
-                            <span style={{ fontSize: '12px', color: active ? C.navy : C.border, fontWeight: 900 }}>
+                            <span className="text-[12px] font-black" style={{ color: active ? C.navy : C.border }}>
                               {dir || '↕'}
                             </span>
                           )}
@@ -392,42 +496,60 @@ export function BrandsPage() {
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((b, i) => (
-                  <tr key={b.id} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
-                    style={{ borderBottom: `1px solid ${C.borderLight}`, cursor: 'pointer', transition: 'background .1s' }}
+                {pageItems.map((b) => (
+                  <tr
+                    key={b.id}
+                    onClick={() => navigate(`/marka/${b.slug}`)}
+                    onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
+                    className="cursor-pointer transition-[background] duration-100"
+                    style={{ borderBottom: `1px solid ${C.borderLight}` }}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isOrig ? C.goldBg : C.greenBg, border: `1px solid ${isOrig ? C.goldBorder : C.greenBorder}`, overflow: 'hidden', flexShrink: 0 }}>
-                          <img src={b.logoImage || noImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <td className="px-[14px] py-3">
+                      <div className="flex items-center gap-[10px]">
+                        <div
+                          className="w-9 h-9 rounded-full overflow-hidden shrink-0"
+                          style={{
+                            background: isOrig ? C.goldBg : C.greenBg,
+                            border: `1px solid ${isOrig ? C.goldBorder : C.greenBorder}`,
+                          }}
+                        >
+                          <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
                         </div>
-                        <span style={{ fontWeight: 600, fontSize: '14px', color: C.navy, fontFamily: FH }}>{b.name}</span>
+                        <span className="font-semibold text-[14px] text-(--color-navy)" style={{ fontFamily: FH }}>{b.name}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.origin || '—'}</td>
-                    {isOrig && <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{b.founded || '—'}</td>}
-                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{isOrig ? (perfumeCountMap[b.id] || 0) : (muadilBrandProductCount[b.id] || 0)}</td>
-                    {isOrig && <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>{muadilCountMap[b.id] || 0}</td>}
+                    <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">{b.origin || '—'}</td>
+                    {isOrig && <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">{b.founded || '—'}</td>}
+                    <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">
+                      {isOrig ? (perfumeCountMap[b.id] || 0) : (muadilBrandProductCount[b.id] || 0)}
+                    </td>
+                    {isOrig && <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">{muadilCountMap[b.id] || 0}</td>}
                     {!isOrig && (() => {
                       const sc = brandScoreMap[b.id];
                       return (
-                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                        <td className="px-[14px] py-3 text-center">
                           {sc != null ? (
-                            <span style={{ fontWeight: 800, fontSize: '14px', color: scoreColor(sc) }}>{sc}/10</span>
+                            <span className="font-extrabold text-[14px]" style={{ color: scoreColor(sc) }}>{sc}/10</span>
                           ) : (
-                            <span style={{ color: C.textLight, fontSize: '13px' }}>—</span>
+                            <span className="text-(--color-text-light) text-[13px]">—</span>
                           )}
                         </td>
                       );
                     })()}
-                    <td style={{ padding: '12px 14px', fontSize: '13px', color: C.textMid, textAlign: 'center' }}>♥ {(b.likes || 0).toLocaleString()}</td>
-                    <td style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">♥ {(b.likes || 0).toLocaleString()}</td>
+                    <td className="px-[14px] py-3">
+                      <div className="flex justify-center">
                         <button
                           onClick={e => { e.stopPropagation(); toggleBrandFavorite(user?.uid || user?.id, b.id); }}
                           title={user ? (isBrandFavorite(user?.uid || user?.id, b.id) ? 'Favoriden çıkar' : 'Favoriye ekle') : 'Giriş yapın'}
-                          style={{ width: '28px', height: '28px', borderRadius: '50%', border: `1px solid ${isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBorder : C.border}`, background: isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBg : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '13px', transition: 'all .15s' }}>
+                          className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer text-[13px] transition-all duration-150"
+                          style={{
+                            border: `1px solid ${isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBorder : C.border}`,
+                            background: isBrandFavorite(user?.uid || user?.id, b.id) ? C.redBg : '#fff',
+                          }}
+                        >
                           {isBrandFavorite(user?.uid || user?.id, b.id) ? '❤️' : '🤍'}
                         </button>
                       </div>
@@ -437,24 +559,49 @@ export function BrandsPage() {
               </tbody>
             </table>
             </div>
-            {!sorted.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Bu kategoride marka bulunmuyor.</div>}
+            {!sorted.length && (
+              <div className="text-center p-[60px] text-(--color-text-light)">Bu kategoride marka bulunmuyor.</div>
+            )}
           </Card>
           {totalPages > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '20px', flexWrap: 'wrap' }}>
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={safePage === 1}
-                style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>‹</button>
+            <div className="flex justify-center items-center gap-[6px] mt-5 flex-wrap">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={safePage === 1}
+                className="px-[14px] py-[6px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-[13px] font-[--font-body]"
+                style={{ color: safePage === 1 ? C.textLight : C.text, cursor: safePage === 1 ? 'default' : 'pointer' }}
+              >
+                ‹
+              </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).filter(n => n === 1 || n === totalPages || Math.abs(n - safePage) <= 1).reduce((acc, n, idx, arr) => {
                 if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
                 acc.push(n);
                 return acc;
               }, []).map((n, i) => n === '…' ? (
-                <span key={`e${i}`} style={{ padding: '0 4px', color: C.textLight }}>…</span>
+                <span key={`e${i}`} className="px-1 text-(--color-text-light)">…</span>
               ) : (
-                <button key={n} onClick={() => setPage(n)}
-                  style={{ padding: '6px 11px', borderRadius: '8px', border: `1px solid ${n === safePage ? C.navy : C.border}`, background: n === safePage ? C.navy : C.card, color: n === safePage ? '#fff' : C.text, cursor: 'pointer', fontSize: '13px', fontWeight: n === safePage ? 700 : 400, fontFamily: F }}>{n}</button>
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className="px-[11px] py-[6px] rounded-[8px] text-[13px] cursor-pointer font-[--font-body]"
+                  style={{
+                    border: `1px solid ${n === safePage ? C.navy : C.border}`,
+                    background: n === safePage ? C.navy : C.card,
+                    color: n === safePage ? '#fff' : C.text,
+                    fontWeight: n === safePage ? 700 : 400,
+                  }}
+                >
+                  {n}
+                </button>
               ))}
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
-                style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer', fontSize: '13px', fontFamily: F }}>›</button>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage === totalPages}
+                className="px-[14px] py-[6px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-[13px] font-[--font-body]"
+                style={{ color: safePage === totalPages ? C.textLight : C.text, cursor: safePage === totalPages ? 'default' : 'pointer' }}
+              >
+                ›
+              </button>
             </div>
           )}
           </>

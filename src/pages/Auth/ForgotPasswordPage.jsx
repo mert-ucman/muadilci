@@ -3,7 +3,6 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input, Btn } from '@/components/ui';
 import { AuthLayout } from './AuthLayout';
-import { C } from '@/constants/theme';
 
 export function ForgotPasswordPage() {
   const { navigate } = useRouter();
@@ -36,23 +35,32 @@ export function ForgotPasswordPage() {
       {!sent ? (
         <>
           <Input label="E-posta" type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && submit()} placeholder="ornek@mail.com" />
-          {err && <div style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '10px', padding: '10px 14px', color: C.red, fontSize: '13px', marginBottom: '12px' }}>⚠ {err}</div>}
+          {err && (
+            <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-[10px] px-[14px] py-[10px] text-(--color-red) text-[13px] mb-3">
+              {err}
+            </div>
+          )}
           <Btn onClick={submit} disabled={loading} style={{ width: '100%', justifyContent: 'center', marginBottom: '14px' }} size="lg">
             {loading ? 'Gönderiliyor...' : 'Bağlantı Gönder'}
           </Btn>
         </>
       ) : (
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <div style={{ width: '54px', height: '54px', borderRadius: '50%', background: C.greenBg, border: `1px solid ${C.greenBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', fontSize: '22px' }}>✓</div>
-          <div style={{ fontWeight: 700, color: C.text, marginBottom: '8px' }}>E-posta gönderildi!</div>
-          <div style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.6 }}>
-            <strong style={{ color: C.gold }}>{email}</strong> adresine bağlantı gönderdik.<br />
-            <span style={{ display: 'block', marginTop: '6px' }}>Maildeki bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz. Spam klasörünü de kontrol edin.</span>
+        <div className="text-center py-5">
+          <div className="w-[54px] h-[54px] rounded-full bg-(--color-green-bg) border border-(--color-green-border) flex items-center justify-center mx-auto mb-[14px] text-[22px]">✓</div>
+          <div className="font-bold text-(--color-text) mb-2">E-posta gönderildi!</div>
+          <div className="text-[13px] text-(--color-text-light) leading-[1.6]">
+            <strong className="text-(--color-gold)">{email}</strong> adresine bağlantı gönderdik.<br />
+            <span className="block mt-[6px]">Maildeki bağlantıya tıklayarak yeni şifrenizi belirleyebilirsiniz. Spam klasörünü de kontrol edin.</span>
           </div>
         </div>
       )}
-      <div style={{ textAlign: 'center' }}>
-        <span onClick={() => navigate('/giris')} style={{ fontSize: '13px', color: C.gold, cursor: 'pointer' }}>← Giriş sayfasına dön</span>
+      <div className="text-center">
+        <span
+          onClick={() => navigate('/giris')}
+          className="text-[13px] text-(--color-gold) cursor-pointer"
+        >
+          ← Giriş sayfasına dön
+        </span>
       </div>
     </AuthLayout>
   );

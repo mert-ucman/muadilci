@@ -24,7 +24,7 @@ export function LandingPage() {
     description: 'Orijinal parfümlerin uygun fiyatlı muadillerini keşfet, koku/kalıcılık/yayılım puanlarıyla karşılaştır ve sana en yakın alternatifi bul. Türkiye\'nin muadil parfüm topluluğu.',
   });
   return (
-    <div style={{ background: '#fff', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div className="bg-white min-h-screen overflow-x-hidden">
       <PageNavigator sections={SECTIONS} />
       <div id="hero"><HeroSection /></div>
       <div id="how"><HowItWorksSection /></div>

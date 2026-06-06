@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { C, F } from '@/constants/theme';
 import { Btn } from '@/components/ui';
 
 const RESEND_COOLDOWN = 60; // saniye
@@ -67,38 +66,24 @@ export function EmailVerificationPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh', background: C.bg,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '20px', fontFamily: F,
-    }}>
-      <div style={{
-        background: '#fff', borderRadius: '20px',
-        boxShadow: '0 8px 40px rgba(0,0,0,.1)',
-        padding: '48px 40px', maxWidth: '440px', width: '100%',
-        textAlign: 'center',
-      }}>
-        {/* İkon */}
-        <div style={{
-          width: '88px', height: '88px', borderRadius: '50%',
-          background: C.goldBg, border: `2px solid ${C.goldBorder}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 24px', color: C.gold,
-        }}>
+    <div className="min-h-screen bg-(--color-bg) flex items-center justify-center p-5 font-[--font-body]">
+      <div className="bg-white rounded-[20px] shadow-[0_8px_40px_rgba(0,0,0,.1)] px-10 py-12 max-w-[440px] w-full text-center">
+        {/* Icon */}
+        <div className="w-[88px] h-[88px] rounded-full bg-(--color-gold-bg) border-2 border-(--color-gold-border) flex items-center justify-center mx-auto mb-6 text-(--color-gold)">
           <EnvelopeIcon />
         </div>
 
-        <h1 style={{ fontSize: '22px', fontWeight: 900, color: C.navy, marginBottom: '10px' }}>
+        <h1 className="text-[22px] font-black text-(--color-navy) mb-[10px]">
           E-postanı Doğrula
         </h1>
-        <p style={{ fontSize: '14px', color: C.textMid, lineHeight: 1.7, marginBottom: '8px' }}>
-          <strong style={{ color: C.text }}>{user?.email}</strong> adresine bir doğrulama bağlantısı gönderdik.
+        <p className="text-[14px] text-(--color-text-mid) leading-[1.7] mb-2">
+          <strong className="text-(--color-text)">{user?.email}</strong> adresine bir doğrulama bağlantısı gönderdik.
         </p>
-        <p style={{ fontSize: '13px', color: C.textLight, lineHeight: 1.6, marginBottom: '28px' }}>
+        <p className="text-[13px] text-(--color-text-light) leading-[1.6] mb-7">
           Bağlantıya tıkladıktan sonra aşağıdaki butona basın.
         </p>
 
-        {/* Doğruladım butonu */}
+        {/* Verify button */}
         <Btn
           onClick={handleCheck}
           disabled={checking}
@@ -109,44 +94,32 @@ export function EmailVerificationPage() {
         </Btn>
 
         {checkErr && (
-          <div style={{
-            background: '#fff5f5', border: '1px solid #fc8181',
-            borderRadius: '10px', padding: '10px 14px',
-            color: '#c53030', fontSize: '13px', marginBottom: '12px',
-          }}>
-            ⚠ {checkErr}
+          <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] px-[14px] py-[10px] text-[#c53030] text-[13px] mb-3">
+            {checkErr}
           </div>
         )}
 
-        {/* Yeniden gönder */}
-        <div style={{ marginBottom: '24px' }}>
+        {/* Resend */}
+        <div className="mb-6">
           {sendOk && (
-            <div style={{
-              background: '#f0fff4', border: '1px solid #9ae6b4',
-              borderRadius: '10px', padding: '10px 14px',
-              color: '#276749', fontSize: '13px', marginBottom: '10px',
-            }}>
+            <div className="bg-[#f0fff4] border border-[#9ae6b4] rounded-[10px] px-[14px] py-[10px] text-[#276749] text-[13px] mb-[10px]">
               ✓ Doğrulama maili tekrar gönderildi.
             </div>
           )}
           {sendErr && (
-            <div style={{
-              background: '#fff5f5', border: '1px solid #fc8181',
-              borderRadius: '10px', padding: '10px 14px',
-              color: '#c53030', fontSize: '13px', marginBottom: '10px',
-            }}>
-              ⚠ {sendErr}
+            <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] px-[14px] py-[10px] text-[#c53030] text-[13px] mb-[10px]">
+              {sendErr}
             </div>
           )}
           <button
             onClick={handleResend}
             disabled={sending || cooldown > 0}
+            className="bg-transparent border-none p-1 text-[13px] font-semibold font-[--font-body]"
             style={{
-              background: 'none', border: 'none', cursor: cooldown > 0 ? 'default' : 'pointer',
-              fontSize: '13px', fontFamily: F, fontWeight: 600,
-              color: cooldown > 0 ? C.textLight : C.gold,
+              cursor: cooldown > 0 ? 'default' : 'pointer',
+              color: cooldown > 0 ? 'var(--color-text-light)' : 'var(--color-gold)',
               textDecoration: cooldown > 0 ? 'none' : 'underline',
-              textUnderlineOffset: '3px', padding: '4px',
+              textUnderlineOffset: '3px',
             }}
           >
             {sending
@@ -157,25 +130,16 @@ export function EmailVerificationPage() {
           </button>
         </div>
 
-        {/* Bilgi kutusu */}
-        <div style={{
-          background: '#f8f9fb', border: `1px solid ${C.border}`,
-          borderRadius: '10px', padding: '12px 14px',
-          fontSize: '12px', color: C.textLight, lineHeight: 1.6,
-          marginBottom: '24px', textAlign: 'left',
-        }}>
-          💡 Mail gelmiyorsa <strong>spam/junk</strong> klasörünü kontrol edin.
+        {/* Info box */}
+        <div className="bg-[#f8f9fb] border border-(--color-border) rounded-[10px] px-[14px] py-3 text-[12px] text-(--color-text-light) leading-[1.6] mb-6 text-left">
+          Mail gelmiyorsa <strong>spam/junk</strong> klasörünü kontrol edin.
           Birkaç dakika içinde ulaşması gerekir.
         </div>
 
-        {/* Çıkış */}
+        {/* Logout */}
         <button
           onClick={() => logout()}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '13px', color: C.textLight, fontFamily: F,
-            textDecoration: 'underline', textUnderlineOffset: '3px',
-          }}
+          className="bg-transparent border-none cursor-pointer text-[13px] text-(--color-text-light) font-[--font-body] underline underline-offset-[3px]"
         >
           Farklı bir hesapla giriş yap
         </button>

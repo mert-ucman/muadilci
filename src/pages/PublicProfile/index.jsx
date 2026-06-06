@@ -29,28 +29,31 @@ function AccordionList({ list, perfumes, muadilPerfumes, navigate }) {
   };
 
   return (
-    <div style={{ border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden', background: C.card }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px', cursor: 'pointer', background: open ? C.goldBg : C.card, transition: 'background 0.2s' }}
-        onClick={() => setOpen((s) => !s)}>
+    <div className="border border-(--color-border) rounded-xl overflow-hidden bg-(--color-card)">
+      <div
+        className="flex items-center gap-3 p-[14px_18px] cursor-pointer transition-colors duration-200"
+        style={{ background: open ? C.goldBg : C.card }}
+        onClick={() => setOpen((s) => !s)}
+      >
         <svg width="14" height="14" fill="none" stroke={C.textLight} strokeWidth="2.5" viewBox="0 0 24 24"
           style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
           <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, fontFamily: F, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{list.title}</div>
-          <div style={{ fontSize: '11px', color: C.textLight, marginTop: '2px' }}>{list.items?.length || 0} parfüm</div>
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: F }}>{list.title}</div>
+          <div className="text-[11px] text-(--color-text-light) mt-[2px]">{list.items?.length || 0} parfüm</div>
         </div>
       </div>
       {open && (
-        <div style={{ borderTop: `1px solid ${C.borderLight}`, padding: '14px 18px' }}>
+        <div className="border-t border-(--color-border-light) p-[14px_18px]">
           {(!list.items?.length) ? (
-            <div style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>Bu listede henüz parfüm yok.</div>
+            <div className="text-[13px] text-(--color-text-light) italic">Bu listede henüz parfüm yok.</div>
           ) : (
-            <ol style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <ol className="m-0 pl-5 flex flex-col gap-2">
               {list.items.map((item, i) => {
                 const url = getUrl(item);
                 return (
-                  <li key={i} style={{ fontSize: '14px', color: C.text, lineHeight: 1.5 }}>
+                  <li key={i} className="text-sm text-(--color-text) leading-[1.5]">
                     {url ? (
                       <a href={`/#${url}`} onClick={(e) => { e.preventDefault(); navigate(url); }}
                         style={{ fontWeight: 600, color: C.text, textDecoration: 'none', borderBottom: '1px solid transparent', transition: 'color 0.15s, border-color 0.15s' }}
@@ -58,7 +61,7 @@ function AccordionList({ list, perfumes, muadilPerfumes, navigate }) {
                         onMouseLeave={e => { e.currentTarget.style.color = C.text; e.currentTarget.style.borderBottomColor = 'transparent'; }}
                       >{item.displayName}</a>
                     ) : (
-                      <span style={{ fontWeight: 600 }}>{item.displayName}</span>
+                      <span className="font-semibold">{item.displayName}</span>
                     )}
                   </li>
                 );
@@ -115,34 +118,35 @@ export function PublicProfilePage({ params, queryParams }) {
     : [];
 
   if (loading) return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '32px', height: '32px', border: '3px solid #e5e7eb', borderTop: `3px solid ${C.gold}`, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-[3px] border-[#e5e7eb] border-t-[3px] animate-spin" style={{ borderTopColor: C.gold }} />
     </div>
   );
 
   if (notFound) return (
-    <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-      <div style={{ fontSize: '48px' }}>🔍</div>
-      <h2 style={{ fontSize: '22px', fontWeight: 900, color: C.navy }}>Kullanıcı bulunamadı</h2>
-      <p style={{ color: C.textLight }}>@{username} adında bir kullanıcı yok.</p>
+    <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+      <div className="text-[48px]">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <h2 className="text-[22px] font-black text-(--color-navy)">Kullanıcı bulunamadı</h2>
+      <p className="text-(--color-text-light)">@{username} adında bir kullanıcı yok.</p>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg }}>
+    <div className="min-h-screen bg-(--color-bg)">
       {/* Header */}
       <div style={{ background: `linear-gradient(135deg,${C.navy},${C.navyLight})`, padding: sm ? '28px 16px' : '40px 32px' }}>
         <div style={{ maxWidth: '860px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', flexShrink: 0, overflow: 'hidden', border: '3px solid rgba(255,255,255,.25)', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {profile.photoURL
-              ? <img src={profile.photoURL} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              : <span style={{ fontSize: sm ? '22px' : '28px', fontWeight: 700, color: '#fff' }}>{profile.name?.[0]?.toUpperCase()}</span>
+              ? <img src={profile.photoURL} alt={profile.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              : <span style={{ fontSize: sm ? '22px' : '28px' }} className="font-bold text-white">{profile.name?.[0]?.toUpperCase()}</span>
             }
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: sm ? '20px' : '26px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>{profile.name}</div>
-            <div style={{ color: 'rgba(255,255,255,.6)', fontSize: '13px', marginBottom: '8px' }}>@{username}</div>
+          <div className="flex-1 min-w-0">
+            <div style={{ fontSize: sm ? '20px' : '26px' }} className="font-black text-white mb-1">{profile.name}</div>
+            <div className="text-white/60 text-[13px] mb-2">@{username}</div>
             <Badge color={ROLE_COLOR[profile.role] || 'gold'}>{ROLE_LABEL[profile.role] || 'Üye'}</Badge>
           </div>
         </div>
@@ -151,43 +155,39 @@ export function PublicProfilePage({ params, queryParams }) {
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: sm ? '24px 16px' : '32px 32px' }}>
         {/* Listeler */}
         {lists.length > 0 && (
-          <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: C.navy, marginBottom: '14px' }}>
-              Listeler <span style={{ fontSize: '13px', fontWeight: 500, color: C.textLight }}>({lists.length})</span>
+          <div className="mb-10">
+            <h2 className="text-[18px] font-extrabold text-(--color-navy) mb-[14px]">
+              Listeler <span className="text-[13px] font-medium text-(--color-text-light)">({lists.length})</span>
             </h2>
 
             {!user ? (
-              <div style={{
-                border: `1px solid ${C.border}`, borderRadius: '16px',
-                padding: sm ? '32px 20px' : '40px 48px',
-                textAlign: 'center', background: C.card,
-                position: 'relative', overflow: 'hidden',
-              }}>
-                {/* Bulanık arka plan önizleme */}
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px', filter: 'blur(4px)', opacity: 0.35, pointerEvents: 'none' }}>
+              <div className="border border-(--color-border) rounded-2xl text-center bg-(--color-card) relative overflow-hidden"
+                style={{ padding: sm ? '32px 20px' : '40px 48px' }}>
+                {/* Blurred background preview */}
+                <div className="absolute inset-0 flex flex-col gap-[10px] p-4 blur-[4px] opacity-35 pointer-events-none">
                   {lists.slice(0, 3).map((l) => (
-                    <div key={l.id} style={{ height: '52px', background: C.surface, borderRadius: '10px', border: `1px solid ${C.border}` }} />
+                    <div key={l.id} className="h-[52px] bg-(--color-surface) rounded-[10px] border border-(--color-border)" />
                   ))}
                 </div>
-                {/* Overlay içerik */}
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                {/* Overlay content */}
+                <div className="relative z-10">
+                  <div className="w-[52px] h-[52px] rounded-full bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center mx-auto mb-[14px]">
                     <FontAwesomeIcon icon={faLock} style={{ fontSize: '20px', color: C.gold }} />
                   </div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: C.navy, marginBottom: '8px' }}>
+                  <h3 className="text-[16px] font-extrabold text-(--color-navy) mb-2">
                     Listeleri görmek için üye olun
                   </h3>
-                  <p style={{ fontSize: '13px', color: C.textLight, marginBottom: '20px', lineHeight: 1.6 }}>
+                  <p className="text-[13px] text-(--color-text-light) mb-5 leading-[1.6]">
                     @{username} adlı kullanıcının parfüm listelerini görmek için ücretsiz üye olun.
                   </p>
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <div className="flex gap-[10px] justify-center flex-wrap">
                     <Btn onClick={() => navigate('/kayit')}>Hemen Üye Ol</Btn>
                     <Btn variant="secondary" onClick={() => navigate('/giris')}>Giriş Yap</Btn>
                   </div>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="flex flex-col gap-[10px]">
                 {lists.map((list) => (
                   <AccordionList
                     key={list.id}
@@ -205,8 +205,8 @@ export function PublicProfilePage({ params, queryParams }) {
         {/* Yorumlar / Karşılaştırmalar */}
         {userReviews.length > 0 && (
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: C.navy, marginBottom: '14px' }}>
-              Karşılaştırmalar <span style={{ fontSize: '13px', fontWeight: 500, color: C.textLight }}>({userReviews.length})</span>
+            <h2 className="text-[18px] font-extrabold text-(--color-navy) mb-[14px]">
+              Karşılaştırmalar <span className="text-[13px] font-medium text-(--color-text-light)">({userReviews.length})</span>
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(300px,1fr))', gap: '12px' }}>
               {userReviews.map((c) => {
@@ -215,11 +215,11 @@ export function PublicProfilePage({ params, queryParams }) {
                 return (
                   <Card key={c.id} hover style={{ padding: '16px', cursor: 'pointer' }}
                     onClick={() => navigate(`/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}`)}>
-                    <div style={{ fontWeight: 700, fontSize: '14px', color: C.navy, marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div className="font-bold text-sm text-(--color-navy) mb-[6px] overflow-hidden text-ellipsis whitespace-nowrap">
                       {muadil.brandName} — {muadil.name}
                     </div>
-                    <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '8px' }}>→ {muadil.targetBrandName} {muadil.targetPerfumeName}</div>
-                    <div style={{ display: 'flex', gap: '10px', fontSize: '12px', color: C.textMid }}>
+                    <div className="text-xs text-(--color-text-light) mb-2">→ {muadil.targetBrandName} {muadil.targetPerfumeName}</div>
+                    <div className="flex gap-[10px] text-xs text-(--color-text-mid)">
                       <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
                       <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
                     </div>
@@ -231,9 +231,11 @@ export function PublicProfilePage({ params, queryParams }) {
         )}
 
         {lists.length === 0 && userReviews.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: C.textLight }}>
-            <div style={{ fontSize: '36px', marginBottom: '12px' }}>🌸</div>
-            <div style={{ fontSize: '15px' }}>Bu kullanıcı henüz içerik paylaşmamış.</div>
+          <div className="text-center p-[60px_20px] text-(--color-text-light)">
+            <div className="text-[36px] mb-3">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={C.textLight} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M8.5 9a3.5 3.5 0 0 1 7 0c0 2-3.5 3-3.5 5"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            </div>
+            <div className="text-[15px]">Bu kullanıcı henüz içerik paylaşmamış.</div>
           </div>
         )}
       </div>

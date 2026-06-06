@@ -1,3 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  /* Backgrounds */
+  --color-bg:       #FAFAF8;
+  --color-card:     #FFFFFF;
+  --color-surface:  #F5F2EE;
+
+  /* Borders */
+  --color-border:       #E5E2DC;
+  --color-border-light: #EFECE7;
+
+  /* Gold */
+  --color-gold:        #B8935A;
+  --color-gold-light:  #C9A46B;
+  --color-gold-bg:     #FBF7F1;
+  --color-gold-border: #E8D5B3;
+  --color-gold-deep:   #9A7840;
+
+  /* Text */
+  --color-text:       #0F0F0F;
+  --color-text-mid:   #4A4A4A;
+  --color-text-light: #8A8A8A;
+  --color-text-muted: #B8B8B8;
+
+  /* Navy alias */
+  --color-navy:       #0F0F0F;
+  --color-navy-light: #2A2A2A;
+
+  /* Semantic */
+  --color-green:        #2d8a4e;
+  --color-green-bg:     #edf7f1;
+  --color-green-border: #a8dbb8;
+  --color-red:          #c0392b;
+  --color-red-bg:       #fdf0ee;
+  --color-red-border:   #f0b8b0;
+  --color-orange:       #d47c20;
+  --color-orange-bg:    #fdf5e8;
+  --color-blue:         #2563eb;
+  --color-blue-bg:      #eff6ff;
+
+  /* Fonts */
+  --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-accent:  'Elms Sans', 'DM Sans', sans-serif;
+  --font-ui:      'Inter', 'DM Sans', sans-serif;
+}
+
 @media (max-width: 1024px) {
   .page-nav { display: none !important; }
 }

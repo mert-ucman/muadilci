@@ -25,10 +25,8 @@ export function ComparisonSection() {
   return (
     <section
       ref={sectionRef}
+      className="bg-(--color-text) relative overflow-hidden"
       style={{
-        background: C.text,
-        position: 'relative',
-        overflow: 'hidden',
         padding: xs ? '80px 20px 72px' : sm ? '100px 24px 88px' : '0',
       }}
     >
@@ -38,118 +36,78 @@ export function ComparisonSection() {
           <img
             src="https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=900&q=85"
             alt=""
-            style={{
-              position: 'absolute', inset: 0,
-              width: '100%', height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-              opacity: 0.18,
-              filter: 'grayscale(20%)',
-              pointerEvents: 'none',
-            }}
+            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+            style={{ opacity: 0.18, filter: 'grayscale(20%)' }}
             onError={e => (e.target.style.display = 'none')}
           />
           {/* Gradient overlay so text stays readable */}
-          <div style={{
-            position: 'absolute', inset: 0, pointerEvents: 'none',
-            background: 'linear-gradient(to bottom, rgba(15,12,8,.75) 0%, rgba(15,12,8,.6) 60%, rgba(15,12,8,.85) 100%)',
-          }} />
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_bottom,rgba(15,12,8,.75)_0%,rgba(15,12,8,.6)_60%,rgba(15,12,8,.85)_100%)]" />
         </>
       )}
 
       {/* Decorative grain texture overlay */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 80% 60% at 70% 50%, rgba(184,147,90,.07) 0%, transparent 70%)',
-      }} />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_70%_50%,rgba(184,147,90,.07)_0%,transparent_70%)]" />
 
-      <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        display: 'grid',
-        gridTemplateColumns: xs || sm ? '1fr' : '80px 1fr 1fr',
-        minHeight: xs || sm ? 'auto' : '680px',
-        position: 'relative',
-      }}>
-
+      <div
+        className="max-w-[1400px] mx-auto relative"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: xs || sm ? '1fr' : '80px 1fr 1fr',
+          minHeight: xs || sm ? 'auto' : '680px',
+        }}
+      >
         {/* ── Left vertical text strip ── */}
         {!xs && !sm && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRight: '1px solid rgba(255,255,255,.08)',
-            padding: '0',
-            position: 'relative',
-          }}>
-            <div style={{
-              transform: 'rotate(-90deg)',
-              whiteSpace: 'nowrap',
-              fontSize: '10px',
-              fontWeight: 700,
-              color: 'rgba(255,255,255,.25)',
-              letterSpacing: '.25em',
-              textTransform: 'uppercase',
-              fontFamily: F,
-              userSelect: 'none',
-            }}>
+          <div className="flex items-center justify-center border-r border-white/[.08] relative">
+            <div
+              className="whitespace-nowrap text-[10px] font-bold text-white/25 tracking-[.25em] uppercase select-none"
+              style={{ transform: 'rotate(-90deg)', fontFamily: F }}
+            >
               GERÇEK KARŞILAŞTIRMA — MUADILCI
             </div>
           </div>
         )}
 
         {/* ── Left: editorial typography ── */}
-        <div style={{
-          padding: xs || sm ? '0' : '88px 56px 88px 64px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          borderRight: xs || sm ? 'none' : '1px solid rgba(255,255,255,.08)',
-        }}>
+        <div
+          className="flex flex-col justify-between"
+          style={{
+            padding: xs || sm ? '0' : '88px 56px 88px 64px',
+            borderRight: xs || sm ? 'none' : '1px solid rgba(255,255,255,.08)',
+          }}
+        >
           {/* Eyebrow */}
           <div className="sr" style={{ marginBottom: xs || sm ? '36px' : '0' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '40px',
-            }}>
-              <div style={{ width: '28px', height: '1px', background: C.gold }} />
-              <span style={{
-                fontSize: '10px', fontWeight: 700, color: C.gold,
-                letterSpacing: '.2em', textTransform: 'uppercase', fontFamily: F,
-              }}>
+            <div className="inline-flex items-center gap-[10px] mb-10">
+              <div className="w-7 h-px bg-(--color-gold)" />
+              <span
+                className="text-[10px] font-bold text-(--color-gold) tracking-[.2em] uppercase"
+                style={{ fontFamily: F }}
+              >
                 Muadilci
               </span>
             </div>
 
             {/* Giant heading */}
-            <h2 style={{
-              fontFamily: FH,
-              fontSize: xs ? '54px' : sm ? '72px' : 'clamp(72px, 6.5vw, 108px)',
-              fontWeight: 300,
-              color: '#fff',
-              lineHeight: 1.0,
-              letterSpacing: '-0.02em',
-              marginBottom: '32px',
-            }}>
+            <h2
+              className="font-light text-white leading-[1.0] tracking-[-0.02em] mb-8"
+              style={{
+                fontFamily: FH,
+                fontSize: xs ? '54px' : sm ? '72px' : 'clamp(72px, 6.5vw, 108px)',
+              }}
+            >
               Benzer<br />
               koku,<br />
-              <em style={{
-                fontStyle: 'italic',
-                color: C.gold,
-                fontWeight: 400,
-              }}>en yakın<br />muadil.</em>
+              <em className="italic text-(--color-gold) font-normal">en yakın<br />muadil.</em>
             </h2>
 
             {/* Thin divider line */}
-            <div style={{ width: '48px', height: '1px', background: 'rgba(255,255,255,.2)', marginBottom: '28px' }} />
+            <div className="w-12 h-px bg-white/20 mb-7" />
 
-            <p style={{
-              fontSize: '14px',
-              color: 'rgba(255,255,255,.5)',
-              lineHeight: 1.85,
-              maxWidth: '340px',
-              fontFamily: F,
-              fontWeight: 300,
-            }}>
+            <p
+              className="text-[14px] text-white/50 leading-[1.85] max-w-[340px] font-light"
+              style={{ fontFamily: F }}
+            >
               Her karşılaştırma gerçek kullanıcıların benzerlik, yayılım ve kalıcılık
               puanlarıyla desteklenir. Moderatör onaylı içerik, doğrulanmış yorumlar.
             </p>
@@ -159,20 +117,8 @@ export function ComparisonSection() {
           <div className="sr sr-d3" style={{ marginTop: xs || sm ? '48px' : '56px' }}>
             <button
               onClick={() => navigate('/karsilastir')}
-              style={{
-                background: 'transparent',
-                border: `1px solid ${C.gold}`,
-                borderRadius: '6px',
-                padding: '14px 36px',
-                color: C.gold,
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontFamily: F,
-                letterSpacing: '.08em',
-                textTransform: 'uppercase',
-                transition: 'background 0.25s, color 0.25s',
-              }}
+              className="bg-transparent border border-(--color-gold) rounded-[6px] px-9 py-[14px] text-(--color-gold) text-[13px] font-semibold cursor-pointer tracking-[.08em] uppercase transition-[background,color] duration-[250ms]"
+              style={{ fontFamily: F }}
               onMouseEnter={e => { e.currentTarget.style.background = C.gold; e.currentTarget.style.color = '#fff'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = C.gold; }}
             >
@@ -183,34 +129,18 @@ export function ComparisonSection() {
 
         {/* ── Right: visual composition ── */}
         {!xs && !sm && (
-          <div style={{
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
+          <div className="relative overflow-hidden">
             {/* Background image */}
             <img
               src={similarImg}
               alt=""
-              style={{
-                position: 'absolute', inset: 0,
-                width: '100%', height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center',
-                opacity: 0.65,
-                filter: 'grayscale(10%)',
-              }}
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{ opacity: 0.65, filter: 'grayscale(10%)' }}
             />
 
             {/* Dark gradient on left edge to blend into text column */}
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to right, rgba(15,15,15,1) 0%, rgba(15,15,15,.3) 40%, transparent 100%)',
-            }} />
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(to top, rgba(15,15,15,.9) 0%, transparent 60%)',
-            }} />
-
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,15,15,1)_0%,rgba(15,15,15,.3)_40%,transparent_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(15,15,15,.9)_0%,transparent_60%)]" />
           </div>
         )}
       </div>

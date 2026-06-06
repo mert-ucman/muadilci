@@ -25,12 +25,10 @@ export function Btn({ children, onClick, variant = 'primary', size = 'md', style
       disabled={disabled}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
+      className="inline-flex items-center gap-[6px] rounded-[10px] font-semibold transition-all duration-[180ms]"
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: '6px',
-        borderRadius: '10px',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        fontFamily: F, fontWeight: 600,
-        transition: 'all .18s',
+        fontFamily: F,
         opacity: disabled ? 0.6 : 1,
         transform: hov && !disabled ? 'translateY(-1px)' : 'none',
         ...SIZES[size],

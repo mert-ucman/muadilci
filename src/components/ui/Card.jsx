@@ -8,12 +8,9 @@ export function Card({ children, style: s, onClick, hover }) {
       onClick={onClick}
       onMouseEnter={() => hover && setHov(true)}
       onMouseLeave={() => hover && setHov(false)}
+      className="bg-card border border-border rounded-[16px] transition-all duration-200"
       style={{
-        background: C.card,
-        border: `1px solid ${C.border}`,
-        borderRadius: '16px',
         boxShadow: hov ? C.shadowMd : C.shadow,
-        transition: 'all .2s',
         cursor: onClick ? 'pointer' : 'default',
         ...s,
       }}

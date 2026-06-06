@@ -29,16 +29,16 @@ function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel,
   };
 
   return (
-    <div className="fade-in" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
-      {isEditMode && <div style={{ fontSize: '13px', fontWeight: 700, color: C.gold, marginBottom: '12px' }}>Yorumunu Düzenle</div>}
-      <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+    <div className="fade-in rounded-xl p-4 mb-[18px]" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
+      {isEditMode && <div className="text-[13px] font-bold mb-3" style={{ color: C.gold }}>Yorumunu Düzenle</div>}
+      <div className="mb-3" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px' }}>
         {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
           <div key={l}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '13px', color: C.textMid }}>{l}</span>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: C.gold }}>{v}/10</span>
+            <div className="flex justify-between mb-1">
+              <span className="text-[13px] text-(--color-text-mid)">{l}</span>
+              <span className="text-[13px] font-bold" style={{ color: C.gold }}>{v}/10</span>
             </div>
-            <input type="range" min="1" max="10" value={v} onChange={(e) => sv(Number(e.target.value))} style={{ width: '100%', accentColor: C.gold }} />
+            <input type="range" min="1" max="10" value={v} onChange={(e) => sv(Number(e.target.value))} className="w-full" style={{ accentColor: C.gold }} />
           </div>
         ))}
       </div>
@@ -47,31 +47,34 @@ function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel,
         onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); }}
         placeholder="Deneyiminizi paylaşın..."
         rows={3}
-        style={{ width: '100%', border: `1px solid ${profanityError ? C.red : C.border}`, borderRadius: '8px', padding: '10px 12px', fontSize: '14px', color: C.text, background: C.card, outline: 'none', resize: 'none', marginBottom: profanityError ? '6px' : '12px', boxSizing: 'border-box', transition: 'border-color .2s' }}
+        className="w-full rounded-lg px-3 py-[10px] text-[14px] outline-none resize-none box-border transition-[border-color] duration-200"
+        style={{ border: `1px solid ${profanityError ? C.red : C.border}`, color: C.text, background: C.card, marginBottom: profanityError ? '6px' : '12px' }}
       />
       {profanityError && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '12px', fontSize: '13px', color: C.red, fontWeight: 600 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-        <span style={{ fontSize: '13px', color: C.textMid, fontWeight: 600 }}>Bu muadili tavsiye eder misiniz?</span>
+      <div className="flex items-center gap-3 mb-[10px]">
+        <span className="text-[13px] text-(--color-text-mid) font-semibold">Bu muadili tavsiye eder misiniz?</span>
         <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
-          style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+          className="w-[38px] h-[38px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 shrink-0"
+          style={{ border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight }}>
           <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '15px' }} />
         </button>
         <button onClick={() => setCRecommend(cRecommend === false ? null : false)}
-          style={{ width: '38px', height: '38px', borderRadius: '50%', border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s', flexShrink: 0 }}>
+          className="w-[38px] h-[38px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 shrink-0"
+          style={{ border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight }}>
           <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
         </button>
       </div>
-      <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
+      <div className="text-[12px] text-(--color-text-mid) rounded-lg px-3 py-2 mb-2" style={{ background: C.blueBg, border: '1px solid #bfdbfe' }}>
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
-      {!isMod && !isAdmin && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
-      {submitError && <div style={{ fontSize: '13px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>{submitError}</div>}
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+      {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.orange }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      {submitError && <div className="text-[13px] rounded-lg px-3 py-2 mb-2" style={{ color: C.red, background: '#fff5f5', border: '1px solid #fecaca' }}>{submitError}</div>}
+      <div className="flex gap-2 justify-end">
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
         <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
       </div>
@@ -180,17 +183,18 @@ export function ComparisonPage({ queryParams }) {
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
-      <div style={{ maxWidth: '1320px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: sm ? '22px' : '26px', fontWeight: 900, color: C.navy, marginBottom: '6px' }}>Parfüm Karşılaştır</h1>
-        <p style={{ color: C.textLight, fontSize: '14px', marginBottom: '24px' }}>Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
+    <div className="min-h-screen bg-(--color-bg)" style={{ padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
+      <div className="max-w-[1320px] mx-auto">
+        <h1 className="font-black text-(--color-navy) mb-[6px]" style={{ fontSize: sm ? '22px' : '26px' }}>Parfüm Karşılaştır</h1>
+        <p className="text-(--color-text-light) text-[14px] mb-6">Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
 
         {/* Selectors */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', minHeight: '30px' }}>
+        <div className="flex justify-end mb-2 min-h-[30px]">
           {(selOrigBrand || selOrigId || selMuadilBrand || selMuadilId) && (
             <button
               onClick={() => { setSelOrigBrand(''); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', border: `1px solid ${C.border}`, background: C.card, color: C.textMid, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: F, transition: 'all .15s', whiteSpace: 'nowrap' }}
+              className="inline-flex items-center gap-[6px] px-[14px] py-[7px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150 whitespace-nowrap"
+              style={{ border: `1px solid ${C.border}`, background: C.card, color: C.textMid, fontFamily: F }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.red; e.currentTarget.style.color = C.red; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>
@@ -198,19 +202,19 @@ export function ComparisonPage({ queryParams }) {
             </button>
           )}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
+        <div className="mb-[22px]" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px' }}>
           <Card style={{ padding: '20px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Orijinal Parfüm</div>
-            <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
-              <div style={{ flex: 1 }}><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selOrigId} onChange={(e) => { const id = e.target.value; setSelOrigId(id); if (id) { const p = perfumes.find((p) => String(p.id) === String(id)); if (p) setSelOrigBrand(p.brandName); } setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
+            <div className="text-[12px] font-bold text-(--color-text-light) tracking-[.08em] uppercase mb-3">Orijinal Parfüm</div>
+            <div className="flex gap-[10px]" style={{ flexDirection: sm ? 'column' : 'row' }}>
+              <div className="flex-1"><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
+              <div className="flex-1"><Select label="Ürün" value={selOrigId} onChange={(e) => { const id = e.target.value; setSelOrigId(id); if (id) { const p = perfumes.find((p) => String(p.id) === String(id)); if (p) setSelOrigBrand(p.brandName); } setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: C.textLight, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Muadil Parfüm</div>
-            <div style={{ display: 'flex', gap: '10px', flexDirection: sm ? 'column' : 'row' }}>
-              <div style={{ flex: 1 }}><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
-              <div style={{ flex: 1 }}><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); if (selOrigId && id) window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${id}`); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
+            <div className="text-[12px] font-bold text-(--color-text-light) tracking-[.08em] uppercase mb-3">Muadil Parfüm</div>
+            <div className="flex gap-[10px]" style={{ flexDirection: sm ? 'column' : 'row' }}>
+              <div className="flex-1"><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
+              <div className="flex-1"><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); if (selOrigId && id) window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${id}`); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
             </div>
           </Card>
         </div>
@@ -218,39 +222,47 @@ export function ComparisonPage({ queryParams }) {
         {selOrig && selMuadil ? (
           <div className="fade-in">
             {/* Top cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px', marginBottom: '14px' }}>
+            <div className="mb-[14px]" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px' }}>
               {/* ── Orijinal Parfüm Kartı ── */}
               {(() => {
                 const FI = "'Inter', 'DM Sans', sans-serif";
-                const badgeStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3px 9px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, fontFamily: FI, letterSpacing: '.08em', textTransform: 'uppercase', background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' };
                 return (
-                  <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)', display: 'flex', flexDirection: 'column' }}>
+                  <div className="rounded-[18px] overflow-hidden flex flex-col" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
                     {/* Görsel */}
-                    <div style={{ width: '100%', overflow: 'hidden' }}>
-                      <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', display: 'block' }} />
+                    <div className="w-full overflow-hidden">
+                      <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full block" />
                     </div>
                     {/* İçerik */}
-                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#EDE9E0', border: '1px solid #DDD8CE', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="p-[12px_14px] flex items-center gap-[10px]">
+                      <div className="w-[50px] h-[50px] rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center" style={{ background: '#EDE9E0', border: '1px solid #DDD8CE' }}>
                         {origBrand?.logoImage
-                          ? <img src={origBrand.logoImage} alt={origBrand.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid, fontFamily: FI, letterSpacing: '.04em', textTransform: 'uppercase' }}>{origBrand?.logo || selOrig.brandName?.slice(0,2)}</span>
+                          ? <img src={origBrand.logoImage} alt={origBrand.name} className="w-full h-full object-cover" />
+                          : <span className="text-[10px] font-bold uppercase tracking-[.04em]" style={{ color: C.textMid, fontFamily: FI }}>{origBrand?.logo || selOrig.brandName?.slice(0,2)}</span>
                         }
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <a href={`/marka/${selOrig.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selOrig.brandSlug}`); }} style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }} onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selOrig.brandName}</a>
-                        <div style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '5px' }}>{selOrig.name}</div>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>Orijinal</p></div>
-                          {selOrig.gender && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selOrig.gender}</p></div>}
-                          {selOrig.year && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selOrig.year}</p></div>}
+                      <div className="flex-1 min-w-0">
+                        <a href={`/marka/${selOrig.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selOrig.brandSlug}`); }}
+                          className="block overflow-hidden text-ellipsis whitespace-nowrap mb-[2px] no-underline"
+                          style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selOrig.brandName}</a>
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap mb-[5px]" style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid }}>{selOrig.name}</div>
+                        <div className="flex gap-1 flex-wrap">
+                          <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">Orijinal</p></div>
+                          {selOrig.gender && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.gender}</p></div>}
+                          {selOrig.year && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.year}</p></div>}
                         </div>
                       </div>
-                      <div style={{ position: 'relative', flexShrink: 0 }} onMouseEnter={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '1'; }} onMouseLeave={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '0'; }}>
-                        <button onClick={() => navigate(`/${selOrig.brandSlug}/${selOrig.slug}`)} style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#fff', border: '1px solid #DDD8CE', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,.08)', transition: 'box-shadow .15s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,.14)'} onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,.08)'}>
+                      <div className="relative shrink-0"
+                        onMouseEnter={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '1'; }}
+                        onMouseLeave={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '0'; }}>
+                        <button onClick={() => navigate(`/${selOrig.brandSlug}/${selOrig.slug}`)}
+                          className="w-[36px] h-[36px] rounded-full bg-white flex items-center justify-center cursor-pointer transition-[box-shadow] duration-150"
+                          style={{ border: '1px solid #DDD8CE', boxShadow: '0 1px 4px rgba(0,0,0,.08)' }}
+                          onMouseEnter={e => e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,.14)'} onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,.08)'}>
                           <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: '12px', color: C.textMid }} />
                         </button>
-                        <div data-tip="" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: '#1a1a1a', color: '#fff', fontSize: '11px', fontFamily: FI, fontWeight: 500, padding: '5px 10px', borderRadius: '8px', whiteSpace: 'nowrap', opacity: 0, transition: 'opacity .15s', pointerEvents: 'none', zIndex: 10 }}>Parfüm profiline git</div>
+                        <div data-tip="" className="absolute bottom-[calc(100%+8px)] right-0 text-[11px] font-medium px-[10px] py-[5px] rounded-lg whitespace-nowrap pointer-events-none z-10 transition-opacity duration-150"
+                          style={{ background: '#1a1a1a', color: '#fff', fontFamily: FI, opacity: 0 }}>Parfüm profiline git</div>
                       </div>
                     </div>
                   </div>
@@ -260,70 +272,85 @@ export function ComparisonPage({ queryParams }) {
               {/* ── Muadil Parfüm Kartı ── */}
               {(() => {
                 const FI = "'Inter', 'DM Sans', sans-serif";
-                const badgeStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3px 9px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, fontFamily: FI, letterSpacing: '.08em', textTransform: 'uppercase', background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' };
                 return (
-                  <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)', display: 'flex', flexDirection: 'column' }}>
+                  <div className="rounded-[18px] overflow-hidden flex flex-col" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
                     {/* Görsel + favori butonu */}
-                    <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
-                      <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', display: 'block' }} />
-                      <button onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,255,255,.85)', border: '1px solid rgba(0,0,0,.08)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)', transition: 'all .15s' }}>
+                    <div className="relative w-full overflow-hidden">
+                      <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full block" />
+                      <button onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }}
+                        className="absolute top-[10px] right-[10px] w-[32px] h-[32px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150"
+                        style={{ background: 'rgba(255,255,255,.85)', border: '1px solid rgba(0,0,0,.08)', backdropFilter: 'blur(4px)' }}>
                         <FontAwesomeIcon icon={faHeart} style={{ fontSize: '13px', color: isMuadilFavorite(user?.uid, selMuadil.id) ? '#f87171' : '#ccc' }} />
                       </button>
                     </div>
                     {/* İçerik */}
-                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#EDE9E0', border: '1px solid #DDD8CE', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="p-[12px_14px] flex items-center gap-[10px]">
+                      <div className="w-[50px] h-[50px] rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center" style={{ background: '#EDE9E0', border: '1px solid #DDD8CE' }}>
                         {muadilBrand?.logoImage
-                          ? <img src={muadilBrand.logoImage} alt={muadilBrand.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid, fontFamily: FI, letterSpacing: '.04em', textTransform: 'uppercase' }}>{muadilBrand?.logo || selMuadil.brandName?.slice(0,2)}</span>
+                          ? <img src={muadilBrand.logoImage} alt={muadilBrand.name} className="w-full h-full object-cover" />
+                          : <span className="text-[10px] font-bold uppercase tracking-[.04em]" style={{ color: C.textMid, fontFamily: FI }}>{muadilBrand?.logo || selMuadil.brandName?.slice(0,2)}</span>
                         }
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <a href={`/marka/${selMuadil.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selMuadil.brandSlug}`); }} style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }} onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selMuadil.brandName}</a>
-                        <div style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '5px' }}>{selMuadil.name}</div>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                          <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>Muadil</p></div>
-                          {(selMuadil.gender || selOrig.gender) && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selMuadil.gender || selOrig.gender}</p></div>}
+                      <div className="flex-1 min-w-0">
+                        <a href={`/marka/${selMuadil.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selMuadil.brandSlug}`); }}
+                          className="block overflow-hidden text-ellipsis whitespace-nowrap mb-[2px] no-underline"
+                          style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text }}
+                          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selMuadil.brandName}</a>
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap mb-[5px]" style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid }}>{selMuadil.name}</div>
+                        <div className="flex gap-1 flex-wrap">
+                          <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">Muadil</p></div>
+                          {(selMuadil.gender || selOrig.gender) && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selMuadil.gender || selOrig.gender}</p></div>}
                         </div>
                       </div>
                     </div>
                   </div>
                 );
               })()}
+
               <Card style={{ padding: sm ? '14px' : '24px', position: 'relative', gridColumn: sm ? '1 / -1' : md ? '1 / -1' : 'auto' }}>
                 <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.uid, selOrig.id, selMuadil.id); }}
-                  style={{ position: 'absolute', top: '14px', right: '14px', background: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}>
-                  {isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? '❤️' : '🤍'}
+                  className="absolute top-[14px] right-[14px] w-[36px] h-[36px] rounded-[10px] flex items-center justify-center cursor-pointer text-[18px]"
+                  style={{ background: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}` }}>
+                  <FontAwesomeIcon icon={faHeart} style={{ fontSize: '16px', color: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.red : C.textLight }} />
                 </button>
-                <div style={{ fontSize: sm ? '12px' : '13px', fontWeight: 700, color: C.textMid, marginBottom: '8px', paddingRight: '40px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                  <span>{selOrig.brandName} <span style={{ color: C.textLight, fontWeight: 400 }}>-</span> {selOrig.name}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, color: '#fff', fontSize: '9px', fontWeight: 900, flexShrink: 0, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}>VS</span>
-                  <span>{selMuadil.brandName} <span style={{ color: C.textLight, fontWeight: 400 }}>-</span> {selMuadil.name}</span>
+                <div className="font-bold text-(--color-text-mid) mb-2 pr-10 flex items-center gap-[6px] flex-wrap" style={{ fontSize: sm ? '12px' : '13px' }}>
+                  <span>{selOrig.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selOrig.name}</span>
+                  <div className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[9px] font-black shrink-0 flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}><p className="m-0 p-0 w-max">VS</p></div>
+                  <span>{selMuadil.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selMuadil.name}</span>
                 </div>
-                <div style={{ marginBottom: '3px' }}><span style={{ fontSize: sm ? '12px' : '13px', color: C.textLight }}>Muadil markası: </span><span style={{ fontWeight: 700, color: C.text, fontSize: sm ? '12px' : '13px' }}>{selMuadil.brandName}</span></div>
-                <div style={{ marginBottom: sm ? '8px' : '14px' }}><span style={{ fontSize: sm ? '12px' : '13px', color: C.textLight }}>Muadil Parfüm: </span><span style={{ fontWeight: 700, color: C.text, fontSize: sm ? '12px' : '13px' }}>{selMuadil.name}</span></div>
-                <div style={{ height: '1px', background: C.border, marginBottom: '14px' }} />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', position: 'relative' }}>
+                <div className="mb-[3px]">
+                  <span className="text-(--color-text-light)" style={{ fontSize: sm ? '12px' : '13px' }}>Muadil markası: </span>
+                  <span className="font-bold text-(--color-text)" style={{ fontSize: sm ? '12px' : '13px' }}>{selMuadil.brandName}</span>
+                </div>
+                <div style={{ marginBottom: sm ? '8px' : '14px' }}>
+                  <span className="text-(--color-text-light)" style={{ fontSize: sm ? '12px' : '13px' }}>Muadil Parfüm: </span>
+                  <span className="font-bold text-(--color-text)" style={{ fontSize: sm ? '12px' : '13px' }}>{selMuadil.name}</span>
+                </div>
+                <div className="h-px mb-[14px]" style={{ background: C.border }} />
+                <div className="flex justify-end mb-2 relative">
                   <button
                     onMouseEnter={() => setShowScoreInfo(true)}
                     onMouseLeave={() => setShowScoreInfo(false)}
-                    style={{ width: '20px', height: '20px', borderRadius: '50%', border: `1px solid ${C.border}`, background: '#f4f4f6', color: C.textLight, fontSize: '12px', fontWeight: 700, cursor: 'default', fontFamily: F, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                    className="w-[20px] h-[20px] rounded-full text-[12px] font-bold cursor-default flex items-center justify-center shrink-0"
+                    style={{ border: `1px solid ${C.border}`, background: '#f4f4f6', color: C.textLight, fontFamily: F }}
                   >?</button>
                   {showScoreInfo && (
-                    <div style={{ position: 'absolute', top: '26px', right: 0, width: '240px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px', boxShadow: '0 8px 24px rgba(0,0,0,.1)', zIndex: 10, fontSize: '12px', color: C.text, lineHeight: 1.6 }}>
-                      <div style={{ fontWeight: 700, color: C.navy, marginBottom: '8px', fontSize: '13px' }}>Puanlar Nasıl Hesaplanır?</div>
-                      <div style={{ marginBottom: '6px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Koku Yakınlığı:</span> Kullanıcıların orijinal kokuya benzerlik oylarının ortalaması.</div>
-                      <div style={{ marginBottom: '6px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Yayılım:</span> Parfümün çevreye ne kadar yayıldığına verilen oyların ortalaması.</div>
-                      <div style={{ marginBottom: '8px' }}><span style={{ fontWeight: 600, color: C.textMid }}>Kalıcılık:</span> Kokunun üstte ne kadar süre kaldığına verilen oyların ortalaması.</div>
-                      <div style={{ paddingTop: '8px', borderTop: `1px solid ${C.borderLight}` }}><span style={{ fontWeight: 600, color: C.gold }}>Genel Puan:</span> Koku yakınlığı, yayılım ve kalıcılığın eşit ağırlıklı ortalamasıdır (0–10).</div>
+                    <div className="absolute top-[26px] right-0 w-[240px] rounded-xl p-[14px] z-10 text-[12px] leading-relaxed"
+                      style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: '0 8px 24px rgba(0,0,0,.1)', color: C.text }}>
+                      <div className="font-bold mb-2 text-[13px]" style={{ color: C.navy }}>Puanlar Nasıl Hesaplanır?</div>
+                      <div className="mb-[6px]"><span className="font-semibold" style={{ color: C.textMid }}>Koku Yakınlığı:</span> Kullanıcıların orijinal kokuya benzerlik oylarının ortalaması.</div>
+                      <div className="mb-[6px]"><span className="font-semibold" style={{ color: C.textMid }}>Yayılım:</span> Parfümün çevreye ne kadar yayıldığına verilen oyların ortalaması.</div>
+                      <div className="mb-2"><span className="font-semibold" style={{ color: C.textMid }}>Kalıcılık:</span> Kokunun üstte ne kadar süre kaldığına verilen oyların ortalaması.</div>
+                      <div className="pt-2" style={{ borderTop: `1px solid ${C.borderLight}` }}><span className="font-semibold" style={{ color: C.gold }}>Genel Puan:</span> Koku yakınlığı, yayılım ve kalıcılığın eşit ağırlıklı ortalamasıdır (0–10).</div>
                     </div>
                   )}
                 </div>
                 <ScoreBar label="Koku Yakınlığı" value={scores.scent} empty={scores.scent === null} />
                 <ScoreBar label="Yayılım" value={scores.projection} empty={scores.projection === null} />
                 <ScoreBar label="Kalıcılık" value={scores.longevity} empty={scores.longevity === null} />
-                {scores.count === 0 && <div style={{ fontSize: '12px', color: C.textLight, fontStyle: 'italic', textAlign: 'center', marginBottom: '8px' }}>Henüz onaylanmış yorum yok</div>}
-                <div style={{ marginTop: sm ? '8px' : '14px', padding: sm ? '10px 12px' : '14px', background: C.goldBg, borderRadius: '10px', border: `1px solid ${C.goldBorder}` }}>
+                {scores.count === 0 && <div className="text-[12px] text-(--color-text-light) italic text-center mb-2">Henüz onaylanmış yorum yok</div>}
+                <div className="rounded-[10px]" style={{ marginTop: sm ? '8px' : '14px', padding: sm ? '10px 12px' : '14px', background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
                   {/* Genel Puan başlık + pill badge */}
                   {(() => {
                     const s = scores.overall;
@@ -334,54 +361,57 @@ export function ComparisonPage({ queryParams }) {
                       :           '#48bb78, #38a169';
                     const textColor = s === null ? C.textLight : s <= 4 ? C.red : s < 7 ? '#f6ad55' : C.green;
                     return (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <div className="flex items-center justify-between mb-[10px]">
                         <div>
-                          <div style={{ fontSize: '12px', color: C.textLight, fontWeight: 600, marginBottom: '2px' }}>Genel Puan</div>
-                          {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight }}>{scores.count} yorumun ortalaması</div>}
+                          <div className="text-[12px] text-(--color-text-light) font-semibold mb-[2px]">Genel Puan</div>
+                          {scores.count > 0 && <div className="text-[11px] text-(--color-text-light)">{scores.count} yorumun ortalaması</div>}
                         </div>
                         {/* Gradient border pill */}
-                        <div style={{ background: `linear-gradient(135deg, ${grad})`, padding: '2px', borderRadius: '999px', flexShrink: 0 }}>
-                          <div style={{ background: '#fff', borderRadius: '999px', padding: '5px 14px', display: 'flex', alignItems: 'baseline', gap: '1px' }}>
-                            <span style={{ fontSize: '18px', fontWeight: 900, color: textColor, lineHeight: 1 }}>{s !== null ? s : '—'}</span>
-                            {s !== null && <span style={{ fontSize: '11px', fontWeight: 600, color: C.textLight }}>/10</span>}
+                        <div className="p-[2px] rounded-[999px] shrink-0" style={{ background: `linear-gradient(135deg, ${grad})` }}>
+                          <div className="bg-white rounded-[999px] px-[14px] py-[5px] flex items-baseline gap-[1px]">
+                            <span className="text-[18px] font-black leading-none" style={{ color: textColor }}>{s !== null ? s : '—'}</span>
+                            {s !== null && <span className="text-[11px] font-semibold text-(--color-text-light)">/10</span>}
                           </div>
                         </div>
                       </div>
                     );
                   })()}
                   {/* Progress bar */}
-                  <div style={{ position: 'relative', height: sm ? '6px' : '8px', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 50%, #38a169 100%)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: scores.overall !== null ? `${100 - (scores.overall / 10) * 100}%` : '100%', background: C.borderLight, transition: 'width .4s' }} />
+                  <div className="relative rounded-sm overflow-hidden" style={{ height: sm ? '6px' : '8px', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 50%, #38a169 100%)' }}>
+                    <div className="absolute top-0 right-0 h-full transition-[width] duration-400" style={{ width: scores.overall !== null ? `${100 - (scores.overall / 10) * 100}%` : '100%', background: C.borderLight }} />
                   </div>
                 </div>
               </Card>
             </div>
 
             {/* Notes + Other muadils */}
-            <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div className="mb-[14px]" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: '14px' }}>
               <Card style={{ padding: '22px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}`, width: '100%', textAlign: 'center' }}>{selOrig.name}</div>
-                <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '10px' }}>Koku Notaları</div>
+                <div className="font-bold text-[15px] text-(--color-navy) mb-[14px] pb-3 w-full text-center" style={{ borderBottom: `1px solid ${C.border}` }}>{selOrig.name}</div>
+                <div className="text-[12px] text-(--color-text-light) mb-[10px]">Koku Notaları</div>
                 {[['Üst', faArrowUp, selOrig.notes?.top || []], ['Kalp', faHeart, selOrig.notes?.heart || []], ['Alt', faArrowDown, selOrig.notes?.base || []]].map(([l, icon, n]) => (
-                  <div key={l} style={{ marginBottom: '8px', width: '100%' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: C.textMid, marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}><FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}</div>
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                      {n.map((note) => <span key={note} style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, borderRadius: '6px', padding: '2px 8px', fontSize: '12px', color: C.gold }}>{note}</span>)}
+                  <div key={l} className="mb-2 w-full">
+                    <div className="text-[12px] font-semibold text-(--color-text-mid) mb-[3px] flex items-center justify-center gap-1">
+                      <FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}
+                    </div>
+                    <div className="flex gap-1 flex-wrap justify-center">
+                      {n.map((note) => <span key={note} className="rounded-md px-2 py-[2px] text-[12px]" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>{note}</span>)}
                     </div>
                   </div>
                 ))}
               </Card>
 
               <Card style={{ padding: '22px' }}>
-                <div style={{ fontWeight: 700, fontSize: '15px', color: C.green, marginBottom: '14px', paddingBottom: '12px', borderBottom: `1px solid ${C.border}` }}>{selMuadil.name}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: C.textLight }}>DİĞER MUADİLLER</span>
+                <div className="font-bold text-[15px] mb-[14px] pb-3" style={{ color: C.green, borderBottom: `1px solid ${C.border}` }}>{selMuadil.name}</div>
+                <div className="flex justify-between items-center mb-[10px]">
+                  <span className="text-[12px] font-semibold text-(--color-text-light)">DİĞER MUADİLLER</span>
                   <button onClick={() => setMuadilSortDir((d) => d === 'desc' ? 'asc' : 'desc')}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: C.textMid, background: '#f4f4f6', border: `1px solid ${C.border}`, borderRadius: '6px', padding: '3px 8px', cursor: 'pointer', fontFamily: F }}>
+                    className="flex items-center gap-1 text-[11px] font-semibold text-(--color-text-mid) rounded-md px-2 py-[3px] cursor-pointer"
+                    style={{ background: '#f4f4f6', border: `1px solid ${C.border}`, fontFamily: F }}>
                     Puan {muadilSortDir === 'desc' ? '↓' : '↑'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '250px', overflowY: 'auto', paddingRight: '2px' }}>
+                <div className="flex flex-col gap-[6px] max-h-[250px] overflow-y-auto pr-[2px]">
                   {[...matching]
                     .map((m) => ({ m, ms: calcScores(m.id, comments) }))
                     .sort((a, b) => {
@@ -398,15 +428,16 @@ export function ComparisonPage({ queryParams }) {
                               setSelMuadilBrand(m.brandName);
                               window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${newId}`);
                             }}
-                          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', border: `1px solid ${isSel ? C.goldBorder : C.border}`, borderRadius: '10px', background: isSel ? C.goldBg : 'transparent', cursor: 'pointer', textAlign: 'left', fontFamily: F, transition: 'all .15s' }}
+                          className="flex justify-between items-center px-3 py-[10px] rounded-[10px] cursor-pointer text-left transition-all duration-150"
+                          style={{ border: `1px solid ${isSel ? C.goldBorder : C.border}`, background: isSel ? C.goldBg : 'transparent', fontFamily: F }}
                           onMouseEnter={(e) => { if (!isSel) e.currentTarget.style.background = C.borderLight; }}
                           onMouseLeave={(e) => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}>
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: isSel ? C.gold : C.text }}>{m.brandName} — {m.name}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                            <span style={{ fontSize: '12px', fontWeight: 700, color: ms.overall !== null ? C.gold : C.textLight }}>
+                          <div className="text-[13px] font-semibold" style={{ color: isSel ? C.gold : C.text }}>{m.brandName} — {m.name}</div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-[12px] font-bold" style={{ color: ms.overall !== null ? C.gold : C.textLight }}>
                               {ms.overall !== null ? `${ms.overall}/10` : '—'}
                             </span>
-                            {isSel && <span style={{ fontSize: '11px', color: C.gold, fontWeight: 400 }}>seçilen</span>}
+                            {isSel && <span className="text-[11px] font-normal" style={{ color: C.gold }}>seçilen</span>}
                           </div>
                         </button>
                       );
@@ -417,7 +448,7 @@ export function ComparisonPage({ queryParams }) {
 
             {/* Stats panel */}
             <Card style={{ padding: sm ? '16px' : '22px', marginBottom: '14px' }}>
-              <div style={{ fontWeight: 700, fontSize: '15px', color: C.navy, marginBottom: '14px', paddingBottom: '10px', borderBottom: `1px solid ${C.border}` }}>
+              <div className="font-bold text-[15px] text-(--color-navy) mb-[14px] pb-[10px]" style={{ borderBottom: `1px solid ${C.border}` }}>
                 Muadil İstatistikleri
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr 1fr' : 'repeat(4,1fr)', gap: sm ? '10px' : '14px' }}>
@@ -427,13 +458,14 @@ export function ComparisonPage({ queryParams }) {
                   { icon: faThumbsUp,        value: recCount,                        label: 'tavsiye ediyor',        bg: C.greenBg, border: C.greenBorder, iconBg: '#dcfce7', color: C.green },
                   { icon: faThumbsDown,      value: notRecCount,                     label: 'tavsiye etmiyor',       bg: C.redBg, border: C.redBorder, iconBg: '#fee2e2', color: C.red },
                 ].map(({ icon, value, label, bg, border, iconBg, color }) => (
-                  <div key={label} style={{ background: bg, border: `1px solid ${border}`, borderRadius: '12px', padding: sm ? '12px' : '14px 16px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div key={label} className="rounded-xl flex items-center gap-[14px]"
+                    style={{ background: bg, border: `1px solid ${border}`, padding: sm ? '12px' : '14px 16px' }}>
+                    <div className="w-[40px] h-[40px] rounded-full flex items-center justify-center shrink-0" style={{ background: iconBg }}>
                       <FontAwesomeIcon icon={icon} style={{ fontSize: '17px', color }} />
                     </div>
                     <div>
-                      <div style={{ fontSize: sm ? '20px' : '22px', fontWeight: 900, color, lineHeight: 1.1 }}>{value.toLocaleString('tr-TR')}</div>
-                      <div style={{ fontSize: '11px', color: C.textMid, fontWeight: 600, marginTop: '2px' }}>{label}</div>
+                      <div className="font-black leading-[1.1]" style={{ fontSize: sm ? '20px' : '22px', color }}>{value.toLocaleString('tr-TR')}</div>
+                      <div className="text-[11px] text-(--color-text-mid) font-semibold mt-[2px]">{label}</div>
                     </div>
                   </div>
                 ))}
@@ -442,8 +474,8 @@ export function ComparisonPage({ queryParams }) {
 
             {/* Comments */}
             <Card style={{ padding: '22px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: `1px solid ${C.border}` }}>
-                <span style={{ fontWeight: 700, fontSize: '16px', color: C.navy }}>Yorumlar ({muadilComments.length})</span>
+              <div className="flex justify-between items-center mb-[18px] pb-[14px]" style={{ borderBottom: `1px solid ${C.border}` }}>
+                <span className="font-bold text-[16px] text-(--color-navy)">Yorumlar ({muadilComments.length})</span>
                 {user && !showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
                 {user && !showCForm && userReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
               </div>
@@ -462,13 +494,13 @@ export function ComparisonPage({ queryParams }) {
               )}
 
               {!user && (
-                <div style={{ textAlign: 'center', padding: '14px', background: '#f9f9fb', borderRadius: '10px', marginBottom: '16px' }}>
-                  <div style={{ fontSize: '13px', color: C.textMid, marginBottom: '8px' }}>Yorum yapmak için giriş yapın</div>
+                <div className="text-center p-[14px] rounded-[10px] mb-4" style={{ background: '#f9f9fb' }}>
+                  <div className="text-[13px] text-(--color-text-mid) mb-2">Yorum yapmak için giriş yapın</div>
                   <Btn size="sm" onClick={() => navigate('/giris')}>Giriş Yap</Btn>
                 </div>
               )}
 
-              {muadilComments.length === 0 && <div style={{ textAlign: 'center', color: C.textLight, fontSize: '14px', padding: '32px' }}>Henüz yorum yok.</div>}
+              {muadilComments.length === 0 && <div className="text-center text-(--color-text-light) text-[14px] py-8">Henüz yorum yok.</div>}
               <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
                 {muadilComments.map((c) => {
                   const isDeleted = c.userId === 'deleted';
@@ -493,86 +525,97 @@ export function ComparisonPage({ queryParams }) {
                     ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
                     : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
                   return (
-                    <div key={c.id} style={{
-                      border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
-                      borderRadius: '12px', padding: '14px 16px',
-                      background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
-                      position: 'relative', overflow: 'hidden',
-                    }}>
+                    <div key={c.id} className="rounded-xl px-4 py-[14px] relative overflow-hidden"
+                      style={{
+                        border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
+                        background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
+                      }}>
                       {/* Admin şerit */}
-                      {isAdmin && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
-                      {isModerator && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
-                      <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', color: '#fff', fontWeight: 700, flexShrink: 0, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none', overflow: 'hidden' }}>
+                      {isAdmin && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
+                      {isModerator && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
+                      <div className="flex gap-[10px] mb-2">
+                        <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[13px] text-white font-bold shrink-0 overflow-hidden"
+                          style={{ background: avatarBg, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none' }}>
                           {livePhoto
-                            ? <img src={livePhoto} alt={liveName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            ? <img src={livePhoto} alt={liveName} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             : isAdmin ? <FontAwesomeIcon icon={faCrown} style={{ fontSize: '14px' }} /> : liveAvatar
                           }
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center flex-wrap gap-1">
+                            <div className="flex items-center gap-[6px] flex-wrap">
                               {isAdmin ? (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, borderRadius: '6px', padding: '2px 9px', fontSize: '12px', fontWeight: 800, color: C.goldLight }}>
-                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} />{liveName}
-                                </span>
+                                <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-extrabold"
+                                  style={{ background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, color: C.goldLight }}>
+                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max">{liveName}</p>
+                                </div>
                               ) : isModerator ? (
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#ede9fe', border: '1px solid #a78bfa', borderRadius: '6px', padding: '2px 9px', fontSize: '12px', fontWeight: 700, color: '#5b21b6' }}>
-                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} />{liveName}
-                                </span>
+                                <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-bold" style={{ background: '#ede9fe', border: '1px solid #a78bfa', color: '#5b21b6' }}>
+                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max">{liveName}</p>
+                                </div>
                               ) : isDeleted ? (
-                                <span style={{ fontSize: '13px', color: C.textLight, fontStyle: 'italic' }}>{liveName}</span>
+                                <span className="text-[13px] text-(--color-text-light) italic">{liveName}</span>
                               ) : commentUser?.username ? (
                                 <a href={`/@${commentUser.username}`}
                                   onClick={(e) => { e.preventDefault(); navigate(`/@${commentUser.username}`); }}
-                                  style={{ fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', cursor: 'pointer', transition: 'color 0.15s' }}
+                                  className="font-bold text-[13px] no-underline cursor-pointer transition-colors duration-150"
+                                  style={{ color: C.text }}
                                   onMouseEnter={e => e.currentTarget.style.color = C.gold}
                                   onMouseLeave={e => e.currentTarget.style.color = C.text}
                                 >{liveName}</a>
                               ) : (
-                                <span style={{ fontWeight: 700, fontSize: '13px', color: C.text }}>{liveName}</span>
+                                <span className="font-bold text-[13px]" style={{ color: C.text }}>{liveName}</span>
                               )}
                             </div>
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <div className="flex gap-[6px] items-center">
                               {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
                               {c.status === 'pending_update' && <Badge color="orange">Güncelleme Bekliyor</Badge>}
-                              <span style={{ fontSize: '11px', color: C.textLight }}>{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
+                              <span className="text-[11px] text-(--color-text-light)">{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
                               {!isDeleted && user?.uid === c.userId && (
                                 confirmDeleteId === c.id
-                                  ? <span style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                  ? <span className="flex gap-1 items-center">
                                       <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); }}
-                                        style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#e53e3e', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Sil</button>
+                                        className="text-[11px] font-bold text-white bg-[#e53e3e] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
+                                        style={{ fontFamily: F }}>Sil</button>
                                       <button onClick={() => setConfirmDeleteId(null)}
-                                        style={{ fontSize: '11px', color: C.textMid, background: '#f0f0f0', border: 'none', borderRadius: '5px', padding: '2px 8px', cursor: 'pointer', fontFamily: F }}>Vazgeç</button>
+                                        className="text-[11px] text-(--color-text-mid) bg-[#f0f0f0] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
+                                        style={{ fontFamily: F }}>Vazgeç</button>
                                     </span>
                                   : <button onClick={() => setConfirmDeleteId(c.id)}
-                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: C.textLight, display: 'flex', alignItems: 'center', opacity: 0.6 }}
+                                      className="bg-transparent border-none cursor-pointer p-[2px] flex items-center opacity-60"
+                                      style={{ color: C.textLight }}
                                       title="Yorumu sil">
                                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                                     </button>
                               )}
                             </div>
                           </div>
-                          <div style={{ display: 'flex', gap: '10px', marginTop: '3px', fontSize: '12px', color: C.textMid, flexWrap: 'wrap', alignItems: 'center' }}>
+                          <div className="flex gap-[10px] mt-[3px] text-[12px] text-(--color-text-mid) flex-wrap items-center">
                             <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
                             <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
                             <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
                             <span style={{ color: C.border }}>|</span>
                             <span>Puan <strong style={{ color: C.gold }}>{((c.similarity + c.projection + c.longevity) / 3).toFixed(1)}/10</strong></span>
                             {c.recommend === true && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.greenBg, border: `1px solid ${C.greenBorder}`, borderRadius: '20px', padding: '2px 8px', color: C.green, fontWeight: 700 }}>
-                                <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
-                              </span>
+                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                                style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, color: C.green }}>
+                                <p className="m-0 p-0 w-max flex items-center gap-1">
+                                  <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
+                                </p>
+                              </div>
                             )}
                             {c.recommend === false && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: C.redBg, border: `1px solid ${C.redBorder}`, borderRadius: '20px', padding: '2px 8px', color: C.red, fontWeight: 700 }}>
-                                <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
-                              </span>
+                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                                style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red }}>
+                                <p className="m-0 p-0 w-max flex items-center gap-1">
+                                  <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
+                                </p>
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                      <p style={{ fontSize: '13px', color: C.text, lineHeight: 1.6 }}>{c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text}</p>
+                      <p className="text-[13px] leading-relaxed" style={{ color: C.text }}>{c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text}</p>
                     </div>
                   );
                 })}
@@ -581,11 +624,11 @@ export function ComparisonPage({ queryParams }) {
           </div>
         ) : (
           <Card style={{ padding: sm ? '40px 20px' : '60px', textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '14px', color: C.textLight }}>
+            <div className="text-[48px] mb-[14px] text-(--color-text-light)">
               <FontAwesomeIcon icon={faMagnifyingGlass} />
             </div>
-            <div style={{ fontSize: sm ? '16px' : '20px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>Karşılaştırmak istediğiniz parfümü seçin</div>
-            <div style={{ color: C.textLight, fontSize: '14px' }}>Orijinal parfümü ve muadilini seçin.</div>
+            <div className="font-bold text-(--color-navy) mb-2" style={{ fontSize: sm ? '16px' : '20px' }}>Karşılaştırmak istediğiniz parfümü seçin</div>
+            <div className="text-(--color-text-light) text-[14px]">Orijinal parfümü ve muadilini seçin.</div>
           </Card>
         )}
       </div>
