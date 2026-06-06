@@ -1423,6 +1423,7 @@ export function AdminPanel() {
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
+  const [tabDropOpen, setTabDropOpen] = useState(false);
   const [openActionId, setOpenActionId] = useState(null);
   const [uam, setUam] = useState({ open: false, user: null, step: 'actions', action: null, loading: false, error: '' });
   const [iam, setIam] = useState({ open: false, item: null, itemType: null, step: 'actions', loading: false, error: '', withMuadils: false });
@@ -1802,28 +1803,62 @@ export function AdminPanel() {
         </div>
       </div>
 
-      {/* ── Yatay sekme barı ─────────────────────────────────────────────── */}
+      {/* ── Sekme barı — masaüstü: yatay, mobil: dropdown ────────────────── */}
       <div className="bg-(--color-card) border-b border-(--color-border) sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-8 flex flex-wrap">
-          {TABS.map(({ k, l, icon }) => {
-            const active = tab === k;
-            return (
-              <button key={k} onClick={() => setTab(k)}
-                className="flex items-center gap-[7px] px-4 py-[13px] border-none bg-transparent text-[13px] cursor-pointer font-[family-name:var(--font-body)] transition-[color,border-color] duration-150 whitespace-nowrap"
-                style={{
-                  borderBottom: `2px solid ${active ? C.gold : 'transparent'}`,
-                  color: active ? C.gold : C.textMid,
-                  fontWeight: active ? 700 : 500,
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.color = C.text; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.color = C.textMid; }}
-              >
-                <FontAwesomeIcon icon={icon} className="text-xs" />
-                {l}
-              </button>
-            );
-          })}
-        </div>
+        {sm ? (
+          /* ── Mobil dropdown ── */
+          <div className="relative px-4 py-2">
+            <button
+              onClick={() => setTabDropOpen(v => !v)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-(--color-border) bg-(--color-bg) text-[14px] font-semibold cursor-pointer"
+              style={{ color: C.text }}
+            >
+              <span className="flex items-center gap-2" style={{ color: C.gold }}>
+                <FontAwesomeIcon icon={TABS.find(t => t.k === tab)?.icon || faGauge} className="text-xs" />
+                {TABS.find(t => t.k === tab)?.l}
+              </span>
+              <FontAwesomeIcon icon={tabDropOpen ? faChevronUp : faChevronDown} className="text-xs" style={{ color: C.textLight }} />
+            </button>
+            {tabDropOpen && (
+              <div className="absolute left-4 right-4 top-[calc(100%-4px)] bg-(--color-card) border border-(--color-border) rounded-xl shadow-lg z-50 overflow-hidden" style={{ boxShadow: C.shadowLg }}>
+                {TABS.map(({ k, l, icon }) => {
+                  const active = tab === k;
+                  return (
+                    <button key={k} onClick={() => { setTab(k); setTabDropOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 border-none text-[13px] cursor-pointer text-left transition-colors duration-100"
+                      style={{ background: active ? C.goldBg : 'transparent', color: active ? C.gold : C.text, fontWeight: active ? 700 : 400, borderBottom: `1px solid ${C.borderLight}` }}
+                    >
+                      <FontAwesomeIcon icon={icon} className="text-xs w-4" style={{ color: active ? C.gold : C.textMid }} />
+                      {l}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* ── Masaüstü yatay bar ── */
+          <div className="max-w-[1400px] mx-auto px-8 flex flex-wrap">
+            {TABS.map(({ k, l, icon }) => {
+              const active = tab === k;
+              return (
+                <button key={k} onClick={() => setTab(k)}
+                  className="flex items-center gap-[7px] px-4 py-[13px] border-none bg-transparent text-[13px] cursor-pointer font-[family-name:var(--font-body)] transition-[color,border-color] duration-150 whitespace-nowrap"
+                  style={{
+                    borderBottom: `2px solid ${active ? C.gold : 'transparent'}`,
+                    color: active ? C.gold : C.textMid,
+                    fontWeight: active ? 700 : 500,
+                  }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.color = C.text; }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.color = C.textMid; }}
+                >
+                  <FontAwesomeIcon icon={icon} className="text-xs" />
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="max-w-[1400px] mx-auto">
