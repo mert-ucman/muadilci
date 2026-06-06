@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
-import { C } from '@/constants/theme';
+import { C, F } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { calcAllMuadilScores, calcAllBrandScores } from '@/utils/scoring';
 import { faTrophy, faMedal } from '@fortawesome/free-solid-svg-icons';
@@ -34,7 +34,7 @@ function RankNum({ n }) {
   const m = medals[n];
   return (
     <div
-      className="w-7 h-7 rounded-full grid place-items-center text-[11px] font-extrabold shrink-0 select-none font-[--font-body]"
+      className="w-7 h-7 rounded-full grid place-items-center text-[11px] font-extrabold shrink-0 select-none"
       style={{
         background: m ? m.bg : 'var(--color-border)',
         color: m ? m.color : 'var(--color-text-light)',
@@ -166,19 +166,19 @@ export function LeaderboardPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <h1
-            className="font-black text-(--color-navy) m-0 font-[--font-body]"
-            style={{ fontSize: sm ? '26px' : '32px' }}
+            className="font-black text-(--color-navy) m-0"
+            style={{ fontSize: sm ? '26px' : '32px', fontFamily: F }}
           >
             En İyiler
           </h1>
-          <p className="text-[14px] text-(--color-text-light) mt-2 font-[--font-body]">
+          <p className="text-[14px] text-(--color-text-light) mt-2" style={{ fontFamily: F }}>
             Kullanıcı puanlarına göre en başarılı muadil parfümler ve markalar
           </p>
           <div className="inline-flex items-center gap-2 mt-[10px] px-[14px] py-[6px] rounded-[20px] bg-(--color-surface) border border-(--color-border)">
             <svg width="12" height="12" fill="none" stroke="var(--color-text-light)" strokeWidth="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span className="text-[12px] text-(--color-text-light) font-[--font-body]">
+            <span className="text-[12px] text-(--color-text-light)">
               muadilci.com bu listeleri hazırlarken güvenilirlik ortalaması için <strong className="text-(--color-text-mid)">Bayesian Ortalamasını</strong> kullanır.
             </span>
           </div>
@@ -203,7 +203,7 @@ export function LeaderboardPage() {
                 <FontAwesomeIcon icon={faTrophy} style={{ fontSize: '16px', color: '#fff' }} />
               </div>
               <div>
-                <h2 className="m-0 text-[16px] font-extrabold text-(--color-navy) font-[--font-body]">
+                <h2 className="m-0 text-[16px] font-extrabold text-(--color-navy)">
                   En İyi 10 Muadil Parfüm
                 </h2>
                 <p className="m-0 text-[12px] text-(--color-text-light)">Parfüme ait benzerlik, yayılım, kalıcılık puanı ortalaması</p>
@@ -232,7 +232,7 @@ export function LeaderboardPage() {
                 <FontAwesomeIcon icon={faMedal} style={{ fontSize: '16px', color: '#fff' }} />
               </div>
               <div>
-                <h2 className="m-0 text-[16px] font-extrabold text-(--color-navy) font-[--font-body]">
+                <h2 className="m-0 text-[16px] font-extrabold text-(--color-navy)">
                   En İyi 10 Muadil Marka
                 </h2>
                 <p className="m-0 text-[12px] text-(--color-text-light)">Markaya ait parfümlerin ortalaması</p>

@@ -1,6 +1,16 @@
+import { useEffect } from 'react';
 import { C } from '@/constants/theme';
 
 export function Modal({ open, onClose, title, children, width = '500px' }) {
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   if (!open) return null;
   return (
     <div className="fixed inset-0 bg-black/45 z-[1000] flex items-center justify-center p-5">
