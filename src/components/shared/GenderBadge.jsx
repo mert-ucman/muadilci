@@ -8,8 +8,10 @@ export function GenderBadge({ gender }) {
   if (!gender) return null;
   const s = GENDER_STYLE[gender] || { bg: '#f3f4f6', border: '#d1d5db', text: '#6b7280' };
   return (
-    <span style={{
-      display: 'inline-block',
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       background: s.bg,
       border: `1px solid ${s.border}`,
       borderRadius: '20px',
@@ -18,7 +20,7 @@ export function GenderBadge({ gender }) {
       fontWeight: 700,
       color: s.text,
     }}>
-      {gender}
-    </span>
+      <p style={{ margin: 0, padding: 0, width: 'max-content' }}>{gender}</p>
+    </div>
   );
 }

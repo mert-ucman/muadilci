@@ -212,7 +212,7 @@ export function DataProvider({ children }) {
       userAvatar: user?.avatar,
       userPhotoURL: user?.photoURL || null,
       userRole: user?.role ?? 'user',
-      status: 'pending',
+      status: user?.role === 'admin' ? 'approved' : 'pending',
       createdAt: serverTimestamp(),
     });
 
@@ -369,13 +369,14 @@ export function DataProvider({ children }) {
     if (!reviewSnap.exists()) return;
     const review = reviewSnap.data();
 
-    if (review.status === 'pending') {
+    if (review.status === 'pending' || user?.role === 'admin') {
       await updateDoc(docRef('reviews', id), {
         text: data.text,
         similarity: data.similarity,
         projection: data.projection,
         longevity: data.longevity,
         recommend: data.recommend ?? null,
+        ...(user?.role === 'admin' ? { status: 'approved', pendingUpdate: null } : {}),
       });
     } else {
       await updateDoc(docRef('reviews', id), {

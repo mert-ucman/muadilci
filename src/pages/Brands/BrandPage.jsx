@@ -211,9 +211,10 @@ export function BrandPage({ params }) {
                 <span style={{ fontSize: '12px', color: 'rgba(255,255,255,.5)', fontWeight: 600 }}>{brand.origin}{isOrig && brand.founded ? ` · ${brand.founded}` : ''}</span>
                 <Badge color={isOrig ? 'gold' : 'green'}>{isOrig ? 'Orijinal Marka' : 'Muadil Marka'}</Badge>
                 {isOrig && brand.category && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: brand.category === 'Niche' ? 'rgba(167,139,250,.25)' : 'rgba(147,197,253,.2)', color: brand.category === 'Niche' ? '#c4b5fd' : '#93c5fd', border: `1px solid ${brand.category === 'Niche' ? 'rgba(167,139,250,.4)' : 'rgba(147,197,253,.3)'}` }}>
-                    <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} style={{ fontSize: '11px' }} /> {brand.category}
-                  </span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '2px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, background: brand.category === 'Niche' ? 'rgba(167,139,250,.25)' : 'rgba(147,197,253,.2)', color: brand.category === 'Niche' ? '#c4b5fd' : '#93c5fd', border: `1px solid ${brand.category === 'Niche' ? 'rgba(167,139,250,.4)' : 'rgba(147,197,253,.3)'}` }}>
+                    <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} style={{ fontSize: '11px' }} />
+                    <p style={{ margin: 0, padding: 0, width: 'max-content' }}>{brand.category}</p>
+                  </div>
                 )}
               </div>
               <h1 style={{ fontSize: sm ? '24px' : 'clamp(24px,4vw,42px)', fontWeight: 600, color: '#fff', marginBottom: '8px', fontFamily: FH, letterSpacing: '0.01em' }}>{brand.name}</h1>
@@ -237,10 +238,10 @@ export function BrandPage({ params }) {
                   )}
                   {/* "Website yok" etiketi — sadece muadil markalar için */}
                   {!isOrig && brand.website === 'website yok' && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.4)', fontSize: '13px', fontWeight: 600, fontFamily: F }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '6px 14px', borderRadius: '20px', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.12)', color: 'rgba(255,255,255,.4)', fontSize: '13px', fontWeight: 600, fontFamily: F }}>
                       <FontAwesomeIcon icon={faGlobe} style={{ fontSize: '13px' }} />
-                      Web Sitesi Yok
-                    </span>
+                      <p style={{ margin: 0, padding: 0, width: 'max-content' }}>Web Sitesi Yok</p>
+                    </div>
                   )}
                   {/* Instagram */}
                   {brand.instagram && (

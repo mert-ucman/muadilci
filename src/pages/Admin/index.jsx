@@ -958,7 +958,7 @@ function GChip({ g }) {
   const s = GENDER_STYLE[g];
   if (!s) return null;
   return (
-    <span style={{ display: 'inline-block', padding: '1px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>{g}</span>
+    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '1px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{g}</p></div>
   );
 }
 
@@ -2016,14 +2016,14 @@ export function AdminPanel() {
                     {sorted.map((b) => (
                       <tr key={b.id} style={{ borderBottom: `1px solid ${C.borderLight}`, background: selectedIds.has(b.id) ? '#fffbeb' : 'transparent' }} onMouseEnter={(e) => { if (!selectedIds.has(b.id)) e.currentTarget.style.background = '#fafafa'; }} onMouseLeave={(e) => { e.currentTarget.style.background = selectedIds.has(b.id) ? '#fffbeb' : 'transparent'; }}>
                         <td style={{ ...tdStyle, width: '40px' }}><input type="checkbox" checked={selectedIds.has(b.id)} onChange={() => toggleSelect(b.id)} /></td>
-                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><a href={`/marka/${b.slug}`} onClick={(e) => { if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${b.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{b.name}</a><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
+                        <td style={tdStyle}><div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}><div style={{ width: '30px', height: '30px', borderRadius: '7px', background: C.goldBg, border: `1px solid ${C.goldBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: C.gold, overflow: 'hidden' }}>{b.logoImage ? <img src={b.logoImage} alt={b.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : b.logo}</div><div><a href={`/marka/${b.slug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); e.stopPropagation(); navigate(`/marka/${b.slug}`); }} style={{ fontWeight: 600, fontSize: '14px', color: C.navy, cursor: 'pointer', textDecoration: 'none' }}>{b.name}</a><div style={{ fontSize: '11px', color: C.textLight }}>/{b.slug}</div></div></div></td>
                         <td style={{ ...tdStyle, fontSize: '13px', color: C.textMid }}>{b.origin}</td>
                         {isOrig && (
                           <td style={tdStyle}>
                             {b.category && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
-                                {b.category}
-                              </span>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
+                                <p style={{ margin: 0, padding: 0, width: 'max-content' }}>{b.category}</p>
+                              </div>
                             )}
                           </td>
                         )}

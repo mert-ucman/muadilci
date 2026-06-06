@@ -101,7 +101,7 @@ export function PerfumesPage() {
   useEffect(() => { localStorage.setItem('perf_pp',   String(perPage)); }, [perPage]);
 
   // Tab değişince sayfa sıfırla
-  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); };
+  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); setListSortKey('name'); setListSortDir('asc'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchFilter = (v) => { setFilter(v); setPage(1); };
   const switchSearch = (v) => { setSearch(v); setPage(1); };
@@ -179,11 +179,6 @@ export function PerfumesPage() {
     return applyMuadilSort(base, sort);
   }, [muadilPerfumes, search, sort, muadilScores, scoreFilter, genderFilterM]);
 
-  const activeList = pTab === 'original' ? filtO : filtM;
-  const totalPages = Math.max(1, Math.ceil(activeList.length / perPage));
-  const safePage   = Math.min(page, totalPages);
-  const pageItems  = activeList.slice((safePage - 1) * perPage, safePage * perPage);
-
   // Liste görünümü sütun sıralaması
   const handleListSort = (key) => {
     if (listSortKey === key) { setListSortDir((d) => d === 'asc' ? 'desc' : 'asc'); }
@@ -191,9 +186,11 @@ export function PerfumesPage() {
     setPage(1);
   };
 
-  const listSortedItems = useMemo(() => {
-    if (view !== 'list') return pageItems;
-    return [...pageItems].sort((a, b) => {
+  // Sütun sıralaması tüm filtrelenmiş listeye uygulanır, sonra sayfalanır
+  const activeList = useMemo(() => {
+    const base = pTab === 'original' ? filtO : filtM;
+    if (view !== 'list') return base;
+    return [...base].sort((a, b) => {
       let av, bv;
       if (pTab === 'original') {
         if (listSortKey === 'name')   { av = a.name || ''; bv = b.name || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
@@ -215,7 +212,11 @@ export function PerfumesPage() {
       }
       return 0;
     });
-  }, [pageItems, view, listSortKey, listSortDir, pTab, muadilCountMap, muadilScores]);
+  }, [filtO, filtM, pTab, view, listSortKey, listSortDir, muadilCountMap, muadilScores]);
+
+  const totalPages = Math.max(1, Math.ceil(activeList.length / perPage));
+  const safePage   = Math.min(page, totalPages);
+  const pageItems  = activeList.slice((safePage - 1) * perPage, safePage * perPage);
 
   const scoreColor = (v) => v === null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
 
@@ -370,7 +371,7 @@ export function PerfumesPage() {
                     <div style={{ fontSize: '12px', color: C.textMid, marginBottom: '8px' }}>{p.brandName} · {p.year}</div>
                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
                       <GenderBadge gender={p.gender} />
-                      {mc > 0 && <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}` }}>{mc} muadil</span>}
+                      {mc > 0 && <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}` }}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{mc} muadil</p></div>}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px solid ${C.borderLight}`, gap: '6px' }}>
                       <span style={{ fontSize: '11px', color: C.textLight, display: 'flex', alignItems: 'center', gap: '3px' }}><FontAwesomeIcon icon={faHeart} style={{ fontSize: '10px', color: C.gold }} /> {(p.likes || 0).toLocaleString()}</span>
@@ -448,7 +449,7 @@ export function PerfumesPage() {
                 </tr>
               </thead>
               <tbody>
-                {listSortedItems.map((item) => {
+                {pageItems.map((item) => {
                   const uid = user?.uid || user?.id;
                   const isOrig = pTab === 'original';
                   const mc = isOrig ? (muadilCountMap[item.id] || 0) : null;
@@ -511,7 +512,7 @@ export function PerfumesPage() {
               </tbody>
             </table>
             </div>
-            {!listSortedItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
+            {!pageItems.length && <div style={{ textAlign: 'center', padding: '60px', color: C.textLight }}>Sonuç bulunamadı.</div>}
           </Card>
         )}
 

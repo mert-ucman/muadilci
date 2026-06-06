@@ -47,3 +47,5 @@ export const C = {
 export const F  = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 /* Display: Cormorant Garamond — editorial luxury serif */
 export const FH = "'Cormorant Garamond', Georgia, serif";
+/* Accent: Elms Sans — utilitarian geometric sans */
+export const FE = "'Elms Sans', 'DM Sans', sans-serif";

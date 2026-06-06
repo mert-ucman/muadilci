@@ -232,7 +232,7 @@ export function ActivityTab() {
                       <td style={{ padding: '12px 14px', whiteSpace: 'nowrap' }}>
                         {log.userUsername ? (
                           <a href={`/@${log.userUsername}`}
-                            onClick={(e) => { e.preventDefault(); navigate(`/@${log.userUsername}`); }}
+                            onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/@${log.userUsername}`); }}
                             style={{ fontWeight: 700, color: C.gold, textDecoration: 'none', fontSize: '13px' }}
                             onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                             onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
@@ -253,20 +253,20 @@ export function ActivityTab() {
                             {log.muadilName && <span style={{ color: C.textMid }}> — {log.muadilName}</span>}
                             {' '}karşılaştırmasına yorum yaptı
                             {log.perfumeUrl && (
-                              <button onClick={() => navigate(log.perfumeUrl)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle' }}>
+                              <a href={log.perfumeUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.perfumeUrl); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle', display: 'inline-block' }}>
                                 <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{ fontSize: '11px' }} />
-                              </button>
+                              </a>
                             )}
                           </span>
                         ) : log.type === 'list_created' ? (
                           <span style={{ color: C.text }}>
                             <strong>"{log.listTitle}"</strong> listesini oluşturdu
                             {log.listUrl && log.userUsername && (
-                              <button onClick={() => navigate(log.listUrl)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle' }}>
+                              <a href={log.listUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.listUrl); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.gold, marginLeft: '6px', padding: '2px', verticalAlign: 'middle', display: 'inline-block' }}>
                                 <FontAwesomeIcon icon={faArrowUpRightFromSquare} style={{ fontSize: '11px' }} />
-                              </button>
+                              </a>
                             )}
                           </span>
                         ) : log.type === 'login' ? (

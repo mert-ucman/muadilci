@@ -15,12 +15,12 @@ export function ScoreBar({ label, value, empty }) {
           {empty ? '—' : `${value}/10`}
         </span>
       </div>
-      <div style={{ height: '6px', background: C.borderLight, borderRadius: '3px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: '6px', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 50%, #38a169 100%)', borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{
+          position: 'absolute', top: 0, right: 0,
           height: '100%',
-          width: empty ? '0%' : `${(value / 10) * 100}%`,
-          background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)',
-          borderRadius: '3px',
+          width: empty ? '100%' : `${100 - (value / 10) * 100}%`,
+          background: C.borderLight,
           transition: 'width .4s',
         }} />
       </div>

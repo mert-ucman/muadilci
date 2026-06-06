@@ -54,6 +54,21 @@ export function App() {
     if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
     link.href = faviconUrl;
   }, [faviconUrl]);
+
+  // Route korumaları — render sırasında değil, effect içinde yönlendir
+  useEffect(() => {
+    if (loading) return;
+    if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) {
+      navigate('/giris');
+    } else if (user && !isMod && basePath === '/moderasyon') {
+      navigate('/');
+    } else if (user && !isAdmin && basePath === '/admin') {
+      navigate('/');
+    } else if (user && (basePath === '/giris' || basePath === '/kayit')) {
+      navigate('/');
+    }
+  }, [loading, user, isAdmin, isMod, basePath]);
+
   const noLayout = NO_LAYOUT_PATHS.includes(basePath);
 
   if (loading) return (
@@ -73,24 +88,11 @@ export function App() {
     return <UsernameSetupPage />;
   }
 
-  // Route korumaları
-  if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) {
-    navigate('/giris');
-    return null;
-  }
-  if (user && !isMod && basePath === '/moderasyon') {
-    navigate('/');
-    return null;
-  }
-  if (user && !isAdmin && basePath === '/admin') {
-    navigate('/');
-    return null;
-  }
-  // Giriş yapmış kullanıcıyı auth sayfalarından yönlendir
-  if (user && (basePath === '/giris' || basePath === '/kayit')) {
-    navigate('/');
-    return null;
-  }
+  // Koruma gerektiren sayfalarda yönlendirme beklenirken boş render
+  if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) return null;
+  if (user && !isMod && basePath === '/moderasyon') return null;
+  if (user && !isAdmin && basePath === '/admin') return null;
+  if (user && (basePath === '/giris' || basePath === '/kayit')) return null;
 
   let Page = NotFoundPage;
   let params = {};

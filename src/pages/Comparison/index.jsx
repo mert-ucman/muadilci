@@ -8,9 +8,9 @@ import { containsProfanity } from '@/utils/profanity';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { Badge } from '@/components/ui/Badge';
-import { C, F } from '@/constants/theme';
+import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
@@ -69,7 +69,7 @@ function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel,
       <div style={{ fontSize: '12px', color: C.textMid, background: C.blueBg, border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
-      {!isMod && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      {!isMod && !isAdmin && <div style={{ fontSize: '12px', color: C.orange, marginBottom: '8px' }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
       {submitError && <div style={{ fontSize: '13px', color: C.red, background: '#fff5f5', border: '1px solid #fecaca', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px' }}>{submitError}</div>}
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
@@ -85,18 +85,31 @@ export function ComparisonPage({ queryParams }) {
     description: 'Orijinal parfüm ile muadilini yan yana karşılaştır; koku benzerliği, kalıcılık ve yayılım puanlarını topluluk yorumlarıyla incele.',
   });
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
-  const { user, isMod } = useAuth();
+  const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
+  const { user, isMod, isAdmin } = useAuth();
   const { w, sm, md, xs } = useW();
 
-  const initOrigId = queryParams?.orijinal || '';
-  const initOrigBrand = initOrigId ? (perfumes.find((p) => String(p.id) === String(initOrigId))?.brandName || '') : '';
-  const [selOrigBrand, setSelOrigBrand] = useState(initOrigBrand);
-  const [selOrigId, setSelOrigId] = useState(initOrigId);
-  const initMuadilId = queryParams?.muadil || '';
-  const initMuadilBrand = initMuadilId ? (muadilPerfumes.find((m) => String(m.id) === String(initMuadilId))?.brandName || '') : '';
-  const [selMuadilBrand, setSelMuadilBrand] = useState(initMuadilBrand);
-  const [selMuadilId, setSelMuadilId] = useState(initMuadilId);
+  const initOrigId    = queryParams?.orijinal || '';
+  const initMuadilId  = queryParams?.muadil   || '';
+  const [selOrigBrand,   setSelOrigBrand]   = useState('');
+  const [selOrigId,      setSelOrigId]      = useState(initOrigId);
+  const [selMuadilBrand, setSelMuadilBrand] = useState('');
+  const [selMuadilId,    setSelMuadilId]    = useState(initMuadilId);
+
+  // Data geç yüklenince (refresh) brand seçimini otomatik doldur
+  useEffect(() => {
+    if (!selOrigBrand && selOrigId && perfumes.length > 0) {
+      const p = perfumes.find((p) => String(p.id) === String(selOrigId));
+      if (p) setSelOrigBrand(p.brandName);
+    }
+  }, [perfumes, selOrigId]);
+
+  useEffect(() => {
+    if (!selMuadilBrand && selMuadilId && muadilPerfumes.length > 0) {
+      const m = muadilPerfumes.find((m) => String(m.id) === String(selMuadilId));
+      if (m) setSelMuadilBrand(m.brandName);
+    }
+  }, [muadilPerfumes, selMuadilId]);
   const [muadilSortDir, setMuadilSortDir] = useState('desc');
   const [showCForm, setShowCForm] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -115,6 +128,8 @@ export function ComparisonPage({ queryParams }) {
   const mFiltered = selMuadilBrand ? matching.filter((m) => m.brandName === selMuadilBrand) : matching;
   // selMuadil yalnızca seçili orijinale ait muadiller arasında aranır
   const selMuadil = selMuadilId ? matching.find((m) => String(m.id) === String(selMuadilId)) : undefined;
+  const muadilBrand = selMuadil ? brands.find((b) => b.slug === selMuadil.brandSlug || String(b.id) === String(selMuadil.brandId)) : null;
+  const origBrand   = selOrig   ? brands.find((b) => b.slug === selOrig.brandSlug   || String(b.id) === String(selOrig.brandId))   : null;
 
   const muadilComments = selMuadil
     ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && (isMod || c.status === 'approved' || c.status === 'pending_update' || (c.status === 'pending' && c.userId === user?.uid)))
@@ -204,37 +219,77 @@ export function ComparisonPage({ queryParams }) {
           <div className="fade-in">
             {/* Top cards */}
             <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px', marginBottom: '14px' }}>
-              <Card style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden' }}>
-                  <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-                <div style={{ padding: sm ? '8px 10px' : '14px 16px' }}>
-                  <div style={{ fontSize: sm ? '13px' : '16px', fontWeight: 900, color: C.navy, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selOrig.name}</div>
-                  <div style={{ fontSize: sm ? '11px' : '13px', color: C.textMid, marginBottom: sm ? '4px' : '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selOrig.brandName}</div>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    <Badge color="blue">Orijinal</Badge>
-                    <GenderBadge gender={selOrig.gender} />
+              {/* ── Orijinal Parfüm Kartı ── */}
+              {(() => {
+                const FI = "'Inter', 'DM Sans', sans-serif";
+                const badgeStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3px 9px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, fontFamily: FI, letterSpacing: '.08em', textTransform: 'uppercase', background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' };
+                return (
+                  <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)', display: 'flex', flexDirection: 'column' }}>
+                    {/* Görsel */}
+                    <div style={{ width: '100%', overflow: 'hidden' }}>
+                      <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', display: 'block' }} />
+                    </div>
+                    {/* İçerik */}
+                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#EDE9E0', border: '1px solid #DDD8CE', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {origBrand?.logoImage
+                          ? <img src={origBrand.logoImage} alt={origBrand.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid, fontFamily: FI, letterSpacing: '.04em', textTransform: 'uppercase' }}>{origBrand?.logo || selOrig.brandName?.slice(0,2)}</span>
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <a href={`/marka/${selOrig.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selOrig.brandSlug}`); }} style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }} onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selOrig.brandName}</a>
+                        <div style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '5px' }}>{selOrig.name}</div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>Orijinal</p></div>
+                          {selOrig.gender && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selOrig.gender}</p></div>}
+                          {selOrig.year && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selOrig.year}</p></div>}
+                        </div>
+                      </div>
+                      <div style={{ position: 'relative', flexShrink: 0 }} onMouseEnter={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '1'; }} onMouseLeave={e => { const t = e.currentTarget.querySelector('[data-tip]'); if (t) t.style.opacity = '0'; }}>
+                        <button onClick={() => navigate(`/${selOrig.brandSlug}/${selOrig.slug}`)} style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#fff', border: '1px solid #DDD8CE', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,.08)', transition: 'box-shadow .15s' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,0,0,.14)'} onMouseLeave={e => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,.08)'}>
+                          <FontAwesomeIcon icon={faChevronRight} style={{ fontSize: '12px', color: C.textMid }} />
+                        </button>
+                        <div data-tip="" style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, background: '#1a1a1a', color: '#fff', fontSize: '11px', fontFamily: FI, fontWeight: 500, padding: '5px 10px', borderRadius: '8px', whiteSpace: 'nowrap', opacity: 0, transition: 'opacity .15s', pointerEvents: 'none', zIndex: 10 }}>Parfüm profiline git</div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Card>
-              <Card style={{ padding: '0', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ width: '100%', aspectRatio: sm ? '1/1' : '4/3', background: '#f0f0f0', overflow: 'hidden', position: 'relative' }}>
-                  <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button
-                    onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }}
-                    style={{ position: 'absolute', top: '10px', right: '10px', background: isMuadilFavorite(user?.uid, selMuadil.id) ? C.redBg : 'rgba(255,255,255,.9)', border: `1px solid ${isMuadilFavorite(user?.uid, selMuadil.id) ? C.redBorder : 'rgba(255,255,255,.6)'}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', boxShadow: '0 2px 8px rgba(0,0,0,.15)', backdropFilter: 'blur(4px)' }}>
-                    {isMuadilFavorite(user?.uid, selMuadil.id) ? '❤️' : '🤍'}
-                  </button>
-                </div>
-                <div style={{ padding: sm ? '8px 10px' : '14px 16px' }}>
-                  <div style={{ fontSize: sm ? '13px' : '16px', fontWeight: 900, color: C.navy, marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selMuadil.name}</div>
-                  <div style={{ fontSize: sm ? '11px' : '13px', color: C.textMid, marginBottom: sm ? '4px' : '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selMuadil.brandName}</div>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                    <Badge color="green">Muadil</Badge>
-                    <GenderBadge gender={selMuadil.gender || selOrig.gender} />
+                );
+              })()}
+
+              {/* ── Muadil Parfüm Kartı ── */}
+              {(() => {
+                const FI = "'Inter', 'DM Sans', sans-serif";
+                const badgeStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3px 9px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, fontFamily: FI, letterSpacing: '.08em', textTransform: 'uppercase', background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' };
+                return (
+                  <div style={{ borderRadius: '18px', overflow: 'hidden', background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)', display: 'flex', flexDirection: 'column' }}>
+                    {/* Görsel + favori butonu */}
+                    <div style={{ position: 'relative', width: '100%', overflow: 'hidden' }}>
+                      <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} style={{ width: '100%', display: 'block' }} />
+                      <button onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,255,255,.85)', border: '1px solid rgba(0,0,0,.08)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(4px)', transition: 'all .15s' }}>
+                        <FontAwesomeIcon icon={faHeart} style={{ fontSize: '13px', color: isMuadilFavorite(user?.uid, selMuadil.id) ? '#f87171' : '#ccc' }} />
+                      </button>
+                    </div>
+                    {/* İçerik */}
+                    <div style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#EDE9E0', border: '1px solid #DDD8CE', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {muadilBrand?.logoImage
+                          ? <img src={muadilBrand.logoImage} alt={muadilBrand.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <span style={{ fontSize: '10px', fontWeight: 700, color: C.textMid, fontFamily: FI, letterSpacing: '.04em', textTransform: 'uppercase' }}>{muadilBrand?.logo || selMuadil.brandName?.slice(0,2)}</span>
+                        }
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <a href={`/marka/${selMuadil.brandSlug}`} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(`/marka/${selMuadil.brandSlug}`); }} style={{ fontFamily: FI, fontWeight: 700, fontSize: '13px', color: C.text, textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }} onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selMuadil.brandName}</a>
+                        <div style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '5px' }}>{selMuadil.name}</div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>Muadil</p></div>
+                          {(selMuadil.gender || selOrig.gender) && <div style={badgeStyle}><p style={{ margin: 0, padding: 0, width: 'max-content' }}>{selMuadil.gender || selOrig.gender}</p></div>}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                );
+              })()}
               <Card style={{ padding: sm ? '14px' : '24px', position: 'relative', gridColumn: sm ? '1 / -1' : md ? '1 / -1' : 'auto' }}>
                 <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.uid, selOrig.id, selMuadil.id); }}
                   style={{ position: 'absolute', top: '14px', right: '14px', background: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}`, borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '18px' }}>
@@ -269,14 +324,35 @@ export function ComparisonPage({ queryParams }) {
                 <ScoreBar label="Kalıcılık" value={scores.longevity} empty={scores.longevity === null} />
                 {scores.count === 0 && <div style={{ fontSize: '12px', color: C.textLight, fontStyle: 'italic', textAlign: 'center', marginBottom: '8px' }}>Henüz onaylanmış yorum yok</div>}
                 <div style={{ marginTop: sm ? '8px' : '14px', padding: sm ? '10px 12px' : '14px', background: C.goldBg, borderRadius: '10px', border: `1px solid ${C.goldBorder}` }}>
-                  <div style={{ fontSize: '12px', color: C.textLight, marginBottom: '6px', fontWeight: 600 }}>Genel Puan</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ flex: 1, height: sm ? '6px' : '8px', background: C.borderLight, borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: scores.overall !== null ? `${(scores.overall / 10) * 100}%` : '0%', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 45%, #38a169 100%)', borderRadius: '4px' }} />
-                    </div>
-                    <span style={{ fontWeight: 900, color: scores.overall !== null ? (scores.overall <= 4 ? C.red : scores.overall < 7 ? C.orange : C.green) : C.textLight, fontSize: sm ? '16px' : '18px', minWidth: '44px', textAlign: 'right' }}>{scores.overall !== null ? `${scores.overall}/10` : '—'}</span>
+                  {/* Genel Puan başlık + pill badge */}
+                  {(() => {
+                    const s = scores.overall;
+                    const grad = s === null ? '#ccc, #ccc'
+                      : s <= 3  ? '#e53e3e, #f87171'
+                      : s <= 5  ? '#e53e3e, #f6ad55'
+                      : s <= 7  ? '#f6ad55, #68d391'
+                      :           '#48bb78, #38a169';
+                    const textColor = s === null ? C.textLight : s <= 4 ? C.red : s < 7 ? '#f6ad55' : C.green;
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div>
+                          <div style={{ fontSize: '12px', color: C.textLight, fontWeight: 600, marginBottom: '2px' }}>Genel Puan</div>
+                          {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight }}>{scores.count} yorumun ortalaması</div>}
+                        </div>
+                        {/* Gradient border pill */}
+                        <div style={{ background: `linear-gradient(135deg, ${grad})`, padding: '2px', borderRadius: '999px', flexShrink: 0 }}>
+                          <div style={{ background: '#fff', borderRadius: '999px', padding: '5px 14px', display: 'flex', alignItems: 'baseline', gap: '1px' }}>
+                            <span style={{ fontSize: '18px', fontWeight: 900, color: textColor, lineHeight: 1 }}>{s !== null ? s : '—'}</span>
+                            {s !== null && <span style={{ fontSize: '11px', fontWeight: 600, color: C.textLight }}>/10</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Progress bar */}
+                  <div style={{ position: 'relative', height: sm ? '6px' : '8px', background: 'linear-gradient(90deg, #e53e3e 0%, #f6ad55 50%, #38a169 100%)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: scores.overall !== null ? `${100 - (scores.overall / 10) * 100}%` : '100%', background: C.borderLight, transition: 'width .4s' }} />
                   </div>
-                  {scores.count > 0 && <div style={{ fontSize: '11px', color: C.textLight, marginTop: '4px' }}>{scores.count} yorumun ortalaması</div>}
                 </div>
               </Card>
             </div>
