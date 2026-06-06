@@ -60,13 +60,8 @@
   to   { transform: translateX(0); }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* box-sizing, margin ve padding sıfırlaması Tailwind preflight tarafından @layer base içinde yapılıyor.
+   Burada tekrar tanımlamak @layer utilities içindeki mx-auto, px-*, py-* gibi class'ları eziyor. */
 
 html,
 body,
