@@ -39,7 +39,17 @@ Kullanım: `bg-(--color-gold)`, `text-(--color-text-mid)`, `border-(--color-bord
 ```
 
 ## Font Kuralları
-- **Body:** `DM Sans` → `font-(--font-body)` veya `F` sabiti
-- **Display / Serif:** `Cormorant Garamond` → `font-(--font-display)` veya `FH` sabiti
-- **Accent / Geometric:** `Elms Sans` → `font-(--font-accent)` veya `FE` sabiti
-- **UI / Data:** `Inter` → `font-(--font-ui)`
+- **Body:** `DM Sans` → inline `style={{ fontFamily: F }}` veya `F` sabiti
+- **Display / Serif:** `Cormorant Garamond` → inline `style={{ fontFamily: FH }}` veya `FH` sabiti
+- **Accent / Geometric:** `Elms Sans` → inline `style={{ fontFamily: FE }}` veya `FE` sabiti
+- **UI / Data:** `Inter` → inline `"'Inter', 'DM Sans', sans-serif"`
+- `font-(--font-body)` gibi Tailwind CSS variable class'ları font-family için **güvenilir değildir** — her zaman `style={{ fontFamily: F }}` inline kullanılır.
+
+## Kritik CSS Uyarısı
+- `index.css` içinde `*, *::before, *::after { margin: 0; padding: 0; }` gibi **@layer dışı reset kuralları YAZILMAZ**.
+  Bu kurallar Tailwind `@layer utilities` içindeki `mx-auto`, `px-*`, `py-*` gibi tüm spacing class'larını ezer.
+  Tailwind preflight bu sıfırlamayı zaten `@layer base` içinde yapar.
+
+## Modal Kullanımı
+- `<Modal>` bileşeni açıkken `document.body.style.overflow = 'hidden'` ile arka plan scroll'u otomatik kilitler.
+- Yeni modal gerektiren durumlar için `src/components/ui/Modal.jsx` bileşenini kullan.
