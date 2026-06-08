@@ -1,7 +1,10 @@
 # Muadilci — Proje Dokümantasyonu
 
 > Türk parfüm muadillerini keşfetmek ve karşılaştırmak için geliştirilmiş topluluk tabanlı platform.
-
+> Bu proje React.js - Tailwindcss - Vite ile kodlanmalıdır.
+> Veritabanı Firebase üzerindedir.
+> Markanın renkleri şöyledir Primary #c9a063 - Secondary #0d0d0d - Tertiary #f5f2ec - Quaternary #ffffff - Quinary #8f8f8f
+> Projede değişiklik olduğunda bu markdown dosyası güncellenmelidir.
 ---
 
 ## ⚠️ Geliştirici Kuralı — İkon Kullanımı
