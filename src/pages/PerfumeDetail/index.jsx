@@ -8,7 +8,7 @@ import { Card, Badge, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faArrowLeft, faLeaf } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
@@ -188,29 +188,57 @@ export function PerfumeDetailPage({ params }) {
             <div className="text-[15px] text-(--color-text-mid) mb-[16px]">{perfume.brandName} · Est. {perfume.year}</div>
             <p className="text-[15px] text-(--color-text) leading-[1.7] mb-[22px] italic">{perfume.description}</p>
             <h3 className="text-[15px] font-bold text-(--color-navy) mb-[12px]">Koku Notaları</h3>
-            <div
-              className="grid gap-[10px]"
-              style={{ gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr' }}
-            >
-              {[
-                ['Üst Notalar',  faArrowUp,   perfume.notes?.top   || [], C.goldBg,  C.goldBorder,  C.gold],
-                ['Kalp Notaları',faHeart,     perfume.notes?.heart || [], '#fff5f8', '#f0c0d0', '#c06080'],
-                ['Dip Notalar',  faArrowDown, perfume.notes?.base  || [], C.greenBg, C.greenBorder, C.green],
-              ].map(([l, icon, notes, bg, border, col]) => (
-                <div key={l} style={{ background: bg, border: `1px solid ${border}` }} className="rounded-[12px] p-[12px]">
-                  <div className="flex items-center gap-[5px] mb-[8px]">
-                    <FontAwesomeIcon icon={icon} style={{ fontSize: '11px', color: col }} />
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase' }}>{l}</span>
+            {(() => {
+              const topNotes   = perfume.notes?.top   || [];
+              const heartNotes = perfume.notes?.heart || [];
+              const baseNotes  = perfume.notes?.base  || [];
+              const hasAll = topNotes.length > 0 && (heartNotes.length > 0 || baseNotes.length > 0);
+
+              if (!hasAll && topNotes.length > 0) {
+                // Sadece üst notalar var → tek kart
+                return (
+                  <div style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }} className="rounded-[12px] p-[12px]">
+                    <div className="flex items-center gap-[5px] mb-[8px]">
+                      <FontAwesomeIcon icon={faLeaf} style={{ fontSize: '11px', color: C.gold }} />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: C.gold, letterSpacing: '.06em', textTransform: 'uppercase' }}>Notalar</span>
+                    </div>
+                    {topNotes.map((n) => (
+                      <div key={n} className="text-[13px] text-(--color-text) mb-[4px] flex gap-[5px] items-center">
+                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold }} className="shrink-0 inline-block" />
+                        {n}
+                      </div>
+                    ))}
                   </div>
-                  {notes.map((n) => (
-                    <div key={n} className="text-[13px] text-(--color-text) mb-[4px] flex gap-[5px] items-center">
-                      <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: col }} className="shrink-0 inline-block" />
-                      {n}
+                );
+              }
+
+              // Üst + orta + alt notalar → üç ayrı kart
+              return (
+                <div
+                  className="grid gap-[10px]"
+                  style={{ gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr' }}
+                >
+                  {[
+                    ['Üst Notalar',   faArrowUp,   topNotes,   C.goldBg,  C.goldBorder,  C.gold],
+                    ['Kalp Notaları', faHeart,     heartNotes, '#fff5f8', '#f0c0d0',     '#c06080'],
+                    ['Dip Notalar',   faArrowDown, baseNotes,  C.greenBg, C.greenBorder, C.green],
+                  ].map(([l, icon, notes, bg, border, col]) => (
+                    <div key={l} style={{ background: bg, border: `1px solid ${border}` }} className="rounded-[12px] p-[12px]">
+                      <div className="flex items-center gap-[5px] mb-[8px]">
+                        <FontAwesomeIcon icon={icon} style={{ fontSize: '11px', color: col }} />
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: col, letterSpacing: '.06em', textTransform: 'uppercase' }}>{l}</span>
+                      </div>
+                      {notes.map((n) => (
+                        <div key={n} className="text-[13px] text-(--color-text) mb-[4px] flex gap-[5px] items-center">
+                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: col }} className="shrink-0 inline-block" />
+                          {n}
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         </div>
 
