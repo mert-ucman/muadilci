@@ -34,6 +34,7 @@ export function DataProvider({ children }) {
   const [users, setUsers] = useState([]);
   const [sliderImages, setSliderImages] = useState([]);
   const [faviconUrl, setFaviconUrl] = useState('');
+  const [globalBrandHeaders, setGlobalBrandHeaders] = useState({ original: '', muadil: '' });
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
 
@@ -56,7 +57,13 @@ export function DataProvider({ children }) {
     unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)), (s) => { setComments(snap2arr(s)); tryDone(); }));
 
     unsubs.push(onSnapshot(col('sliderImages'), (s) => setSliderImages(snap2arr(s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)))));
-    unsubs.push(onSnapshot(doc(db, 'settings', 'site'), (s) => { if (s.exists()) setFaviconUrl(s.data().faviconUrl || ''); }));
+    unsubs.push(onSnapshot(doc(db, 'settings', 'site'), (s) => {
+      if (s.exists()) {
+        const d = s.data();
+        setFaviconUrl(d.faviconUrl || '');
+        setGlobalBrandHeaders({ original: d.originalBrandHeader || '', muadil: d.muadilBrandHeader || '' });
+      }
+    }));
 
     return () => unsubs.forEach((u) => u());
   }, []);
@@ -665,6 +672,10 @@ export function DataProvider({ children }) {
   const updateFavicon = async (url) => {
     await setDoc(doc(db, 'settings', 'site'), { faviconUrl: url }, { merge: true });
   };
+  const updateBrandGlobalHeader = async (type, url) => {
+    const field = type === 'original' ? 'originalBrandHeader' : 'muadilBrandHeader';
+    await setDoc(doc(db, 'settings', 'site'), { [field]: url ?? null }, { merge: true });
+  };
 
   // ─── Slider images ────────────────────────────────────────────────────────
   const MAX_SLIDER = 10;
@@ -710,6 +721,7 @@ export function DataProvider({ children }) {
       addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
       faviconUrl, updateFavicon,
+      globalBrandHeaders, updateBrandGlobalHeader,
     }}>
       {children}
     </DataCtx.Provider>

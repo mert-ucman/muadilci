@@ -89,7 +89,7 @@ function IconList() {
 
 export function BrandPage({ params }) {
   const { navigate, goBack } = useRouter();
-  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
+  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite, globalBrandHeaders } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
   const [showTooltip, setShowTooltip] = useState(false);
@@ -216,9 +216,14 @@ export function BrandPage({ params }) {
       <div
         className="padding"
         style={{
-          background: brand.headerImage
-            ? `linear-gradient(to bottom, rgba(15,15,15,.52), rgba(15,15,15,.88)), url(${brand.headerImage}) center/cover no-repeat`
-            : `linear-gradient(135deg,${C.navy},${C.navyLight})`,
+          background: (() => {
+            const img = brand.headerImage
+              || (brand.type === 'original' ? globalBrandHeaders?.original : globalBrandHeaders?.muadil)
+              || '';
+            return img
+              ? `linear-gradient(to bottom, rgba(15,15,15,.52), rgba(15,15,15,.88)), url(${img}) center/cover no-repeat`
+              : `linear-gradient(135deg,${C.navy},${C.navyLight})`;
+          })(),
           padding: sm ? '32px 16px' : '48px 32px',
         }}
       >

@@ -1426,7 +1426,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, refreshPerfumes, refreshMuadils } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -2546,6 +2546,8 @@ export function AdminPanel() {
             brands={brands}
             updateBrand={updateBrand}
             MAX_SIZE_MB={MAX_SIZE_MB}
+            globalBrandHeaders={globalBrandHeaders}
+            updateBrandGlobalHeader={updateBrandGlobalHeader}
           />
         )}
 
