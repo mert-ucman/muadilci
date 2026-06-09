@@ -296,4 +296,15 @@ Yalnızca `status === 'approved'` yorumlardan:
 
 ---
 
-*Son güncelleme: 2026-06-01*
+## Kaldırılan Paketler
+
+| Paket | Tür | Kaldırılma Sebebi |
+|-------|-----|-------------------|
+| `recharts` | dependency | Hiçbir `src/` dosyasında import edilmiyordu |
+| `archiver` | devDependency | Hiçbir `src/` veya `scripts/` dosyasında kullanılmıyordu |
+| `jimp` | devDependency | Hiçbir `src/` veya `scripts/` dosyasında kullanılmıyordu |
+| `sharp` | devDependency | Hiçbir `src/` veya `scripts/` dosyasında kullanılmıyordu; görsel işleme ihtiyacı doğarsa `npm i -D sharp` ile geri eklenebilir |
+
+---
+
+*Son güncelleme: 2026-06-09*
