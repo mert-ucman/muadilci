@@ -93,6 +93,8 @@ async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = loading
+  // Auth ilk tam döngüsünü (onAuthStateChanged + async Firestore fetch) bitirdi mi?
+  const [authInitialized, setAuthInitialized] = useState(false);
   // Kullanıcı kendi hesabını silerken otomatik-çıkış listener'ını sustur
   const selfDeletingRef = useRef(false);
   // İnaktivite timer ref'i
@@ -102,16 +104,31 @@ export function AuthProvider({ children }) {
   // Güncel user'a stale closure olmadan erişmek için ref
   const userRef = useRef(null);
   useEffect(() => { userRef.current = user ?? null; }, [user]);
+  // onAuthStateChanged'in birden fazla kez çağrılması (null→user geçişi) durumunda
+  // yalnızca en son çağrının authInitialized'ı set etmesini garantiler.
+  const authCallbackGenRef = useRef(0);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) { setUser(null); return; }
+      const gen = ++authCallbackGenRef.current;
+
+      if (!firebaseUser) {
+        setUser(null);
+        // Hemen ardından bir user callback gelebilir (null→user race); kısa bir
+        // mikrotask bekleyip nesli kontrol ederek gereksiz initialized set'ini önle.
+        setTimeout(() => {
+          if (authCallbackGenRef.current === gen) setAuthInitialized(true);
+        }, 0);
+        return;
+      }
       // Token'ı tazele: kullanıcı başka sekmede/cihazda doğruladıysa
       // emailVerified güncel değeri ancak reload sonrası okunabilir
       try { await firebaseUser.reload(); } catch { /* offline vb. */ }
+      if (authCallbackGenRef.current !== gen) return; // daha yeni bir callback var
       const fresh = auth.currentUser || firebaseUser;
       const userData = await fetchOrCreateUserDoc(fresh);
-      if (!userData) { setUser(null); return; } // deleted hesap → çıkış yapıldı
+      if (authCallbackGenRef.current !== gen) return; // daha yeni bir callback var
+      if (!userData) { setUser(null); setAuthInitialized(true); return; } // deleted hesap → çıkış yapıldı
       const provider = fresh.providerData[0]?.providerId || 'password';
       // Yeni sekme veya sayfa yenilemesinde inaktivite sayacını sıfırla.
       // Yoksa kullanıcı başka bir browser sekmesinde 10+ dk geçirirse bu sekme
@@ -123,6 +140,7 @@ export function AuthProvider({ children }) {
         emailVerified: fresh.emailVerified || provider === 'google.com',
         provider,
       });
+      setAuthInitialized(true);
     });
     return unsub;
   }, []);
@@ -468,7 +486,9 @@ export function AuthProvider({ children }) {
 
   const isAdmin = user?.role === 'admin';
   const isMod = user?.role === 'moderator' || user?.role === 'admin';
-  const loading = user === undefined;
+  // loading: auth tam olarak başlatılana kadar (ilk async döngü bitmeden) true kalır.
+  // Bu, Firebase'in null→user geçişindeki kısa race condition'ı önler.
+  const loading = !authInitialized;
 
   return (
     <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod }}>
