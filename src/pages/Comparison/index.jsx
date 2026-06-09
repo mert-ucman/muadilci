@@ -14,7 +14,7 @@ import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumb
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
-function CommentForm({ initialValues, isEditMode, isMod, sm, onSubmit, onCancel, submitError }) {
+function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, onCancel, submitError }) {
   const [cSim, setCSim] = useState(initialValues?.sim ?? 5);
   const [cProj, setCProj] = useState(initialValues?.proj ?? 5);
   const [cLon, setCLon] = useState(initialValues?.lon ?? 5);
@@ -486,6 +486,7 @@ export function ComparisonPage({ queryParams }) {
                   initialValues={editInitials}
                   isEditMode={isEditMode}
                   isMod={isMod}
+                  isAdmin={isAdmin}
                   sm={sm}
                   submitError={submitError}
                   onSubmit={submitC}
