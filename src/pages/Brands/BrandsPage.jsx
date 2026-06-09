@@ -500,7 +500,7 @@ export function BrandsPage() {
                 {pageItems.map((b) => (
                   <tr
                     key={b.id}
-                    onClick={() => navigate(`/marka/${b.slug}`)}
+                    onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/marka/${b.slug}`); }}
                     onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
                     className="cursor-pointer transition-[background] duration-100"
                     style={{ borderBottom: `1px solid ${C.borderLight}` }}

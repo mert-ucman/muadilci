@@ -668,7 +668,7 @@ export function BrandPage({ params }) {
                   return (
                     <tr
                       key={item.id}
-                      onClick={() => isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`)}
+                      onClick={() => { if (window.getSelection()?.toString()) return; isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`); }}
                       className="border-b border-(--color-border-light) cursor-pointer transition-[background] duration-100"
                       onMouseEnter={(e) => e.currentTarget.style.background = C.bg}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}

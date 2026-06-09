@@ -51,7 +51,7 @@ function PerfumeTable({ rows, navigate }) {
       {rows.map((row, i) => (
         <div
           key={row.muadil.id}
-          onClick={() => navigate(`/karsilastir?orijinal=${row.muadil.targetPerfumeId}&muadil=${row.muadil.id}`)}
+          onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/karsilastir?orijinal=${row.muadil.targetPerfumeId}&muadil=${row.muadil.id}`); }}
           className="flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer transition-shadow duration-150"
           style={{
             marginBottom: i < rows.length - 1 ? '6px' : 0,
@@ -85,7 +85,7 @@ function BrandTable({ rows, navigate }) {
       {rows.map((row, i) => (
         <div
           key={row.brand.id}
-          onClick={() => navigate(`/marka/${row.brand.slug}`)}
+          onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/marka/${row.brand.slug}`); }}
           onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${row.brand.slug}`, '_blank'); } }}
           className="flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer transition-shadow duration-150"
           style={{
