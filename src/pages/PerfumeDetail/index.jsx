@@ -176,7 +176,7 @@ export function PerfumeDetailPage({ params }) {
           </Card>
 
           <div
-            className="bg-(--color-card) border border-(--color-border) rounded-[16px]"
+            className="bg-(--color-card) border border-(--color-border) rounded-[16px] flex flex-col justify-between"
             style={{ padding: sm ? '18px' : '24px' }}
           >
             <h1
