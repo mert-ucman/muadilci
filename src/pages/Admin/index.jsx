@@ -1666,6 +1666,8 @@ export function AdminPanel() {
 
   // ─── Export ───────────────────────────────────────────────────────────────
   const [exportModal, setExportModal] = useState(false);
+  const [exportOpts, setExportOpts] = useState({ notes: false, description: false, year: false });
+  const toggleExportOpt = (k) => setExportOpts((prev) => ({ ...prev, [k]: !prev[k] }));
   const [refreshing, setRefreshing] = useState(false);
   const [showFloatingRefresh, setShowFloatingRefresh] = useState(false);
   const refreshBtnRef = useRef(null);
@@ -1695,11 +1697,22 @@ export function AdminPanel() {
 
   const getExportData = () => {
     if (tab === 'perfumes') {
-      return {
-        headers: ['Marka', 'Parfüm Adı', 'Cinsiyet', 'Muadil Sayısı', 'URL'],
-        rows: sortedPerfs.map((p) => [p.brandName, p.name, p.gender || '', p.muadilCount, `/${p.brandSlug}/${p.slug}`]),
-        filename: 'parfumler',
-      };
+      const headers = ['Marka', 'Parfüm Adı', 'Cinsiyet', 'Muadil Sayısı', 'URL'];
+      if (exportOpts.year)        headers.push('Çıkış Yılı');
+      if (exportOpts.notes)       headers.push('Üst Notalar', 'Kalp Notaları', 'Dip Notalar');
+      if (exportOpts.description) headers.push('Açıklama');
+
+      const noteStr = (arr) => Array.isArray(arr) ? arr.join(', ') : (arr || '');
+
+      const rows = sortedPerfs.map((p) => {
+        const row = [p.brandName, p.name, p.gender || '', p.muadilCount, `/${p.brandSlug}/${p.slug}`];
+        if (exportOpts.year)        row.push(p.year || '');
+        if (exportOpts.notes)       row.push(noteStr(p.notes?.top), noteStr(p.notes?.heart), noteStr(p.notes?.base));
+        if (exportOpts.description) row.push(p.description || '');
+        return row;
+      });
+
+      return { headers, rows, filename: 'parfumler' };
     }
     const isOrig = tab === 'original-brands';
     const data = isOrig ? sortedOrigBrands : sortedMuadilBrands;
@@ -2590,6 +2603,28 @@ export function AdminPanel() {
               sortedMuadilBrands.length
             } kayıt</strong> hangi formatta aktarılsın?
           </p>
+
+          {tab === 'perfumes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 12px', background: 'var(--color-bg-soft, #f7f5f0)', borderRadius: 8, marginBottom: 2 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-text-mid)', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 2 }}>Ekstra sütunlar</p>
+              {[
+                { key: 'year',        label: 'Çıkış yılı eklensin mi?' },
+                { key: 'notes',       label: 'Notalar eklensin mi?' },
+                { key: 'description', label: 'Açıklama eklensin mi?' },
+              ].map(({ key, label }) => (
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--color-text)' }}>
+                  <input
+                    type="checkbox"
+                    checked={exportOpts[key]}
+                    onChange={() => toggleExportOpt(key)}
+                    style={{ width: 15, height: 15, accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          )}
+
           <Btn variant="primary" onClick={exportExcel} style={{ justifyContent: 'center' }}>
             Excel (.xlsx)
           </Btn>
