@@ -90,7 +90,7 @@ export function ComparisonPage({ queryParams }) {
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
   const { user, isMod, isAdmin } = useAuth();
-  const { w, sm, md, xs } = useW();
+  const { w, sm, md, lg, xl, xs } = useW();
 
   const initOrigId    = queryParams?.orijinal || '';
   const initMuadilId  = queryParams?.muadil   || '';
@@ -222,7 +222,7 @@ export function ComparisonPage({ queryParams }) {
         {selOrig && selMuadil ? (
           <div className="fade-in">
             {/* Top cards */}
-            <div className="mb-[14px]" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr 1fr' : md ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px' }}>
+            <div className="mb-[14px]" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : xl ? '1fr 1fr' : '1fr 1fr 1.4fr', gap: sm ? '8px' : '14px' }}>
               {/* ── Orijinal Parfüm Kartı ── */}
               {(() => {
                 const FI = "'Inter', 'DM Sans', sans-serif";
@@ -307,7 +307,7 @@ export function ComparisonPage({ queryParams }) {
                 );
               })()}
 
-              <Card style={{ padding: sm ? '14px' : '24px', position: 'relative', gridColumn: sm ? '1 / -1' : md ? '1 / -1' : 'auto' }}>
+              <Card style={{ padding: sm ? '14px' : '24px', position: 'relative', gridColumn: (!sm && xl) ? '1 / -1' : 'auto' }}>
                 <button onClick={() => { if (selOrig && selMuadil) toggleCompFavorite(user?.uid, selOrig.id, selMuadil.id); }}
                   className="absolute top-[14px] right-[14px] w-[36px] h-[36px] rounded-[10px] flex items-center justify-center cursor-pointer text-[18px]"
                   style={{ background: isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBg : '#f5f5f5', border: `1px solid ${isCompFavorite(user?.uid, selOrig?.id, selMuadil?.id) ? C.redBorder : C.border}` }}>
@@ -451,7 +451,7 @@ export function ComparisonPage({ queryParams }) {
               <div className="font-bold text-[15px] text-(--color-navy) mb-[14px] pb-[10px]" style={{ borderBottom: `1px solid ${C.border}` }}>
                 Muadil İstatistikleri
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr 1fr' : 'repeat(4,1fr)', gap: sm ? '10px' : '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: md ? '1fr 1fr' : 'repeat(4,1fr)', gap: sm ? '10px' : '14px' }}>
                 {[
                   { icon: faMagnifyingGlass, value: approvedMuadilComments.length, label: 'kullanıcı karşılaştırdı', bg: C.blueBg, border: '#bfdbfe', iconBg: '#dbeafe', color: C.blue },
                   { icon: faHeart,           value: selMuadil.likes ?? 0,           label: 'favoriye ekledi',       bg: C.goldBg, border: C.goldBorder, iconBg: 'rgba(184,150,90,.15)', color: C.gold },

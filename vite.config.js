@@ -8,7 +8,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      'canvg': resolve(__dirname, 'src/stubs/canvg.js'),
+      'html2canvas': resolve(__dirname, 'src/stubs/canvg.js'),
+      'dompurify': resolve(__dirname, 'src/stubs/canvg.js'),
     },
+  },
+  optimizeDeps: {
+    exclude: ['jspdf', 'jspdf-autotable'],
   },
   server: {
     port: Number(process.env.PORT) || 5173,

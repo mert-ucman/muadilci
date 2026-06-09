@@ -4,7 +4,7 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
-import { Card, Badge, ScoreBar } from '@/components/ui';
+import { Card, Badge, ScoreBar, TableScrollHint } from '@/components/ui';
 import { faShirt, faGem, faArrowLeft, faHeart, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
@@ -627,6 +627,7 @@ export function BrandPage({ params }) {
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
+            <TableScrollHint />
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <table className="w-full min-w-[520px] border-collapse">
               <thead>

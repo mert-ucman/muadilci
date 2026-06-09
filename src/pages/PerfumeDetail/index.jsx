@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
-import { Card, Badge, Btn, ScoreBar } from '@/components/ui';
+import { Card, Badge, Btn, ScoreBar, TableScrollHint } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
@@ -318,6 +318,7 @@ export function PerfumeDetailPage({ params }) {
         {/* List View */}
         {view === 'list' && (
           <Card style={{ overflow: 'hidden' }}>
+            <TableScrollHint />
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <table className="w-full min-w-[560px] border-collapse">
               <thead>

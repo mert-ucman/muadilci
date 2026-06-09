@@ -6,16 +6,18 @@ import { Badge } from '@/components/ui';
 import { C, F } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare, faRotateRight, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { TableScrollHint } from '@/components/ui';
 import noImage from '@/img/no-image.jpg';
 
 const PAGE_SIZE = 50;
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 dakika
 
 const TYPE_CONFIG = {
-  review_created: { label: 'Yorum',   color: 'gold'  },
-  list_created:   { label: 'Liste',   color: 'blue'  },
-  login:          { label: 'Giriş',   color: 'green' },
-  logout:         { label: 'Çıkış',   color: 'orange'},
+  review_created: { label: 'Yorum',          color: 'gold'  },
+  list_created:   { label: 'Liste',          color: 'blue'  },
+  login:          { label: 'Giriş',          color: 'green' },
+  logout:         { label: 'Çıkış',          color: 'orange'},
+  logout_auto:    { label: 'Otomatik Çıkış', color: 'orange'},
 };
 
 
@@ -199,7 +201,9 @@ export function ActivityTab() {
       ) : (
         <>
           <div className="border border-(--color-border) rounded-xl overflow-hidden">
-            <table className="w-full border-collapse text-[13px]">
+            <TableScrollHint />
+            <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <table className="w-full min-w-[560px] border-collapse text-[13px]">
               <thead>
                 <tr className="bg-(--color-surface) border-b border-(--color-border)">
                   {['Kullanıcı', 'Tür', 'Detay', 'Tarih'].map((h) => (
@@ -276,6 +280,7 @@ export function ActivityTab() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {hasMore && (

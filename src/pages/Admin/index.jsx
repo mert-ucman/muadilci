@@ -5,7 +5,7 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { slugify } from '@/utils/strings';
-import { Card, Badge, Btn, Modal, Input, Select, Textarea } from '@/components/ui';
+import { Card, Badge, Btn, Modal, Input, Select, Textarea, TableScrollHint } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F } from '@/constants/theme';
 import { uploadDataURL } from '@/lib/storage';
@@ -14,7 +14,10 @@ import { ActivityTab } from './ActivityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile } from '@fortawesome/free-solid-svg-icons';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -1308,6 +1311,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
             </div>
           )}
 
+          <TableScrollHint />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <thead>
@@ -1377,6 +1381,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
               </button>
             )}
           </div>
+          <TableScrollHint />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse">
               <tbody>
@@ -1441,6 +1446,7 @@ export function AdminPanel() {
   const PERF_PER_PAGE = 50;
   const [userInput, setUserInput] = useState('');
   const [userQuery, setUserQuery] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [bulkDel, setBulkDel] = useState({ open: false, loading: false, error: '' });
 
   // ─── Tüm Yorumlar sekmesi ───────────────────────────────────────────────
@@ -1939,6 +1945,54 @@ export function AdminPanel() {
             ? allSorted.filter((u) => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (RL[u.role] || '').toLowerCase().includes(q))
             : allSorted.slice(0, 10);
           const submitSearch = () => setUserQuery(userInput);
+
+          const exportRows = allSorted.map((u) => ({
+            'Ad Soyad':       u.name  || '—',
+            'E-posta':        u.email || '—',
+            'Rol':            RL[u.role] || u.role || '—',
+            'Durum':          u.deleted ? 'Silindi' : (u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'),
+            'Üyelik Tarihi':  fmtTs(u.createdAt),
+            'Silinme Tarihi': fmtTs(u.deletedAt),
+          }));
+
+          const exportCSV = () => {
+            const headers = Object.keys(exportRows[0]);
+            const lines = [
+              headers.join(','),
+              ...exportRows.map((r) => headers.map((h) => `"${String(r[h]).replace(/"/g, '""')}"`).join(',')),
+            ];
+            const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'kullaniciler.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            setShowExportMenu(false);
+          };
+
+          const exportXLSX = () => {
+            const ws = XLSX.utils.json_to_sheet(exportRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Kullanıcılar');
+            XLSX.writeFile(wb, 'kullaniciler.xlsx');
+            setShowExportMenu(false);
+          };
+
+          const exportPDF = () => {
+            const doc = new jsPDF({ orientation: 'landscape' });
+            doc.setFontSize(13);
+            doc.text('Kullanıcı Listesi', 14, 14);
+            autoTable(doc, {
+              head: [Object.keys(exportRows[0])],
+              body: exportRows.map((r) => Object.values(r)),
+              startY: 22,
+              styles: { fontSize: 8, cellPadding: 3 },
+              headStyles: { fillColor: [184, 147, 90], textColor: 255, fontStyle: 'bold' },
+              alternateRowStyles: { fillColor: [250, 250, 248] },
+            });
+            doc.save('kullaniciler.pdf');
+            setShowExportMenu(false);
+          };
           return (
             <Card style={{ overflow: 'hidden' }}>
               <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center justify-between flex-wrap gap-[10px]">
@@ -1948,7 +2002,7 @@ export function AdminPanel() {
                     {q ? `${displayed.length} sonuç` : `Son ${displayed.length} üye`}
                   </span>
                 </span>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap">
                   <div className="relative">
                     <input
                       value={userInput}
@@ -1963,8 +2017,41 @@ export function AdminPanel() {
                     )}
                   </div>
                   <Btn size="sm" onClick={submitSearch}>Ara</Btn>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportMenu((v) => !v)}
+                      className="h-[34px] inline-flex items-center gap-[6px] px-[12px] rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150"
+                      style={{ border: `1px solid ${C.goldBorder}`, background: C.goldBg, color: C.gold, fontFamily: F }}
+                    >
+                      <FontAwesomeIcon icon={faDownload} style={{ fontSize: '12px' }} />
+                      Dışa Aktar
+                    </button>
+                    {showExportMenu && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowExportMenu(false)} />
+                        <div className="absolute right-0 top-[calc(100%+6px)] z-20 rounded-xl overflow-hidden"
+                          style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: '0 8px 24px rgba(0,0,0,.1)', minWidth: '160px' }}>
+                          {[
+                            { label: 'Excel (.xlsx)', icon: faTable,   color: '#217346', fn: exportXLSX },
+                            { label: 'PDF (.pdf)',    icon: faFilePdf, color: '#e53e3e', fn: exportPDF  },
+                            { label: 'CSV (.csv)',    icon: faFile,    color: '#0ea5e9', fn: exportCSV  },
+                          ].map(({ label, icon, color, fn }) => (
+                            <button key={label} onClick={fn}
+                              className="w-full flex items-center gap-[10px] px-4 py-[10px] text-[13px] font-semibold cursor-pointer transition-colors duration-100 border-none bg-transparent"
+                              style={{ color: C.text, fontFamily: F }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f5f5'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                              <FontAwesomeIcon icon={icon} style={{ fontSize: '14px', color, width: '16px' }} />
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+              <TableScrollHint />
               <div className="overflow-x-auto scroll-x">
                 <table className="w-full min-w-[700px] border-collapse">
                   <thead><tr className="bg-[#f9f9fb]">
@@ -2050,6 +2137,7 @@ export function AdminPanel() {
                   </button>
                 </div>
                 <SearchBar value={search} onChange={setSearch} placeholder="Marka adı veya köken ara…" count={sorted.length} total={baseBrands.length} />
+                <TableScrollHint />
                 <div className="overflow-x-auto scroll-x">
                 <table className="w-full min-w-[580px] border-collapse">
                   <thead><tr className="bg-[#f9f9fb]">
@@ -2174,6 +2262,7 @@ export function AdminPanel() {
                   })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setPerfPage(1); }} placeholder="Parfüm adı, marka veya cinsiyet ara…" count={sorted.length} total={perfumes.length} />
+                <TableScrollHint />
                 <div className="overflow-x-auto scroll-x">
                 <table className="w-full min-w-[620px] border-collapse">
                   <thead><tr className="bg-[#f9f9fb]">
@@ -2299,6 +2388,7 @@ export function AdminPanel() {
                   })()}
                 </div>
                 <SearchBar deferred value={search} onChange={(v) => { setSearch(v); setMuadilPage(1); }} placeholder="Muadil adı, marka veya hedef parfüm ara…" count={sorted.length} total={muadilPerfumes.length} />
+                <TableScrollHint />
                 <div className="overflow-x-auto scroll-x">
                 <table className="w-full min-w-[680px] border-collapse">
                   <thead><tr className="bg-[#f9f9fb]">
@@ -2406,6 +2496,7 @@ export function AdminPanel() {
                   <Card style={{ overflow: 'hidden' }}>
                     <div className="px-[18px] py-[14px] border-b border-(--color-border)"><span className="font-bold text-(--color-navy)">Yorumlar</span></div>
                     <SearchBar value={search} onChange={setSearch} placeholder="Kullanıcı adı veya yorum içeriği ara…" count={filtered.length} total={revList.length} />
+                    <TableScrollHint />
                     <div className="overflow-x-auto scroll-x">
                     <table className="w-full min-w-[760px] border-collapse">
                       <thead><tr className="bg-[#f9f9fb]">

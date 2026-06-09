@@ -3,7 +3,7 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
-import { Card } from '@/components/ui';
+import { Card, TableScrollHint } from '@/components/ui';
 import { calcScores } from '@/utils/scoring';
 import { C, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
@@ -462,6 +462,7 @@ export function BrandsPage() {
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
+            <TableScrollHint />
             <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
             <table className="w-full border-collapse" style={{ minWidth: '620px' }}>
               <thead>

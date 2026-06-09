@@ -5,4 +5,5 @@ export { Modal }    from './Modal';
 export { Input }    from './Input';
 export { Select }   from './Select';
 export { Textarea } from './Textarea';
-export { ScoreBar } from './ScoreBar';
+export { ScoreBar }        from './ScoreBar';
+export { TableScrollHint } from './TableScrollHint';

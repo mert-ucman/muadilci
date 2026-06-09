@@ -275,6 +275,13 @@ Yalnızca `status === 'approved'` yorumlardan:
 
 > **Proje boyunca emoji değil FontAwesome kullanılır.**
 
+### Tablo Kaydırma İpucu (`TableScrollHint`)
+
+- Tüm `<table>` içeren sayfalar, tabloyu saran `overflow-x-auto` div'inden **hemen önce** `<TableScrollHint />` bileşenini kullanır.
+- Bileşen, `lg` breakpoint'inde (< 1024 px — tablet ve altı) "Tabloyu incelemek için sağa kaydırınız" ibaresini gösterir; geniş ekranlarda gizlenir.
+- `src/components/ui/TableScrollHint.jsx` — içine `useW` hook'u gömülüdür, dışarıdan prop gerekmez.
+- Uygulandığı sayfalar: `Brands/BrandsPage`, `Brands/BrandPage`, `Perfumes`, `PerfumeDetail`, `Admin/index`, `Admin/ActivityTab`.
+
 - Parfüm/marka adları → `FH` (Cormorant Garamond)
 - UI metinleri → `F` (DM Sans)
 - Favori rengi → `C.gold` (kırmızı kullanılmaz)
@@ -307,4 +314,4 @@ Yalnızca `status === 'approved'` yorumlardan:
 
 ---
 
-*Son güncelleme: 2026-06-09*
+*Son güncelleme: 2026-06-09 — TableScrollHint tüm tablolara eklendi*

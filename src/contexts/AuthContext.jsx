@@ -99,6 +99,9 @@ export function AuthProvider({ children }) {
   const inactivityTimerRef = useRef(null);
   // BroadcastChannel: sekmeler arası aktivite senkronizasyonu
   const channelRef = useRef(null);
+  // Güncel user'a stale closure olmadan erişmek için ref
+  const userRef = useRef(null);
+  useEffect(() => { userRef.current = user ?? null; }, [user]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -326,6 +329,8 @@ export function AuthProvider({ children }) {
     clearTimeout(inactivityTimerRef.current);
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     inactivityTimerRef.current = setTimeout(() => {
+      const u = userRef.current;
+      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
       signOut(auth).then(() => setUser(null));
     }, INACTIVITY_TIMEOUT_MS);
   };
@@ -357,12 +362,16 @@ export function AuthProvider({ children }) {
     const elapsed = Date.now() - lastActivity;
     if (elapsed >= INACTIVITY_TIMEOUT_MS) {
       // Zaten süre dolmuş → hemen çıkış
+      const u = userRef.current;
+      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
       signOut(auth).then(() => setUser(null));
       return;
     }
     // Kalan süre kadar timer kur
     clearTimeout(inactivityTimerRef.current);
     inactivityTimerRef.current = setTimeout(() => {
+      const u = userRef.current;
+      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
       signOut(auth).then(() => setUser(null));
     }, INACTIVITY_TIMEOUT_MS - elapsed);
 
