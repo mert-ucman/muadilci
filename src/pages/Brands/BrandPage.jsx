@@ -216,7 +216,9 @@ export function BrandPage({ params }) {
       <div
         className="padding"
         style={{
-          background: `linear-gradient(135deg,${C.navy},${C.navyLight})`,
+          background: brand.headerImage
+            ? `linear-gradient(to bottom, rgba(15,15,15,.52), rgba(15,15,15,.88)), url(${brand.headerImage}) center/cover no-repeat`
+            : `linear-gradient(135deg,${C.navy},${C.navyLight})`,
           padding: sm ? '32px 16px' : '48px 32px',
         }}
       >
