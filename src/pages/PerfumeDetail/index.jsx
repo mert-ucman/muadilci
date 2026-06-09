@@ -195,19 +195,24 @@ export function PerfumeDetailPage({ params }) {
               const hasAll = topNotes.length > 0 && (heartNotes.length > 0 || baseNotes.length > 0);
 
               if (!hasAll && topNotes.length > 0) {
-                // Sadece üst notalar var → tek kart
+                // Sadece üst notalar var → pill/tag listesi
                 return (
-                  <div style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }} className="rounded-[12px] p-[12px]">
-                    <div className="flex items-center gap-[5px] mb-[8px]">
-                      <FontAwesomeIcon icon={faLeaf} style={{ fontSize: '11px', color: C.gold }} />
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: C.gold, letterSpacing: '.06em', textTransform: 'uppercase' }}>Notalar</span>
+                  <div>
+                    <div className="flex items-center gap-[6px] mb-[10px]">
+                      <FontAwesomeIcon icon={faLeaf} style={{ fontSize: '12px', color: C.gold }} />
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: C.gold, letterSpacing: '.06em', textTransform: 'uppercase' }}>Notalar</span>
                     </div>
-                    {topNotes.map((n) => (
-                      <div key={n} className="text-[13px] text-(--color-text) mb-[4px] flex gap-[5px] items-center">
-                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: C.gold }} className="shrink-0 inline-block" />
-                        {n}
-                      </div>
-                    ))}
+                    <div className="flex flex-wrap gap-[8px]">
+                      {topNotes.map((n) => (
+                        <div
+                          key={n}
+                          className="inline-flex items-center justify-center rounded-[20px] px-[12px] py-[5px]"
+                          style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }}
+                        >
+                          <p className="m-0 p-0 w-max" style={{ fontSize: '13px', color: C.gold, fontWeight: 500 }}>{n}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               }

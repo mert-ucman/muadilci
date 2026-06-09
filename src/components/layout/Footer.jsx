@@ -145,7 +145,7 @@ export function Footer() {
           }}
         >
           <span className="text-[12px]" style={{ color: C.textMuted }}>© 2026 muadilci.com — Tüm hakları saklıdır.</span>
-          <span className="text-[12px]" style={{ color: C.textMuted }}>Parfüm dünyasını demokratikleştiriyoruz.</span>
+          <span className="text-[12px]" style={{ color: C.textMuted }}>Koku dünyasını demokratize ediyoruz.</span>
         </div>
       </div>
 
