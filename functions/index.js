@@ -1,4 +1,4 @@
-const { onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -7,6 +7,50 @@ admin.initializeApp();
  * Firestore'da users/{uid} belgesi güncellenip deleted:true olduğunda
  * Firebase Authentication hesabını otomatik siler.
  */
+/**
+ * users/{uid} belgesi oluşturulduğunda veya role alanı değiştiğinde Firebase Auth
+ * custom claim'lerini günceller. Bu claim'ler storage.rules içindeki isAdmin()
+ * fonksiyonu tarafından kullanılır: request.auth.token.admin == true
+ *
+ * Yeni kullanıcı oluşturulunca da tetiklenir (create) çünkü admin bir kullanıcıya
+ * doğrudan admin rolü atayabilir.
+ */
+exports.syncRoleClaims = onDocumentUpdated('users/{uid}', async (event) => {
+  const before = event.data.before.data();
+  const after  = event.data.after.data();
+
+  // role değişmediyse çık
+  if (before.role === after.role) return;
+
+  const uid = event.params.uid;
+  const isAdmin = after.role === 'admin';
+
+  try {
+    await admin.auth().setCustomUserClaims(uid, { admin: isAdmin });
+    console.log(`✓ Custom claims güncellendi: ${uid} → admin=${isAdmin}`);
+  } catch (e) {
+    console.error(`✗ Custom claims hatası (${uid}):`, e);
+    throw e;
+  }
+});
+
+/**
+ * Yeni kullanıcı belgesi oluşturulduğunda başlangıç claim'lerini set eder.
+ * Kullanıcılar varsayılan olarak 'user' rolüyle oluşturulduğundan admin=false set edilir.
+ */
+exports.initRoleClaims = onDocumentCreated('users/{uid}', async (event) => {
+  const data = event.data.data();
+  const uid  = event.params.uid;
+  const isAdmin = data?.role === 'admin';
+
+  try {
+    await admin.auth().setCustomUserClaims(uid, { admin: isAdmin });
+    console.log(`✓ Başlangıç custom claims set edildi: ${uid} → admin=${isAdmin}`);
+  } catch (e) {
+    console.error(`✗ Başlangıç custom claims hatası (${uid}):`, e);
+  }
+});
+
 exports.deleteAuthOnUserDeleted = onDocumentUpdated('users/{uid}', async (event) => {
   const before = event.data.before.data();
   const after  = event.data.after.data();

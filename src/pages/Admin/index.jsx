@@ -1753,12 +1753,19 @@ export function AdminPanel() {
 
   const exportPDF = () => {
     const { headers, rows, filename } = getExportData();
+    // HTML entity escaping — Firestore verisinin XSS vektörü olmasını önler
+    const esc = (v) => String(v ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
     const thStyle = 'padding:8px 12px;background:#1a1a2e;color:#fff;font-weight:700;font-size:12px;text-align:left;border:1px solid #ddd;';
     const tdStyle = 'padding:7px 12px;font-size:12px;border:1px solid #ddd;';
     const trEven = 'background:#f9f9fb;';
-    const ths = headers.map((h) => `<th style="${thStyle}">${h}</th>`).join('');
-    const trs = rows.map((r, i) => `<tr style="${i % 2 === 1 ? trEven : ''}">${r.map((c) => `<td style="${tdStyle}">${c}</td>`).join('')}</tr>`).join('');
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${filename}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}h2{margin-bottom:16px;font-size:16px}@media print{button{display:none}}</style></head><body><h2>${filename} — ${rows.length} kayıt</h2><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table><script>setTimeout(()=>window.print(),400)<\/script></body></html>`;
+    const ths = headers.map((h) => `<th style="${thStyle}">${esc(h)}</th>`).join('');
+    const trs = rows.map((r, i) => `<tr style="${i % 2 === 1 ? trEven : ''}">${r.map((c) => `<td style="${tdStyle}">${esc(c)}</td>`).join('')}</tr>`).join('');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(filename)}</title><style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}h2{margin-bottom:16px;font-size:16px}@media print{button{display:none}}</style></head><body><h2>${esc(filename)} — ${rows.length} kayıt</h2><table><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table><script>setTimeout(()=>window.print(),400)<\/script></body></html>`;
     const w = window.open('', '_blank'); w.document.write(html); w.document.close();
     setExportModal(false);
   };

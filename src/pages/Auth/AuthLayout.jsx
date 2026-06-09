@@ -55,7 +55,7 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
                 lineHeight: 1.85,
                 letterSpacing: '0.02em',
               }}>
-                Dünya'nın lüks parfüm muadillerini<br />
+                Lüks parfümlerin muadillerini<br />
                 keşfet, karşılaştır ve en iyisini bul.
               </p>
             </div>

@@ -54,7 +54,7 @@ export function Footer() {
               <img src={logoDark} alt="muadilci" className="h-14 w-auto" />
             </div>
             <p className="text-[13px] leading-[1.75] max-w-[240px] font-normal" style={{ color: C.textLight }}>
-              Dünya'nın lüks parfüm muadillerini keşfet, karşılaştır ve en iyisini bul.
+              Lüks parfümlerin muadillerini keşfet, karşılaştır ve en iyisini bul.
             </p>
             <a
               href="https://www.instagram.com/muadilciapp"

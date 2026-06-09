@@ -97,7 +97,15 @@ service cloud.firestore {
     // ── Activity Logs ─────────────────────────────────────────────────────
     match /activityLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAuth();
+      // Yalnızca kendi UID'ini yazabilir; URL alanları / ile başlayan iç path olmalı
+      allow create: if isAuth()
+                     && request.resource.data.userId == request.auth.uid
+                     && (!request.resource.data.keys().hasAny(['perfumeUrl'])
+                         || request.resource.data.perfumeUrl == null
+                         || request.resource.data.perfumeUrl.matches('^/[a-zA-Z0-9/?=&@_.%-]*$'))
+                     && (!request.resource.data.keys().hasAny(['listUrl'])
+                         || request.resource.data.listUrl == null
+                         || request.resource.data.listUrl.matches('^/@[a-zA-Z0-9_-]+[/?].*$'));
     }
 
     // ── Presence (aktif kullanıcı takibi) ────────────────────────────────
@@ -125,10 +133,13 @@ service cloud.firestore {
         (resource.data.get('forStaff', false) == true && isMod()) ||
         resource.data.userId == request.auth.uid
       );
-      // Oluşturma: giriş yapmış herkes staff bildirimi oluşturabilir (yorum gönderimi);
-      // kullanıcıya özel bildirimi yalnızca mod/admin oluşturabilir
+      // Oluşturma: staff bildirimleri yalnızca doğrulanmış e-posta ve kendi UID'i ile;
+      // kullanıcıya özel bildirimleri yalnızca mod/admin oluşturabilir
       allow create: if isAuth() && (
-        request.resource.data.get('forStaff', false) == true || isMod()
+        (request.resource.data.get('forStaff', false) == true
+          && request.auth.token.email_verified == true
+          && request.resource.data.userId == request.auth.uid)
+        || isMod()
       );
       // Güncelleme (okundu işareti / temizle): sahip veya mod/admin
       allow update: if isAuth() && (

@@ -12,6 +12,9 @@ import noImage from '@/img/no-image.jpg';
 const PAGE_SIZE = 50;
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 dakika
 
+// Firestore'dan gelen URL'lerin yalnızca iç path olduğunu doğrular (XSS/open-redirect koruması)
+const isSafeInternalPath = (url) => typeof url === 'string' && /^\/[a-zA-Z0-9/?=&@_.%-]*$/.test(url);
+
 const TYPE_CONFIG = {
   review_created: { label: 'Yorum',          color: 'gold'  },
   list_created:   { label: 'Liste',          color: 'blue'  },
@@ -244,7 +247,7 @@ export function ActivityTab() {
                             <strong>{log.targetBrandName} {log.targetPerfumeName}</strong>
                             {log.muadilName && <span className="text-(--color-text-mid)"> — {log.muadilName}</span>}
                             {' '}karşılaştırmasına yorum yaptı
-                            {log.perfumeUrl && (
+                            {isSafeInternalPath(log.perfumeUrl) && (
                               <a href={log.perfumeUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.perfumeUrl); }}
                                 className="bg-transparent border-none cursor-pointer text-(--color-gold) ml-1.5 p-0.5 align-middle inline-block">
                                 <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[11px]" />
@@ -254,7 +257,7 @@ export function ActivityTab() {
                         ) : log.type === 'list_created' ? (
                           <span className="text-(--color-text)">
                             <strong>"{log.listTitle}"</strong> listesini oluşturdu
-                            {log.listUrl && log.userUsername && (
+                            {isSafeInternalPath(log.listUrl) && log.userUsername && (
                               <a href={log.listUrl} onClick={(e) => { if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); navigate(log.listUrl); }}
                                 className="bg-transparent border-none cursor-pointer text-(--color-gold) ml-1.5 p-0.5 align-middle inline-block">
                                 <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[11px]" />
