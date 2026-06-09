@@ -74,6 +74,7 @@ service cloud.firestore {
       // Oluşturma: yalnızca kendi adına, 'pending' durumla, gerçek rolüyle ve
       // doğrulanmış e-posta ile (moderasyon atlatma + rol taklidini engeller)
       allow create: if isAdmin() || (isAuth()
+                     && reviewId == request.auth.uid + '_' + request.resource.data.muadilId
                      && request.resource.data.userId == request.auth.uid
                      && request.resource.data.status == 'pending'
                      && request.resource.data.userRole == userDoc().role

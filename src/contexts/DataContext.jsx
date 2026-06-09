@@ -209,11 +209,13 @@ export function DataProvider({ children }) {
       throw Object.assign(new Error(`Çok hızlı yorum gönderiyorsunuz. ${remaining} saniye bekleyin.`), { code: 'rate-limited', remaining });
     }
     lastCommentAt.current = now;
-    const ref = doc(col('reviews'));
+    const muadilId = String(c.muadilPerfumeId ?? c.muadilId);
+    const compositeId = `${user?.uid}_${muadilId}`;
+    const ref = doc(col('reviews'), compositeId);
     await setDoc(ref, {
       ...c,
-      id: ref.id,
-      muadilId: String(c.muadilPerfumeId ?? c.muadilId),
+      id: compositeId,
+      muadilId,
       userId: user?.uid,
       userName: user?.role === 'moderator' ? '@moderatör' : (user?.username ? `@${user.username}` : user?.name),
       userAvatar: user?.avatar,
@@ -224,7 +226,6 @@ export function DataProvider({ children }) {
     });
 
     // Moderatör/admin'e anlık bildirim
-    const muadilId = String(c.muadilPerfumeId ?? c.muadilId);
     const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
     try {
       await addDoc(col('notifications'), {
