@@ -668,7 +668,8 @@ export function BrandPage({ params }) {
                   return (
                     <tr
                       key={item.id}
-                      onClick={() => { if (window.getSelection()?.toString()) return; isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`); }}
+                      onMouseDown={(e) => { e.currentTarget._mdX = e.clientX; e.currentTarget._mdY = e.clientY; }}
+                      onClick={(e) => { if (Math.abs(e.clientX - e.currentTarget._mdX) > 5 || Math.abs(e.clientY - e.currentTarget._mdY) > 5) return; isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`); }}
                       className="border-b border-(--color-border-light) cursor-pointer transition-[background] duration-100"
                       onMouseEnter={(e) => e.currentTarget.style.background = C.bg}
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}

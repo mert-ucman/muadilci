@@ -500,8 +500,8 @@ export function BrandsPage() {
                 {pageItems.map((b) => (
                   <tr
                     key={b.id}
-                    onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/marka/${b.slug}`); }}
-                    onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
+                    onMouseDown={(e) => { e.currentTarget._mdX = e.clientX; e.currentTarget._mdY = e.clientY; if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}
+                    onClick={(e) => { if (Math.abs(e.clientX - e.currentTarget._mdX) > 5 || Math.abs(e.clientY - e.currentTarget._mdY) > 5) return; navigate(`/marka/${b.slug}`); }}
                     className="cursor-pointer transition-[background] duration-100"
                     style={{ borderBottom: `1px solid ${C.borderLight}` }}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg}

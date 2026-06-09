@@ -51,7 +51,8 @@ function PerfumeTable({ rows, navigate }) {
       {rows.map((row, i) => (
         <div
           key={row.muadil.id}
-          onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/karsilastir?orijinal=${row.muadil.targetPerfumeId}&muadil=${row.muadil.id}`); }}
+          onMouseDown={(e) => { e.currentTarget._mdX = e.clientX; e.currentTarget._mdY = e.clientY; }}
+          onClick={(e) => { if (Math.abs(e.clientX - e.currentTarget._mdX) > 5 || Math.abs(e.clientY - e.currentTarget._mdY) > 5) return; navigate(`/karsilastir?orijinal=${row.muadil.targetPerfumeId}&muadil=${row.muadil.id}`); }}
           className="flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer transition-shadow duration-150"
           style={{
             marginBottom: i < rows.length - 1 ? '6px' : 0,
@@ -85,8 +86,8 @@ function BrandTable({ rows, navigate }) {
       {rows.map((row, i) => (
         <div
           key={row.brand.id}
-          onClick={() => { if (window.getSelection()?.toString()) return; navigate(`/marka/${row.brand.slug}`); }}
-          onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${row.brand.slug}`, '_blank'); } }}
+          onMouseDown={(e) => { e.currentTarget._mdX = e.clientX; e.currentTarget._mdY = e.clientY; if (e.button === 1) { e.preventDefault(); window.open(`/marka/${row.brand.slug}`, '_blank'); } }}
+          onClick={(e) => { if (Math.abs(e.clientX - e.currentTarget._mdX) > 5 || Math.abs(e.clientY - e.currentTarget._mdY) > 5) return; navigate(`/marka/${row.brand.slug}`); }}
           className="flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer transition-shadow duration-150"
           style={{
             marginBottom: i < rows.length - 1 ? '6px' : 0,
