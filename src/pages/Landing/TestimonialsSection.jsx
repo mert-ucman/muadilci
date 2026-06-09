@@ -20,7 +20,7 @@ const TESTIMONIALS = [
   },
   {
     av: 'M', name: 'Mehmet T.', role: 'Koleksiyoncu', rating: 4,
-    text: "Lattafa'nın muadillerini bulmak için biçilmiş kaftan. Koleksiyonum için orijinali, günlük kullanım için muadili tercih ediyorum.",
+    text: "Dior'un muadillerini bulmak için biçilmiş kaftan. Koleksiyonum için orijinali, günlük kullanım için muadili tercih ediyorum.",
     index: '03',
   },
 ];
