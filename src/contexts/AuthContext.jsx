@@ -16,8 +16,7 @@ import {
   EmailAuthProvider,
   sendEmailVerification,
   multiFactor,
-  PhoneAuthProvider,
-  PhoneMultiFactorGenerator,
+  TotpMultiFactorGenerator,
   getMultiFactorResolver,
 } from 'firebase/auth';
 import {
@@ -428,22 +427,25 @@ export function AuthProvider({ children }) {
     url: window.location.origin,
   });
 
-  // ── MFA (SMS tabanlı, yalnızca admin) ──────────────────────────────────────
-  // recaptchaVerifier: çağıran component'te new RecaptchaVerifier(auth, el, {size:'invisible'})
-  const startMfaEnrollment = async (phoneNumber, recaptchaVerifier) => {
+  // ── MFA (TOTP / Authenticator app tabanlı, yalnızca admin) ─────────────────
+  // TOTP reCAPTCHA gerektirmez — SMS olmadığı için toll-fraud koruması gereksiz.
+  // Kurulum: secret üret → QR/secretKey göster → kullanıcı authenticator'a ekler →
+  // ürettiği 6 haneli kodu doğrular.
+  const startTotpEnrollment = async () => {
     const cu = auth.currentUser;
     if (!cu) throw new Error('Oturum açık değil.');
     const session = await multiFactor(cu).getSession();
-    const provider = new PhoneAuthProvider(auth);
-    return provider.verifyPhoneNumber({ phoneNumber, session }, recaptchaVerifier);
+    const secret = await TotpMultiFactorGenerator.generateSecret(session);
+    const accountName = cu.email || 'admin';
+    const qrCodeUrl = secret.generateQrCodeUrl(accountName, 'Muadilci');
+    return { secret, qrCodeUrl, secretKey: secret.secretKey };
   };
 
-  const completeMfaEnrollment = async (verificationId, otp) => {
+  const completeTotpEnrollment = async (secret, otp, displayName = 'Authenticator') => {
     const cu = auth.currentUser;
     if (!cu) throw new Error('Oturum açık değil.');
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
-    const assertion = PhoneMultiFactorGenerator.assertion(credential);
-    await multiFactor(cu).enroll(assertion, 'Telefon');
+    const assertion = TotpMultiFactorGenerator.assertionForEnrollment(secret, otp);
+    await multiFactor(cu).enroll(assertion, displayName);
   };
 
   const getMfaFactors = () => {
@@ -461,28 +463,22 @@ export function AuthProvider({ children }) {
     await mf.unenroll(factor);
   };
 
-  // Login sırasında MFA challenge: SMS gönder, resolver döndür.
-  // recaptchaVerifier her zaman geçilir (görünmez). Test telefon numaralarında
-  // SDK reCAPTCHA'yı ve gerçek SMS'i atlar; gerçek numara + production domain'de
-  // Enterprise/v2 doğrulaması devreye girer.
-  const startMfaLogin = async (mfaError, recaptchaVerifier) => {
+  // Login sırasında MFA challenge: resolver + TOTP faktör id döndür (SMS yok, reCAPTCHA yok)
+  const startTotpLogin = (mfaError) => {
     const resolver = getMultiFactorResolver(auth, mfaError);
-    const phoneInfoOptions = { multiFactorHint: resolver.hints[0], session: resolver.session };
-    const provider = new PhoneAuthProvider(auth);
-    const verificationId = await provider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
-    return { resolver, verificationId };
+    const hint = resolver.hints.find((h) => h.factorId === TotpMultiFactorGenerator.FACTOR_ID) || resolver.hints[0];
+    return { resolver, enrollmentId: hint.uid };
   };
 
-  const completeMfaLogin = async (resolver, verificationId, otp) => {
-    const credential = PhoneAuthProvider.credential(verificationId, otp);
-    const assertion = PhoneMultiFactorGenerator.assertion(credential);
+  const completeTotpLogin = async (resolver, enrollmentId, otp) => {
+    const assertion = TotpMultiFactorGenerator.assertionForSignIn(enrollmentId, otp);
     const cred = await resolver.resolveSignIn(assertion);
     const userData = await fetchOrCreateUserDoc(cred.user);
     if (!userData) { setUser(null); return; }
     const provider = cred.user.providerData[0]?.providerId || 'password';
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     const u = { ...userData, uid: cred.user.uid };
-    writeActivityLog(u, 'login', { method: 'email_mfa' });
+    writeActivityLog(u, 'login', { method: 'email_totp' });
     updatePresence(u, true);
     setUser({ ...u, emailVerified: cred.user.emailVerified || provider === 'google.com', provider });
   };
@@ -563,7 +559,7 @@ export function AuthProvider({ children }) {
   const loading = !authInitialized;
 
   return (
-    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod, startMfaEnrollment, completeMfaEnrollment, getMfaFactors, unenrollMfa, startMfaLogin, completeMfaLogin }}>
+    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod, startTotpEnrollment, completeTotpEnrollment, getMfaFactors, unenrollMfa, startTotpLogin, completeTotpLogin }}>
       {children}
     </AuthCtx.Provider>
   );
