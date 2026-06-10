@@ -169,6 +169,39 @@ export function HeroSection() {
   const [current, setCurrent] = useState(0);
   const [paused,  setPaused]  = useState(false);
 
+  // Önceki ziyaretten önbelleğe alınan slider URL'si — Firebase gelmeden önce preload başlatır
+  const [cachedHeroUrl] = useState(() => {
+    try { return localStorage.getItem('hero-slide-0') || null; } catch { return null; }
+  });
+
+  // Firebase'den gelen URL'yi önbelleğe al + <link rel="preload"> ile yüklemeyi öne çek
+  useEffect(() => {
+    const firstSrc = sliderImages[0]?.src;
+    if (!firstSrc) return;
+    try { localStorage.setItem('hero-slide-0', firstSrc); } catch {}
+    // Daha önce eklenmemişse preload link ekle
+    if (!document.querySelector(`link[data-hero-preload]`)) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = firstSrc;
+      link.setAttribute('data-hero-preload', '1');
+      document.head.appendChild(link);
+    }
+  }, [sliderImages[0]?.src]);
+
+  // Önbellek URL'si varsa tarayıcıya hemen preload başlat (Firebase gelmeden önce)
+  useEffect(() => {
+    if (!cachedHeroUrl) return;
+    if (document.querySelector(`link[data-hero-preload]`)) return;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = cachedHeroUrl;
+    link.setAttribute('data-hero-preload', '1');
+    document.head.appendChild(link);
+  }, []);
+
   const visibleSlides = sliderImages.filter(img => {
     if (xs)     return img.showMobile  !== false;
     if (lg)     return img.showTablet  !== false;
@@ -185,11 +218,20 @@ export function HeroSection() {
     return () => clearInterval(t);
   }, [total, paused, next]);
 
-  /* Still loading → render nothing to avoid white flash */
-  if (loading) return null;
+  // İlk boyamada render edilecek slide'lar: gerçek slider verisi henüz gelmediyse
+  // ama önbellekte URL varsa, hero'yu hemen o görselle göster (boş kalmasın, pop etmesin).
+  // Firebase cevabı gelince visibleSlides devreye girer ve sorunsuzca yerini alır.
+  const usingCachedFallback = total === 0 && !!cachedHeroUrl;
+  const renderSlides = total > 0
+    ? visibleSlides
+    : (usingCachedFallback ? [{ id: '__cached__', src: cachedHeroUrl, name: '' }] : []);
+  const renderTotal = renderSlides.length;
+
+  // Render edilecek görsel yok ve hâlâ yükleniyor → iki-kolon layout için bekle.
+  if (renderTotal === 0 && loading) return null;
 
   /* No slider images → editorial two-column layout */
-  if (total === 0) {
+  if (renderTotal === 0) {
     return (
       <section
         className="bg-(--color-bg) border-b border-(--color-border-light)"
@@ -243,9 +285,15 @@ export function HeroSection() {
         className="flex w-full h-full"
         style={{ transform: `translateX(-${current * 100}%)`, transition: 'transform .6s cubic-bezier(.4,0,.2,1)', willChange: 'transform' }}
       >
-        {visibleSlides.map((img, i) => (
+        {renderSlides.map((img, i) => (
           <div key={img.id} className="relative shrink-0 w-screen min-w-[100vw] h-full overflow-hidden">
-            <img src={img.src} alt={img.name} className="absolute inset-0 w-full h-full object-cover" />
+            <img
+              src={img.src}
+              alt={img.name}
+              className="absolute inset-0 w-full h-full object-cover"
+              fetchpriority={i === 0 ? 'high' : 'low'}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
             {/* Overlay — editorial: gradient from left dark, right lighter */}
             <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(10,8,6,.88)_0%,rgba(10,8,6,.55)_55%,rgba(10,8,6,.15)_100%)]" />
             {i === 0 && (

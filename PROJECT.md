@@ -7,6 +7,13 @@
 > Projede değişiklik olduğunda bu markdown dosyası güncellenmelidir.
 ---
 
+## ⚠️ Geliştirici Kuralı — Deploy ve Push Onayı
+
+> **Firebase deploy (`firebase deploy`) ve Git push (`git push`) işlemleri kullanıcı onayı olmadan yapılmaz.**
+> Her deploy/push öncesinde kullanıcıdan açıkça onay alınmalıdır.
+
+---
+
 ## ⚠️ Geliştirici Kuralı — İkon Kullanımı
 
 > **Proje boyunca emoji değil, FontAwesome kütüphanesi kullanılacak.**

@@ -41,7 +41,7 @@ function BrandChip({ b, navigate }) {
       }}
     >
       <div className="w-[34px] h-[34px] rounded-full bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center overflow-hidden shrink-0">
-        <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
+        <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" loading="lazy" />
       </div>
       <span className="text-[13px] font-semibold text-(--color-text-mid) tracking-[.01em] whitespace-nowrap">{b.name}</span>
     </div>
