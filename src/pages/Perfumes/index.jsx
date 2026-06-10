@@ -9,6 +9,7 @@ import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import noImage from '@/img/no-image.jpg';
+import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -80,6 +81,19 @@ export function PerfumesPage() {
   });
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, comments, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
+
+  // Onaylı yorumlardan parfüm/muadil fotoğraf haritası (yeni → eski). Kart/satır kapakları buradan.
+  const photoMap = useMemo(() => {
+    const orig = {}, mu = {};
+    for (const c of comments) {
+      if (c.status !== 'approved') continue;
+      if (c.originalImage && c.targetPerfumeId != null) (orig[c.targetPerfumeId] ||= []).push(c.originalImage);
+      if (c.muadilImage && c.muadilId != null) (mu[c.muadilId] ||= []).push(c.muadilImage);
+    }
+    return { orig, mu };
+  }, [comments]);
+  const origPhotos = (p) => [p.image, ...(photoMap.orig[p.id] || [])].filter(Boolean);
+  const muadilPhotos = (m) => [m.image, ...(photoMap.mu[m.id] || [])].filter(Boolean);
   const { user } = useAuth();
   const { sm, xs } = useW();
 
@@ -382,8 +396,8 @@ export function PerfumesPage() {
                     style={{ border: `1px solid ${isPerfumeFavorite(uid, p.id) ? C.goldBorder : C.border}`, background: isPerfumeFavorite(uid, p.id) ? C.goldBg : '#fff' }}>
                     <FontAwesomeIcon icon={faHeart} style={{ color: isPerfumeFavorite(uid, p.id) ? C.gold : C.textLight, fontSize: '13px' }} />
                   </button>
-                  <div className="w-full overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: '4/3' }}>
-                    <img src={p.image || noImage} alt={p.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                  <div className="w-full overflow-hidden">
+                    <PerfumeGallery photos={origPhotos(p)} />
                   </div>
                   <div className="p-[12px_14px]">
                     <div className="font-normal text-(--color-navy) mb-[2px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: sm ? '13px' : '15px', fontFamily: "'Inter', sans-serif" }}>{p.name}</div>
@@ -424,8 +438,8 @@ export function PerfumesPage() {
                     style={{ border: `1px solid ${isMuadilFavorite(uid, m.id) ? C.goldBorder : C.border}`, background: isMuadilFavorite(uid, m.id) ? C.goldBg : '#fff' }}>
                     <FontAwesomeIcon icon={faHeart} style={{ color: isMuadilFavorite(uid, m.id) ? C.gold : C.textLight, fontSize: '13px' }} />
                   </button>
-                  <div className="w-full overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: '4/3' }}>
-                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                  <div className="w-full overflow-hidden">
+                    <PerfumeGallery photos={muadilPhotos(m)} />
                   </div>
                   <div className="p-[12px_14px]">
                     <div className="font-normal text-(--color-navy) mb-[2px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: sm ? '13px' : '15px', fontFamily: "'Inter', sans-serif" }}>{m.name}</div>
@@ -498,7 +512,7 @@ export function PerfumesPage() {
                       <td className="px-[14px] py-[10px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[38px] h-[38px] rounded-lg bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                            <img src={(isOrig ? origPhotos(item) : muadilPhotos(item))[0] || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{item.name}</span>
                         </div>

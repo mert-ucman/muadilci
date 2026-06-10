@@ -384,6 +384,10 @@ export function DataProvider({ children }) {
         projection: data.projection,
         longevity: data.longevity,
         recommend: data.recommend ?? null,
+        ...(data.originalImage !== undefined ? { originalImage: data.originalImage ?? null } : {}),
+        ...(data.muadilImage !== undefined ? { muadilImage: data.muadilImage ?? null } : {}),
+        ...(data.imageConsent !== undefined ? { imageConsent: !!data.imageConsent } : {}),
+        ...(data.targetPerfumeId !== undefined ? { targetPerfumeId: data.targetPerfumeId ?? null } : {}),
         ...(user?.role === 'admin' ? { status: 'approved', pendingUpdate: null } : {}),
       });
     } else {

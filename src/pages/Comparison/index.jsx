@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -7,6 +7,9 @@ import { calcScores } from '@/utils/scoring';
 import { containsProfanity } from '@/utils/profanity';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
+import { PhotoSlot } from '@/components/shared/PhotoSlot';
+import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
+import { uploadDataURL } from '@/lib/storage';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
@@ -21,11 +24,21 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
   const [cText, setCText] = useState(initialValues?.text ?? '');
   const [cRecommend, setCRecommend] = useState(initialValues?.recommend ?? null);
   const [profanityError, setProfanityError] = useState(false);
+  const [cOrigImg, setCOrigImg] = useState(initialValues?.origImg ?? null);
+  const [cMuadilImg, setCMuadilImg] = useState(initialValues?.muadilImg ?? null);
+  const [cConsent, setCConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+
+  const hasPhoto = !!(cOrigImg || cMuadilImg);
 
   const submit = () => {
     if (!cText.trim()) return;
     if (containsProfanity(cText)) { setProfanityError(true); return; }
-    onSubmit({ similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend });
+    if (hasPhoto && !cConsent) { setConsentError(true); return; }
+    onSubmit({
+      similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend,
+      originalImage: cOrigImg, muadilImage: cMuadilImg, imageConsent: hasPhoto,
+    });
   };
 
   return (
@@ -69,6 +82,23 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
           <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
         </button>
       </div>
+      <div className="mb-[12px]">
+        <div className="text-[13px] font-semibold mb-2" style={{ color: C.textMid }}>
+          Fotoğraf ekle <span style={{ color: C.textLight, fontWeight: 400 }}>(opsiyonel)</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3" style={{ maxWidth: sm ? '100%' : 420 }}>
+          <PhotoSlot label="Orijinal şişesi" value={cOrigImg} onChange={(v) => { setCOrigImg(v); if (!v && !cMuadilImg) setConsentError(false); }} />
+          <PhotoSlot label="Muadil şişesi" value={cMuadilImg} onChange={(v) => { setCMuadilImg(v); if (!v && !cOrigImg) setConsentError(false); }} />
+        </div>
+        {hasPhoto && (
+          <label className="flex items-start gap-2 mt-2 cursor-pointer">
+            <input type="checkbox" checked={cConsent} onChange={(e) => { setCConsent(e.target.checked); if (consentError) setConsentError(false); }} className="mt-[2px] shrink-0" style={{ accentColor: C.gold }} />
+            <span className="text-[12px]" style={{ color: consentError ? C.red : C.textMid }}>
+              Eklediğim görsellerin Muadilci'de yayınlanmasına ve kullanılmasına izin veriyorum.
+            </span>
+          </label>
+        )}
+      </div>
       <div className="text-[12px] text-(--color-text-mid) rounded-lg px-3 py-2 mb-2" style={{ background: C.blueBg, border: '1px solid #bfdbfe' }}>
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
@@ -91,6 +121,17 @@ export function ComparisonPage({ queryParams }) {
   const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
   const { user, isMod, isAdmin } = useAuth();
   const { w, sm, md, lg, xl, xs } = useW();
+
+  // Onaylı yorumlardan parfüm/muadil fotoğraf haritası (yeni → eski)
+  const photoMap = useMemo(() => {
+    const orig = {}, mu = {};
+    for (const c of comments) {
+      if (c.status !== 'approved') continue;
+      if (c.originalImage && c.targetPerfumeId != null) (orig[c.targetPerfumeId] ||= []).push(c.originalImage);
+      if (c.muadilImage && c.muadilId != null) (mu[c.muadilId] ||= []).push(c.muadilImage);
+    }
+    return { orig, mu };
+  }, [comments]);
 
   const initOrigId    = queryParams?.orijinal || '';
   const initMuadilId  = queryParams?.muadil   || '';
@@ -153,14 +194,29 @@ export function ComparisonPage({ queryParams }) {
     if (!user || !selMuadil) return;
     setSubmitError('');
     try {
+      // Yeni eklenen data URL'leri Storage'a yükle (zaten http URL ise olduğu gibi bırakılır)
+      let originalImage = data.originalImage ?? null;
+      let muadilImage = data.muadilImage ?? null;
+      if (originalImage?.startsWith('data:')) originalImage = await uploadDataURL(originalImage, `reviews/${user.uid}`);
+      if (muadilImage?.startsWith('data:')) muadilImage = await uploadDataURL(muadilImage, `reviews/${user.uid}`);
+
+      const payload = {
+        similarity: data.similarity, projection: data.projection, longevity: data.longevity,
+        text: data.text, recommend: data.recommend,
+        originalImage, muadilImage,
+        imageConsent: !!data.imageConsent,
+        targetPerfumeId: selMuadil.targetPerfumeId ?? selOrigId ?? null,
+      };
+
       if (isEditMode && userReview) {
-        await updateComment(userReview.id, data);
+        await updateComment(userReview.id, payload);
       } else {
-        await addComment({ muadilPerfumeId: selMuadil.id, ...data, status: isMod ? 'approved' : 'pending' });
+        await addComment({ muadilPerfumeId: selMuadil.id, ...payload, status: isMod ? 'approved' : 'pending' });
       }
       setShowCForm(false); setIsEditMode(false); setEditInitials(null);
     } catch (e) {
       if (e.code === 'rate-limited') setSubmitError(e.message);
+      else setSubmitError('Gönderilemedi. Lütfen tekrar deneyin.');
     }
   };
 
@@ -172,6 +228,8 @@ export function ComparisonPage({ queryParams }) {
       lon: userReview.longevity ?? 5,
       text: userReview.pendingUpdate?.text ?? userReview.text ?? '',
       recommend: userReview.recommend ?? null,
+      origImg: userReview.originalImage ?? null,
+      muadilImg: userReview.muadilImage ?? null,
     });
     setIsEditMode(true);
     setShowCForm(true);
@@ -227,10 +285,10 @@ export function ComparisonPage({ queryParams }) {
               {(() => {
                 const FI = "'Inter', 'DM Sans', sans-serif";
                 return (
-                  <div className="rounded-[18px] overflow-hidden flex flex-col" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
-                    {/* Görsel */}
+                  <div className="rounded-[18px] overflow-hidden flex flex-col self-start" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
+                    {/* Görsel galerisi (topluluk fotoğrafları) */}
                     <div className="w-full overflow-hidden">
-                      <img src={selOrig.image || noImage} alt={selOrig.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full block" />
+                      <PerfumeGallery photos={[selOrig.image, ...(photoMap.orig[selOrig.id] || [])].filter(Boolean)} />
                     </div>
                     {/* İçerik */}
                     <div className="p-[12px_14px] flex items-center gap-[10px]">
@@ -249,7 +307,7 @@ export function ComparisonPage({ queryParams }) {
                         <div className="flex gap-1 flex-wrap">
                           <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">Orijinal</p></div>
                           {selOrig.gender && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.gender}</p></div>}
-                          {selOrig.year && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.year}</p></div>}
+                          {Number(selOrig.year) > 0 && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.year}</p></div>}
                         </div>
                       </div>
                       <div className="relative shrink-0"
@@ -273,10 +331,10 @@ export function ComparisonPage({ queryParams }) {
               {(() => {
                 const FI = "'Inter', 'DM Sans', sans-serif";
                 return (
-                  <div className="rounded-[18px] overflow-hidden flex flex-col" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
-                    {/* Görsel + favori butonu */}
+                  <div className="rounded-[18px] overflow-hidden flex flex-col self-start" style={{ background: '#F5F2EC', border: '1px solid #E8E3D8', boxShadow: '0 2px 16px rgba(0,0,0,.07)' }}>
+                    {/* Görsel galerisi + favori butonu */}
                     <div className="relative w-full overflow-hidden">
-                      <img src={selMuadil.image || noImage} alt={selMuadil.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full block" />
+                      <PerfumeGallery photos={[selMuadil.image, ...(photoMap.mu[selMuadil.id] || [])].filter(Boolean)} />
                       <button onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }}
                         className="absolute top-[10px] right-[10px] w-[32px] h-[32px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150"
                         style={{ background: 'rgba(255,255,255,.85)', border: '1px solid rgba(0,0,0,.08)', backdropFilter: 'blur(4px)' }}>
@@ -389,16 +447,29 @@ export function ComparisonPage({ queryParams }) {
               <Card style={{ padding: '22px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                 <div className="font-bold text-[15px] text-(--color-navy) mb-[14px] pb-3 w-full text-center" style={{ borderBottom: `1px solid ${C.border}` }}>{selOrig.name}</div>
                 <div className="text-[12px] text-(--color-text-light) mb-[10px]">Koku Notaları</div>
-                {[['Üst', faArrowUp, selOrig.notes?.top || []], ['Kalp', faHeart, selOrig.notes?.heart || []], ['Alt', faArrowDown, selOrig.notes?.base || []]].map(([l, icon, n]) => (
-                  <div key={l} className="mb-2 w-full">
-                    <div className="text-[12px] font-semibold text-(--color-text-mid) mb-[3px] flex items-center justify-center gap-1">
-                      <FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}
+                {(() => {
+                  const clean = (arr) => (arr || []).filter((x) => typeof x === 'string' && x.trim() && !/^(nan|null|undefined)$/i.test(x.trim()));
+                  const top = clean(selOrig.notes?.top), heart = clean(selOrig.notes?.heart), base = clean(selOrig.notes?.base);
+                  const cats = [['Üst', faArrowUp, top], ['Kalp', faHeart, heart], ['Alt', faArrowDown, base]].filter(([, , n]) => n.length > 0);
+                  const chip = (note) => <span key={note} className="rounded-md px-2 py-[2px] text-[12px]" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>{note}</span>;
+                  // Hiç geçerli nota yok
+                  if (cats.length === 0) {
+                    return <div className="text-[12px] italic text-(--color-text-light)">Nota bilgisi bulunmamıştır.</div>;
+                  }
+                  // Tek kategori → etiketsiz düz liste
+                  if (cats.length === 1) {
+                    return <div className="flex gap-1 flex-wrap justify-center">{cats[0][2].map(chip)}</div>;
+                  }
+                  // Birden çok kategori → etiketli
+                  return cats.map(([l, icon, n]) => (
+                    <div key={l} className="mb-2 w-full">
+                      <div className="text-[12px] font-semibold text-(--color-text-mid) mb-[3px] flex items-center justify-center gap-1">
+                        <FontAwesomeIcon icon={icon} style={{ fontSize: '10px' }} />{l}
+                      </div>
+                      <div className="flex gap-1 flex-wrap justify-center">{n.map(chip)}</div>
                     </div>
-                    <div className="flex gap-1 flex-wrap justify-center">
-                      {n.map((note) => <span key={note} className="rounded-md px-2 py-[2px] text-[12px]" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>{note}</span>)}
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </Card>
 
               <Card style={{ padding: '22px' }}>
@@ -575,7 +646,7 @@ export function ComparisonPage({ queryParams }) {
                               {!isDeleted && user?.uid === c.userId && (
                                 confirmDeleteId === c.id
                                   ? <span className="flex gap-1 items-center">
-                                      <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); }}
+                                      <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
                                         className="text-[11px] font-bold text-white bg-[#e53e3e] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
                                         style={{ fontFamily: F }}>Sil</button>
                                       <button onClick={() => setConfirmDeleteId(null)}
