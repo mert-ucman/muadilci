@@ -41,6 +41,12 @@
 - [ ] **Core Web Vitals** — Google Search Console'a site eklendikten sonra LCP/CLS/FID ölçülmeli.
 - [ ] **Image optimizasyonu** — Storage'a yüklerken WebP dönüştürme, max 800px genişlik.
 
+### Bakım / Temizlik
+- [ ] **Kullanılmayan reCAPTCHA Enterprise "muadilci" key'i** — TOTP'ye geçildiği için gereksiz; GCP'den silinebilir.
+- [ ] **`scripts/notes_unmatched.json`** — takip dışı dosya; `.gitignore`'a eklenmeli veya silinmeli.
+- [ ] **`xlsx` çift import** — `Admin/index.jsx`'te hem statik hem dinamik import ediliyor (rollup uyarısı); tek yönteme indirilmeli.
+- [ ] **Chunk boyutu > 500 kB** — `manualChunks` ile kod bölme (`jspdf`, `xlsx`).
+
 ### Admin Paneli
 - [ ] **Toplu içerik yükleme (CSV/JSON import)** — Admin paneline parfüm/marka için toplu yükleme.
 - [ ] **Moderasyon geçmişi** — `moderatedBy`, `moderatedAt` alanları reviews'a eklenmeli.
@@ -66,6 +72,17 @@
 ---
 
 ## ✅ Tamamlananlar
+
+### Admin 2FA / MFA (2026-06-10)
+- [x] Admin hesabı için iki faktörlü doğrulama (2FA)
+- [x] **TOTP (authenticator app)** tabanı — SMS + reCAPTCHA Enterprise çıkmazı aşıldı
+- [x] Identity Platform'da TOTP, Admin REST API ile etkinleştirildi; SMS MFA kapatıldı
+- [x] `Admin > Güvenlik` sekmesi — QR kodlu TOTP kurulum + kaldırma (`SecurityTab.jsx`)
+- [x] Giriş akışında TOTP challenge ekranı (`LoginPage.jsx`)
+- [x] Cloud Functions — rol → `admin` + `moderator` custom claim senkronizasyonu
+- [x] Hassas işlemlerde MFA-farkında `reauthenticate` + şık `MfaReauthModal` (prompt yerine)
+- [x] MFA kaldırma şifre + authenticator kodu onayı istiyor
+- [x] "+ Marka Ekle" `setBf is not defined` hatası giderildi
 
 ### Altyapı & Güvenlik
 - [x] Firestore base64 → Firebase Storage migration (`scripts/migrate-images-to-storage.mjs`)
@@ -117,4 +134,4 @@
 
 ---
 
-*Son güncelleme: 2026-06-01*
+*Son güncelleme: 2026-06-10 — Admin TOTP 2FA sistemi tamamlandı*

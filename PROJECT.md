@@ -22,14 +22,17 @@
 |--------|-----------|
 | Framework | React 18 (Vite) |
 | Backend / DB | Firebase Firestore (real-time) |
-| Auth | Firebase Authentication |
+| Auth | Firebase Authentication + **Identity Platform** (MFA için) |
+| 2FA / MFA | TOTP (authenticator app) — admin hesabı için, Identity Platform üzerinden |
 | Depolama | Firebase Storage (görseller) |
 | Hosting | Firebase Hosting |
-| Cloud Functions | Firebase Functions v2 (Gen 2) |
+| Cloud Functions | Firebase Functions v2 (Gen 2) — rol → custom claims senkronizasyonu |
 | Routing | History API tabanlı custom SPA router (`RouterContext`) |
 | Stil | Inline CSS — tema sabitleri: `src/constants/theme.js` |
 | İkonlar | FontAwesome (`@fortawesome/free-solid-svg-icons`) |
 | Fontlar | DM Sans (UI — `F`), Cormorant Garamond (başlıklar — `FH`) |
+| QR kod | `qrcode` (TOTP kurulum QR'ı — client-side, secret dışarı sızmaz) |
+| Dışa aktarma | `jspdf` + `jspdf-autotable` (PDF), `xlsx` (Excel) |
 
 ---
 
@@ -46,7 +49,8 @@ src/
 │
 ├── contexts/
 │   ├── AuthContext.jsx             # Auth, rol yönetimi, publicProfiles sync, inaktivite,
-│   │                               # presence heartbeat, giriş/çıkış aktivite logu
+│   │                               # presence heartbeat, aktivite logu, TOTP MFA (enroll/login),
+│   │                               # MFA-farkında reauthenticate + MfaReauthModal köprüsü
 │   ├── DataContext.jsx             # Firestore real-time listeners, logActivity(), updateUser()
 │   └── RouterContext.jsx           # History API SPA router, navigate(), goBack()
 │
@@ -72,7 +76,8 @@ src/
 │   │   ├── Input.jsx, Select.jsx, Textarea.jsx
 │   │   ├── ScoreBar.jsx, FaIcon.jsx
 │   ├── shared/
-│   │   └── GenderBadge.jsx
+│   │   ├── GenderBadge.jsx
+│   │   └── MfaReauthModal.jsx     # Hassas işlem öncesi authenticator kodu toplayan merkezi modal
 │   └── layout/
 │       ├── Navbar.jsx              # Üst nav (tüm linkler <a>, yeni sekme desteği)
 │       └── Footer.jsx
@@ -95,10 +100,11 @@ src/
     ├── Moderation/index.jsx
     ├── Admin/
     │   ├── index.jsx               # Sol sidebar nav + tüm sekmeler
-    │   └── ActivityTab.jsx         # Hareketler: aktif kullanıcılar paneli + aktivite tablosu
+    │   ├── ActivityTab.jsx         # Hareketler: aktif kullanıcılar paneli + aktivite tablosu
+    │   └── SecurityTab.jsx         # Güvenlik: TOTP (authenticator) 2FA kurulum/kaldırma + QR
     ├── NotFound.jsx
     └── Auth/
-        ├── LoginPage.jsx           # İki kolonlu layout (sol: sign-up.png)
+        ├── LoginPage.jsx           # İki kolonlu layout (sol: sign-up.png) + TOTP MFA challenge adımı
         ├── RegisterPage.jsx        # İki kolonlu layout (sol: login page.png)
         ├── AuthLayout.jsx          # bgImage + headline prop'ları, Ana Sayfa butonu
         └── ...
@@ -135,7 +141,11 @@ src/
 |-----|----------|
 | `user` | Favori, yorum, profil düzenleme, liste oluşturma/paylaşma |
 | `moderator` | + Yorumları onayla/reddet; yorumlarda `@moderatör` |
-| `admin` | + Tüm CRUD; Admin paneli; Hareketler + aktif kullanıcılar |
+| `admin` | + Tüm CRUD; Admin paneli; Hareketler + aktif kullanıcılar; zorunlu 2FA (TOTP) |
+
+**Custom Claims:** `users/{uid}.role` değiştiğinde Cloud Functions (`syncRoleClaims` / `initRoleClaims`)
+JWT'ye `admin` ve `moderator` claim'lerini yazar (`moderator` claim admin için de `true`).
+`AuthContext` `onSnapshot` ile rol değişimini yakalayıp `getIdToken(true)` ile token'ı anında tazeler.
 
 ---
 
@@ -172,7 +182,7 @@ src/
 |-----|----------------|------------|
 | `review_created` | `DataContext.addComment()` | `reviewId`, `muadilId`, `muadilName`, `targetBrandName`, `targetPerfumeName`, `perfumeUrl` |
 | `list_created` | `ListsTab.handleSave()` | `listId`, `listTitle`, `listUrl` |
-| `login` | `AuthContext.loginWithEmail/Google()` | `method: 'email'\|'google'` |
+| `login` | `AuthContext.loginWithEmail/Google()` / MFA girişi | `method: 'email'\|'google'\|'email_totp'` |
 | `logout` | `AuthContext.logout()` | — |
 
 ### Presence sistemi
@@ -196,8 +206,33 @@ src/
 ## Admin Paneli
 
 - **Sidebar:** sol tarafta 210px, FontAwesome ikonlu dikey navigasyon; `position: sticky`
-- **Sekmeler:** Genel Bakış, Kullanıcılar, Orijinal/Muadil Markalar, Orijinal/Muadil Parfümler, Tüm Yorumlar, Slider, Favicon, Parfüm Birleştir, **Hareketler**
+- **Sekmeler:** Genel Bakış, Kullanıcılar, Orijinal/Muadil Markalar, Orijinal/Muadil Parfümler, Tüm Yorumlar, Slider, Favicon, Parfüm Birleştir, **Hareketler**, **Güvenlik**
 - **Mobil:** dropdown select
+
+---
+
+## Admin 2FA (TOTP / Authenticator)
+
+Admin hesabı için iki faktörlü doğrulama **TOTP** (Google/Microsoft Authenticator) tabanlıdır.
+SMS **kullanılmaz** — Identity Platform'un SMS akışında zorunlu kıldığı reCAPTCHA Enterprise
+localhost/production'da güvenilir çalışmadığı için TOTP'ye geçildi (reCAPTCHA gerektirmez, SMS
+maliyeti yok, SIM-swap riski taşımaz).
+
+### Akış
+- **Kurulum** (`Admin > Güvenlik` → `SecurityTab.jsx`): şifre reauth → `generateSecret` → QR kod
+  (`qrcode` ile client-side) + elle giriş anahtarı → authenticator'daki 6 haneli kod → `enroll`
+- **Giriş** (`LoginPage.jsx`): email/şifre → `auth/multi-factor-auth-required` → authenticator kod
+  ekranı → `resolveSignIn` (SMS gönderme adımı yok, doğrudan kod girişi)
+- **Kaldırma** (`SecurityTab.jsx`): şifre + (reauth ile) authenticator kodu onayı şart
+- **Hassas işlemler** (marka/parfüm/kullanıcı/yorum silme): `reauthenticate(şifre)` → MFA kuruluysa
+  `MfaReauthModal` ile authenticator kodu da istenir (promise köprüsü `AuthContext` içinde)
+
+### Identity Platform yapılandırması
+- MFA `state: ENABLED`, `providerConfigs[].totpProviderConfig` ile TOTP açık; `enabledProviders` boş (SMS kapalı)
+- TOTP, GCP konsol UI'ında görünmediği için **Identity Toolkit Admin REST API** ile açıldı:
+  `PATCH .../admin/v2/projects/{project}/config?updateMask=mfa.providerConfigs`
+- Kullanıcının MFA faktörleri Firebase Admin SDK ile temizlenebilir:
+  `updateUser(uid, { multiFactor: { enrolledFactors: null } })`
 
 ---
 
@@ -314,4 +349,4 @@ Yalnızca `status === 'approved'` yorumlardan:
 
 ---
 
-*Son güncelleme: 2026-06-09 — TableScrollHint tüm tablolara eklendi*
+*Son güncelleme: 2026-06-10 — Admin TOTP 2FA sistemi (SMS yerine authenticator), MFA reauth modali, Güvenlik sekmesi, rol→custom claims senkronizasyonu*
