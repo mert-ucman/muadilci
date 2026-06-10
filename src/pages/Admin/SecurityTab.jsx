@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { useAuth } from '@/contexts/AuthContext';
-import { Btn, Card, Input } from '@/components/ui';
+import { Btn, Card, Input, Modal } from '@/components/ui';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShieldHalved, faCircleCheck, faCircleXmark, faMobileScreen, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { C } from '@/constants/theme';
@@ -24,6 +24,7 @@ export function SecurityTab() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const [copied, setCopied] = useState(false);
+  const [removeModal, setRemoveModal] = useState({ open: false, uid: null, pass: '', error: '', loading: false });
 
   useEffect(() => {
     setFactors(getMfaFactors());
@@ -87,17 +88,24 @@ export function SecurityTab() {
     }
   };
 
-  const handleUnenroll = async (factorUid) => {
-    if (!window.confirm('MFA kaldırılacak. Emin misiniz?')) return;
-    setErr('');
+  // Kaldırma onayı: şifre + (reauthenticate üzerinden) TOTP kodu doğrulanır
+  const handleRemoveConfirm = async () => {
+    setRemoveModal((s) => ({ ...s, loading: true, error: '' }));
     try {
-      await unenrollMfa(factorUid);
+      await reauthenticate(removeModal.pass);   // şifre doğrula + TOTP modalini aç
+      await unenrollMfa(removeModal.uid);
       setFactors(getMfaFactors());
+      setRemoveModal({ open: false, uid: null, pass: '', error: '', loading: false });
+      setStep(STEPS.idle);
     } catch (e) {
-      if (e.code === 'auth/requires-recent-login') {
-        setErr('Kaldırmak için önce çıkış yapıp tekrar giriş yapın.');
+      if (e.code === 'auth/mfa-cancelled') {
+        setRemoveModal((s) => ({ ...s, loading: false })); // TOTP iptal edildi → modal açık kalsın
+      } else if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        setRemoveModal((s) => ({ ...s, loading: false, error: 'Şifre hatalı.' }));
+      } else if (e.code === 'auth/too-many-requests') {
+        setRemoveModal((s) => ({ ...s, loading: false, error: 'Çok fazla deneme. Lütfen bekleyin.' }));
       } else {
-        setErr('MFA kaldırılamadı.');
+        setRemoveModal((s) => ({ ...s, loading: false, error: 'Kaldırılamadı. Tekrar deneyin.' }));
       }
     }
   };
@@ -162,7 +170,7 @@ export function SecurityTab() {
                   <div className="text-[12px] text-(--color-text-light)">Authenticator uygulaması</div>
                 </div>
                 <button
-                  onClick={() => handleUnenroll(f.uid)}
+                  onClick={() => setRemoveModal({ open: true, uid: f.uid, pass: '', error: '', loading: false })}
                   className="text-[12px] font-semibold px-3 py-[5px] rounded-[7px] cursor-pointer border border-[#fecaca] bg-[#fff5f5] text-(--color-red)"
                   style={{ fontFamily: 'inherit' }}
                 >
@@ -273,6 +281,40 @@ export function SecurityTab() {
           2FA başarıyla kuruldu. Bir sonraki girişte authenticator kodu istenecek.
         </div>
       )}
+
+      {/* MFA Kaldırma Onay Modalı — şifre + authenticator kodu ister */}
+      <Modal
+        open={removeModal.open}
+        onClose={() => !removeModal.loading && setRemoveModal({ open: false, uid: null, pass: '', error: '', loading: false })}
+        title="İki Faktörlü Doğrulamayı Kaldır"
+        width="400px"
+      >
+        <div className="mb-4 px-4 py-3 bg-[#fff5f5] border border-[#fecaca] rounded-[10px] text-[13px] text-(--color-red) leading-[1.6]">
+          2FA kaldırılacak ve hesabınız yalnızca şifreyle korunacak. Onaylamak için şifrenizi girin; ardından authenticator kodu istenecek.
+        </div>
+
+        <Input
+          label="Mevcut Şifreniz"
+          type="password"
+          value={removeModal.pass}
+          onChange={(e) => setRemoveModal((s) => ({ ...s, pass: e.target.value, error: '' }))}
+          onKeyDown={(e) => e.key === 'Enter' && !removeModal.loading && removeModal.pass && handleRemoveConfirm()}
+          placeholder="Şifrenizi girin"
+        />
+
+        {removeModal.error && (
+          <div className="px-3 py-2 mt-3 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red)">{removeModal.error}</div>
+        )}
+
+        <div className="flex gap-[10px] mt-4 justify-end">
+          <Btn variant="ghost" onClick={() => setRemoveModal({ open: false, uid: null, pass: '', error: '', loading: false })} disabled={removeModal.loading}>
+            İptal
+          </Btn>
+          <Btn variant="danger" onClick={handleRemoveConfirm} disabled={removeModal.loading || !removeModal.pass}>
+            {removeModal.loading ? 'Kaldırılıyor…' : 'Kaldır'}
+          </Btn>
+        </div>
+      </Modal>
     </div>
   );
 }

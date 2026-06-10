@@ -695,8 +695,8 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
 }
 
 /* ─── Add Brand Modal ─────────────────────────────────────────────────── */
-function AddBrandModal({ brands, onClose, onAdd }) {
-  const [bf, setBf] = useState({ name: '', slug: '', type: 'original', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '', instagram: '', website: '' });
+function AddBrandModal({ brands, onClose, onAdd, initialType = 'original' }) {
+  const [bf, setBf] = useState({ name: '', slug: '', type: initialType, origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '', instagram: '', website: '' });
   const [brandErr, setBrandErr] = useState('');
   const [cropModal, setCropModal] = useState({ open: false, src: '' });
 
@@ -2133,7 +2133,7 @@ export function AdminPanel() {
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
-                <Btn onClick={() => { setBf({ name: '', slug: '', type: isOrig ? 'original' : 'muadil', origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '' }); setShowBM(true); }}>+ Marka Ekle</Btn>
+                <Btn onClick={() => setShowBM(true)}>+ Marka Ekle</Btn>
               </div>
               <Card style={{ overflow: 'hidden' }}>
                 <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3">
@@ -2905,6 +2905,7 @@ export function AdminPanel() {
       {showBM && (
         <AddBrandModal
           brands={brands}
+          initialType={tab === 'muadil-brands' ? 'muadil' : 'original'}
           onClose={() => setShowBM(false)}
           onAdd={(data) => { addBrand(data); setShowBM(false); }}
         />

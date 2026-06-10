@@ -27,6 +27,7 @@ import { auth, db } from '@/lib/firebase';
 import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
 import { writeActivityLog, updatePresence } from '@/lib/activityLog';
+import { MfaReauthModal } from '@/components/shared/MfaReauthModal';
 
 // 10 dakika hareketsizlik → otomatik çıkış
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -110,6 +111,9 @@ export function AuthProvider({ children }) {
   // onAuthStateChanged'in birden fazla kez çağrılması (null→user geçişi) durumunda
   // yalnızca en son çağrının authInitialized'ı set etmesini garantiler.
   const authCallbackGenRef = useRef(0);
+  // MFA reauth modal'ı: hassas işlem öncesi authenticator kodu toplar
+  const [mfaPrompt, setMfaPrompt] = useState({ open: false, error: '', loading: false });
+  const mfaPromiseRef = useRef(null); // { resolve, reject, resolver, hint }
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -511,7 +515,8 @@ export function AuthProvider({ children }) {
   };
 
   // Şifre ile yeniden kimlik doğrula. Hesapta MFA (TOTP) kuruluysa şifre
-  // doğrulandıktan sonra authenticator kodu da istenir ve işlem onunla tamamlanır.
+  // doğrulandıktan sonra authenticator kodu merkezi modal ile toplanır
+  // (mfaPromiseRef üzerinden promise köprüsü).
   const reauthenticate = async (password) => {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Oturum açık değil.');
@@ -520,29 +525,44 @@ export function AuthProvider({ children }) {
       await reauthenticateWithCredential(currentUser, credential);
     } catch (e) {
       if (e.code !== 'auth/multi-factor-auth-required') throw e; // şifre hatalı vb. → yukarı fırlat
-      // Şifre doğru, ikinci faktör gerekiyor → authenticator kodu iste
+      // Şifre doğru, ikinci faktör gerekiyor → modal'ı aç, kod gelene kadar bekle
       const resolver = getMultiFactorResolver(auth, e);
       const hint = resolver.hints.find((h) => h.factorId === TotpMultiFactorGenerator.FACTOR_ID) || resolver.hints[0];
-      for (let attempt = 0; attempt < 3; attempt++) {
-        const code = window.prompt(
-          attempt === 0
-            ? 'Bu işlem için Authenticator uygulamanızdaki 6 haneli kodu girin:'
-            : 'Kod hatalı. Authenticator uygulamasındaki güncel kodu tekrar girin:'
-        );
-        if (code == null) { const err = new Error('İşlem iptal edildi.'); err.code = 'auth/mfa-cancelled'; throw err; }
-        try {
-          const assertion = TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code.trim());
-          await resolver.resolveSignIn(assertion);
-          return; // başarılı
-        } catch (err) {
-          if (err.code !== 'auth/invalid-verification-code' && err.code !== 'auth/invalid-payload') throw err;
-          // yanlış kod → döngü tekrar sorar
-        }
-      }
-      const err = new Error('Çok fazla hatalı kod.');
-      err.code = 'auth/too-many-requests';
-      throw err;
+      await new Promise((resolve, reject) => {
+        mfaPromiseRef.current = { resolve, reject, resolver, hint };
+        setMfaPrompt({ open: true, error: '', loading: false });
+      });
     }
+  };
+
+  // Modal "Onayla": girilen kodu doğrula. Yanlışsa modal açık kalır, doğruysa promise çözülür.
+  const submitMfaPrompt = async (code) => {
+    const ctx = mfaPromiseRef.current;
+    if (!ctx) return;
+    setMfaPrompt({ open: true, loading: true, error: '' });
+    try {
+      const assertion = TotpMultiFactorGenerator.assertionForSignIn(ctx.hint.uid, code.trim());
+      await ctx.resolver.resolveSignIn(assertion);
+      mfaPromiseRef.current = null;
+      setMfaPrompt({ open: false, error: '', loading: false });
+      ctx.resolve();
+    } catch (err) {
+      if (err.code === 'auth/invalid-verification-code' || err.code === 'auth/invalid-payload') {
+        setMfaPrompt({ open: true, loading: false, error: 'Kod hatalı. Authenticator uygulamasındaki güncel kodu girin.' });
+      } else {
+        mfaPromiseRef.current = null;
+        setMfaPrompt({ open: false, error: '', loading: false });
+        ctx.reject(err);
+      }
+    }
+  };
+
+  // Modal "İptal": işlemi iptal et, promise reddedilir.
+  const cancelMfaPrompt = () => {
+    const ctx = mfaPromiseRef.current;
+    mfaPromiseRef.current = null;
+    setMfaPrompt({ open: false, error: '', loading: false });
+    if (ctx) { const err = new Error('İşlem iptal edildi.'); err.code = 'auth/mfa-cancelled'; ctx.reject(err); }
   };
 
   // Oturum açık kullanıcının belgesi silinirse / deleted:true olursa anında çıkış yaptır.
@@ -589,6 +609,13 @@ export function AuthProvider({ children }) {
   return (
     <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod, startTotpEnrollment, completeTotpEnrollment, getMfaFactors, unenrollMfa, startTotpLogin, completeTotpLogin }}>
       {children}
+      <MfaReauthModal
+        open={mfaPrompt.open}
+        error={mfaPrompt.error}
+        loading={mfaPrompt.loading}
+        onSubmit={submitMfaPrompt}
+        onCancel={cancelMfaPrompt}
+      />
     </AuthCtx.Provider>
   );
 }
