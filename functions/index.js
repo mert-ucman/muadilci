@@ -23,11 +23,14 @@ exports.syncRoleClaims = onDocumentUpdated('users/{uid}', async (event) => {
   if (before.role === after.role) return;
 
   const uid = event.params.uid;
-  const isAdmin = after.role === 'admin';
+  const claims = {
+    admin:     after.role === 'admin',
+    moderator: after.role === 'moderator' || after.role === 'admin',
+  };
 
   try {
-    await admin.auth().setCustomUserClaims(uid, { admin: isAdmin });
-    console.log(`✓ Custom claims güncellendi: ${uid} → admin=${isAdmin}`);
+    await admin.auth().setCustomUserClaims(uid, claims);
+    console.log(`✓ Custom claims güncellendi: ${uid} → admin=${claims.admin}, moderator=${claims.moderator}`);
   } catch (e) {
     console.error(`✗ Custom claims hatası (${uid}):`, e);
     throw e;
@@ -41,11 +44,14 @@ exports.syncRoleClaims = onDocumentUpdated('users/{uid}', async (event) => {
 exports.initRoleClaims = onDocumentCreated('users/{uid}', async (event) => {
   const data = event.data.data();
   const uid  = event.params.uid;
-  const isAdmin = data?.role === 'admin';
+  const claims = {
+    admin:     data?.role === 'admin',
+    moderator: data?.role === 'moderator' || data?.role === 'admin',
+  };
 
   try {
-    await admin.auth().setCustomUserClaims(uid, { admin: isAdmin });
-    console.log(`✓ Başlangıç custom claims set edildi: ${uid} → admin=${isAdmin}`);
+    await admin.auth().setCustomUserClaims(uid, claims);
+    console.log(`✓ Başlangıç custom claims set edildi: ${uid} → admin=${claims.admin}, moderator=${claims.moderator}`);
   } catch (e) {
     console.error(`✗ Başlangıç custom claims hatası (${uid}):`, e);
   }

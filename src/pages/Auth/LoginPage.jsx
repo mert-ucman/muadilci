@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { RecaptchaVerifier } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { Btn } from '@/components/ui';
 import { AuthLayout, GoogleBtn, Divider, EyeIcon, signUpBg } from './AuthLayout';
 
+// step: 'login' | 'mfa-sending' | 'mfa-code'
 export function LoginPage() {
-  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, loginWithGoogle, startMfaLogin, completeMfaLogin } = useAuth();
   const { navigate } = useRouter();
-  const [identifier, setIdentifier] = useState(''); // e-posta veya kullanıcı adı
+
+  const [identifier, setIdentifier] = useState('');
   const [pass, setPass] = useState('');
   const [showP, setShowP] = useState(false);
   const [err, setErr] = useState('');
@@ -15,6 +19,27 @@ export function LoginPage() {
   const [fPass, setFPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const [step, setStep] = useState('login');
+  const [mfaState, setMfaState] = useState(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [fMfa, setFMfa] = useState(false);
+
+  const recaptchaVerifierRef = useRef(null);
+
+  // Görünmez reCAPTCHA — test numaralarında otomatik atlanır
+  const getRecaptcha = () => {
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'login-recaptcha', { size: 'invisible' });
+    }
+    return recaptchaVerifierRef.current;
+  };
+
+  const resetRecaptcha = () => {
+    try { recaptchaVerifierRef.current?.clear(); } catch { /* noop */ }
+    recaptchaVerifierRef.current = null;
+  };
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
@@ -37,7 +62,23 @@ export function LoginPage() {
       await loginWithEmail(identifier.trim(), pass);
       navigate('/');
     } catch (e) {
-      if (
+      if (e.code === 'auth/multi-factor-auth-required') {
+        setStep('mfa-sending');
+        try {
+          const state = await startMfaLogin(e, getRecaptcha());
+          setMfaState(state);
+          setStep('mfa-code');
+        } catch (mfaErr) {
+          console.error('[MFA login error]', mfaErr?.code, mfaErr?.message);
+          resetRecaptcha();
+          setStep('login');
+          if (mfaErr.code === 'auth/too-many-requests') {
+            setErr('Çok fazla deneme. Lütfen bekleyin.');
+          } else {
+            setErr(`SMS gönderilemedi. (${mfaErr?.code || 'bilinmeyen hata'})`);
+          }
+        }
+      } else if (
         e.code === 'auth/user-not-found' ||
         e.code === 'auth/wrong-password' ||
         e.code === 'auth/invalid-credential'
@@ -53,8 +94,100 @@ export function LoginPage() {
     }
   };
 
+  const submitMfa = async () => {
+    if (!mfaCode) { setErr('Doğrulama kodunu girin.'); return; }
+    setMfaLoading(true);
+    setErr('');
+    try {
+      await completeMfaLogin(mfaState.resolver, mfaState.verificationId, mfaCode.trim());
+      resetRecaptcha();
+      navigate('/');
+    } catch (e) {
+      if (e.code === 'auth/invalid-verification-code') {
+        setErr('Doğrulama kodu hatalı.');
+      } else if (e.code === 'auth/code-expired') {
+        setErr('Kod süresi doldu. Tekrar giriş yapın.');
+        resetRecaptcha();
+        setStep('login');
+        setMfaState(null);
+      } else {
+        setErr('Doğrulama başarısız. Tekrar deneyin.');
+      }
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
   const inpClass = 'w-full rounded-[10px] px-[14px] py-[10px] text-[14px] text-(--color-text) outline-none transition-[border-color] duration-200';
 
+  // SMS gönderiliyor
+  if (step === 'mfa-sending') {
+    return (
+      <AuthLayout
+        title="SMS Gönderiliyor"
+        subtitle="Telefonunuza doğrulama kodu gönderiliyor..."
+        bgImage={signUpBg}
+        headline={<>Güvenli<br /><em style={{ color: 'rgb(184,147,90)', fontStyle: 'italic' }}>Giriş</em><br />Doğrulaması</>}
+      >
+        <div className="flex items-center justify-center py-10">
+          <div className="w-8 h-8 border-2 border-(--color-gold) border-t-transparent rounded-full animate-spin" />
+        </div>
+        <div id="login-recaptcha" />
+      </AuthLayout>
+    );
+  }
+
+  // SMS kod girişi
+  if (step === 'mfa-code') {
+    return (
+      <AuthLayout
+        title="SMS Doğrulama"
+        subtitle="Telefonunuza gönderilen 6 haneli kodu girin"
+        bgImage={signUpBg}
+        headline={<>Güvenli<br /><em style={{ color: 'rgb(184,147,90)', fontStyle: 'italic' }}>Giriş</em><br />Doğrulaması</>}
+      >
+        <div className="mb-[14px]">
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
+            SMS Doğrulama Kodu
+          </label>
+          <input
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value)}
+            onFocus={() => setFMfa(true)}
+            onBlur={() => setFMfa(false)}
+            onKeyDown={(e) => e.key === 'Enter' && submitMfa()}
+            placeholder="123456"
+            maxLength={6}
+            autoComplete="one-time-code"
+            inputMode="numeric"
+            className={inpClass}
+            style={{ border: `1px solid ${fMfa ? 'var(--color-gold)' : 'var(--color-border)'}`, letterSpacing: '0.2em', textAlign: 'center', fontSize: '20px' }}
+          />
+        </div>
+
+        {err && (
+          <div className="bg-(--color-red-bg) border border-(--color-red-border) rounded-[10px] px-[14px] py-[10px] text-(--color-red) text-[13px] mb-3">
+            {err}
+          </div>
+        )}
+
+        <Btn onClick={submitMfa} disabled={mfaLoading} style={{ width: '100%', justifyContent: 'center', marginBottom: '14px' }} size="lg">
+          {mfaLoading ? 'Doğrulanıyor...' : 'Doğrula ve Giriş Yap'}
+        </Btn>
+
+        <div className="text-center text-[13px] text-(--color-text-mid)">
+          <span
+            onClick={() => { resetRecaptcha(); setStep('login'); setMfaCode(''); setErr(''); setMfaState(null); }}
+            className="text-(--color-gold) font-bold cursor-pointer"
+          >
+            Geri Dön
+          </span>
+        </div>
+      </AuthLayout>
+    );
+  }
+
+  // Normal login
   return (
     <AuthLayout
       title="Hoş Geldiniz"
@@ -135,6 +268,7 @@ export function LoginPage() {
           Üye Ol
         </span>
       </div>
+      <div id="login-recaptcha" />
     </AuthLayout>
   );
 }

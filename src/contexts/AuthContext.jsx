@@ -15,6 +15,10 @@ import {
   reauthenticateWithPopup,
   EmailAuthProvider,
   sendEmailVerification,
+  multiFactor,
+  PhoneAuthProvider,
+  PhoneMultiFactorGenerator,
+  getMultiFactorResolver,
 } from 'firebase/auth';
 import {
   doc, getDoc, setDoc, updateDoc, writeBatch, deleteDoc,
@@ -424,6 +428,66 @@ export function AuthProvider({ children }) {
     url: window.location.origin,
   });
 
+  // ── MFA (SMS tabanlı, yalnızca admin) ──────────────────────────────────────
+  // recaptchaVerifier: çağıran component'te new RecaptchaVerifier(auth, el, {size:'invisible'})
+  const startMfaEnrollment = async (phoneNumber, recaptchaVerifier) => {
+    const cu = auth.currentUser;
+    if (!cu) throw new Error('Oturum açık değil.');
+    const session = await multiFactor(cu).getSession();
+    const provider = new PhoneAuthProvider(auth);
+    return provider.verifyPhoneNumber({ phoneNumber, session }, recaptchaVerifier);
+  };
+
+  const completeMfaEnrollment = async (verificationId, otp) => {
+    const cu = auth.currentUser;
+    if (!cu) throw new Error('Oturum açık değil.');
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
+    const assertion = PhoneMultiFactorGenerator.assertion(credential);
+    await multiFactor(cu).enroll(assertion, 'Telefon');
+  };
+
+  const getMfaFactors = () => {
+    const cu = auth.currentUser;
+    if (!cu) return [];
+    return multiFactor(cu).enrolledFactors;
+  };
+
+  const unenrollMfa = async (factorUid) => {
+    const cu = auth.currentUser;
+    if (!cu) throw new Error('Oturum açık değil.');
+    const mf = multiFactor(cu);
+    const factor = mf.enrolledFactors.find((f) => f.uid === factorUid);
+    if (!factor) throw new Error('Faktör bulunamadı.');
+    await mf.unenroll(factor);
+  };
+
+  // Login sırasında MFA challenge: SMS gönder, resolver döndür.
+  // recaptchaVerifier her zaman geçilir (görünmez). Test telefon numaralarında
+  // SDK reCAPTCHA'yı ve gerçek SMS'i atlar; gerçek numara + production domain'de
+  // Enterprise/v2 doğrulaması devreye girer.
+  const startMfaLogin = async (mfaError, recaptchaVerifier) => {
+    const resolver = getMultiFactorResolver(auth, mfaError);
+    const phoneInfoOptions = { multiFactorHint: resolver.hints[0], session: resolver.session };
+    const provider = new PhoneAuthProvider(auth);
+    const verificationId = await provider.verifyPhoneNumber(phoneInfoOptions, recaptchaVerifier);
+    return { resolver, verificationId };
+  };
+
+  const completeMfaLogin = async (resolver, verificationId, otp) => {
+    const credential = PhoneAuthProvider.credential(verificationId, otp);
+    const assertion = PhoneMultiFactorGenerator.assertion(credential);
+    const cred = await resolver.resolveSignIn(assertion);
+    const userData = await fetchOrCreateUserDoc(cred.user);
+    if (!userData) { setUser(null); return; }
+    const provider = cred.user.providerData[0]?.providerId || 'password';
+    localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    const u = { ...userData, uid: cred.user.uid };
+    writeActivityLog(u, 'login', { method: 'email_mfa' });
+    updatePresence(u, true);
+    setUser({ ...u, emailVerified: cred.user.emailVerified || provider === 'google.com', provider });
+  };
+  // ────────────────────────────────────────────────────────────────────────────
+
   const verifyResetCode = (oobCode) => verifyPasswordResetCode(auth, oobCode);
   const confirmReset = (oobCode, newPassword) => confirmPasswordReset(auth, oobCode, newPassword);
 
@@ -457,7 +521,8 @@ export function AuthProvider({ children }) {
     await reauthenticateWithCredential(currentUser, credential);
   };
 
-  // Oturum açık kullanıcının belgesi silinirse / deleted:true olursa anında çıkış yaptır
+  // Oturum açık kullanıcının belgesi silinirse / deleted:true olursa anında çıkış yaptır.
+  // Rol değişikliğinde state'i ve custom claim token'ını anında günceller.
   useEffect(() => {
     if (!user?.uid) return;
     const ref = doc(db, 'users', user.uid);
@@ -466,6 +531,13 @@ export function AuthProvider({ children }) {
       if (!snap.exists() || snap.data().deleted) {
         await signOut(auth);
         setUser(null);
+        return;
+      }
+      const data = snap.data();
+      if (data.role !== userRef.current?.role) {
+        // Token'ı zorla yenile → Cloud Function'ın set ettiği custom claim'ler JWT'ye geçsin
+        try { await auth.currentUser?.getIdToken(true); } catch { /* noop */ }
+        setUser((prev) => (prev ? { ...prev, role: data.role } : prev));
       }
     });
     return () => unsub();
@@ -491,7 +563,7 @@ export function AuthProvider({ children }) {
   const loading = !authInitialized;
 
   return (
-    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod }}>
+    <AuthCtx.Provider value={{ user, loading, loginWithEmail, register, loginWithGoogle, logout, resetPassword, verifyResetCode, confirmReset, checkUsername, updateUsername, deleteAccount, reauthenticate, updateProfilePhoto, deleteProfilePhoto, sendVerificationEmail, reloadUser, isAdmin, isMod, startMfaEnrollment, completeMfaEnrollment, getMfaFactors, unenrollMfa, startMfaLogin, completeMfaLogin }}>
       {children}
     </AuthCtx.Provider>
   );

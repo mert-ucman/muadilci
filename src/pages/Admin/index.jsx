@@ -12,10 +12,11 @@ import { uploadDataURL } from '@/lib/storage';
 import { db } from '@/lib/firebase';
 import { ActivityTab } from './ActivityTab';
 import { BrandProfilesTab } from './BrandProfilesTab';
+import { SecurityTab } from './SecurityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -128,6 +129,7 @@ const TABS = [
   { k: 'favicon',         l: 'Favicon',            icon: faImage },
   { k: 'merge-perfumes',  l: 'Parfüm Birleştir',  icon: faCodeMerge },
   { k: 'activity',        l: 'Hareketler',         icon: faClockRotateLeft },
+  { k: 'security',        l: 'Güvenlik',           icon: faShieldHalved },
 ];
 
 function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB }) {
@@ -2575,6 +2577,7 @@ export function AdminPanel() {
         )}
 
         {tab === 'activity' && <ActivityTab />}
+        {tab === 'security' && <SecurityTab />}
 
         {tab === 'merge-perfumes' && (
           <MergePerfumesTab
