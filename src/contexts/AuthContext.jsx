@@ -510,11 +510,39 @@ export function AuthProvider({ children }) {
     if (oldUrl) deleteImageByUrl(oldUrl);
   };
 
+  // Şifre ile yeniden kimlik doğrula. Hesapta MFA (TOTP) kuruluysa şifre
+  // doğrulandıktan sonra authenticator kodu da istenir ve işlem onunla tamamlanır.
   const reauthenticate = async (password) => {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Oturum açık değil.');
     const credential = EmailAuthProvider.credential(currentUser.email, password);
-    await reauthenticateWithCredential(currentUser, credential);
+    try {
+      await reauthenticateWithCredential(currentUser, credential);
+    } catch (e) {
+      if (e.code !== 'auth/multi-factor-auth-required') throw e; // şifre hatalı vb. → yukarı fırlat
+      // Şifre doğru, ikinci faktör gerekiyor → authenticator kodu iste
+      const resolver = getMultiFactorResolver(auth, e);
+      const hint = resolver.hints.find((h) => h.factorId === TotpMultiFactorGenerator.FACTOR_ID) || resolver.hints[0];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const code = window.prompt(
+          attempt === 0
+            ? 'Bu işlem için Authenticator uygulamanızdaki 6 haneli kodu girin:'
+            : 'Kod hatalı. Authenticator uygulamasındaki güncel kodu tekrar girin:'
+        );
+        if (code == null) { const err = new Error('İşlem iptal edildi.'); err.code = 'auth/mfa-cancelled'; throw err; }
+        try {
+          const assertion = TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code.trim());
+          await resolver.resolveSignIn(assertion);
+          return; // başarılı
+        } catch (err) {
+          if (err.code !== 'auth/invalid-verification-code' && err.code !== 'auth/invalid-payload') throw err;
+          // yanlış kod → döngü tekrar sorar
+        }
+      }
+      const err = new Error('Çok fazla hatalı kod.');
+      err.code = 'auth/too-many-requests';
+      throw err;
+    }
   };
 
   // Oturum açık kullanıcının belgesi silinirse / deleted:true olursa anında çıkış yaptır.
