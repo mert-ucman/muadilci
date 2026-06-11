@@ -160,6 +160,118 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
   );
 }
 
+/* ── Reusable hero pieces (slider + yükleme iskeleti ortak kullanır) ──── */
+const MARQUEE_TEXT = 'Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu';
+
+function HeroMarquee({ reverse = false }) {
+  return (
+    <div className={`absolute ${reverse ? 'bottom-0 border-t' : 'top-0 border-b'} left-0 right-0 z-[6] py-[10px] border-[rgba(184,147,90,0.2)] bg-[rgba(0,0,0,0.25)] backdrop-blur-[6px] overflow-hidden whitespace-nowrap`}>
+      <div className="inline-block" style={{ animation: `${reverse ? 'heroMarqueeReverse' : 'heroMarquee'} 22s linear infinite` }}>
+        {Array(6).fill(MARQUEE_TEXT).map((t, i) => (
+          <span key={i} className="text-[11px] font-medium text-white/55 tracking-[0.18em] uppercase mr-16" style={{ fontFamily: F }}>
+            <span className="text-(--color-gold) mr-16">✦</span>{t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroOverlay({ navigate, lg }) {
+  return (
+    <div className="absolute inset-0 flex items-center" style={{ padding: lg ? '52px 28px' : '52px 80px' }}>
+      <div className="w-full max-w-[600px]">
+        {/* Eyebrow */}
+        <div className="inline-flex items-center gap-2 mb-6">
+          <div className="w-5 h-px bg-(--color-gold)" />
+          <span className="text-[11px] font-semibold text-(--color-gold) tracking-[.12em] uppercase" style={{ fontFamily: F }}>Muadilci</span>
+        </div>
+        <h1
+          className="font-normal text-white leading-[1.05] tracking-[-0.01em] mb-5"
+          style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)' }}
+        >
+          Lüks kokuyu,<br /><em className="text-(--color-gold) italic">en yakın</em><br />muadiliyle keşfet.
+        </h1>
+        <p className="text-[16px] text-white/65 leading-[1.7] mb-8 max-w-[420px]" style={{ fontFamily: F }}>
+          Chanel, Dior, Tom Ford ve daha fazlasının orijinaline en yakın muadillerini bul.
+        </p>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            onClick={() => navigate('/karsilastir')}
+            className="bg-(--color-gold) border-none rounded-[8px] px-7 py-[13px] text-white text-[14px] font-semibold cursor-pointer transition-[background] duration-200"
+            style={{ fontFamily: F }}
+            onMouseEnter={e => e.currentTarget.style.background = C.goldDeep}
+            onMouseLeave={e => e.currentTarget.style.background = C.gold}
+          >
+            Karşılaştırmaya Başla
+          </button>
+          <button
+            onClick={() => navigate('/kayit')}
+            className="bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
+            style={{ fontFamily: F }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
+          >
+            Ücretsiz Üye Ol
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeroLuxuryFrame() {
+  return (
+    <div className="absolute inset-[18px] z-[5] pointer-events-none">
+      {/* Inner border */}
+      <div className="absolute inset-0 border border-[rgba(184,147,90,0.25)] rounded-[2px]" />
+
+      {/* Corner TL */}
+      <div className="absolute top-[-1px] left-[-1px]">
+        <div className="absolute top-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
+        <div className="absolute top-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
+      </div>
+      {/* Corner TR */}
+      <div className="absolute top-[-1px] right-[-1px]">
+        <div className="absolute top-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
+        <div className="absolute top-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
+      </div>
+      {/* Corner BL */}
+      <div className="absolute bottom-[-1px] left-[-1px]">
+        <div className="absolute bottom-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
+        <div className="absolute bottom-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
+      </div>
+      {/* Corner BR */}
+      <div className="absolute bottom-[-1px] right-[-1px]">
+        <div className="absolute bottom-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
+        <div className="absolute bottom-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
+      </div>
+
+      {/* Mid-side ornaments */}
+      <div className="absolute top-1/2 left-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
+        <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+        <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+        <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+      </div>
+      <div className="absolute top-1/2 right-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
+        <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+        <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+        <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
+      </div>
+      <div className="absolute left-1/2 top-[-1px] -translate-x-1/2 flex items-center gap-1">
+        <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+        <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+        <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+      </div>
+      <div className="absolute left-1/2 bottom-[-1px] -translate-x-1/2 flex items-center gap-1">
+        <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+        <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
+        <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
+      </div>
+    </div>
+  );
+}
+
 /* ── Main HeroSection ────────────────────────────────────────────────── */
 export function HeroSection() {
   const { navigate } = useRouter();
@@ -227,8 +339,35 @@ export function HeroSection() {
     : (usingCachedFallback ? [{ id: '__cached__', src: cachedHeroUrl, name: '' }] : []);
   const renderTotal = renderSlides.length;
 
-  // Render edilecek görsel yok ve hâlâ yükleniyor → iki-kolon layout için bekle.
-  if (renderTotal === 0 && loading) return null;
+  // Render edilecek görsel yok ama veri hâlâ yükleniyor → hero'nun yerini BOŞ bırakma.
+  // Slider ile birebir aynı boyutta koyu bir iskelet göster: statik başlık/butonlar
+  // anında görünür, sadece arka plan görseli Firebase'den gelince yerine oturur.
+  // Böylece "Nasıl Çalışır" yukarı zıplamaz ve slider sıçramadan açılır.
+  if (renderTotal === 0 && loading) {
+    return (
+      <section
+        className="relative overflow-hidden bg-[#0a0806]"
+        style={{ height: lg ? '65vh' : 'calc(100vh - 192px)', minHeight: '520px' }}
+        aria-busy="true"
+      >
+        {/* Slider overlay'i ile aynı koyu gradyan — görsel gelince kusursuz devreder */}
+        <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(10,8,6,.95)_0%,rgba(28,22,16,.95)_55%,rgba(10,8,6,.7)_100%)]" />
+        {/* İnce altın shimmer: yüklenme sinyali */}
+        <div
+          className="absolute inset-0 opacity-60"
+          style={{
+            background: 'linear-gradient(100deg, transparent 0%, rgba(184,147,90,.07) 45%, rgba(184,147,90,.07) 55%, transparent 100%)',
+            backgroundSize: '1200px 100%',
+            animation: 'shimmer 2s linear infinite',
+          }}
+        />
+        <HeroMarquee />
+        <HeroOverlay navigate={navigate} lg={lg} />
+        <HeroMarquee reverse />
+        <HeroLuxuryFrame />
+      </section>
+    );
+  }
 
   /* No slider images → editorial two-column layout */
   if (renderTotal === 0) {
@@ -265,20 +404,7 @@ export function HeroSection() {
       onMouseLeave={() => setPaused(false)}
     >
       {/* Top horizontal marquee strip */}
-      <div className="absolute top-0 left-0 right-0 z-[6] py-[10px] border-b border-[rgba(184,147,90,0.2)] bg-[rgba(0,0,0,0.25)] backdrop-blur-[6px] overflow-hidden whitespace-nowrap">
-        <div className="inline-block" style={{ animation: 'heroMarquee 22s linear infinite' }}>
-          {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
-            <span
-              key={i}
-              className="text-[11px] font-medium text-white/55 tracking-[0.18em] uppercase mr-16"
-              style={{ fontFamily: F }}
-            >
-              <span className="text-(--color-gold) mr-16">✦</span>
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
+      <HeroMarquee />
 
       {/* Slides */}
       <div
@@ -296,68 +422,13 @@ export function HeroSection() {
             />
             {/* Overlay — editorial: gradient from left dark, right lighter */}
             <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(10,8,6,.88)_0%,rgba(10,8,6,.55)_55%,rgba(10,8,6,.15)_100%)]" />
-            {i === 0 && (
-              <div
-                className="absolute inset-0 flex items-center"
-                style={{ padding: lg ? '52px 28px' : '52px 80px' }}
-              >
-                <div className="w-full max-w-[600px]">
-                  {/* Eyebrow */}
-                  <div className="inline-flex items-center gap-2 mb-6">
-                    <div className="w-5 h-px bg-(--color-gold)" />
-                    <span className="text-[11px] font-semibold text-(--color-gold) tracking-[.12em] uppercase" style={{ fontFamily: F }}>Muadilci</span>
-                  </div>
-                  <h1
-                    className="font-normal text-white leading-[1.05] tracking-[-0.01em] mb-5"
-                    style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)' }}
-                  >
-                    Lüks kokuyu,<br /><em className="text-(--color-gold) italic">en yakın</em><br />muadiliyle keşfet.
-                  </h1>
-                  <p className="text-[16px] text-white/65 leading-[1.7] mb-8 max-w-[420px]" style={{ fontFamily: F }}>
-                    Chanel, Dior, Tom Ford ve daha fazlasının orijinaline en yakın muadillerini bul.
-                  </p>
-                  <div className="flex gap-3 flex-wrap">
-                    <button
-                      onClick={() => navigate('/karsilastir')}
-                      className="bg-(--color-gold) border-none rounded-[8px] px-7 py-[13px] text-white text-[14px] font-semibold cursor-pointer transition-[background] duration-200"
-                      style={{ fontFamily: F }}
-                      onMouseEnter={e => e.currentTarget.style.background = C.goldDeep}
-                      onMouseLeave={e => e.currentTarget.style.background = C.gold}
-                    >
-                      Karşılaştırmaya Başla
-                    </button>
-                    <button
-                      onClick={() => navigate('/kayit')}
-                      className="bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
-                      style={{ fontFamily: F }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
-                    >
-                      Ücretsiz Üye Ol
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            {i === 0 && <HeroOverlay navigate={navigate} lg={lg} />}
           </div>
         ))}
       </div>
 
       {/* Bottom horizontal marquee strip */}
-      <div className="absolute bottom-0 left-0 right-0 z-[6] py-[10px] border-t border-[rgba(184,147,90,0.2)] bg-[rgba(0,0,0,0.25)] backdrop-blur-[6px] overflow-hidden whitespace-nowrap">
-        <div className="inline-block" style={{ animation: 'heroMarqueeReverse 22s linear infinite' }}>
-          {Array(6).fill('Türkiye\'nin ilk ve tek orijinal — muadil parfüm kıyaslama platformu').map((t, i) => (
-            <span
-              key={i}
-              className="text-[11px] font-medium text-white/55 tracking-[0.18em] uppercase mr-16"
-              style={{ fontFamily: F }}
-            >
-              <span className="text-(--color-gold) mr-16">✦</span>
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
+      <HeroMarquee reverse />
 
       {/* Arrows */}
       {total > 1 && ['prev','next'].map(dir => (
@@ -388,53 +459,7 @@ export function HeroSection() {
       )}
 
       {/* Luxury frame overlay */}
-      <div className="absolute inset-[18px] z-[5] pointer-events-none">
-        {/* Inner border */}
-        <div className="absolute inset-0 border border-[rgba(184,147,90,0.25)] rounded-[2px]" />
-
-        {/* Corner TL */}
-        <div className="absolute top-[-1px] left-[-1px]">
-          <div className="absolute top-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
-          <div className="absolute top-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
-        </div>
-        {/* Corner TR */}
-        <div className="absolute top-[-1px] right-[-1px]">
-          <div className="absolute top-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
-          <div className="absolute top-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
-        </div>
-        {/* Corner BL */}
-        <div className="absolute bottom-[-1px] left-[-1px]">
-          <div className="absolute bottom-0 left-0 w-10 h-[1.5px] bg-(--color-gold)" />
-          <div className="absolute bottom-0 left-0 w-[1.5px] h-10 bg-(--color-gold)" />
-        </div>
-        {/* Corner BR */}
-        <div className="absolute bottom-[-1px] right-[-1px]">
-          <div className="absolute bottom-0 right-0 w-10 h-[1.5px] bg-(--color-gold)" />
-          <div className="absolute bottom-0 right-0 w-[1.5px] h-10 bg-(--color-gold)" />
-        </div>
-
-        {/* Mid-side ornaments */}
-        <div className="absolute top-1/2 left-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
-          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
-          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
-          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
-        </div>
-        <div className="absolute top-1/2 right-[-1px] -translate-y-1/2 flex flex-col items-center gap-1">
-          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
-          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
-          <div className="w-[1.5px] h-5 bg-[rgba(184,147,90,0.4)]" />
-        </div>
-        <div className="absolute left-1/2 top-[-1px] -translate-x-1/2 flex items-center gap-1">
-          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
-          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
-          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
-        </div>
-        <div className="absolute left-1/2 bottom-[-1px] -translate-x-1/2 flex items-center gap-1">
-          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
-          <div className="w-1 h-1 rounded-full bg-(--color-gold) opacity-70" />
-          <div className="h-[1.5px] w-5 bg-[rgba(184,147,90,0.4)]" />
-        </div>
-      </div>
+      <HeroLuxuryFrame />
     </section>
   );
 }
