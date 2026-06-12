@@ -109,6 +109,7 @@ export function LoginPage() {
             Doğrulama Kodu
           </label>
           <input
+            autoFocus
             value={mfaCode}
             onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             onFocus={() => setFMfa(true)}

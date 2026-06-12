@@ -851,7 +851,7 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
         <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf({ ...mf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => {
           const p = perfumes.find((x) => String(x.id) === e.target.value);
-          setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.name} Benzeri` : '', gender: p?.gender || '' });
+          setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.brandName} ${p.name} Benzeri` : '', gender: p?.gender || '' });
         }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
       </div>
       {mf.gender && (
@@ -1724,6 +1724,16 @@ export function AdminPanel() {
 
       return { headers, rows, filename: 'parfumler' };
     }
+    if (tab === 'muadil') {
+      const headers = ['Marka', 'Model', 'Muadil Firma', 'Genel Puan'];
+      const rows = sortedMuadils.map((m) => [
+        m.targetBrandName || '',
+        m.targetPerfumeName || '',
+        m.brandName || '',
+        m.overall >= 0 ? m.overall : '',
+      ]);
+      return { headers, rows, filename: 'muadil-parfumler' };
+    }
     const isOrig = tab === 'original-brands';
     const data = isOrig ? sortedOrigBrands : sortedMuadilBrands;
     return {
@@ -2368,6 +2378,10 @@ export function AdminPanel() {
               <Card style={{ overflow: 'hidden' }}>
                 <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3 flex-wrap">
                   <span className="font-bold text-(--color-navy)">Muadil Parfümler</span>
+                  <button onClick={() => setExportModal(true)} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Listeye Aktar
+                  </button>
                   {(() => {
                       const list = ['', ...muadilBrandList];
                       const idx = list.indexOf(muadilBrandFilter);
@@ -2713,6 +2727,7 @@ export function AdminPanel() {
           <p className="text-[13px] text-(--color-text-mid) mb-1">
             Şu an görünen <strong>{
               tab === 'perfumes' ? sortedPerfs.length :
+              tab === 'muadil' ? sortedMuadils.length :
               tab === 'original-brands' ? sortedOrigBrands.length :
               sortedMuadilBrands.length
             } kayıt</strong> hangi formatta aktarılsın?
