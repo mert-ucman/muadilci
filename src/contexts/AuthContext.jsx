@@ -164,6 +164,13 @@ export function AuthProvider({ children }) {
         throw err;
       }
       email = usernameSnap.data().email;
+      // Admin/moderatör hesaplarında e-posta usernames'te tutulmaz (PII gizliliği);
+      // bu hesaplar yalnızca e-posta ile giriş yapar.
+      if (!email) {
+        const err = new Error('Bu hesaba kullanıcı adıyla giriş yapılamıyor. Lütfen e-posta adresinizle giriş yapın.');
+        err.code = 'username-login-disabled';
+        throw err;
+      }
     }
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const userData = await fetchOrCreateUserDoc(cred.user);
@@ -256,7 +263,11 @@ export function AuthProvider({ children }) {
     const batch = writeBatch(db);
     batch.update(doc(db, 'users', currentUser.uid), { username: newKey });
     if (oldKey) batch.delete(doc(db, 'usernames', oldKey));
-    batch.set(doc(db, 'usernames', newKey), { uid: currentUser.uid, email: currentUser.email });
+    // Admin/moderatör e-postası usernames'te saklanmaz (public PII sızıntısını önler)
+    const unameData = (user?.role === 'admin' || user?.role === 'moderator')
+      ? { uid: currentUser.uid }
+      : { uid: currentUser.uid, email: currentUser.email };
+    batch.set(doc(db, 'usernames', newKey), unameData);
     await batch.commit();
     // Bu kullanıcıya ait tüm yorumların userName alanını güncelle
     const newUserName = user?.role === 'moderator' ? '@moderatör' : `@${newKey}`;

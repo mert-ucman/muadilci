@@ -46,7 +46,9 @@ service cloud.firestore {
 
     // ── Usernames (benzersizlik için) ─────────────────────────────────────
     match /usernames/{username} {
-      allow get: if true;        // giriş ve kullanıcı adı benzersizlik kontrolü
+      // Admin kullanıcı adı belgesi e-posta içerir; yalnızca admin okuyabilir.
+      // Diğer belgeler: giriş ve kullanıcı adı benzersizlik kontrolü için herkese açık.
+      allow get: if username != 'admin' || isAdmin();
       allow list: if isMod();    // toplu e-posta hasadı (enumeration) engellendi
       allow create: if isAuth() && request.resource.data.uid == request.auth.uid;
       allow delete: if isAdmin() || (isAuth() && resource.data.uid == request.auth.uid);
@@ -73,6 +75,11 @@ service cloud.firestore {
     // ── Reviews ───────────────────────────────────────────────────────────
     // Metin en az 40 karakter olmalı (spam/düşük efor sunucu kapısı).
     function validReviewLen(t) { return t is string && t.size() >= 40 && t.size() <= 4000; }
+    // Sahip yalnızca gönderimden sonraki 5 dakika içinde düzenleyebilir.
+    function withinEditWindow() {
+      return resource.data.createdAt is timestamp
+             && request.time < resource.data.createdAt + duration.value(5, 'm');
+    }
     match /reviews/{reviewId} {
       allow read: if true;
       // Oluşturma client'tan KAPALIDIR. Normal kullanıcı yorumları yalnızca
@@ -82,20 +89,23 @@ service cloud.firestore {
       allow create: if isAdmin();
       // Güncelleme: mod her şeyi; sahip pending yorumunu düzenleyebilir ya da
       // approved yorumunu pending_update'e geçirebilir; hesap silinince anonimleştirme.
-      // Sahip düzenlemelerinde metin minimum uzunluk kapısından geçer.
+      // Sahip düzenlemelerinde metin minimum uzunluk + 5dk düzenleme penceresi geçerli.
       allow update: if isMod()
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'pending'
                          && request.resource.data.status == 'pending'
-                         && validReviewLen(request.resource.data.text))
+                         && validReviewLen(request.resource.data.text)
+                         && withinEditWindow())
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'approved'
                          && request.resource.data.status == 'pending_update'
-                         && validReviewLen(request.resource.data.pendingUpdate.text))
+                         && validReviewLen(request.resource.data.pendingUpdate.text)
+                         && withinEditWindow())
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'pending_update'
                          && request.resource.data.status == 'pending_update'
-                         && validReviewLen(request.resource.data.pendingUpdate.text))
+                         && validReviewLen(request.resource.data.pendingUpdate.text)
+                         && withinEditWindow())
                      || (isAuth() && resource.data.userId == request.auth.uid && request.resource.data.userId == 'deleted');
       allow delete: if isMod() || isOwner(resource.data.userId);
     }

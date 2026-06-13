@@ -61,8 +61,8 @@ export function PhotoSlot({ label, value, onChange, disabled }) {
           className="w-full flex flex-col items-center justify-center gap-1.5 rounded-[10px] cursor-pointer"
           style={{ aspectRatio: '1/1', border: `1.5px dashed ${C.goldBorder}`, background: C.card, color: C.textLight }}
         >
-          <FontAwesomeIcon icon={loading ? faSpinner : faCamera} spin={loading} style={{ fontSize: '18px', color: C.gold }} />
-          <span className="text-[11px]">{loading ? 'Yükleniyor…' : 'Fotoğraf ekle'}</span>
+          <FontAwesomeIcon icon={loading ? faSpinner : faCamera} spin={loading} style={{ fontSize: '24px', color: C.gold }} />
+          <span className="text-[13px]">{loading ? 'Yükleniyor…' : 'Fotoğraf ekle'}</span>
         </button>
       )}
       {err && <div className="text-[11px] mt-1" style={{ color: C.red }}>{err}</div>}

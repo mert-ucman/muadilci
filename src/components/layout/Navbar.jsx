@@ -40,6 +40,15 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', close);
   }, [notifOpen]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (e) => {
+      if (!e.target.closest('[data-menu-root]')) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [menuOpen]);
+
   const pendingCount = comments.filter((c) => c.status === 'pending' || c.status === 'pending_update').length;
 
   const navLinks = [
@@ -385,7 +394,7 @@ export function Navbar() {
 
           {/* Desktop user menu */}
           {!lg && user && (
-            <div className="relative">
+            <div data-menu-root className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="flex items-center gap-2 bg-transparent rounded-[8px] px-[10px] py-[5px] pl-[6px] cursor-pointer transition-[border-color] duration-200"

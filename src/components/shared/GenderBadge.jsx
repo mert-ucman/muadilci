@@ -12,7 +12,7 @@ export function GenderBadge({ gender }) {
       className="inline-flex items-center justify-center rounded-[20px] px-[10px] py-[3px] text-[12px] font-bold"
       style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.text }}
     >
-      <p className="m-0 p-0 w-max">{gender}</p>
+      <p className="m-0 p-0 w-max leading-none" style={{ transform: 'translateY(0.5px)' }}>{gender}</p>
     </div>
   );
 }

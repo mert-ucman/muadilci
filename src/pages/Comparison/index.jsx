@@ -88,12 +88,14 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
         <button onClick={() => setCRecommend(cRecommend === true ? null : true)}
           className="w-[38px] h-[38px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 shrink-0"
           style={{ border: `2px solid ${cRecommend === true ? C.green : C.border}`, background: cRecommend === true ? C.greenBg : '#fff', color: cRecommend === true ? C.green : C.textLight }}>
-          <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '15px' }} />
+          {/* Çift tam sayı boyut: kesirli em genişliğin sub-pixel kaymasını önler */}
+          <FontAwesomeIcon icon={faThumbsUp} style={{ width: '16px', height: '16px' }} />
         </button>
         <button onClick={() => setCRecommend(cRecommend === false ? null : false)}
           className="w-[38px] h-[38px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150 shrink-0"
           style={{ border: `2px solid ${cRecommend === false ? C.red : C.border}`, background: cRecommend === false ? C.redBg : '#fff', color: cRecommend === false ? C.red : C.textLight }}>
-          <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '15px' }} />
+          {/* Çift tam sayı boyut: kesirli em genişliğin sub-pixel kaymasını önler */}
+          <FontAwesomeIcon icon={faThumbsDown} style={{ width: '16px', height: '16px' }} />
         </button>
       </div>
       <div className="mb-[12px]">
@@ -117,6 +119,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
       {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.orange }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.textMid }}>Yorumu düzenlemeniz için 5dk süreniz vardır.</div>}
       {submitError && <div className="text-[13px] rounded-lg px-3 py-2 mb-2" style={{ color: C.red, background: '#fff5f5', border: '1px solid #fecaca' }}>{submitError}</div>}
       <div className="flex gap-2 justify-end">
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
@@ -175,6 +178,7 @@ export function ComparisonPage({ queryParams }) {
   const [submitError, setSubmitError] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [, setEditTick] = useState(0); // 5dk düzenleme penceresi dolunca yeniden render
 
 
   const origBrands = [...new Set(perfumes.map((p) => p.brandName))].sort((a, b) => a.localeCompare(b, 'tr'));
@@ -195,6 +199,23 @@ export function ComparisonPage({ queryParams }) {
   const userReview = selMuadil && user
     ? comments.find((c) => c.muadilPerfumeId === selMuadil.id && c.userId === user.uid)
     : null;
+
+  // Kullanıcı yorumunu yalnızca gönderimden sonraki 5 dakika içinde düzenleyebilir.
+  // (mod/admin bu sınırdan muaftır — kurallar tarafında da aynı şekilde)
+  const EDIT_WINDOW_MS = 5 * 60 * 1000;
+  const reviewCreatedMs = userReview?.createdAt?.toMillis?.()
+    ?? (userReview?.createdAt?.seconds ? userReview.createdAt.seconds * 1000 : null);
+  const canEditReview = !!userReview && (isMod || isAdmin
+    || (reviewCreatedMs != null && Date.now() - reviewCreatedMs < EDIT_WINDOW_MS));
+
+  // Pencere tam dolduğunda butonu gizlemek için tek seferlik timeout
+  useEffect(() => {
+    if (!userReview || isMod || isAdmin || reviewCreatedMs == null) return;
+    const remaining = reviewCreatedMs + EDIT_WINDOW_MS - Date.now();
+    if (remaining <= 0) return;
+    const t = setTimeout(() => setEditTick((x) => x + 1), remaining + 100);
+    return () => clearTimeout(t);
+  }, [userReview?.id, reviewCreatedMs, isMod, isAdmin]);
   const scores = selMuadil ? calcScores(selMuadil.id, comments) : { scent: null, projection: null, longevity: null, overall: null, count: 0 };
 
   // Tavsiye sayıları: onaylanmış yorumlardan hesapla
@@ -235,7 +256,7 @@ export function ComparisonPage({ queryParams }) {
   };
 
   const openEditForm = () => {
-    if (!userReview) return;
+    if (!userReview || !canEditReview) return;
     setEditInitials({
       sim: userReview.similarity ?? 5,
       proj: userReview.projection ?? 5,
@@ -352,7 +373,8 @@ export function ComparisonPage({ queryParams }) {
                       <button onClick={() => { if (user?.uid) toggleMuadilFavorite(user.uid, selMuadil.id); }}
                         className="absolute top-[10px] right-[10px] w-[32px] h-[32px] rounded-full flex items-center justify-center cursor-pointer transition-all duration-150"
                         style={{ background: 'rgba(255,255,255,.85)', border: '1px solid rgba(0,0,0,.08)', backdropFilter: 'blur(4px)' }}>
-                        <FontAwesomeIcon icon={faHeart} style={{ fontSize: '13px', color: isMuadilFavorite(user?.uid, selMuadil.id) ? '#f87171' : '#ccc' }} />
+                        {/* Çift tam sayı boyut: 1.25em kesirli genişliğin sub-pixel kaymasını önler */}
+                        <FontAwesomeIcon icon={faHeart} style={{ width: '14px', height: '14px', color: isMuadilFavorite(user?.uid, selMuadil.id) ? '#f87171' : '#ccc' }} />
                       </button>
                     </div>
                     {/* İçerik */}
@@ -388,7 +410,7 @@ export function ComparisonPage({ queryParams }) {
                 <div className="font-bold text-(--color-text-mid) mb-2 pr-10 flex items-center gap-[6px] flex-wrap" style={{ fontSize: sm ? '12px' : '13px' }}>
                   <span>{selOrig.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selOrig.name}</span>
                   <div className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[9px] font-black shrink-0 flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}><p className="m-0 p-0 w-max">VS</p></div>
+                    style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}><p className="m-0 p-0 w-max leading-none" style={{ transform: 'translateY(0.5px)' }}>VS</p></div>
                   <span>{selMuadil.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selMuadil.name}</span>
                 </div>
                 <div className="mb-[3px]">
@@ -562,7 +584,8 @@ export function ComparisonPage({ queryParams }) {
               <div className="flex justify-between items-center mb-[18px] pb-[14px]" style={{ borderBottom: `1px solid ${C.border}` }}>
                 <span className="font-bold text-[16px] text-(--color-navy)">Yorumlar ({muadilComments.length})</span>
                 {user && !showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
-                {user && !showCForm && userReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
+                {user && !showCForm && userReview && canEditReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
+                {user && !showCForm && userReview && !canEditReview && <span className="text-[12px] text-(--color-text-light)">Düzenleme süresi doldu</span>}
               </div>
 
               {showCForm && (

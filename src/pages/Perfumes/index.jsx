@@ -394,7 +394,8 @@ export function PerfumesPage() {
                     onClick={(e) => { e.stopPropagation(); togglePerfumeFavorite(uid, p.id); }}
                     className="absolute top-[10px] right-[10px] z-[1] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer"
                     style={{ border: `1px solid ${isPerfumeFavorite(uid, p.id) ? C.goldBorder : C.border}`, background: isPerfumeFavorite(uid, p.id) ? C.goldBg : '#fff' }}>
-                    <FontAwesomeIcon icon={faHeart} style={{ color: isPerfumeFavorite(uid, p.id) ? C.gold : C.textLight, fontSize: '13px' }} />
+                    {/* Çift tam sayı boyut: 1.25em kesirli genişliğin sub-pixel kaymasını önler */}
+                    <FontAwesomeIcon icon={faHeart} style={{ color: isPerfumeFavorite(uid, p.id) ? C.gold : C.textLight, width: '14px', height: '14px' }} />
                   </button>
                   <div className="w-full overflow-hidden">
                     <PerfumeGallery photos={origPhotos(p)} />
@@ -436,7 +437,8 @@ export function PerfumesPage() {
                     onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }}
                     className="absolute top-[10px] right-[10px] z-[1] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer"
                     style={{ border: `1px solid ${isMuadilFavorite(uid, m.id) ? C.goldBorder : C.border}`, background: isMuadilFavorite(uid, m.id) ? C.goldBg : '#fff' }}>
-                    <FontAwesomeIcon icon={faHeart} style={{ color: isMuadilFavorite(uid, m.id) ? C.gold : C.textLight, fontSize: '13px' }} />
+                    {/* Çift tam sayı boyut: 1.25em kesirli genişliğin sub-pixel kaymasını önler */}
+                    <FontAwesomeIcon icon={faHeart} style={{ color: isMuadilFavorite(uid, m.id) ? C.gold : C.textLight, width: '14px', height: '14px' }} />
                   </button>
                   <div className="w-full overflow-hidden">
                     <PerfumeGallery photos={muadilPhotos(m)} />
@@ -558,7 +560,8 @@ export function PerfumesPage() {
                           onClick={() => isOrig ? togglePerfumeFavorite(uid, item.id) : toggleMuadilFavorite(uid, item.id)}
                           className="w-[28px] h-[28px] rounded-full flex items-center justify-center cursor-pointer mx-auto"
                           style={{ border: `1px solid ${(isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBorder : C.border}`, background: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.goldBg : '#fff' }}>
-                          <FontAwesomeIcon icon={faHeart} style={{ fontSize: '12px', color: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.gold : C.textLight }} />
+                          {/* Çift tam sayı boyut: 1.25em kesirli genişliğin sub-pixel kaymasını önler */}
+                          <FontAwesomeIcon icon={faHeart} style={{ width: '14px', height: '14px', color: (isOrig ? isPerfumeFavorite(uid, item.id) : isMuadilFavorite(uid, item.id)) ? C.gold : C.textLight }} />
                         </button>
                       </td>
                     </tr>

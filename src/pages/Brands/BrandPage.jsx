@@ -92,6 +92,21 @@ export function BrandPage({ params }) {
   const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite, globalBrandHeaders } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
+
+  // Onaylı yorumlardan görsel haritası (Parfümler sayfasıyla aynı mantık).
+  // Muadil/orijinalin kendi 'image' alanı boşsa kapak olarak kullanıcı görselini kullan.
+  const photoMap = useMemo(() => {
+    const orig = {}, mu = {};
+    for (const c of comments) {
+      if (c.status !== 'approved') continue;
+      if (c.originalImage && c.targetPerfumeId != null) (orig[c.targetPerfumeId] ||= []).push(c.originalImage);
+      if (c.muadilImage && c.muadilId != null) (mu[c.muadilId] ||= []).push(c.muadilImage);
+    }
+    return { orig, mu };
+  }, [comments]);
+  const coverPhoto = (item, orig) =>
+    item.image || (orig ? photoMap.orig[item.id]?.[0] : photoMap.mu[item.id]?.[0]) || noImage;
+
   const [showTooltip, setShowTooltip] = useState(false);
   const [view, setView] = useState('list');
   const [genderFilter, setGenderFilter] = useState(null); // null = hepsi, 'erkek'|'kadin'|'unisex' = filtreli
@@ -552,7 +567,7 @@ export function BrandPage({ params }) {
                 <Card key={item.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }}
                   onClick={() => isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`)}>
                   <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
-                    <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover block" />
+                    <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover block" />
                     {/* Muadil sayı badge — sadece orijinal parfümlerde */}
                     {isOrig && (
                       <div
@@ -684,7 +699,7 @@ export function BrandPage({ params }) {
                       <td className="px-[14px] py-[12px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[40px] h-[40px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={item.image || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                            <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-semibold text-[14px] text-(--color-navy)">{item.name}</span>
                         </div>

@@ -14,10 +14,13 @@
 const BANNED_SUBSTR = [
   // Hakaret / küfür
   'amina', 'amcik', 'amcuk', 'amkafa', 'orospu', 'orospucocugu',
-  'pic',
-  'sik', 'sikerim', 'sikeyim', 'sikim', 'siktir', 'sikis',
+  // NOT: 'sik', 'sikis', 'got', 'pic' gibi kısa kökler BANNED_SUBSTR'de TUTULMAZ.
+  // Türkçe ı→i normalizasyonu yüzünden masum kelimelerle çakışıyorlar:
+  // "sıktım/sıkıntı/sık", "sıkış(ık)", "götür", "kapıcı/yapıcı", "siklamen" (parfüm notası).
+  // Gerçek küfürler bileşik formlar + tam-kelime (BANNED_WHOLE) ile yakalanır.
+  'sikerim', 'sikeyim', 'sikim', 'siktir',
   'yarrak', 'yarak',
-  'got', 'gotlek', 'gotveren',
+  'gotlek', 'gotveren',
   'ibne',
   'anani', 'ananin',
   'bacini', 'bacinin',
@@ -52,7 +55,7 @@ const BANNED_WHOLE = [
   'oc',
   'salak', 'aptal', 'mal', 'mallik',
   'it', 'kopek',
-  'piçler', 'picler',
+  'piçler', 'picler', 'pic',
   // Tek başına kullanıldığında cinsel anlam taşıyan kısa kelimeler
   'am', 'got',
 ];
@@ -116,7 +119,14 @@ export function containsProfanity(text) {
   const norm     = normalize(text);
   const compact  = stripSeparators(norm);           // ayraçsız
   const collapsed = collapseRepeats(compact);        // tekrarsız + ayraçsız
-  const noVowels  = removeVowels(collapsed);         // sesli harfsiz + tekrarsız + ayraçsız
+
+  // Sesli-harf-çıkarma bypass'ı KELİME BAZINDA yapılır. Tüm metni birleştirip
+  // sesli harf atmak, bitişik kelimeler arasında sahte eşleşme üretiyordu
+  // (ör. "aldım çok" → "ldmck" ⊃ "mck" = amcık). Kelime bazında bölünce bu olmaz.
+  const tokenNoVowels = norm
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .map((tok) => removeVowels(collapseRepeats(tok)));
 
   // Banned word'ün dönüşümlerini önbelleğe al
   function check(word) {
@@ -129,10 +139,11 @@ export function containsProfanity(text) {
     if (compact.includes(nw))      return true;  // ayraç bypass
     if (collapsed.includes(nwCollapsed)) return true; // tekrar harf bypass
 
-    // — Sesli harf çıkarma bypass —
-    // Yanlış pozitifi önlemek için en az 3 ünsüz gerektirir + çakışan kökler muaf
+    // — Sesli harf çıkarma bypass (kelime bazında, TAM eşleşme) —
+    // "içerir" yerine tam eşleşme: "sks"(seks) ⊄ "sksk"(sıkışık), "yrk"(yarrak)=="yrk".
+    // En az 3 ünsüz gerektirir + çakışan kökler muaf.
     if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
-      if (noVowels.includes(nwNoVowels)) return true;
+      if (tokenNoVowels.some((t) => t === nwNoVowels)) return true;
     }
 
     return false;
@@ -152,9 +163,9 @@ export function containsProfanity(text) {
     const re          = new RegExp(`(^|[^a-z0-9])${nwCollapsed}([^a-z0-9]|$)`);
     if (re.test(norm) || re.test(compact) || re.test(collapsed)) return true;
 
+    // sesli harf çıkarma: kelime bazında TAM eşleşme
     if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
-      const reNV = new RegExp(`(^|[^a-z0-9])${nwNoVowels}([^a-z0-9]|$)`);
-      if (reNV.test(noVowels)) return true;
+      if (tokenNoVowels.some((t) => t === nwNoVowels)) return true;
     }
   }
 
