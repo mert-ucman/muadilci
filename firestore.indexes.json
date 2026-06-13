@@ -64,6 +64,14 @@
         { "fieldPath": "online", "order": "ASCENDING" },
         { "fieldPath": "lastSeen", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "abuseSignals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

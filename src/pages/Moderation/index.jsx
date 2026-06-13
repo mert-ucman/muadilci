@@ -55,6 +55,7 @@ export function ModerationPage() {
                           ? <Badge color="purple">Güncelleme İsteği</Badge>
                           : <Badge color="orange">Yeni Yorum</Badge>
                         }
+                        {c.abuseFlag && <Badge color="red">Şüpheli</Badge>}
                         <span className="text-xs text-(--color-text-light)">{c.date}</span>
                       </div>
                     </div>
@@ -88,6 +89,12 @@ export function ModerationPage() {
                   <p className="text-sm text-(--color-text) leading-relaxed mb-3">{c.text}</p>
                 )}
 
+                {c.abuseFlag && c.abuseReason && (
+                  <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fff5f5', border: '1px solid #fecaca', color: C.red }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Spam şüphesi: {c.abuseReason}
+                  </div>
+                )}
                 <div className="flex gap-2 justify-end">
                   <Btn variant="danger" size="sm" onClick={() => rejectComment(c.id)}>
                     {isUpdate ? 'Reddet (Eskiyi Koru)' : 'Reddet'}

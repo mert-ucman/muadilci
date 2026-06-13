@@ -5,6 +5,7 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { containsProfanity } from '@/utils/profanity';
+import { validateReviewText, REVIEW_MIN_LENGTH } from '@/utils/reviewValidation';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { PhotoSlot } from '@/components/shared/PhotoSlot';
@@ -24,6 +25,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
   const [cText, setCText] = useState(initialValues?.text ?? '');
   const [cRecommend, setCRecommend] = useState(initialValues?.recommend ?? null);
   const [profanityError, setProfanityError] = useState(false);
+  const [textError, setTextError] = useState('');
   const [cOrigImg, setCOrigImg] = useState(initialValues?.origImg ?? null);
   const [cMuadilImg, setCMuadilImg] = useState(initialValues?.muadilImg ?? null);
   const [cConsent, setCConsent] = useState(false);
@@ -31,9 +33,12 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
 
   const hasPhoto = !!(cOrigImg || cMuadilImg);
 
+  const textCheck = validateReviewText(cText);
+
   const submit = () => {
     if (!cText.trim()) return;
     if (containsProfanity(cText)) { setProfanityError(true); return; }
+    if (!textCheck.ok) { setTextError(textCheck.reason); return; }
     if (hasPhoto && !cConsent) { setConsentError(true); return; }
     onSubmit({
       similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend,
@@ -57,16 +62,25 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
       </div>
       <textarea
         value={cText}
-        onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); }}
-        placeholder="Deneyiminizi paylaşın..."
+        onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); if (textError) setTextError(''); }}
+        placeholder="Deneyiminizi en az 40 karakterle paylaşın..."
         rows={3}
         className="w-full rounded-lg px-3 py-[10px] text-[14px] outline-none resize-none box-border transition-[border-color] duration-200"
-        style={{ border: `1px solid ${profanityError ? C.red : C.border}`, color: C.text, background: C.card, marginBottom: profanityError ? '6px' : '12px' }}
+        style={{ border: `1px solid ${(profanityError || textError) ? C.red : C.border}`, color: C.text, background: C.card, marginBottom: (profanityError || textError) ? '6px' : '6px' }}
       />
+      <div className="flex justify-end mb-3 text-[11px]" style={{ color: cText.trim().length < REVIEW_MIN_LENGTH ? C.textLight : C.green }}>
+        {cText.trim().length}/{REVIEW_MIN_LENGTH} karakter
+      </div>
       {profanityError && (
         <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
+        </div>
+      )}
+      {textError && !profanityError && (
+        <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {textError}
         </div>
       )}
       <div className="flex items-center gap-3 mb-[10px]">
@@ -106,7 +120,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
       {submitError && <div className="text-[13px] rounded-lg px-3 py-2 mb-2" style={{ color: C.red, background: '#fff5f5', border: '1px solid #fecaca' }}>{submitError}</div>}
       <div className="flex gap-2 justify-end">
         <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
-        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
+        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError || !textCheck.ok}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
       </div>
     </div>
   );
@@ -215,7 +229,7 @@ export function ComparisonPage({ queryParams }) {
       }
       setShowCForm(false); setIsEditMode(false); setEditInitials(null);
     } catch (e) {
-      if (e.code === 'rate-limited') setSubmitError(e.message);
+      if (e.code === 'rate-limited' || e.code === 'review-rejected') setSubmitError(e.message);
       else setSubmitError('Gönderilemedi. Lütfen tekrar deneyin.');
     }
   };

@@ -16,7 +16,7 @@ import { SecurityTab } from './SecurityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -2542,8 +2542,19 @@ export function AdminPanel() {
                             <td className="px-[14px] py-[11px] text-xs text-(--color-text-mid) whitespace-nowrap">{fmtDate(r.createdAt)}</td>
                             <td className="px-[14px] py-[11px] text-[13px] text-(--color-text) font-semibold whitespace-nowrap">{r.userName || '—'}</td>
                             <td className="px-[14px] py-[11px] text-xs text-(--color-text-mid)">{muadilName(r)}</td>
-                            <td className="px-[14px] py-[11px] text-[13px] text-(--color-text) max-w-[340px] leading-[1.5]">{r.text || <span className="text-(--color-text-light)">—</span>}</td>
-                            <td style={tdStyle}><Badge color={r.status === 'approved' ? 'green' : 'orange'}>{r.status === 'approved' ? 'Onaylı' : 'Beklemede'}</Badge></td>
+                            <td className="px-[14px] py-[11px] text-[13px] text-(--color-text) max-w-[340px] leading-[1.5]">
+                              {r.text || <span className="text-(--color-text-light)">—</span>}
+                              {r.abuseFlag && r.abuseReason && (
+                                <div className="mt-[5px] inline-flex items-center gap-[5px] rounded-[6px] px-[7px] py-[3px] text-[11px] font-semibold" style={{ background: '#fff5f5', border: '1px solid #fecaca', color: C.red }}>
+                                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '10px' }} />
+                                  <span>{r.abuseReason}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td style={tdStyle}>
+                              <Badge color={r.status === 'approved' ? 'green' : 'orange'}>{r.status === 'approved' ? 'Onaylı' : 'Beklemede'}</Badge>
+                              {r.abuseFlag && <Badge color="red">Şüpheli</Badge>}
+                            </td>
                             <td style={tdStyle}>
                               <button onClick={() => openRevDel([r.id])} title="Sil" className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-[#fecaca] bg-[#fff5f5] text-(--color-red) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)] whitespace-nowrap">
                                 <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>

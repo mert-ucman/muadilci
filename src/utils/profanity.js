@@ -61,6 +61,11 @@ const BANNED_WHOLE = [
 // Normalize sonrası Türkçe sesli harfler zaten ASCII'ye çevrilmiş olur
 const VOWELS = /[aeiou]/g;
 
+// Sesli-harf-çıkarma bypass'ı, günlük kelimelerle çakışan kısa köklerde yanlış
+// pozitife yol açar. Örn: "kalça" → "klc" ⊂ "kalıcılığı" (parfüm domaininin temel
+// kelimesi). Bu kelimeler YALNIZCA doğrudan / tam-kelime eşleşmeyle taranır.
+const VOWEL_STRIP_EXEMPT = new Set(['kalca']);
+
 // ─── Normalleştirici ────────────────────────────────────────────────────────
 function normalize(str) {
   return (str || '')
@@ -125,8 +130,8 @@ export function containsProfanity(text) {
     if (collapsed.includes(nwCollapsed)) return true; // tekrar harf bypass
 
     // — Sesli harf çıkarma bypass —
-    // Yanlış pozitifi önlemek için en az 3 ünsüz gerektirir
-    if (nwNoVowels.length >= 3) {
+    // Yanlış pozitifi önlemek için en az 3 ünsüz gerektirir + çakışan kökler muaf
+    if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
       if (noVowels.includes(nwNoVowels)) return true;
     }
 
@@ -147,7 +152,7 @@ export function containsProfanity(text) {
     const re          = new RegExp(`(^|[^a-z0-9])${nwCollapsed}([^a-z0-9]|$)`);
     if (re.test(norm) || re.test(compact) || re.test(collapsed)) return true;
 
-    if (nwNoVowels.length >= 3) {
+    if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
       const reNV = new RegExp(`(^|[^a-z0-9])${nwNoVowels}([^a-z0-9]|$)`);
       if (reNV.test(noVowels)) return true;
     }

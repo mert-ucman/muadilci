@@ -4,9 +4,13 @@ import {
   onSnapshot, query, orderBy, serverTimestamp, getDoc, getDocs,
   increment, writeBatch, where, arrayUnion, limit,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase';
 import { deleteImageByUrl } from '@/lib/storage';
 import { useAuth } from './AuthContext';
+
+// Yorum gönderimi sunucu tarafı korumalı callable üzerinden yapılır
+const submitReviewFn = httpsCallable(getFunctions(undefined, 'us-central1'), 'submitReview');
 
 // Bir belge verisindeki tüm görsel URL'lerini toplar (logoImage + images[].src)
 const collectImageUrls = (data) => {
@@ -204,35 +208,62 @@ export function DataProvider({ children }) {
 
   const addComment = async (c) => {
     const now = Date.now();
+    // İlk savunma hattı: client tarafı kısa cooldown (sunucu da ayrıca limitler)
     if (now - lastCommentAt.current < COMMENT_COOLDOWN_MS) {
       const remaining = Math.ceil((COMMENT_COOLDOWN_MS - (now - lastCommentAt.current)) / 1000);
       throw Object.assign(new Error(`Çok hızlı yorum gönderiyorsunuz. ${remaining} saniye bekleyin.`), { code: 'rate-limited', remaining });
     }
-    lastCommentAt.current = now;
     const muadilId = String(c.muadilPerfumeId ?? c.muadilId);
-    const compositeId = `${user?.uid}_${muadilId}`;
-    const ref = doc(col('reviews'), compositeId);
-    await setDoc(ref, {
-      ...c,
-      id: compositeId,
-      muadilId,
-      userId: user?.uid,
-      userName: user?.role === 'moderator' ? '@moderatör' : (user?.username ? `@${user.username}` : user?.name),
-      userAvatar: user?.avatar,
-      userPhotoURL: user?.photoURL || null,
-      userRole: user?.role ?? 'user',
-      status: user?.role === 'admin' ? 'approved' : 'pending',
-      createdAt: serverTimestamp(),
-    });
+
+    // Yorum oluşturma sunucu tarafı korumalı callable üzerinden (spam/IP/24sa/metin)
+    let res;
+    try {
+      res = await submitReviewFn({
+        muadilId,
+        similarity: c.similarity,
+        projection: c.projection,
+        longevity: c.longevity,
+        text: c.text,
+        recommend: c.recommend ?? null,
+        originalImage: c.originalImage ?? null,
+        muadilImage: c.muadilImage ?? null,
+        imageConsent: !!c.imageConsent,
+        targetPerfumeId: c.targetPerfumeId ?? null,
+      });
+    } catch (e) {
+      // Firebase callable HttpsError → kullanıcı dostu Türkçe mesaja çevir.
+      // code formatı: "functions/failed-precondition" gibi gelir.
+      const code = String(e?.code || '').replace('functions/', '');
+      let msg;
+      switch (code) {
+        // Sunucunun gönderdiği Türkçe mesajı doğrudan göster (24sa, e-posta, metin, hız limiti)
+        case 'failed-precondition':
+        case 'invalid-argument':
+        case 'resource-exhausted':
+        case 'permission-denied':
+          msg = e?.message || 'Yorum gönderilemedi. Lütfen tekrar deneyin.';
+          break;
+        case 'unauthenticated':
+          msg = 'Yorum yapmak için giriş yapmalısınız.';
+          break;
+        default:
+          // internal / unavailable / not-found / deadline-exceeded → ham kodu gösterme
+          msg = 'Yorumunuz şu anda gönderilemiyor. Lütfen birkaç dakika sonra tekrar deneyin.';
+      }
+      throw Object.assign(new Error(msg), { code: 'review-rejected', original: code });
+    }
+    lastCommentAt.current = now;
+
+    const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
+    const reviewId = res?.data?.id || `${user?.uid}_${muadilId}`;
 
     // Moderatör/admin'e anlık bildirim
-    const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
     try {
       await addDoc(col('notifications'), {
         type: 'new_review',
         forStaff: true,
         userId: null,
-        reviewId: ref.id,
+        reviewId,
         muadilId,
         muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
         authorName: user?.username ? `@${user.username}` : (user?.name ?? ''),
@@ -244,30 +275,17 @@ export function DataProvider({ children }) {
       // bildirim hatası yorum gönderimini engellemesin
     }
 
-    // Aktivite logu (muadil değişkeni yukarıda zaten tanımlı)
+    // Aktivite logu
     logActivity('review_created', {
-      reviewId: ref.id,
+      reviewId,
       muadilId,
       muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
       targetBrandName: muadil?.targetBrandName || '',
       targetPerfumeName: muadil?.targetPerfumeName || '',
       perfumeUrl: muadil?.targetPerfumeId ? `/karsilastir?orijinal=${muadil.targetPerfumeId}&muadil=${muadil.id}` : null,
     });
-
-    // muadil istatistiklerini güncelle
-    const muadilSnap = await getDoc(docRef('muadils', muadilId));
-    if (muadilSnap.exists()) {
-      const data = muadilSnap.data();
-      const n = (data.reviewCount ?? 0) + 1;
-      const updates = {
-        reviewCount: n,
-        avgSimilarity: ((data.avgSimilarity ?? 0) * (n - 1) + c.similarity) / n,
-        avgProjection: ((data.avgProjection ?? 0) * (n - 1) + c.projection) / n,
-        avgLongevity: ((data.avgLongevity ?? 0) * (n - 1) + c.longevity) / n,
-      };
-      await updateDoc(docRef('muadils', muadilId), updates);
-      setMuadil((prev) => prev.map((m) => String(m.id) === muadilId ? { ...m, ...updates } : m));
-    }
+    // Muadil istatistikleri sunucu (submitReview) tarafında güncellenir; real-time
+    // dinleyici güncel değerleri otomatik getirir.
   };
 
   const approveComment = async (id) => {

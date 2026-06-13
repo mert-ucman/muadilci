@@ -163,7 +163,7 @@ JWT'ye `admin` ve `moderator` claim'lerini yazar (`moderator` claim admin için 
 | `brands` | Markalar | `type`, `active`, `slug`, `logoImage` |
 | `perfumes` | Orijinal parfümler | `brandSlug`, `slug`, `gender`, `year`, `notes`, `images[]` |
 | `muadils` | Muadil parfümler | `targetPerfumeId`, `targetPerfumeName`, `targetBrandName` |
-| `reviews` | Kullanıcı yorumları | `muadilId`, `userId`, `similarity`, `projection`, `longevity`, `status` |
+| `reviews` | Kullanıcı yorumları | `muadilId`, `userId`, `similarity`, `projection`, `longevity`, `status`, `abuseFlag`, `abuseReason` |
 | `users` | Kullanıcı profilleri | `uid`, `username`, `role`, `photoURL`, `active`, `deleted` |
 | `users/{uid}/favorites` | Favoriler | `type`, `refId` |
 | `users/{uid}/perfumeLists` | Parfüm listeleri (**herkese okunabilir**) | `title`, `category`, `items[]` |
@@ -174,6 +174,8 @@ JWT'ye `admin` ve `moderator` claim'lerini yazar (`moderator` claim admin için 
 | `notifications` | Bildirimler | `type`, `userId`, `perfumeUrl`, `read`, `forStaff` |
 | `sliderImages` | Ana sayfa slider | `url`, `order` |
 | `settings` | Site ayarları | `faviconUrl` |
+| `rateLimits` | Hız limiti sayaçları (**sadece Functions yazar**, admin okur) | `count`, `windowStart`, `uids[]` (hash'li IP / uid bazlı) |
+| `abuseSignals` | Spam/suistimal izleri (**sadece Functions yazar**, mod/admin okur) | `type`, `reviewId`, `userId`, `ipHash`, `reason`, `createdAt` |
 
 **Yorum `status`:** `pending` · `approved` · `pending_update` · `rejected`
 
@@ -293,13 +295,48 @@ Yalnızca `status === 'approved'` yorumlardan:
 | `publicProfiles` | **Herkes** | Sahip veya admin |
 | `presence` | Admin | Sahip |
 | `activityLogs` | Admin | Giriş yapmış herkes |
-| `reviews` create | — | `pending` + `email_verified` + role eşleşmeli |
+| `reviews` create | **Herkes okur** | **Client'tan KAPALI** — yorumlar yalnızca `submitReview` Cloud Function (Admin SDK) ile oluşturulur; `allow create: if isAdmin()` yalnızca admin acil oluşturma için |
+| `reviews` update | — | Mod her şeyi; sahip pending/pending_update düzenler — metin **≥ 40 karakter** (`validReviewLen`) |
+| `rateLimits` | Admin | **Sadece Cloud Functions** (`write: if false`) |
+| `abuseSignals` | Mod/Admin | **Sadece Cloud Functions** (`write: if false`) |
+
+> `users` update kuralı `createdAt`'i de sabitler — 24 saat yeni-hesap kuralının kurcalanmasını engeller.
 
 ### Storage Rules
 | Yol | Okuma | Yazma |
 |-----|-------|-------|
 | `perfumes/`, `brands/`, `slider/` | Herkes | Admin |
 | `users/{userId}/` | Herkes | Sahip |
+
+---
+
+## Yorum Spam / Sahte Hesap Koruması
+
+Yorum **oluşturma** akışı, IP ve sunucu sırlarına ihtiyaç duyduğu için client `setDoc` yerine
+**`submitReview` Cloud Function** (`onCall`, `us-central1`) üzerinden geçer. Veri modeli aynıdır
+(`reviews/{uid}_{muadilId}`); real-time dinleyiciler, moderasyon ve admin akışı değişmez.
+
+**Üç katman (hepsi sunucuda zorlanır):**
+1. **Yeni hesaba 24 saat yorum yasağı** — Firebase Auth `creationTime` (kurcalanamaz) baz alınır.
+   Admin/moderator muaf. Hata: *"Spam koruması nedeniyle yeni hesaplar ilk 24 saat yorum yapamaz."*
+   Ek savunma: `users.createdAt` Security Rules ile değiştirilemez.
+2. **IP bazlı hız limiti** — raw IP saklanmaz; `HMAC-SHA256(IP_HASH_SALT + günlük tarih, ip)` hash'i
+   `rateLimits/ip_{hash}` ve `rateLimits/user_{uid}` belgelerinde **atomic transaction** ile tutulur
+   (race-safe). Eşik aşımında **banlama yerine** yorum `pending` + `abuseFlag`/`abuseReason` ile
+   moderasyona düşer; çok yüksek sel eşiğinde (`resource-exhausted`) tamamen reddedilir.
+   Suistimal izleri raw IP yerine hash'le `abuseSignals` koleksiyonuna yazılır.
+3. **Düşük eforlu / çok kısa yorum reddi** — `validateReviewText()` (ortak: `src/utils/reviewValidation.js`
+   + `functions/reviewValidation.js`): min **40 karakter**, sadece emoji/noktalama reddi, tekrar
+   eden karakter/kelime reddi, "çok iyi/berbat/idare eder" gibi kalıpların reddi. Client'ta anlık UX,
+   sunucuda kesin kapı; ayrıca Security Rules update'te min uzunluk zorlar.
+
+**Eşik sabitleri** (`functions/index.js`): IP 5/sa soft → işaret, 20/sa hard → red; kullanıcı 5/10dk soft,
+12/10dk hard; aynı IP'den 3'ten fazla farklı hesap → işaret.
+
+**Deploy notu:** `IP_HASH_SALT` sırrı set edilmeden fonksiyon deploy edilemez:
+`firebase functions:secrets:set IP_HASH_SALT`
+
+Admin "Tüm Yorumlar" ve Moderasyon ekranı, işaretli yorumlarda **"Şüpheli"** rozeti + `abuseReason` gösterir.
 
 ---
 

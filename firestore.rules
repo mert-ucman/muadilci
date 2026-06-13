@@ -17,11 +17,13 @@ service cloud.firestore {
       allow create: if isOwner(uid) && request.resource.data.role == 'user';
       // Güncelleme: admin her şeyi; sahip ise role/active/deleted alanlarını DEĞİŞTİREMEZ
       // (yetki yükseltme ve kendini-aktif-etmeyi engeller)
+      // (createdAt sabittir: 24 saat yeni-hesap kuralının atlatılmasını engeller)
       allow update: if isAdmin()
                      || (isOwner(uid)
                          && request.resource.data.role == resource.data.role
                          && request.resource.data.active == resource.data.active
-                         && request.resource.data.get('deleted', false) == resource.data.get('deleted', false));
+                         && request.resource.data.get('deleted', false) == resource.data.get('deleted', false)
+                         && request.resource.data.createdAt == resource.data.createdAt);
       allow delete: if isOwner(uid) || isAdmin();
 
       // Favoriler alt-koleksiyonu
@@ -69,30 +71,47 @@ service cloud.firestore {
     }
 
     // ── Reviews ───────────────────────────────────────────────────────────
+    // Metin en az 40 karakter olmalı (spam/düşük efor sunucu kapısı).
+    function validReviewLen(t) { return t is string && t.size() >= 40 && t.size() <= 4000; }
     match /reviews/{reviewId} {
       allow read: if true;
-      // Oluşturma: yalnızca kendi adına, 'pending' durumla, gerçek rolüyle ve
-      // doğrulanmış e-posta ile (moderasyon atlatma + rol taklidini engeller)
-      allow create: if isAdmin() || (isAuth()
-                     && reviewId == request.auth.uid + '_' + request.resource.data.muadilId
-                     && request.resource.data.userId == request.auth.uid
-                     && request.resource.data.status == 'pending'
-                     && request.resource.data.userRole == userDoc().role
-                     && request.auth.token.email_verified == true);
+      // Oluşturma client'tan KAPALIDIR. Normal kullanıcı yorumları yalnızca
+      // 'submitReview' Cloud Function (Admin SDK) üzerinden oluşturulur; böylece
+      // 24 saat yeni-hesap kuralı, IP hız limiti ve metin kalite kontrolü atlatılamaz.
+      // Yalnızca admin'e doğrudan acil oluşturma izni bırakıldı.
+      allow create: if isAdmin();
       // Güncelleme: mod her şeyi; sahip pending yorumunu düzenleyebilir ya da
-      // approved yorumunu pending_update'e geçirebilir; hesap silinince anonimleştirme
+      // approved yorumunu pending_update'e geçirebilir; hesap silinince anonimleştirme.
+      // Sahip düzenlemelerinde metin minimum uzunluk kapısından geçer.
       allow update: if isMod()
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'pending'
-                         && request.resource.data.status == 'pending')
+                         && request.resource.data.status == 'pending'
+                         && validReviewLen(request.resource.data.text))
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'approved'
-                         && request.resource.data.status == 'pending_update')
+                         && request.resource.data.status == 'pending_update'
+                         && validReviewLen(request.resource.data.pendingUpdate.text))
                      || (isOwner(resource.data.userId)
                          && resource.data.status == 'pending_update'
-                         && request.resource.data.status == 'pending_update')
+                         && request.resource.data.status == 'pending_update'
+                         && validReviewLen(request.resource.data.pendingUpdate.text))
                      || (isAuth() && resource.data.userId == request.auth.uid && request.resource.data.userId == 'deleted');
       allow delete: if isMod() || isOwner(resource.data.userId);
+    }
+
+    // ── Rate Limits (sadece Cloud Functions / Admin SDK yazar) ──────────────
+    // Hash'li IP ve kullanıcı sayaçları; client erişemez, admin inceleyebilir.
+    match /rateLimits/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ── Abuse Signals (spam/suistimal izleri) ───────────────────────────────
+    // Yalnızca Cloud Functions yazar; mod/admin inceler. Raw IP saklanmaz (hash).
+    match /abuseSignals/{docId} {
+      allow read: if isMod();
+      allow write: if false;
     }
 
     // ── Activity Logs ─────────────────────────────────────────────────────
