@@ -14,16 +14,79 @@ import { uploadDataURL } from '@/lib/storage';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import noImage from '@/img/no-image.jpg';
 
-function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, onCancel, submitError }) {
+// Mevsim ve kullanım ortamı seçenekleri (çoklu seçim). Form, istatistikler ve
+// yorum kartları aynı listeyi kullanır; key değerleri Firestore'da saklanır.
+const SEASON_OPTS = [
+  { key: 'yaz',        label: 'Yaz',       icon: faSun },
+  { key: 'kis',        label: 'Kış',       icon: faSnowflake },
+  { key: 'ilkbahar',   label: 'İlkbahar',  icon: faSeedling },
+  { key: 'sonbahar',   label: 'Sonbahar',  icon: faLeaf },
+  { key: 'dortMevsim', label: '4 Mevsim',  icon: faCalendarDays },
+];
+const OCCASION_OPTS = [
+  { key: 'ofis',   label: 'Ofis',   icon: faBriefcase },
+  { key: 'date',   label: 'Date',   icon: faHeart },
+  { key: 'gunluk', label: 'Günlük', icon: faShirt },
+  { key: 'gunduz', label: 'Gündüz', icon: faSun },
+  { key: 'gece',   label: 'Gece',   icon: faMoon },
+  { key: 'deniz',  label: 'Deniz',  icon: faUmbrellaBeach },
+];
+const SEASON_KEYS = SEASON_OPTS.map((o) => o.key);
+const OCCASION_KEYS = OCCASION_OPTS.map((o) => o.key);
+
+// Evet / Hayır seçim ikilisi (üçüncü tıkta seçim kalkar → "belirtilmemiş")
+function YesNo({ value, onChange }) {
+  const opt = (val, label, color, bg, border) => (
+    <button type="button" onClick={() => onChange(value === val ? null : val)}
+      className="inline-flex items-center justify-center rounded-[20px] px-[14px] py-[5px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
+      style={{ border: `1px solid ${value === val ? border : C.border}`, background: value === val ? bg : '#fff', color: value === val ? color : C.textLight }}>
+      <p className="m-0 p-0 w-max">{label}</p>
+    </button>
+  );
+  return (
+    <div className="flex items-center gap-2">
+      {opt(true, 'Evet', C.green, C.greenBg, C.greenBorder)}
+      {opt(false, 'Hayır', C.red, C.redBg, C.redBorder)}
+    </div>
+  );
+}
+
+// Çoklu seçilebilir ikon+etiket pill grubu (mevsim / kullanım ortamı)
+function MultiChips({ options, value, onChange }) {
+  const toggle = (key) => onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {options.map((o) => {
+        const on = value.includes(o.key);
+        return (
+          <button type="button" key={o.key} onClick={() => toggle(o.key)}
+            className="inline-flex items-center justify-center gap-[6px] rounded-[20px] px-[12px] py-[6px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
+            style={{ border: `1px solid ${on ? C.gold : C.border}`, background: on ? C.goldBg : '#fff', color: on ? C.goldDeep : C.textLight }}>
+            <FontAwesomeIcon icon={o.icon} style={{ width: '12px', height: '12px' }} />
+            <p className="m-0 p-0 w-max">{o.label}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOriginalDefault, onSubmit, onCancel, submitError }) {
   const [cSim, setCSim] = useState(initialValues?.sim ?? 5);
   const [cProj, setCProj] = useState(initialValues?.proj ?? 5);
   const [cLon, setCLon] = useState(initialValues?.lon ?? 5);
   const [cText, setCText] = useState(initialValues?.text ?? '');
   const [cRecommend, setCRecommend] = useState(initialValues?.recommend ?? null);
+  const [cBlindBuy, setCBlindBuy] = useState(initialValues?.blindBuy ?? null);
+  // Orijinale sahiplik: düzenlemede kayıtlı değer, yeni yorumda kullanıcının
+  // bu orijinali daha önce sahiplendiği bilgisinden otomatik dolar.
+  const [cOwnsOriginal, setCOwnsOriginal] = useState(initialValues?.ownsOriginal ?? (ownsOriginalDefault ? true : null));
+  const [cSeasons, setCSeasons] = useState(initialValues?.seasons ?? []);
+  const [cOccasions, setCOccasions] = useState(initialValues?.occasions ?? []);
   const [profanityError, setProfanityError] = useState(false);
   const [textError, setTextError] = useState('');
   const [cOrigImg, setCOrigImg] = useState(initialValues?.origImg ?? null);
@@ -42,6 +105,8 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
     if (hasPhoto && !cConsent) { setConsentError(true); return; }
     onSubmit({
       similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend,
+      blindBuy: cBlindBuy, ownsOriginal: cOwnsOriginal,
+      seasons: cSeasons, occasions: cOccasions,
       originalImage: cOrigImg, muadilImage: cMuadilImg, imageConsent: hasPhoto,
     });
   };
@@ -98,6 +163,22 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, onSubmit, 
           <FontAwesomeIcon icon={faThumbsDown} style={{ width: '16px', height: '16px' }} />
         </button>
       </div>
+      <div className="flex items-center gap-3 mb-[10px] flex-wrap">
+        <span className="text-[13px] text-(--color-text-mid) font-semibold">Bu parfüm kör alışa uygun mu?</span>
+        <YesNo value={cBlindBuy} onChange={setCBlindBuy} />
+      </div>
+      <div className="flex items-center gap-3 mb-[12px] flex-wrap">
+        <span className="text-[13px] text-(--color-text-mid) font-semibold">Bu parfümün orijinaline sahip misiniz?</span>
+        <YesNo value={cOwnsOriginal} onChange={setCOwnsOriginal} />
+      </div>
+      <div className="mb-[12px]">
+        <div className="text-[13px] text-(--color-text-mid) font-semibold mb-2">Bu parfüm hangi mevsim için daha uygun?</div>
+        <MultiChips options={SEASON_OPTS} value={cSeasons} onChange={setCSeasons} />
+      </div>
+      <div className="mb-[12px]">
+        <div className="text-[13px] text-(--color-text-mid) font-semibold mb-2">Bu parfüm hangi ortam için daha uygun?</div>
+        <MultiChips options={OCCASION_OPTS} value={cOccasions} onChange={setCOccasions} />
+      </div>
       <div className="mb-[12px]">
         <div className="text-[13px] font-semibold mb-2" style={{ color: C.textMid }}>
           Fotoğraf ekle <span style={{ color: C.textLight, fontWeight: 400 }}>(opsiyonel)</span>
@@ -135,7 +216,7 @@ export function ComparisonPage({ queryParams }) {
     description: 'Orijinal parfüm ile muadilini yan yana karşılaştır; koku benzerliği, kalıcılık ve yayılım puanlarını topluluk yorumlarıyla incele.',
   });
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus } = useData();
+  const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus, ownsOriginalPerfume } = useData();
   const { user, isMod, isAdmin } = useAuth();
   const { w, sm, md, lg, xl, xs } = useW();
 
@@ -225,6 +306,34 @@ export function ComparisonPage({ queryParams }) {
   const recCount = approvedMuadilComments.filter((c) => c.recommend === true).length;
   const notRecCount = approvedMuadilComments.filter((c) => c.recommend === false).length;
 
+  // Kör alışa uygunluk oyları (yalnızca cevap verenler arasında)
+  const blindYes = approvedMuadilComments.filter((c) => c.blindBuy === true).length;
+  const blindNo = approvedMuadilComments.filter((c) => c.blindBuy === false).length;
+  const blindTotal = blindYes + blindNo;
+  const blindYesPct = blindTotal ? Math.round((blindYes / blindTotal) * 100) : null;
+
+  // Orijinale sahiplik oranı (cevap verenler arasında "sahibim" diyenler)
+  const ownsYes = approvedMuadilComments.filter((c) => c.ownsOriginal === true).length;
+  const ownsTotal = ownsYes + approvedMuadilComments.filter((c) => c.ownsOriginal === false).length;
+  const ownsPct = ownsTotal ? Math.round((ownsYes / ownsTotal) * 100) : null;
+
+  // Mevsim / kullanım ortamı dağılımı: her seçenek için yanıtlayanlar arasındaki yüzde.
+  // Çoklu seçim olduğu için yüzdeler toplamı 100 olmayabilir. En yüksek solda.
+  const buildDist = (opts, field) => {
+    const respondents = approvedMuadilComments.filter((c) => Array.isArray(c[field]) && c[field].length > 0).length;
+    return {
+      respondents,
+      items: opts
+        .map((o) => {
+          const count = approvedMuadilComments.filter((c) => Array.isArray(c[field]) && c[field].includes(o.key)).length;
+          return { ...o, count, pct: respondents ? Math.round((count / respondents) * 100) : 0 };
+        })
+        .sort((a, b) => b.count - a.count),
+    };
+  };
+  const seasonDist = buildDist(SEASON_OPTS, 'seasons');
+  const occasionDist = buildDist(OCCASION_OPTS, 'occasions');
+
   const submitC = async (data) => {
     if (!user || !selMuadil) return;
     setSubmitError('');
@@ -238,6 +347,8 @@ export function ComparisonPage({ queryParams }) {
       const payload = {
         similarity: data.similarity, projection: data.projection, longevity: data.longevity,
         text: data.text, recommend: data.recommend,
+        blindBuy: data.blindBuy ?? null, ownsOriginal: data.ownsOriginal ?? null,
+        seasons: data.seasons ?? [], occasions: data.occasions ?? [],
         originalImage, muadilImage,
         imageConsent: !!data.imageConsent,
         targetPerfumeId: selMuadil.targetPerfumeId ?? selOrigId ?? null,
@@ -263,6 +374,10 @@ export function ComparisonPage({ queryParams }) {
       lon: userReview.longevity ?? 5,
       text: userReview.pendingUpdate?.text ?? userReview.text ?? '',
       recommend: userReview.recommend ?? null,
+      blindBuy: userReview.pendingUpdate?.blindBuy ?? userReview.blindBuy ?? null,
+      ownsOriginal: userReview.pendingUpdate?.ownsOriginal ?? userReview.ownsOriginal ?? null,
+      seasons: userReview.pendingUpdate?.seasons ?? userReview.seasons ?? [],
+      occasions: userReview.pendingUpdate?.occasions ?? userReview.occasions ?? [],
       origImg: userReview.originalImage ?? null,
       muadilImg: userReview.muadilImage ?? null,
     });
@@ -577,6 +692,93 @@ export function ComparisonPage({ queryParams }) {
                   </div>
                 ))}
               </div>
+
+              {/* Kör alış + orijinale sahiplik oranları */}
+              <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: sm ? '10px' : '14px', marginTop: sm ? '10px' : '14px' }}>
+                {/* Kör alışa uygunluk */}
+                <div className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}`, padding: sm ? '12px' : '14px 16px' }}>
+                  <div className="flex items-center gap-[10px] mb-[10px]">
+                    <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.blueBg }}>
+                      <FontAwesomeIcon icon={faEye} style={{ fontSize: '15px', color: C.blue }} />
+                    </div>
+                    <div className="text-[13px] font-bold text-(--color-text)">Kör alışa uygun mu?</div>
+                  </div>
+                  {blindYesPct !== null ? (
+                    <>
+                      <div className="flex w-full h-[10px] rounded-full overflow-hidden mb-[8px]" style={{ background: C.redBg }}>
+                        <div style={{ width: `${blindYesPct}%`, background: C.green }} />
+                        <div style={{ width: `${100 - blindYesPct}%`, background: C.red }} />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="text-[12px] font-bold" style={{ color: C.green }}>%{blindYesPct} Evet</div>
+                        <div className="text-[12px] font-bold" style={{ color: C.red }}>%{100 - blindYesPct} Hayır</div>
+                      </div>
+                      <div className="text-[11px] text-(--color-text-light) mt-[6px]">{blindTotal} kişi yanıtladı</div>
+                    </>
+                  ) : (
+                    <div className="text-[12px] italic text-(--color-text-light)">Henüz yeterli veri yok.</div>
+                  )}
+                </div>
+
+                {/* Orijinale sahiplik */}
+                <div className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}`, padding: sm ? '12px' : '14px 16px' }}>
+                  <div className="flex items-center gap-[10px] mb-[10px]">
+                    <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.goldBg }}>
+                      <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '15px', color: C.gold }} />
+                    </div>
+                    <div className="text-[13px] font-bold text-(--color-text)">Orijinale sahiplik</div>
+                  </div>
+                  {ownsPct !== null ? (
+                    <>
+                      <div className="text-[13px] text-(--color-text-mid) mb-[8px]">
+                        Kullanıcıların <strong style={{ color: C.gold }}>%{ownsPct}</strong>'i bu parfümün orijinaline sahip
+                      </div>
+                      <div className="w-full h-[10px] rounded-full overflow-hidden" style={{ background: C.goldBg }}>
+                        <div style={{ width: `${ownsPct}%`, height: '100%', background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
+                      </div>
+                      <div className="text-[11px] text-(--color-text-light) mt-[6px]">{ownsTotal} kişi yanıtladı</div>
+                    </>
+                  ) : (
+                    <div className="text-[12px] italic text-(--color-text-light)">Henüz yeterli veri yok.</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mevsim + kullanım ortamı dağılımı (en yüksek solda) */}
+              <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: sm ? '10px' : '14px', marginTop: sm ? '10px' : '14px' }}>
+                {[
+                  { title: 'Hangi mevsim için uygun?', headIcon: faSun, dist: seasonDist },
+                  { title: 'Hangi ortam için uygun?', headIcon: faBriefcase, dist: occasionDist },
+                ].map(({ title, headIcon, dist }) => (
+                  <div key={title} className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}`, padding: sm ? '12px' : '14px 16px' }}>
+                    <div className="flex items-center gap-[10px] mb-[12px]">
+                      <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.goldBg }}>
+                        <FontAwesomeIcon icon={headIcon} style={{ fontSize: '15px', color: C.gold }} />
+                      </div>
+                      <div className="text-[13px] font-bold text-(--color-text)">{title}</div>
+                    </div>
+                    {dist.respondents > 0 ? (
+                      <div className="flex flex-col gap-[8px]">
+                        {dist.items.map((it) => (
+                          <div key={it.key} className="flex items-center gap-[8px]">
+                            <div className="flex items-center gap-[6px] shrink-0" style={{ width: '92px' }}>
+                              <FontAwesomeIcon icon={it.icon} style={{ width: '13px', height: '13px', color: it.count > 0 ? C.gold : C.textMuted }} />
+                              <span className="text-[12px] font-semibold" style={{ color: it.count > 0 ? C.text : C.textLight }}>{it.label}</span>
+                            </div>
+                            <div className="flex-1 h-[8px] rounded-full overflow-hidden" style={{ background: C.goldBg }}>
+                              <div style={{ width: `${it.pct}%`, height: '100%', background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
+                            </div>
+                            <div className="text-[12px] font-bold shrink-0 text-right" style={{ width: '40px', color: it.count > 0 ? C.goldDeep : C.textLight }}>%{it.pct}</div>
+                          </div>
+                        ))}
+                        <div className="text-[11px] text-(--color-text-light) mt-[2px]">{dist.respondents} kişi yanıtladı</div>
+                      </div>
+                    ) : (
+                      <div className="text-[12px] italic text-(--color-text-light)">Henüz yeterli veri yok.</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </Card>
 
             {/* Comments */}
@@ -596,6 +798,7 @@ export function ComparisonPage({ queryParams }) {
                   isMod={isMod}
                   isAdmin={isAdmin}
                   sm={sm}
+                  ownsOriginalDefault={!!(user && selOrig && ownsOriginalPerfume(user.uid, selOrig.id))}
                   submitError={submitError}
                   onSubmit={submitC}
                   onCancel={() => { setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
@@ -721,6 +924,32 @@ export function ComparisonPage({ queryParams }) {
                                 </p>
                               </div>
                             )}
+                            {(c.blindBuy === true || c.blindBuy === false) && (
+                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                                style={{ background: C.blueBg, border: '1px solid #bfdbfe', color: C.blue }}>
+                                <p className="m-0 p-0 w-max flex items-center gap-1">
+                                  <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} /> Kör alış: {c.blindBuy ? 'Evet' : 'Hayır'}
+                                </p>
+                              </div>
+                            )}
+                            {c.ownsOriginal === true && (
+                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                                style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
+                                <p className="m-0 p-0 w-max flex items-center gap-1">
+                                  <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '10px' }} /> Orijinale sahip
+                                </p>
+                              </div>
+                            )}
+                            {[...SEASON_OPTS, ...OCCASION_OPTS]
+                              .filter((o) => (c.seasons || []).includes(o.key) || (c.occasions || []).includes(o.key))
+                              .map((o) => (
+                                <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-semibold"
+                                  style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
+                                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                                    <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.label}
+                                  </p>
+                                </div>
+                              ))}
                           </div>
                         </div>
                       </div>

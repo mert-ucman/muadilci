@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import {
   collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDoc, getDocs,
-  increment, writeBatch, where, arrayUnion, limit,
+  increment, writeBatch, where, arrayUnion, arrayRemove, limit,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase';
@@ -225,6 +225,10 @@ export function DataProvider({ children }) {
         longevity: c.longevity,
         text: c.text,
         recommend: c.recommend ?? null,
+        blindBuy: c.blindBuy ?? null,
+        ownsOriginal: c.ownsOriginal ?? null,
+        seasons: Array.isArray(c.seasons) ? c.seasons : [],
+        occasions: Array.isArray(c.occasions) ? c.occasions : [],
         originalImage: c.originalImage ?? null,
         muadilImage: c.muadilImage ?? null,
         imageConsent: !!c.imageConsent,
@@ -294,16 +298,20 @@ export function DataProvider({ children }) {
     const review = reviewSnap.data();
 
     if (review.status === 'pending_update' && review.pendingUpdate) {
-      const { text, similarity, projection, longevity, recommend, submittedAt } = review.pendingUpdate;
+      const { text, similarity, projection, longevity, recommend, blindBuy, ownsOriginal, seasons, occasions, submittedAt } = review.pendingUpdate;
       await updateDoc(docRef('reviews', id), {
         status: 'approved',
         text, similarity, projection, longevity,
         recommend: recommend ?? null,
+        blindBuy: blindBuy ?? null,
+        ownsOriginal: ownsOriginal ?? null,
+        seasons: Array.isArray(seasons) ? seasons : [],
+        occasions: Array.isArray(occasions) ? occasions : [],
         pendingUpdate: null,
         updatedAt: submittedAt ?? serverTimestamp(),
       });
       setComments((prev) => prev.map((c) => c.id === id
-        ? { ...c, status: 'approved', text, similarity, projection, longevity, recommend: recommend ?? null, pendingUpdate: null }
+        ? { ...c, status: 'approved', text, similarity, projection, longevity, recommend: recommend ?? null, blindBuy: blindBuy ?? null, ownsOriginal: ownsOriginal ?? null, seasons: Array.isArray(seasons) ? seasons : [], occasions: Array.isArray(occasions) ? occasions : [], pendingUpdate: null }
         : c));
     } else {
       await updateDoc(docRef('reviews', id), { status: 'approved' });
@@ -395,6 +403,16 @@ export function DataProvider({ children }) {
     if (!reviewSnap.exists()) return;
     const review = reviewSnap.data();
 
+    // Orijinale sahiplik bilgisini kullanıcı belgesinde güncel tut (düzenleme
+    // sunucu callable'ından geçmez; bu yüzden client tarafı senkron şart).
+    if (user?.uid && data.targetPerfumeId != null && typeof data.ownsOriginal === 'boolean') {
+      try {
+        await updateDoc(docRef('users', user.uid), {
+          ownedOriginals: data.ownsOriginal ? arrayUnion(String(data.targetPerfumeId)) : arrayRemove(String(data.targetPerfumeId)),
+        });
+      } catch { /* sahiplik senkronu yorum güncellemesini engellemesin */ }
+    }
+
     if (review.status === 'pending' || user?.role === 'admin') {
       await updateDoc(docRef('reviews', id), {
         text: data.text,
@@ -402,6 +420,10 @@ export function DataProvider({ children }) {
         projection: data.projection,
         longevity: data.longevity,
         recommend: data.recommend ?? null,
+        ...(data.blindBuy !== undefined ? { blindBuy: data.blindBuy ?? null } : {}),
+        ...(data.ownsOriginal !== undefined ? { ownsOriginal: data.ownsOriginal ?? null } : {}),
+        ...(data.seasons !== undefined ? { seasons: Array.isArray(data.seasons) ? data.seasons : [] } : {}),
+        ...(data.occasions !== undefined ? { occasions: Array.isArray(data.occasions) ? data.occasions : [] } : {}),
         ...(data.originalImage !== undefined ? { originalImage: data.originalImage ?? null } : {}),
         ...(data.muadilImage !== undefined ? { muadilImage: data.muadilImage ?? null } : {}),
         ...(data.imageConsent !== undefined ? { imageConsent: !!data.imageConsent } : {}),
@@ -417,6 +439,10 @@ export function DataProvider({ children }) {
           projection: data.projection,
           longevity: data.longevity,
           recommend: data.recommend ?? null,
+          blindBuy: data.blindBuy ?? null,
+          ownsOriginal: data.ownsOriginal ?? null,
+          seasons: Array.isArray(data.seasons) ? data.seasons : [],
+          occasions: Array.isArray(data.occasions) ? data.occasions : [],
           submittedAt: serverTimestamp(),
         },
       });
@@ -625,6 +651,8 @@ export function DataProvider({ children }) {
   const [perfumeFavorites, setPerfumeFavorites] = useState({});
   const [muadilFavorites, setMuadilFavorites] = useState({});
   const [compFavorites, setCompFavorites] = useState({});
+  // Kullanıcının sahip olduğu orijinal parfümler (orijinale-sahiplik prefill için)
+  const [ownedOriginals, setOwnedOriginals] = useState({});
 
   // Kullanıcı değişince favorileri Firestore'dan çek
   useEffect(() => {
@@ -633,6 +661,7 @@ export function DataProvider({ children }) {
       setPerfumeFavorites({});
       setMuadilFavorites({});
       setCompFavorites({});
+      setOwnedOriginals({});
       return;
     }
     const ref = docRef('users', user.uid);
@@ -643,6 +672,7 @@ export function DataProvider({ children }) {
       setPerfumeFavorites((p) => ({ ...p, [user.uid]: d.favPerfumes ?? [] }));
       setMuadilFavorites((p) => ({ ...p, [user.uid]: d.favMuadils ?? [] }));
       setCompFavorites((p) => ({ ...p, [user.uid]: d.favComps ?? [] }));
+      setOwnedOriginals((p) => ({ ...p, [user.uid]: (d.ownedOriginals ?? []).map(String) }));
     });
     return () => unsub();
   }, [user?.uid]);
@@ -684,6 +714,8 @@ export function DataProvider({ children }) {
   const isPerfumeFavorite = (uid, id) => !!(uid && (perfumeFavorites[uid] ?? []).includes(id));
   const isMuadilFavorite = (uid, id) => !!(uid && (muadilFavorites[uid] ?? []).includes(id));
   const isCompFavorite = (uid, origId, muadilId) => !!(uid && (compFavorites[uid] ?? []).includes(compKey(origId, muadilId)));
+  // Kullanıcı bu orijinal parfüme sahip mi? (yorum formunda otomatik dolum için)
+  const ownsOriginalPerfume = (uid, perfumeId) => !!(uid && perfumeId != null && (ownedOriginals[uid] ?? []).includes(String(perfumeId)));
 
   const getUserFavoriteBrands = (uid) => brandFavorites[uid] ?? [];
   const getUserFavoritePerfumes = (uid) => perfumeFavorites[uid] ?? [];
@@ -741,6 +773,7 @@ export function DataProvider({ children }) {
       togglePerfumeFavorite, isPerfumeFavorite, getUserFavoritePerfumes,
       toggleMuadilFavorite, isMuadilFavorite, getUserFavoriteMuadils,
       toggleCompFavorite, isCompFavorite, getUserFavoriteComps,
+      ownsOriginalPerfume,
       addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
       faviconUrl, updateFavicon,

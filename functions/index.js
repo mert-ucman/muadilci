@@ -120,6 +120,12 @@ const USER_WINDOW_MS       = 10 * 60 * 1000;
 const USER_SOFT_REVIEWS    = 5;
 const USER_HARD_REVIEWS    = 12;
 
+// Mevsim / kullanım ortamı geçerli anahtarları (client'tan gelen değerler bunlarla sınırlanır)
+const SEASON_KEYS = ['yaz', 'kis', 'ilkbahar', 'sonbahar', 'dortMevsim'];
+const OCCASION_KEYS = ['ofis', 'date', 'gunluk', 'gunduz', 'gece', 'deniz'];
+const sanitizeKeys = (arr, allowed) =>
+  Array.isArray(arr) ? [...new Set(arr.filter((x) => allowed.includes(x)))] : [];
+
 const clampRating = (v) => {
   const n = Math.round(Number(v));
   if (!Number.isFinite(n)) return 5;
@@ -200,6 +206,13 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
     longevity:  clampRating(data?.longevity),
     text: text.trim(),
     recommend: data?.recommend === true ? true : data?.recommend === false ? false : null,
+    // Kör alışa uygunluk: evet/hayır/belirtilmemiş
+    blindBuy: data?.blindBuy === true ? true : data?.blindBuy === false ? false : null,
+    // Yorum sahibi orijinal parfüme sahip mi? (orijinal parfüm bazında — bkz. ownedOriginals)
+    ownsOriginal: data?.ownsOriginal === true ? true : data?.ownsOriginal === false ? false : null,
+    // Çoklu seçim: hangi mevsim / kullanım ortamı için uygun (yalnızca geçerli anahtarlar)
+    seasons: sanitizeKeys(data?.seasons, SEASON_KEYS),
+    occasions: sanitizeKeys(data?.occasions, OCCASION_KEYS),
     originalImage: typeof data?.originalImage === 'string' ? data.originalImage : null,
     muadilImage:   typeof data?.muadilImage === 'string' ? data.muadilImage : null,
     imageConsent:  !!data?.imageConsent,
@@ -295,6 +308,21 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
 
     return { status, abuseFlag, abuseReason, reviewId, isNewReview };
   });
+
+  // ── Orijinale sahiplik bilgisini kullanıcı belgesinde sakla ──
+  // Sahiplik orijinal parfüm bazındadır: kullanıcı bir orijinale sahipse, o
+  // orijinalin TÜM muadillerine yorum yaparken cevap otomatik dolar (client prefill).
+  if (sanitized.targetPerfumeId && typeof sanitized.ownsOriginal === 'boolean') {
+    try {
+      await db.collection('users').doc(uid).set({
+        ownedOriginals: sanitized.ownsOriginal
+          ? admin.firestore.FieldValue.arrayUnion(sanitized.targetPerfumeId)
+          : admin.firestore.FieldValue.arrayRemove(sanitized.targetPerfumeId),
+      }, { merge: true });
+    } catch (e) {
+      console.error('ownedOriginals güncellenemedi:', e);
+    }
+  }
 
   // ── Abuse işareti varsa ayrı koleksiyona iz bırak (admin/mod inceler) ──
   if (result.abuseFlag) {
