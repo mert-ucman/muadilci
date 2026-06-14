@@ -413,7 +413,9 @@ export function DataProvider({ children }) {
       } catch { /* sahiplik senkronu yorum güncellemesini engellemesin */ }
     }
 
-    if (review.status === 'pending' || user?.role === 'admin') {
+    // Moderatör ve admin düzenlemeleri doğrudan kaydedilir (tekrar onaya düşmez).
+    const isStaffUser = user?.role === 'admin' || user?.role === 'moderator';
+    if (review.status === 'pending' || isStaffUser) {
       await updateDoc(docRef('reviews', id), {
         text: data.text,
         similarity: data.similarity,
@@ -428,7 +430,7 @@ export function DataProvider({ children }) {
         ...(data.muadilImage !== undefined ? { muadilImage: data.muadilImage ?? null } : {}),
         ...(data.imageConsent !== undefined ? { imageConsent: !!data.imageConsent } : {}),
         ...(data.targetPerfumeId !== undefined ? { targetPerfumeId: data.targetPerfumeId ?? null } : {}),
-        ...(user?.role === 'admin' ? { status: 'approved', pendingUpdate: null } : {}),
+        ...(isStaffUser ? { status: 'approved', pendingUpdate: null } : {}),
       });
     } else {
       await updateDoc(docRef('reviews', id), {

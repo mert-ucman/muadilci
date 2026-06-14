@@ -297,6 +297,14 @@ export function ComparisonPage({ queryParams }) {
     const t = setTimeout(() => setEditTick((x) => x + 1), remaining + 100);
     return () => clearTimeout(t);
   }, [userReview?.id, reviewCreatedMs, isMod, isAdmin]);
+
+  // Düzenleme formu açıkken yorum silinirse (aşağıdan), formu da kapat — boş/geçersiz
+  // bir düzenleme ekranının açık kalmasını önler.
+  useEffect(() => {
+    if (showCForm && isEditMode && !userReview) {
+      setShowCForm(false); setIsEditMode(false); setEditInitials(null);
+    }
+  }, [showCForm, isEditMode, userReview]);
   const scores = selMuadil ? calcScores(selMuadil.id, comments) : { scent: null, projection: null, longevity: null, overall: null, count: 0 };
 
   // Tavsiye sayıları: onaylanmış yorumlardan hesapla

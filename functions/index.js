@@ -256,9 +256,9 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
     }
 
     const abuseFlag = !!abuseReason;
-    // Admin yorumu otomatik onaylı; diğer herkes (mod dahil) pending.
-    // Abuse işaretliyse admin bile pending'e düşürülür (gözden geçirme şart).
-    const status = (role === 'admin' && !abuseFlag) ? 'approved' : 'pending';
+    // Moderatör ve admin yorumları otomatik onaylı (doğrudan yayınlanır); diğerleri pending.
+    // Abuse işaretliyse staff bile pending'e düşürülür (gözden geçirme şart).
+    const status = (isStaff && !abuseFlag) ? 'approved' : 'pending';
 
     // ── Yorum belgesini yaz (merge: var olanı güncellerken alanları koru) ──
     tx.set(reviewRef, {
