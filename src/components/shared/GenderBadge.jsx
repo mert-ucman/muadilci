@@ -9,10 +9,13 @@ export function GenderBadge({ gender }) {
   const s = GENDER_STYLE[gender] || { bg: '#f3f4f6', border: '#d1d5db', text: '#6b7280' };
   return (
     <div
-      className="inline-flex items-center justify-center rounded-[20px] px-[10px] py-[3px] text-[12px] font-bold"
-      style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.text }}
+      className="inline-flex items-center justify-center rounded-[20px] px-[10px] text-[12px] font-bold"
+      style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.text, height: '22px' }}
     >
-      <p className="m-0 p-0 w-max leading-none" style={{ transform: 'translateY(0.5px)' }}>{gender}</p>
+      {/* Sub-pixel translateY yerine net piksel line-height ile dikey ortalama
+          (kalp ikonu düzeltmesindeki "çift tam sayı boyut" mantığı: yarım piksel
+          kayma/bulanıklık olmadan tam pikselde ortalanır) */}
+      <p className="m-0 p-0 w-max" style={{ lineHeight: '20px' }}>{gender}</p>
     </div>
   );
 }
