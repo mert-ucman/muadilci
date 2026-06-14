@@ -28,6 +28,8 @@ import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
 import { writeActivityLog, updatePresence } from '@/lib/activityLog';
 import { MfaReauthModal } from '@/components/shared/MfaReauthModal';
+import { AutoLogoutModal } from '@/components/shared/AutoLogoutModal';
+import { useRouter } from '@/contexts/RouterContext';
 
 // 10 dakika hareketsizlik → otomatik çıkış
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -96,7 +98,10 @@ async function fetchOrCreateUserDoc(firebaseUser, extraData = {}) {
 }
 
 export function AuthProvider({ children }) {
+  const { navigate } = useRouter();
   const [user, setUser] = useState(undefined); // undefined = loading
+  // 10 dk hareketsizlik sonrası otomatik çıkış bildirimi modalı
+  const [autoLogoutOpen, setAutoLogoutOpen] = useState(false);
   // Auth ilk tam döngüsünü (onAuthStateChanged + async Firestore fetch) bitirdi mi?
   const [authInitialized, setAuthInitialized] = useState(false);
   // Kullanıcı kendi hesabını silerken otomatik-çıkış listener'ını sustur
@@ -361,14 +366,19 @@ export function AuthProvider({ children }) {
   };
 
   // ── İnaktivite yönetimi ─────────────────────────────────────────────────────
+  // Hareketsizlik nedeniyle oturumu sonlandır: sunucu tarafı çıkış (signOut) +
+  // bilgilendirme modalını aç. Kullanıcı modalı kapatınca ana sayfaya yönlenir.
+  const performAutoLogout = () => {
+    const u = userRef.current;
+    if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
+    signOut(auth).then(() => setUser(null));
+    setAutoLogoutOpen(true);
+  };
+
   const resetInactivityTimer = () => {
     clearTimeout(inactivityTimerRef.current);
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-    inactivityTimerRef.current = setTimeout(() => {
-      const u = userRef.current;
-      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
-      signOut(auth).then(() => setUser(null));
-    }, INACTIVITY_TIMEOUT_MS);
+    inactivityTimerRef.current = setTimeout(performAutoLogout, INACTIVITY_TIMEOUT_MS);
   };
 
   // Kullanıcı giriş yaptığında / state değiştiğinde inaktivite dinleyicilerini kur
@@ -398,18 +408,12 @@ export function AuthProvider({ children }) {
     const elapsed = Date.now() - lastActivity;
     if (elapsed >= INACTIVITY_TIMEOUT_MS) {
       // Zaten süre dolmuş → hemen çıkış
-      const u = userRef.current;
-      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
-      signOut(auth).then(() => setUser(null));
+      performAutoLogout();
       return;
     }
     // Kalan süre kadar timer kur
     clearTimeout(inactivityTimerRef.current);
-    inactivityTimerRef.current = setTimeout(() => {
-      const u = userRef.current;
-      if (u) { writeActivityLog(u, 'logout_auto'); updatePresence(u, false); }
-      signOut(auth).then(() => setUser(null));
-    }, INACTIVITY_TIMEOUT_MS - elapsed);
+    inactivityTimerRef.current = setTimeout(performAutoLogout, INACTIVITY_TIMEOUT_MS - elapsed);
 
     // DOM aktivite olayları
     const handleActivity = () => {
@@ -626,6 +630,10 @@ export function AuthProvider({ children }) {
         loading={mfaPrompt.loading}
         onSubmit={submitMfaPrompt}
         onCancel={cancelMfaPrompt}
+      />
+      <AutoLogoutModal
+        open={autoLogoutOpen}
+        onClose={() => { setAutoLogoutOpen(false); navigate('/'); }}
       />
     </AuthCtx.Provider>
   );
