@@ -728,21 +728,21 @@ export function ComparisonPage({ queryParams }) {
                   )}
                 </div>
 
-                {/* Orijinale sahiplik */}
+                {/* Orijinale sahiplik — turuncu */}
                 <div className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}`, padding: sm ? '12px' : '14px 16px' }}>
                   <div className="flex items-center gap-[10px] mb-[10px]">
-                    <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.goldBg }}>
-                      <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '15px', color: C.gold }} />
+                    <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.orangeBg }}>
+                      <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '15px', color: C.orange }} />
                     </div>
                     <div className="text-[13px] font-bold text-(--color-text)">Orijinale sahiplik</div>
                   </div>
                   {ownsPct !== null ? (
                     <>
                       <div className="text-[13px] text-(--color-text-mid) mb-[8px]">
-                        Kullanıcıların <strong style={{ color: C.gold }}>%{ownsPct}</strong>'i bu parfümün orijinaline sahip
+                        Kullanıcıların <strong style={{ color: C.orange }}>%{ownsPct}</strong>'i bu parfümün orijinaline sahip
                       </div>
-                      <div className="w-full h-[10px] rounded-full overflow-hidden" style={{ background: C.goldBg }}>
-                        <div style={{ width: `${ownsPct}%`, height: '100%', background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
+                      <div className="w-full h-[10px] rounded-full overflow-hidden" style={{ background: C.orangeBg }}>
+                        <div style={{ width: `${ownsPct}%`, height: '100%', background: `linear-gradient(90deg, ${C.orange}, #e8a85a)` }} />
                       </div>
                       <div className="text-[11px] text-(--color-text-light) mt-[6px]">{ownsTotal} kişi yanıtladı</div>
                     </>
@@ -755,13 +755,13 @@ export function ComparisonPage({ queryParams }) {
               {/* Mevsim + kullanım ortamı dağılımı (en yüksek solda) */}
               <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr', gap: sm ? '10px' : '14px', marginTop: sm ? '10px' : '14px' }}>
                 {[
-                  { title: 'Hangi mevsim için uygun?', headIcon: faSun, dist: seasonDist },
-                  { title: 'Hangi ortam için uygun?', headIcon: faBriefcase, dist: occasionDist },
-                ].map(({ title, headIcon, dist }) => (
+                  { title: 'Hangi mevsim için uygun?', headIcon: faSun, dist: seasonDist, clr: { main: C.green, deep: '#1f6e3c', bg: C.greenBg, light: '#68d391' } },
+                  { title: 'Hangi ortam için uygun?', headIcon: faBriefcase, dist: occasionDist, clr: { main: '#7c3aed', deep: '#6d28d9', bg: '#f3effe', light: '#a78bfa' } },
+                ].map(({ title, headIcon, dist, clr }) => (
                   <div key={title} className="rounded-xl" style={{ background: C.card, border: `1px solid ${C.border}`, padding: sm ? '12px' : '14px 16px' }}>
                     <div className="flex items-center gap-[10px] mb-[12px]">
-                      <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.goldBg }}>
-                        <FontAwesomeIcon icon={headIcon} style={{ fontSize: '15px', color: C.gold }} />
+                      <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: clr.bg }}>
+                        <FontAwesomeIcon icon={headIcon} style={{ fontSize: '15px', color: clr.main }} />
                       </div>
                       <div className="text-[13px] font-bold text-(--color-text)">{title}</div>
                     </div>
@@ -770,13 +770,13 @@ export function ComparisonPage({ queryParams }) {
                         {dist.items.map((it) => (
                           <div key={it.key} className="flex items-center gap-[8px]">
                             <div className="flex items-center gap-[6px] shrink-0" style={{ width: '92px' }}>
-                              <FontAwesomeIcon icon={it.icon} style={{ width: '13px', height: '13px', color: it.count > 0 ? C.gold : C.textMuted }} />
+                              <FontAwesomeIcon icon={it.icon} style={{ width: '13px', height: '13px', color: it.count > 0 ? clr.main : C.textMuted }} />
                               <span className="text-[12px] font-semibold" style={{ color: it.count > 0 ? C.text : C.textLight }}>{it.label}</span>
                             </div>
-                            <div className="flex-1 h-[8px] rounded-full overflow-hidden" style={{ background: C.goldBg }}>
-                              <div style={{ width: `${it.pct}%`, height: '100%', background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
+                            <div className="flex-1 h-[8px] rounded-full overflow-hidden" style={{ background: clr.bg }}>
+                              <div style={{ width: `${it.pct}%`, height: '100%', background: `linear-gradient(90deg, ${clr.main}, ${clr.light})` }} />
                             </div>
-                            <div className="text-[12px] font-bold shrink-0 text-right" style={{ width: '40px', color: it.count > 0 ? C.goldDeep : C.textLight }}>%{it.pct}</div>
+                            <div className="text-[12px] font-bold shrink-0 text-right" style={{ width: '40px', color: it.count > 0 ? clr.deep : C.textLight }}>%{it.pct}</div>
                           </div>
                         ))}
                         <div className="text-[11px] text-(--color-text-light) mt-[2px]">{dist.respondents} kişi yanıtladı</div>
