@@ -43,7 +43,7 @@ function YesNo({ value, onChange }) {
     <button type="button" onClick={() => onChange(value === val ? null : val)}
       className="inline-flex items-center justify-center rounded-[20px] px-[14px] py-[5px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
       style={{ border: `1px solid ${value === val ? border : C.border}`, background: value === val ? bg : '#fff', color: value === val ? color : C.textLight }}>
-      <p className="m-0 p-0 w-max">{label}</p>
+      <p className="m-0 p-0 w-max cap-center">{label}</p>
     </button>
   );
   return (
@@ -66,7 +66,7 @@ function MultiChips({ options, value, onChange }) {
             className="inline-flex items-center justify-center gap-[6px] rounded-[20px] px-[12px] py-[6px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
             style={{ border: `1px solid ${on ? C.gold : C.border}`, background: on ? C.goldBg : '#fff', color: on ? C.goldDeep : C.textLight }}>
             <FontAwesomeIcon icon={o.icon} style={{ width: '12px', height: '12px' }} />
-            <p className="m-0 p-0 w-max">{o.label}</p>
+            <p className="m-0 p-0 w-max cap-center">{o.label}</p>
           </button>
         );
       })}
@@ -462,9 +462,9 @@ export function ComparisonPage({ queryParams }) {
                           onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selOrig.brandName}</a>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap mb-[5px]" style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid }}>{selOrig.name}</div>
                         <div className="flex gap-1 flex-wrap">
-                          <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">Orijinal</p></div>
-                          {selOrig.gender && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.gender}</p></div>}
-                          {Number(selOrig.year) > 0 && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selOrig.year}</p></div>}
+                          <div className="inline-flex items-center justify-center px-[9px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE', height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>Orijinal</p></div>
+                          {selOrig.gender && <div className="inline-flex items-center justify-center px-[9px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE', height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{selOrig.gender}</p></div>}
+                          {Number(selOrig.year) > 0 && <div className="inline-flex items-center justify-center px-[9px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE', height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{selOrig.year}</p></div>}
                         </div>
                       </div>
                       <div className="relative shrink-0"
@@ -514,8 +514,8 @@ export function ComparisonPage({ queryParams }) {
                           onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'} onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{selMuadil.brandName}</a>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap mb-[5px]" style={{ fontFamily: FI, fontWeight: 300, fontSize: '12px', color: C.textMid }}>{selMuadil.name}</div>
                         <div className="flex gap-1 flex-wrap">
-                          <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">Muadil</p></div>
-                          {(selMuadil.gender || selOrig.gender) && <div className="inline-flex items-center justify-center px-[9px] py-[3px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE' }}><p className="m-0 p-0 w-max">{selMuadil.gender || selOrig.gender}</p></div>}
+                          <div className="inline-flex items-center justify-center px-[9px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE', height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>Muadil</p></div>
+                          {(selMuadil.gender || selOrig.gender) && <div className="inline-flex items-center justify-center px-[9px] rounded-[20px] text-[10px] font-semibold uppercase tracking-[.08em]" style={{ fontFamily: FI, background: '#EDE9E0', color: C.textMid, border: '1px solid #DDD8CE', height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{selMuadil.gender || selOrig.gender}</p></div>}
                         </div>
                       </div>
                     </div>
@@ -532,7 +532,7 @@ export function ComparisonPage({ queryParams }) {
                 <div className="font-bold text-(--color-text-mid) mb-2 pr-10 flex items-center gap-[6px] flex-wrap" style={{ fontSize: sm ? '12px' : '13px' }}>
                   <span>{selOrig.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selOrig.name}</span>
                   <div className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full text-white text-[9px] font-black shrink-0 flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}><p className="m-0 p-0 w-max leading-none" style={{ transform: 'translateY(0.5px)' }}>VS</p></div>
+                    style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, boxShadow: `0 2px 6px rgba(184,150,90,.4)` }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '22px' }}>VS</p></div>
                   <span>{selMuadil.brandName} <span className="text-(--color-text-light) font-normal">-</span> {selMuadil.name}</span>
                 </div>
                 <div className="mb-[3px]">
@@ -866,11 +866,11 @@ export function ComparisonPage({ queryParams }) {
                               {isAdmin ? (
                                 <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-extrabold"
                                   style={{ background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, color: C.goldLight }}>
-                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max">{liveName}</p>
+                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max cap-center">{liveName}</p>
                                 </div>
                               ) : isModerator ? (
                                 <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-bold" style={{ background: '#ede9fe', border: '1px solid #a78bfa', color: '#5b21b6' }}>
-                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max">{liveName}</p>
+                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max cap-center">{liveName}</p>
                                 </div>
                               ) : isDeleted ? (
                                 <span className="text-[13px] text-(--color-text-light) italic">{liveName}</span>

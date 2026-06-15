@@ -204,10 +204,10 @@ export function PerfumeDetailPage({ params }) {
                       {topNotes.map((n) => (
                         <div
                           key={n}
-                          className="inline-flex items-center justify-center rounded-[20px] px-[12px] py-[5px]"
-                          style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }}
+                          className="inline-flex items-center justify-center rounded-[20px] px-[12px]"
+                          style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, height: '28px' }}
                         >
-                          <p className="m-0 p-0 w-max" style={{ fontSize: '13px', color: C.gold, fontWeight: 500 }}>{n}</p>
+                          <p className="m-0 p-0 w-max cap-center" style={{ fontSize: '13px', color: C.gold, fontWeight: 500, lineHeight: '26px' }}>{n}</p>
                         </div>
                       ))}
                     </div>

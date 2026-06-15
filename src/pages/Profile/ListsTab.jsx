@@ -177,8 +177,8 @@ function AccordionList({ list, onEdit, onDelete, onShare, confirmDeleteId, setCo
                       <span className="font-semibold">{item.displayName}</span>
                     )}
                     {item.isCustom && (
-                      <div className="inline-flex items-center justify-center text-[10px] text-[#b45309] bg-[#fffbeb] border border-[#fcd34d] rounded px-[5px] py-[1px] ml-[6px] font-semibold">
-                        <p className="m-0 p-0 w-max">özel giriş</p>
+                      <div className="inline-flex items-center justify-center text-[10px] text-[#b45309] bg-[#fffbeb] border border-[#fcd34d] rounded px-[5px] ml-[6px] font-semibold" style={{ height: '16px' }}>
+                        <p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '14px' }}>özel giriş</p>
                       </div>
                     )}
                   </li>

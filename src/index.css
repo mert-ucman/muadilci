@@ -161,6 +161,13 @@ img { max-width: 100%; display: block; }
 .nav-link.active::after { transform: scaleX(1); }
 
 /* ── Utilities ─────────────────────────────────────────────────────── */
+/* Badge/etiket/avatar metnini GERÇEK harf yüksekliğine göre dikey ortalar.
+   Yazı tipinin descender (alt) boşluğu yüzünden line-box ortalı olsa bile metin
+   "bir tık yukarıda" görünür; text-box-trim line-box'ın üst/alt leading'ini kırpıp
+   kutuyu cap..baseline aralığına indirir → flex items-center gerçek harfi tam ortalar.
+   Desteklemeyen tarayıcılarda zararsızca yok sayılır (mevcut flex ortalamaya düşer). */
+.cap-center { text-box: trim-both cap alphabetic; }
+
 .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .tabs-scroll {

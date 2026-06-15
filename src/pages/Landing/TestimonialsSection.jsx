@@ -123,7 +123,8 @@ function TestimonialCard({ t, i }) {
             fontFamily: FH,
           }}
         >
-          {t.av}
+          {/* Harf doğrudan flex div'de olursa text-box-trim çalışmaz; span ile sar */}
+          <span className="cap-center">{t.av}</span>
         </div>
         <div>
           <div

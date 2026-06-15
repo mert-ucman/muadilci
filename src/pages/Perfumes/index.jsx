@@ -405,9 +405,9 @@ export function PerfumesPage() {
                     <div className="flex gap-1 flex-wrap mb-[10px]">
                       <GenderBadge gender={p.gender} />
                       {mc > 0 && (
-                        <div className="inline-flex items-center justify-center px-2 py-[2px] rounded-[20px] text-[11px] font-semibold"
-                          style={{ background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}` }}>
-                          <p className="m-0 p-0 w-max">{mc} muadil</p>
+                        <div className="inline-flex items-center justify-center px-2 rounded-[20px] text-[11px] font-semibold"
+                          style={{ background: C.greenBg, color: C.green, border: `1px solid ${C.greenBorder}`, height: '20px' }}>
+                          <p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{mc} muadil</p>
                         </div>
                       )}
                     </div>
@@ -525,9 +525,9 @@ export function PerfumesPage() {
                           <td className="px-[14px] py-[10px] text-center"><GenderBadge gender={item.gender} /></td>
                           <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid) text-center">{item.year || '—'}</td>
                           <td className="px-[14px] py-[10px] text-center">
-                            <div className="inline-flex items-center justify-center px-[10px] py-[2px] rounded-[20px] text-[12px] font-bold"
-                              style={{ background: mc > 0 ? C.greenBg : C.bg, color: mc > 0 ? C.green : C.textLight, border: `1px solid ${mc > 0 ? C.greenBorder : C.border}` }}>
-                              <p className="m-0 p-0 w-max">{mc} muadil</p>
+                            <div className="inline-flex items-center justify-center px-[10px] rounded-[20px] text-[12px] font-bold"
+                              style={{ background: mc > 0 ? C.greenBg : C.bg, color: mc > 0 ? C.green : C.textLight, border: `1px solid ${mc > 0 ? C.greenBorder : C.border}`, height: '20px' }}>
+                              <p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{mc} muadil</p>
                             </div>
                           </td>
                           <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid) text-center">

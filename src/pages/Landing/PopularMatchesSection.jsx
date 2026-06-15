@@ -17,8 +17,9 @@ export function PopularMatchesSection() {
       <div className="max-w-[1100px] mx-auto">
         <div className="flex justify-between items-end mb-8 flex-wrap gap-3">
           <div>
-            <div className="inline-flex items-center justify-center bg-(--color-gold-bg) border border-(--color-gold-border) rounded-[20px] px-4 py-[5px] text-[12px] font-bold text-(--color-gold) mb-[10px]">
-              POPÜLER EŞLEŞMELER
+            <div className="inline-flex items-center justify-center bg-(--color-gold-bg) border border-(--color-gold-border) rounded-[20px] px-4 text-[12px] font-bold text-(--color-gold) mb-[10px]" style={{ height: '26px' }}>
+              {/* text-box-trim (cap-center) büyük harfleri gerçek yükseklikte ortalar */}
+              <p className="m-0 p-0 w-max cap-center">POPÜLER EŞLEŞMELER</p>
             </div>
             <h2 className="text-[clamp(20px,3vw,32px)] font-black text-(--color-navy)">En çok incelenen muadiller</h2>
           </div>

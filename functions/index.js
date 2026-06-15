@@ -11,6 +11,12 @@ admin.initializeApp();
 // Deploy öncesi: firebase functions:secrets:set IP_HASH_SALT
 const IP_HASH_SALT = defineSecret('IP_HASH_SALT');
 
+// Web API anahtarı — kullanıcı adıyla giriş (resolveLoginEmail) içinde parola
+// doğrulamak için Identity Toolkit REST'e gönderilir. Web API key zaten public'tir
+// (client config'te de var) ama tek yerden yönetmek için secret olarak tutulur.
+// Deploy öncesi: firebase functions:secrets:set WEB_API_KEY
+const WEB_API_KEY = defineSecret('WEB_API_KEY');
+
 /**
  * Firestore'da users/{uid} belgesi güncellenip deleted:true olduğunda
  * Firebase Authentication hesabını otomatik siler.
@@ -95,6 +101,76 @@ exports.deleteAuthOnUserDeleted = onDocumentUpdated('users/{uid}', async (event)
     console.error(`✗ Firestore belge silme hatası (${uid}):`, e);
     throw e;
   }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Kullanıcı adıyla giriş — admin/moderatör e-postasını sızdırmadan çözüm
+//  ----------------------------------------------------------------------------
+//  Admin/mod hesaplarının e-postası /usernames belgelerinde TUTULMAZ ve bu
+//  belgeler client'tan okunamaz (bkz. firestore.rules → PII gizliliği). Bu yüzden
+//  bu hesaplar kullanıcı adıyla giriş yapamıyordu. Bu callable çözümü sunucuda
+//  yapar; ancak e-postayı yalnızca DOĞRU PAROLA girildiğinde döndürür — böylece
+//  "kullanıcı adı ver, e-postayı al" şeklinde bir e-posta hasadı oracle'ı olmaz.
+//  Asıl oturum (ve MFA/TOTP akışı) client tarafında normal şekilde tamamlanır.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Identity Toolkit REST ile parolayı doğrula. Admin SDK parola doğrulayamadığı
+// için signInWithPassword endpoint'i kullanılır. MFA kuruluysa bu çağrı idToken
+// yerine mfaPendingCredential döndürür (yine HTTP 200) — her iki durumda da parola
+// doğrudur. Yanlış parola 400 döner.
+async function verifyPassword(apiKey, email, password) {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: false }),
+    },
+  );
+  if (res.ok) return 'ok';                       // idToken veya mfaPendingCredential → parola doğru
+  let code = '';
+  try { code = (await res.json())?.error?.message || ''; } catch { /* gövde yok */ }
+  if (code.startsWith('TOO_MANY_ATTEMPTS')) return 'too-many';
+  return 'bad';                                  // INVALID_LOGIN_CREDENTIALS / INVALID_PASSWORD / EMAIL_NOT_FOUND
+}
+
+exports.resolveLoginEmail = onCall({ secrets: [WEB_API_KEY], region: 'us-central1' }, async (request) => {
+  const username = String(request.data?.username ?? '').toLowerCase().trim();
+  const password = String(request.data?.password ?? '');
+  if (!username || !password) {
+    throw new HttpsError('invalid-argument', 'Kullanıcı adı ve şifre gerekli.');
+  }
+
+  const db = admin.firestore();
+
+  // 1) Kullanıcı adı → uid. Önce /usernames, sonra /users.username yedeği.
+  let uid = null;
+  const unameSnap = await db.collection('usernames').doc(username).get();
+  if (unameSnap.exists) uid = unameSnap.data().uid || null;
+  if (!uid) {
+    const q = await db.collection('users').where('username', '==', username).limit(1).get();
+    if (!q.empty) uid = q.docs[0].id;
+  }
+  if (!uid) throw new HttpsError('not-found', 'Kullanıcı bulunamadı.');
+
+  // 2) uid → e-posta (Admin SDK rules'ı baypas eder)
+  const userSnap = await db.collection('users').doc(uid).get();
+  if (!userSnap.exists) throw new HttpsError('not-found', 'Kullanıcı bulunamadı.');
+  const u = userSnap.data();
+  if (u.deleted) throw new HttpsError('permission-denied', 'Hesap pasif durumda.');
+  const email = u.email;
+  if (!email) throw new HttpsError('failed-precondition', 'Bu hesap için e-posta tanımlı değil.');
+
+  // 3) Parolayı doğrula — doğru parola olmadan e-posta ASLA dönmez (oracle önleme)
+  const verdict = await verifyPassword(WEB_API_KEY.value(), email, password);
+  if (verdict === 'too-many') {
+    throw new HttpsError('resource-exhausted', 'Çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.');
+  }
+  if (verdict !== 'ok') {
+    throw new HttpsError('permission-denied', 'E-posta/kullanıcı adı veya şifre hatalı.');
+  }
+
+  return { email };
 });
 
 // ════════════════════════════════════════════════════════════════════════════

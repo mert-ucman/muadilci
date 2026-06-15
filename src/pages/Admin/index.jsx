@@ -1157,8 +1157,11 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
   const handleAdd = () => {
     if (!mf.name || !mf.brandId || !mf.targetPerfumeId) return;
     const norm = mf.name.trim().toLowerCase();
-    const dup = muadilPerfumes.find((m) => m.name.trim().toLowerCase() === norm);
-    if (dup) { setMuadilErr(`"${mf.name}" adında bir muadil parfüm zaten mevcut.`); return; }
+    // Mükerrer kontrolü muadil MARKASINA göre kapsanır: farklı muadil markaları aynı
+    // orijinalin muadilini ("Homme Marine Benzeri") ekleyebilir; ama aynı marka aynı
+    // adlı muadili iki kez ekleyemez.
+    const dup = muadilPerfumes.find((m) => m.name.trim().toLowerCase() === norm && String(m.brandId) === String(mf.brandId));
+    if (dup) { setMuadilErr(`Bu markada "${mf.name}" adlı muadil zaten mevcut.`); return; }
     setMuadilErr('');
     const b = brands.find((x) => String(x.id) === mf.brandId);
     const t = perfumes.find((x) => String(x.id) === mf.targetPerfumeId);
@@ -1172,7 +1175,9 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
         <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf({ ...mf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
         <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => {
           const p = perfumes.find((x) => String(x.id) === e.target.value);
-          setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.brandName} ${p.name} Benzeri` : '', gender: p?.gender || '' });
+          // Muadil adı yalnızca parfüm adından üretilir (marka adı HARİÇ).
+          // Ör. "Kenzo Homme Marine" seçilirse → "Homme Marine Benzeri".
+          setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.name} Benzeri` : '', gender: p?.gender || '' });
         }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
       </div>
       {mf.gender && (
@@ -1288,7 +1293,7 @@ function GChip({ g }) {
   const s = GENDER_STYLE[g];
   if (!s) return null;
   return (
-    <div className="inline-flex items-center justify-center px-2 py-0.5 rounded-[20px] text-[11px] font-semibold" style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}><p className="m-0 p-0 w-max">{g}</p></div>
+    <div className="inline-flex items-center justify-center px-2 rounded-[20px] text-[11px] font-semibold" style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`, height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{g}</p></div>
   );
 }
 
@@ -1489,7 +1494,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
             skipped++;
           } else {
             movedIds.push(d.id);
-            batch.update(d.ref, { targetPerfumeId: tgt.id, targetPerfumeName: tgt.name, targetBrandName: tgt.brandName, name: `${tgt.brandName} ${tgt.name} Benzeri` });
+            batch.update(d.ref, { targetPerfumeId: tgt.id, targetPerfumeName: tgt.name, targetBrandName: tgt.brandName, name: `${tgt.name} Benzeri` });
             moved++;
           }
         });
@@ -1544,7 +1549,7 @@ function MergePerfumesTab({ perfumes, muadilPerfumes, pairs, setPairs, running, 
             targetPerfumeId: src.id,
             targetPerfumeName: src.name,
             targetBrandName: src.brandName,
-            name: `${src.brandName} ${src.name} Benzeri`,
+            name: `${src.name} Benzeri`,
           });
         }
 
@@ -2512,8 +2517,8 @@ export function AdminPanel() {
                         {isOrig && (
                           <td style={tdStyle}>
                             {b.category && (
-                              <div className="inline-flex items-center justify-center gap-1 px-[10px] py-[3px] rounded-[20px] text-xs font-semibold" style={{ background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}` }}>
-                                <p className="m-0 p-0 w-max">{b.category}</p>
+                              <div className="inline-flex items-center justify-center gap-1 px-[10px] rounded-[20px] text-xs font-semibold" style={{ background: b.category === 'Niche' ? '#f3e8ff' : '#eff6ff', color: b.category === 'Niche' ? '#7c3aed' : '#2563eb', border: `1px solid ${b.category === 'Niche' ? '#ddd6fe' : '#bfdbfe'}`, height: '22px' }}>
+                                <p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '20px' }}>{b.category}</p>
                               </div>
                             )}
                           </td>
@@ -3134,7 +3139,7 @@ export function AdminPanel() {
                     </div>
                     <div className="shrink-0 ml-3">
                       {p.muadilCount > 0
-                        ? <div className="inline-flex items-center justify-center gap-1 bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-2 py-0.5 text-[11px] font-bold text-(--color-red)"><p className="m-0 p-0 w-max">{p.muadilCount} muadil silinecek</p></div>
+                        ? <div className="inline-flex items-center justify-center gap-1 bg-[#fff5f5] border border-[#fecaca] rounded-[6px] px-2 text-[11px] font-bold text-(--color-red)" style={{ height: '20px' }}><p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '18px' }}>{p.muadilCount} muadil silinecek</p></div>
                         : <span className="text-[11px] text-(--color-text-light)">muadil yok</span>
                       }
                     </div>

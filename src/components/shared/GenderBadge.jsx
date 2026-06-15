@@ -12,10 +12,9 @@ export function GenderBadge({ gender }) {
       className="inline-flex items-center justify-center rounded-[20px] px-[10px] text-[12px] font-bold"
       style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.text, height: '22px' }}
     >
-      {/* Sub-pixel translateY yerine net piksel line-height ile dikey ortalama
-          (kalp ikonu düzeltmesindeki "çift tam sayı boyut" mantığı: yarım piksel
-          kayma/bulanıklık olmadan tam pikselde ortalanır) */}
-      <p className="m-0 p-0 w-max" style={{ lineHeight: '20px' }}>{gender}</p>
+      {/* Dikey ortalama: text-box-trim (cap-center) gerçek harf yüksekliğini ortalar;
+          sabit çift yükseklik pill boyutunu sabitler. translateY/py hack yok. */}
+      <p className="m-0 p-0 w-max cap-center">{gender}</p>
     </div>
   );
 }

@@ -216,8 +216,8 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
           PARFÜMLER ({rows.length}/{MAX_ITEMS})
         </label>
         {hasCustom && (
-          <div className="inline-flex items-center justify-center text-[11px] font-semibold px-2 py-[3px] rounded-[6px] bg-[#fffbeb] text-[#b45309] border border-[#fcd34d]">
-            <p className="m-0 p-0 w-max">Listede olmayan parfüm var</p>
+          <div className="inline-flex items-center justify-center text-[11px] font-semibold px-2 rounded-[6px] bg-[#fffbeb] text-[#b45309] border border-[#fcd34d]" style={{ height: '22px' }}>
+            <p className="m-0 p-0 w-max cap-center" style={{ lineHeight: '20px' }}>Listede olmayan parfüm var</p>
           </div>
         )}
       </div>

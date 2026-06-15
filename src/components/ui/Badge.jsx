@@ -13,10 +13,12 @@ export function Badge({ children, color = 'gold' }) {
   const t = VARIANTS[color] || VARIANTS.gold;
   return (
     <div
-      className="inline-flex items-center justify-center rounded-[20px] px-[10px] py-[3px] text-[12px] font-semibold"
-      style={{ background: t.bg, border: `1px solid ${t.border}`, color: t.text }}
+      className="inline-flex items-center justify-center rounded-[20px] px-[10px] text-[12px] font-semibold"
+      style={{ background: t.bg, border: `1px solid ${t.border}`, color: t.text, height: '22px' }}
     >
-      <p className="m-0 p-0 w-max">{children}</p>
+      {/* Dikey ortalama: text-box-trim (cap-center) gerçek harf yüksekliğini ortalar;
+          sabit çift yükseklik pill boyutunu sabitler. translateY/py hack yok. */}
+      <p className="m-0 p-0 w-max cap-center">{children}</p>
     </div>
   );
 }

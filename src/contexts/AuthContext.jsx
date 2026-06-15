@@ -23,6 +23,7 @@ import {
   doc, getDoc, setDoc, updateDoc, writeBatch, deleteDoc,
   serverTimestamp, collection, query, where, getDocs, onSnapshot, limit,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { auth, db } from '@/lib/firebase';
 import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
 import { containsProfanity } from '@/utils/profanity';
@@ -55,6 +56,10 @@ function isInvalidUsername(key) {
 
 const AuthCtx = createContext(null);
 const googleProvider = new GoogleAuthProvider();
+
+// Admin/moderatör hesapları kullanıcı adıyla giriş yaparken e-postayı sunucuda
+// (PII sızdırmadan) çözen callable. E-postayı yalnızca doğru parolayla döndürür.
+const resolveLoginEmailFn = httpsCallable(getFunctions(undefined, 'us-central1'), 'resolveLoginEmail');
 
 export function useAuth() {
   return useContext(AuthCtx);
@@ -160,26 +165,46 @@ export function AuthProvider({ children }) {
   const loginWithEmail = async (identifier, password) => {
     let email = identifier;
     if (!identifier.includes('@')) {
-      // Kullanıcı adıyla giriş: usernames koleksiyonundan e-postayı bul
-      const usernameRef = doc(db, 'usernames', identifier.toLowerCase().trim());
-      const usernameSnap = await getDoc(usernameRef);
-      if (!usernameSnap.exists()) {
+      const key = identifier.toLowerCase().trim();
+      // Normal kullanıcılar: e-posta /usernames belgesinde tutulur, doğrudan oku.
+      let resolved = null;
+      try {
+        const usernameSnap = await getDoc(doc(db, 'usernames', key));
+        if (usernameSnap.exists()) resolved = usernameSnap.data().email || null;
+      } catch {
+        // İzin reddi (ör. /usernames/admin client'tan okunamaz) → sunucu çözümüne düş
+      }
+      // Admin/moderatör (e-posta usernames'te yok ya da okuma engelli): sunucuda çöz.
+      // Cloud Function e-postayı yalnızca parola DOĞRUYSA döndürür (PII oracle önleme).
+      // Asıl oturum + MFA akışı aşağıda client tarafında normal şekilde tamamlanır.
+      if (!resolved) {
+        try {
+          const res = await resolveLoginEmailFn({ username: key, password });
+          resolved = res?.data?.email || null;
+        } catch (e) {
+          const code = e?.code || '';
+          if (code === 'functions/not-found') {
+            const err = new Error('Kullanıcı bulunamadı.');
+            err.code = 'auth/user-not-found';
+            throw err;
+          }
+          if (code === 'functions/resource-exhausted') {
+            const err = new Error('Çok fazla deneme yapıldı.');
+            err.code = 'auth/too-many-requests';
+            throw err;
+          }
+          // permission-denied (yanlış parola) ve diğer hatalar → kimlik bilgisi hatası
+          const err = new Error('E-posta/kullanıcı adı veya şifre hatalı.');
+          err.code = 'auth/invalid-credential';
+          throw err;
+        }
+      }
+      if (!resolved) {
         const err = new Error('Kullanıcı bulunamadı.');
         err.code = 'auth/user-not-found';
         throw err;
       }
-      email = usernameSnap.data().email;
-      // Email usernames doc'ta yoksa (admin/mod hesapları) users koleksiyonundan bul
-      if (!email) {
-        const q = query(collection(db, 'users'), where('username', '==', identifier.toLowerCase().trim()), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) email = snap.docs[0].data().email;
-      }
-      if (!email) {
-        const err = new Error('Bu hesaba kullanıcı adıyla giriş yapılamıyor. Lütfen e-posta adresinizle giriş yapın.');
-        err.code = 'username-login-disabled';
-        throw err;
-      }
+      email = resolved;
     }
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const userData = await fetchOrCreateUserDoc(cred.user);

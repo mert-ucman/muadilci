@@ -309,7 +309,7 @@ export function BrandPage({ params }) {
                     }}
                   >
                     <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} className="text-[11px]" />
-                    <p className="m-0 p-0 w-max">{brand.category}</p>
+                    <p className="m-0 p-0 w-max cap-center">{brand.category}</p>
                   </div>
                 )}
               </div>
@@ -360,7 +360,7 @@ export function BrandPage({ params }) {
                       }}
                     >
                       <FontAwesomeIcon icon={faGlobe} className="text-[13px]" />
-                      <p className="m-0 p-0 w-max">Web Sitesi Yok</p>
+                      <p className="m-0 p-0 w-max cap-center">Web Sitesi Yok</p>
                     </div>
                   )}
                   {/* Instagram */}
