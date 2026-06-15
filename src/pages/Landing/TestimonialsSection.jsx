@@ -9,18 +9,18 @@ gsap.registerPlugin(ScrollTrigger);
 
 const TESTIMONIALS = [
   {
-    av: 'A', name: 'Ahmet K.', role: 'Doğrulanmış Üye', rating: 5,
-    text: "Sauvage'a bayılıyordum ama bütçemi zorluyordu. Muadilci sayesinde MFY Sauvage Benzeri'ni buldum, orijinalden farkı gerçekten minimal!",
+    av: 'S', name: 'Sami O.', role: 'Koleksiyoner', rating: 5,
+    text: "Türkiye'de bütün firmaların bulunduğu, artısı eksisi ve bütün her şeyi ile objektif karşılaştırması olan tek site. Bundan sonra ilk önce Muadilci'de araştırma yapıp öyle alışveriş yapacağım.",
     index: '01',
   },
   {
-    av: 'S', name: 'Selin M.', role: 'Parfüm Tutkunları', rating: 5,
-    text: "Artık parfüm almadan önce mutlaka Muadilci'ye bakıyorum. Orijinale en yakın muadili hızlıca bulup gerçek kullanıcı yorumlarını okuyorum.",
+    av: 'A', name: 'Ali O.', role: 'Parfüm Tutkunu', rating: 5,
+    text: "Bu site sayesinde daha isabetli seçimler yapabileceğiz, kullanıcıların bizzat deneyimleri sayesinde pişman olma devri bitti, memnuniyet devri başladı.",
     index: '02',
   },
   {
-    av: 'M', name: 'Mehmet T.', role: 'Koleksiyoncu', rating: 4,
-    text: "Dior'un muadillerini bulmak için biçilmiş kaftan. Koleksiyonum için orijinali, günlük kullanım için muadili tercih ediyorum.",
+    av: 'M', name: 'Mahmut E.', role: 'Topluluk Üyesi', rating: 5,
+    text: "Lüks parfüm markalarının muadillerini bulmak için biçilmiş kaftan. Lüks parfümlerin yüksek maliyetleri karşısında Muadilci çok güzel iş çıkarıp tüm muadil markaları tek bir yerde topladı. Teşekkürler!",
     index: '03',
   },
 ];
