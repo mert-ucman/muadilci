@@ -37,6 +37,7 @@ export function DataProvider({ children }) {
   const [comments, setComments] = useState([]);
   const [users, setUsers] = useState([]);
   const [sliderImages, setSliderImages] = useState([]);
+  const [landingImages, setLandingImages] = useState({});
   const [faviconUrl, setFaviconUrl] = useState('');
   const [globalBrandHeaders, setGlobalBrandHeaders] = useState({ original: '', muadil: '' });
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,9 @@ export function DataProvider({ children }) {
         setFaviconUrl(d.faviconUrl || '');
         setGlobalBrandHeaders({ original: d.originalBrandHeader || '', muadil: d.muadilBrandHeader || '' });
       }
+    }));
+    unsubs.push(onSnapshot(doc(db, 'settings', 'landingImages'), (s) => {
+      setLandingImages(s.exists() ? s.data() : {});
     }));
 
     return () => unsubs.forEach((u) => u());
@@ -734,6 +738,11 @@ export function DataProvider({ children }) {
     await setDoc(doc(db, 'settings', 'site'), { [field]: url ?? null }, { merge: true });
   };
 
+  // ─── Landing images ───────────────────────────────────────────────────────
+  const updateLandingImage = async (key, url) => {
+    await setDoc(doc(db, 'settings', 'landingImages'), { [key]: url ?? null }, { merge: true });
+  };
+
   // ─── Slider images ────────────────────────────────────────────────────────
   const MAX_SLIDER = 10;
   const MAX_SIZE_MB = 2;
@@ -757,7 +766,7 @@ export function DataProvider({ children }) {
 
   return (
     <DataCtx.Provider value={{
-      brands, perfumes, muadilPerfumes, comments, users, sliderImages,
+      brands, perfumes, muadilPerfumes, comments, users, sliderImages, landingImages,
       loading,
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
@@ -778,6 +787,7 @@ export function DataProvider({ children }) {
       ownsOriginalPerfume,
       addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
+      updateLandingImage,
       faviconUrl, updateFavicon,
       globalBrandHeaders, updateBrandGlobalHeader,
     }}>

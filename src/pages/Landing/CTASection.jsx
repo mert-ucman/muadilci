@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
+import { useData } from '@/contexts/DataContext';
+
+const CTA_FALLBACK_IMG = 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=1600&q=80';
 import { C, F, FH } from '@/constants/theme';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -10,6 +13,8 @@ gsap.registerPlugin(ScrollTrigger);
 export function CTASection() {
   const { navigate } = useRouter();
   const { sm } = useW();
+  const { landingImages } = useData();
+  const ctaBgSrc = landingImages?.ctaBg || CTA_FALLBACK_IMG;
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -56,7 +61,7 @@ export function CTASection() {
       {/* Atmospheric banner */}
       <div className="relative h-[320px] overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=1600&q=80"
+          src={ctaBgSrc}
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
           onError={e => (e.target.style.display = 'none')}
