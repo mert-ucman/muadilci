@@ -200,96 +200,102 @@ export function RegisterPage() {
   return (
     <>
       <TermsModal open={showTerms} onClose={() => setShowTerms(false)} />
-      <AuthLayout title="Hesap Oluştur" subtitle="Ücretsiz üye olun, keşfetmeye başlayın">
+      <AuthLayout title="Hesap Oluştur" subtitle="Ücretsiz üye olun, keşfetmeye başlayın" imageKey="signupImage" wide>
         <GoogleBtn label="Google ile Kayıt Ol" onClick={handleGoogle} loading={googleLoading} />
         <Divider />
 
-        {/* Ad Soyad */}
-        <div className="mb-[14px]">
-          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Ad Soyad</label>
-          <input
-            value={name}
-            onChange={(e) => setName(toTitleCase(e.target.value))}
-            onFocus={() => setFN(true)}
-            onBlur={() => setFN(false)}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder=""
-            className={inpClass}
-            style={{ border: `1px solid ${fN ? 'var(--color-gold)' : 'var(--color-border)'}` }}
-          />
-        </div>
+        {/* 2-column grid — mobilede tek sütun */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
 
-        {/* E-posta */}
-        <div className="mb-[14px]">
-          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">E-posta</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }}
-            onFocus={() => setFE(true)}
-            onBlur={(e) => { setFE(false); validateEmail(e.target.value); }}
-            onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder=""
-            className={inpClass}
-            style={{ border: `1px solid ${emailErr ? 'var(--color-red-border)' : fE ? 'var(--color-gold)' : 'var(--color-border)'}` }}
-          />
-          {emailErr && (
-            <div className="text-[12px] text-(--color-red) mt-1">{emailErr}</div>
-          )}
-        </div>
+          {/* Sol sütun: Ad Soyad + Kullanıcı Adı */}
+          <div>
+            <div className="mb-[12px]">
+              <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Ad Soyad</label>
+              <input
+                value={name}
+                onChange={(e) => setName(toTitleCase(e.target.value))}
+                onFocus={() => setFN(true)}
+                onBlur={() => setFN(false)}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                placeholder=""
+                className={inpClass}
+                style={{ border: `1px solid ${fN ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+              />
+            </div>
 
-        {/* Kullanıcı Adı */}
-        <div className="mb-[14px]">
-          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
-            Kullanıcı Adı
-            <span className="text-[11px] font-normal text-(--color-text-light) ml-[6px]">harf, rakam, _ ve - kullanabilirsiniz</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[14px] text-(--color-text-light) pointer-events-none">@</span>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
-              onFocus={() => setFU(true)}
-              onBlur={() => setFU(false)}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              placeholder=""
-              maxLength={20}
-              className={inpClass}
-              style={{ paddingLeft: '28px', border: `1px solid ${unameBorderColor}` }}
-            />
+            <div className="mb-[12px]">
+              <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
+                Kullanıcı Adı
+              </label>
+              <div className="relative">
+                <span className="absolute left-[13px] top-1/2 -translate-y-1/2 text-[14px] text-(--color-text-light) pointer-events-none">@</span>
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_\-]/g, ''))}
+                  onFocus={() => setFU(true)}
+                  onBlur={() => setFU(false)}
+                  onKeyDown={(e) => e.key === 'Enter' && submit()}
+                  placeholder=""
+                  maxLength={20}
+                  className={inpClass}
+                  style={{ paddingLeft: '28px', border: `1px solid ${unameBorderColor}` }}
+                />
+              </div>
+              <UsernameStatus status={usernameStatus} />
+            </div>
           </div>
-          <UsernameStatus status={usernameStatus} />
-        </div>
 
-        {/* Şifre */}
-        <div className="mb-[14px]">
-          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre</label>
-          <div className="relative">
-            <input
-              type={showP ? 'text' : 'password'}
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              onFocus={() => { setFP(true); setPassTouched(true); }}
-              onBlur={() => setFP(false)}
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              placeholder=""
-              className={inpClass}
-              style={{ paddingRight: '44px', border: `1px solid ${fP ? 'var(--color-gold)' : 'var(--color-border)'}` }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowP((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) flex p-1"
-            >
-              <EyeIcon open={showP} />
-            </button>
+          {/* Sağ sütun: E-posta + Şifre */}
+          <div>
+            <div className="mb-[12px]">
+              <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">E-posta</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); if (emailErr) validateEmail(e.target.value); }}
+                onFocus={() => setFE(true)}
+                onBlur={(e) => { setFE(false); validateEmail(e.target.value); }}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                placeholder=""
+                className={inpClass}
+                style={{ border: `1px solid ${emailErr ? 'var(--color-red-border)' : fE ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+              />
+              {emailErr && (
+                <div className="text-[12px] text-(--color-red) mt-1">{emailErr}</div>
+              )}
+            </div>
+
+            <div className="mb-[4px]">
+              <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre</label>
+              <div className="relative">
+                <input
+                  type={showP ? 'text' : 'password'}
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  onFocus={() => { setFP(true); setPassTouched(true); }}
+                  onBlur={() => setFP(false)}
+                  onKeyDown={(e) => e.key === 'Enter' && submit()}
+                  placeholder=""
+                  className={inpClass}
+                  style={{ paddingRight: '44px', border: `1px solid ${fP ? 'var(--color-gold)' : 'var(--color-border)'}` }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowP((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-(--color-text-light) flex p-1"
+                >
+                  <EyeIcon open={showP} />
+                </button>
+              </div>
+            </div>
           </div>
+
         </div>
 
         <PasswordStrength pass={pass} touched={passTouched} />
 
-        {/* Şifre Tekrar */}
-        <div className="mb-[14px]">
+        {/* Şifre Tekrar — tam genişlik */}
+        <div className="mb-[12px]">
           <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">Şifre Tekrar</label>
           <div className="relative">
             <input
@@ -317,7 +323,7 @@ export function RegisterPage() {
         </div>
 
         {/* Kullanım şartları */}
-        <div className="flex gap-[10px] items-start mb-[14px]">
+        <div className="flex gap-[10px] items-start mb-[12px]">
           <button
             type="button"
             onClick={() => setAgreed((s) => !s)}
@@ -348,7 +354,8 @@ export function RegisterPage() {
           {loading ? 'Kayıt olunuyor...' : 'Üye Ol'}
         </Btn>
         <div className="text-center text-[13px] text-(--color-text-mid)">
-          Zaten üye misin?{' '}
+          Zaten üye misin?
+          <br />
           <span
             onClick={() => navigate('/giris')}
             className="text-(--color-gold) font-bold cursor-pointer"

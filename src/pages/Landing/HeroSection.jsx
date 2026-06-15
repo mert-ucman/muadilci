@@ -3,17 +3,17 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
-import noImage from '@/img/no-image.jpg';
 
 const INTERVAL = 5500;
 
 /* ── Comparison card shown in the right column ─────────────────────── */
 function CompareCard({ perfumes, muadilPerfumes }) {
+  const { noImageUrl } = useData();
   const muadil  = [...muadilPerfumes].sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))[0];
   const perfume = muadil ? perfumes.find(p => p.id === muadil.targetPerfumeId) : null;
 
-  const origImg   = perfume?.images?.[0]?.src || noImage;
-  const muadilImg = muadil?.image || muadil?.images?.[0]?.src || noImage;
+  const origImg   = perfume?.images?.[0]?.src || noImageUrl || undefined;
+  const muadilImg = muadil?.image || muadil?.images?.[0]?.src || noImageUrl || undefined;
   const origName  = perfume ? `${perfume.brandName} ${perfume.name}` : 'Orijinal Parfüm';
   const muadilName= muadil  ? `${muadil.brandName} ${muadil.name}`  : 'Muadil Parfüm';
 
@@ -36,7 +36,7 @@ function CompareCard({ perfumes, muadilPerfumes }) {
         {/* Original */}
         <div className="text-center">
           <div className="w-14 h-14 rounded-[10px] overflow-hidden mx-auto mb-2 border border-(--color-border) bg-(--color-surface)">
-            <img src={origImg} alt={origName} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+            {origImg && <img src={origImg} alt={origName} onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} className="w-full h-full object-cover" />}
           </div>
           <div className="text-[9px] font-semibold text-(--color-text-muted) tracking-[.08em] uppercase mb-[3px]" style={{ fontFamily: F }}>Orijinal</div>
           <div className="text-[11px] font-semibold text-(--color-text) leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: F }}>{origName}</div>
@@ -48,7 +48,7 @@ function CompareCard({ perfumes, muadilPerfumes }) {
         {/* Muadil */}
         <div className="text-center">
           <div className="w-14 h-14 rounded-[10px] overflow-hidden mx-auto mb-2 border border-(--color-gold-border) bg-(--color-gold-bg)">
-            <img src={muadilImg} alt={muadilName} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+            {muadilImg && <img src={muadilImg} alt={muadilName} onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} className="w-full h-full object-cover" />}
           </div>
           <div className="text-[9px] font-semibold text-(--color-gold) tracking-[.08em] uppercase mb-[3px]" style={{ fontFamily: F }}>Muadil</div>
           <div className="text-[11px] font-semibold text-(--color-gold) leading-[1.3] overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: F }}>{muadilName}</div>

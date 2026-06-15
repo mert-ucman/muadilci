@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import noImage from '@/img/no-image.jpg';
+import { useData } from '@/contexts/DataContext';
 import { Lightbox } from './Lightbox';
 
 /**
@@ -10,6 +10,7 @@ import { Lightbox } from './Lightbox';
  * photos: yayınlanmış görsel URL dizisi (yeni → eski sıralı)
  */
 export function PerfumeGallery({ photos = [], className = '', onEmptyClick }) {
+  const { noImageUrl } = useData();
   const [lb, setLb] = useState(-1);
   const shown = photos.slice(0, 4);
   const extra = Math.max(0, photos.length - 4);
@@ -30,7 +31,7 @@ export function PerfumeGallery({ photos = [], className = '', onEmptyClick }) {
                 else if (onEmptyClick) { /* boş kare → kart tıklamasına bırak */ }
               }}
             >
-              <img src={src || noImage} alt="" loading="lazy" className="w-full h-full object-cover" />
+              {(src || noImageUrl) && <img src={src || noImageUrl} alt="" loading="lazy" className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }} />}
               {isOverflow && (
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(15,15,15,0.58)' }}>
                   <span className="text-white font-bold text-[13px] text-center leading-tight px-1">+{extra} görsel<br />daha</span>

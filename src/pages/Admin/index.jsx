@@ -7,7 +7,7 @@ import { calcScores } from '@/utils/scoring';
 import { slugify } from '@/utils/strings';
 import { Card, Badge, Btn, Modal, Input, Select, Textarea, TableScrollHint } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
-import { C, F } from '@/constants/theme';
+import { C, F, FH } from '@/constants/theme';
 import { uploadDataURL } from '@/lib/storage';
 import { db } from '@/lib/firebase';
 import { ActivityTab } from './ActivityTab';
@@ -21,11 +21,6 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Cropper from 'react-easy-crop';
-import howItWorksBgImg from '@/img/how-it-works-bg.png';
-import similarScentImg from '@/img/similar-scent-best-equvalient.png';
-import leafBgImg from '@/img/real-person-real-experience.png';
-
-const CTA_FALLBACK = 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=70';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const RC = { admin: 'red', moderator: 'blue', user: 'gold' };
@@ -243,15 +238,154 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
 }
 
 const LANDING_SLOTS = [
-  { key: 'howItWorksBg',   label: 'Nasıl Çalışır Arkaplanı',  desc: 'HowItWorksSection arkaplan görseli',   aspect: '16/9', fallback: howItWorksBgImg },
-  { key: 'comparisonImg',  label: 'Karşılaştırma Bölümü',      desc: 'ComparisonSection sağ panel görseli',  aspect: '4/3',  fallback: similarScentImg },
-  { key: 'testimonialsBg', label: 'Yorumlar Arkaplanı',         desc: 'TestimonialsSection arkaplan görseli', aspect: '16/9', fallback: leafBgImg },
-  { key: 'ctaBg',          label: 'CTA Bölümü',                 desc: 'CTASection atmosfer görseli',          aspect: '16/9', fallback: CTA_FALLBACK },
+  { key: 'howItWorksBg',   label: 'Nasıl Çalışır Arkaplanı',  desc: 'HowItWorksSection arkaplan görseli',   aspect: '16/9' },
+  { key: 'comparisonImg',  label: 'Karşılaştırma Bölümü',      desc: 'ComparisonSection sağ panel görseli',  aspect: '4/3'  },
+  { key: 'testimonialsBg', label: 'Yorumlar Arkaplanı',         desc: 'TestimonialsSection arkaplan görseli', aspect: '16/9' },
+  { key: 'ctaBg',          label: 'CTA Bölümü',                 desc: 'CTASection atmosfer görseli',          aspect: '16/9' },
+  { key: 'noImageUrl',     label: 'Boş Görsel Placeholder',     desc: 'Parfüm/marka görseli yokken gösterilir', aspect: '1/1' },
+  { key: 'loginImage',     label: 'Giriş Sayfası Görseli',     desc: 'Giriş ve 2FA sayfası sol panel görseli',  aspect: '9/16' },
+  { key: 'signupImage',    label: 'Kayıt Sayfası Görseli',     desc: 'Üye ol sayfası sol panel görseli',        aspect: '9/16' },
 ];
+
+const AUTH_DEFAULT_HTML = 'Kokuların<br><em style="color:#B8935A;font-style:italic">Zarif</em> Dünyasına<br>Hoş Geldiniz';
+const AUTH_DEFAULT_SUB  = 'Lüks parfümlerin muadillerini\nkeşfet, karşılaştır ve en iyisini bul.';
+
+function RichTextEditor({ label, initialHtml, onChange }) {
+  const editorRef = useRef(null);
+  const [colorHex, setColorHex] = useState('#B8935A');
+  const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (!hasMounted.current && editorRef.current && initialHtml !== undefined) {
+      editorRef.current.innerHTML = initialHtml || '';
+      hasMounted.current = true;
+      onChange(initialHtml || '');
+    }
+  }, [initialHtml]);
+
+  const cmd = (command, val) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false, val || null);
+    onChange(editorRef.current.innerHTML);
+  };
+
+  return (
+    <div>
+      <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">{label}</label>
+      <div className="flex items-center gap-2 flex-wrap px-3 py-2 rounded-t-[10px]"
+           style={{ background: '#f8f7f5', border: `1px solid ${C.border}`, borderBottom: 'none' }}>
+        <button
+          onMouseDown={(e) => { e.preventDefault(); cmd('italic'); }}
+          title="Seçili metni italik yap"
+          className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center cursor-pointer text-[14px] font-bold transition-all"
+          style={{ background: '#fff', border: `1px solid ${C.border}`, fontStyle: 'italic', color: C.navy, fontFamily: 'Georgia, serif' }}
+        >I</button>
+        <div className="flex items-center gap-[6px]">
+          <input
+            type="color"
+            value={colorHex}
+            onChange={(e) => setColorHex(e.target.value)}
+            className="w-[28px] h-[28px] rounded-[6px] cursor-pointer"
+            style={{ padding: '2px 3px', border: `1px solid ${C.border}` }}
+            title="Renk seç"
+          />
+          <input
+            type="text"
+            value={colorHex}
+            onChange={(e) => setColorHex(e.target.value)}
+            placeholder="#B8935A"
+            maxLength={7}
+            className="h-[28px] rounded-[6px] text-[12px] text-(--color-text) outline-none px-2"
+            style={{ width: '76px', border: `1px solid ${C.border}` }}
+          />
+          <button
+            onMouseDown={(e) => { e.preventDefault(); cmd('foreColor', colorHex); }}
+            className="h-[28px] px-2 rounded-[6px] text-[11px] font-bold cursor-pointer whitespace-nowrap"
+            style={{ background: colorHex, color: '#fff', border: 'none' }}
+            title="Seçili metnin rengini değiştir"
+          >Renk Uygula</button>
+        </div>
+        <button
+          onMouseDown={(e) => { e.preventDefault(); cmd('insertHTML', '<br>'); }}
+          className="h-[28px] px-2 rounded-[6px] text-[11px] font-semibold cursor-pointer whitespace-nowrap"
+          style={{ background: '#fff', color: C.textLight, border: `1px solid ${C.border}` }}
+          title="Satır sonu ekle"
+        >↵ Satır</button>
+        <button
+          onMouseDown={(e) => { e.preventDefault(); cmd('removeFormat'); }}
+          className="h-[28px] px-2 rounded-[6px] text-[11px] font-semibold cursor-pointer whitespace-nowrap"
+          style={{ background: '#fff5f5', color: C.red, border: '1px solid #fecaca' }}
+          title="Seçili metindeki formatı temizle"
+        >Temizle</button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={() => onChange(editorRef.current?.innerHTML || '')}
+        className="min-h-[72px] rounded-b-[10px] px-[14px] py-[10px] text-[16px] outline-none transition-[border-color] duration-200"
+        style={{ border: `1px solid ${C.border}`, fontFamily: FH, lineHeight: 1.4, color: '#1a1208' }}
+        onFocus={(e) => (e.currentTarget.style.borderColor = C.gold)}
+        onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
+      />
+    </div>
+  );
+}
+
+function AuthPanelPreview({ imageUrl, headlineHtml, subtextText, label }) {
+  const sub = subtextText || AUTH_DEFAULT_SUB;
+  const subLines = sub.split('\n');
+  return (
+    <div className="flex flex-col items-center gap-2 mt-4">
+      <div className="text-[11px] font-semibold text-(--color-text-light) tracking-wide uppercase">{label}</div>
+      <div style={{
+        width: '164px', minHeight: '246px',
+        background: imageUrl ? `url(${imageUrl}) center top / cover no-repeat` : 'linear-gradient(170deg, #1a1208 0%, #0f0a04 100%)',
+        borderRadius: '12px', overflow: 'hidden', position: 'relative',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.28)', flexShrink: 0,
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(170deg, rgba(15,10,5,0.18) 0%, rgba(18,12,4,0.80) 65%)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px' }}>
+          <div
+            style={{ fontFamily: FH, fontSize: '14px', fontWeight: 400, color: '#fff', lineHeight: 1.32, marginBottom: '6px', letterSpacing: '-0.01em' }}
+            dangerouslySetInnerHTML={{ __html: headlineHtml || AUTH_DEFAULT_HTML }}
+          />
+          <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '8px', fontWeight: 300, color: 'rgba(255,255,255,0.58)', lineHeight: 1.85 }}>
+            {subLines.map((l, i) => <span key={i}>{l}{i < subLines.length - 1 && <br />}</span>)}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function LandingImagesSection({ landingImages, updateLandingImage, MAX_SIZE_MB = 3 }) {
   const [uploading, setUploading] = useState(null);
   const [error, setError] = useState('');
+  const [loginHtml, setLoginHtml] = useState('');
+  const [signupHtml, setSignupHtml] = useState('');
+  const [authSubtext, setAuthSubtext] = useState('');
+  const [textSaving, setTextSaving] = useState(false);
+  const [textSaved, setTextSaved] = useState(false);
+
+  useEffect(() => {
+    if (landingImages?.authSubtext !== undefined) setAuthSubtext(landingImages.authSubtext);
+  }, [landingImages?.authSubtext]);
+
+  const saveAuthTexts = async () => {
+    setTextSaving(true);
+    setTextSaved(false);
+    try {
+      await updateLandingImage('loginHeadline', loginHtml);
+      await updateLandingImage('signupHeadline', signupHtml);
+      await updateLandingImage('authSubtext', authSubtext);
+      setTextSaved(true);
+      setTimeout(() => setTextSaved(false), 2000);
+    } finally {
+      setTextSaving(false);
+    }
+  };
 
   const handleFile = async (key, file) => {
     if (!file) return;
@@ -288,23 +422,24 @@ function LandingImagesSection({ landingImages, updateLandingImage, MAX_SIZE_MB =
       )}
 
       <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-        {LANDING_SLOTS.map(({ key, label, desc, aspect, fallback }) => {
+        {LANDING_SLOTS.map(({ key, label, desc, aspect }) => {
           const currentUrl = landingImages?.[key];
-          const previewSrc = currentUrl || fallback;
           const isUploading = uploading === key;
           return (
             <div key={key} className="rounded-[14px] overflow-hidden bg-white flex flex-col" style={{ border: `1px solid ${C.border}` }}>
               {/* Preview */}
-              <div className="relative overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: aspect }}>
-                <img src={previewSrc} alt={label} className="w-full h-full object-cover" />
-                {!currentUrl && (
-                  <div className="absolute bottom-0 left-0 right-0 px-2 py-[5px] text-center text-[10px] font-semibold text-white/80 tracking-wide" style={{ background: 'rgba(0,0,0,.45)' }}>
-                    Şu an kullanılan (varsayılan)
-                  </div>
-                )}
-                {currentUrl && (
-                  <div className="absolute bottom-0 left-0 right-0 px-2 py-[5px] text-center text-[10px] font-semibold text-white tracking-wide" style={{ background: `rgba(184,147,90,.75)` }}>
-                    Özel görsel aktif
+              <div className="relative overflow-hidden flex items-center justify-center" style={{ aspectRatio: aspect, maxHeight: '200px', background: currentUrl ? '#000' : C.goldBg }}>
+                {currentUrl ? (
+                  <>
+                    <img src={currentUrl} alt={label} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 px-2 py-[5px] text-center text-[10px] font-semibold text-white tracking-wide" style={{ background: 'rgba(184,147,90,.75)' }}>
+                      Özel görsel aktif
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-(--color-text-light)">
+                    <FontAwesomeIcon icon={faImage} style={{ fontSize: '28px', opacity: 0.35 }} />
+                    <span className="text-[11px] font-medium">Tema rengi gösterilir</span>
                   </div>
                 )}
                 {isUploading && (
@@ -350,6 +485,74 @@ function LandingImagesSection({ landingImages, updateLandingImage, MAX_SIZE_MB =
             </div>
           );
         })}
+      </div>
+
+      {/* Auth sayfası panel metinleri */}
+      <div className="mt-8 pt-7" style={{ borderTop: `1px solid ${C.border}` }}>
+        <div className="mb-5">
+          <h3 className="text-[15px] font-bold text-(--color-navy) mb-1">Giriş / Kayıt Sayfası Metinleri</h3>
+          <p className="text-[13px] text-(--color-text-light)">Sol panel görsel üzerinde görünen başlık metinleri. Metni seçip araç çubuğu ile italik ve renk uygulayın — anlık önizleme aşağıda görünür.</p>
+        </div>
+
+        <div className="grid gap-8" style={{ gridTemplateColumns: '1fr 1fr', maxWidth: '900px' }}>
+          {/* Giriş Sayfası */}
+          <div>
+            <RichTextEditor
+              label="Giriş Sayfası Başlığı"
+              initialHtml={landingImages?.loginHeadline}
+              onChange={setLoginHtml}
+            />
+            <AuthPanelPreview
+              imageUrl={landingImages?.loginImage}
+              headlineHtml={loginHtml}
+              subtextText={authSubtext}
+              label="Giriş Sayfası Önizleme"
+            />
+          </div>
+
+          {/* Kayıt Sayfası */}
+          <div>
+            <RichTextEditor
+              label="Kayıt Sayfası Başlığı"
+              initialHtml={landingImages?.signupHeadline}
+              onChange={setSignupHtml}
+            />
+            <AuthPanelPreview
+              imageUrl={landingImages?.signupImage}
+              headlineHtml={signupHtml}
+              subtextText={authSubtext}
+              label="Kayıt Sayfası Önizleme"
+            />
+          </div>
+        </div>
+
+        {/* Ortak alt metin */}
+        <div className="mt-6" style={{ maxWidth: '620px' }}>
+          <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
+            Alt Açıklama <span className="text-[11px] font-normal text-(--color-text-light)">(her iki sayfada ortak gösterilir)</span>
+          </label>
+          <textarea
+            value={authSubtext}
+            onChange={(e) => setAuthSubtext(e.target.value)}
+            placeholder={'Lüks parfümlerin muadillerini\nkeşfet, karşılaştır ve en iyisini bul.'}
+            rows={2}
+            className="w-full rounded-[10px] px-[14px] py-[10px] text-[14px] text-(--color-text) outline-none transition-[border-color] duration-200 resize-none"
+            style={{ border: `1px solid ${C.border}`, fontFamily: 'inherit', lineHeight: 1.6 }}
+            onFocus={(e) => (e.target.style.borderColor = C.gold)}
+            onBlur={(e) => (e.target.style.borderColor = C.border)}
+          />
+        </div>
+
+        <div className="mt-4">
+          <button
+            onClick={saveAuthTexts}
+            disabled={textSaving}
+            className="h-[36px] px-5 rounded-[8px] text-[13px] font-semibold cursor-pointer transition-all duration-150 disabled:opacity-60"
+            style={{ background: textSaved ? '#f0fdf4' : C.navy, color: textSaved ? '#16a34a' : '#fff', border: textSaved ? '1px solid #86efac' : 'none' }}
+          >
+            {textSaving ? 'Kaydediliyor...' : textSaved ? '✓ Kaydedildi' : 'Kaydet'}
+          </button>
+        </div>
       </div>
     </div>
   );

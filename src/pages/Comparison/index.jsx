@@ -16,7 +16,6 @@ import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import noImage from '@/img/no-image.jpg';
 
 // Mevsim ve kullanım ortamı seçenekleri (çoklu seçim). Form, istatistikler ve
 // yorum kartları aynı listeyi kullanır; key değerleri Firestore'da saklanır.

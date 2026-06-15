@@ -4,7 +4,6 @@ import { useData } from '@/contexts/DataContext';
 import { C, F, FH } from '@/constants/theme';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import leafBg from '@/img/real-person-real-experience.png';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -158,7 +157,7 @@ function TestimonialCard({ t, i }) {
 export function TestimonialsSection() {
   const { sm, xs } = useW();
   const { landingImages } = useData();
-  const testimonialsBgSrc = landingImages?.testimonialsBg || leafBg;
+  const testimonialsBgSrc = landingImages?.testimonialsBg || null;
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const marqueeRef = useRef(null);
@@ -217,13 +216,13 @@ export function TestimonialsSection() {
       className="bg-(--color-text) overflow-hidden border-b border-white/[.06] relative"
     >
       {/* Full-section leaf background */}
-      <img
+      {testimonialsBgSrc && <img
         src={testimonialsBgSrc}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none z-0"
         style={{ opacity: 0.08, filter: 'grayscale(30%)' }}
-      />
+      />}
 
       {/* Atmospheric glow */}
       <div className="absolute inset-0 pointer-events-none z-[1] bg-[radial-gradient(ellipse_60%_40%_at_20%_60%,rgba(184,147,90,.05)_0%,transparent_70%)]" />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { Btn } from '@/components/ui';
-import { AuthLayout, GoogleBtn, Divider, EyeIcon, signUpBg } from './AuthLayout';
+import { AuthLayout, GoogleBtn, Divider, EyeIcon } from './AuthLayout';
 
 // step: 'login' | 'mfa-code'
 export function LoginPage() {
@@ -101,8 +101,7 @@ export function LoginPage() {
       <AuthLayout
         title="İki Faktörlü Doğrulama"
         subtitle="Authenticator uygulamanızdaki 6 haneli kodu girin"
-        bgImage={signUpBg}
-        headline={<>Güvenli<br /><em style={{ color: 'rgb(184,147,90)', fontStyle: 'italic' }}>Giriş</em><br />Doğrulaması</>}
+        imageKey="loginImage"
       >
         <div className="mb-[14px]">
           <label className="block text-[13px] font-semibold text-(--color-text-mid) mb-[6px]">
@@ -151,8 +150,7 @@ export function LoginPage() {
     <AuthLayout
       title="Hoş Geldiniz"
       subtitle="Hesabınıza giriş yapın"
-      bgImage={signUpBg}
-      headline={<>Kokuların<br /><em style={{ color: 'rgb(184,147,90)', fontStyle: 'italic' }}>Güçlü</em> Dünyasına<br />Hoş Geldiniz</>}
+      imageKey="loginImage"
     >
       <GoogleBtn label="Google ile Giriş Yap" onClick={handleGoogle} loading={googleLoading} />
       <Divider />

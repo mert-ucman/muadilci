@@ -8,7 +8,6 @@ import { Card, Btn, TableScrollHint } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import noImage from '@/img/no-image.jpg';
 import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -80,7 +79,7 @@ export function PerfumesPage() {
     description: 'Tüm orijinal parfümleri ve muadillerini incele; marka, cinsiyet ve nota bazında filtrele, koku ve kalıcılık puanlarına göre sırala.',
   });
   const { navigate } = useRouter();
-  const { perfumes, muadilPerfumes, comments, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
+  const { perfumes, muadilPerfumes, comments, noImageUrl, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
 
   // Onaylı yorumlardan parfüm/muadil fotoğraf haritası (yeni → eski). Kart/satır kapakları buradan.
   const photoMap = useMemo(() => {
@@ -514,7 +513,7 @@ export function PerfumesPage() {
                       <td className="px-[14px] py-[10px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[38px] h-[38px] rounded-lg bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={(isOrig ? origPhotos(item) : muadilPhotos(item))[0] || noImage} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                            <img src={(isOrig ? origPhotos(item) : muadilPhotos(item))[0] || noImageUrl || undefined} alt={item.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{item.name}</span>
                         </div>

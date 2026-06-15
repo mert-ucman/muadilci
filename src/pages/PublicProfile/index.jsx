@@ -8,7 +8,6 @@ import { useW } from '@/hooks/useW';
 import { Card, Badge, Btn } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import noImage from '@/img/no-image.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 

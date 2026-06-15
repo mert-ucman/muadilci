@@ -2,7 +2,6 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C } from '@/constants/theme';
-import noImage from '@/img/no-image.jpg';
 
 const MARQUEE_STYLE = `
   @keyframes marquee-ltr {
@@ -41,7 +40,7 @@ function BrandChip({ b, navigate }) {
       }}
     >
       <div className="w-[34px] h-[34px] rounded-full bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center overflow-hidden shrink-0">
-        <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" loading="lazy" />
+        <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" loading="lazy" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
       </div>
       <span className="text-[13px] font-semibold text-(--color-text-mid) tracking-[.01em] whitespace-nowrap">{b.name}</span>
     </div>
@@ -66,7 +65,7 @@ function MarqueeRow({ items, direction, navigate }) {
 
 export function BrandsBandSection() {
   const { navigate } = useRouter();
-  const { brands } = useData();
+  const { brands, noImageUrl } = useData();
   const { sm } = useW();
 
   const visible = brands.filter((b) => b.active !== false);

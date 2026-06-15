@@ -10,8 +10,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import noImage from '@/img/no-image.jpg';
-
 function IconInstagram() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
@@ -89,7 +87,7 @@ function IconList() {
 
 export function BrandPage({ params }) {
   const { navigate, goBack } = useRouter();
-  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite, globalBrandHeaders } = useData();
+  const { brands, perfumes, muadilPerfumes, comments, noImageUrl, toggleBrandFavorite, isBrandFavorite, toggleMuadilFavorite, isMuadilFavorite, globalBrandHeaders } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
 
@@ -105,7 +103,7 @@ export function BrandPage({ params }) {
     return { orig, mu };
   }, [comments]);
   const coverPhoto = (item, orig) =>
-    item.image || (orig ? photoMap.orig[item.id]?.[0] : photoMap.mu[item.id]?.[0]) || noImage;
+    item.image || (orig ? photoMap.orig[item.id]?.[0] : photoMap.mu[item.id]?.[0]) || noImageUrl || undefined;
 
   const [showTooltip, setShowTooltip] = useState(false);
   const [view, setView] = useState('list');
@@ -567,7 +565,7 @@ export function BrandPage({ params }) {
                 <Card key={item.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }}
                   onClick={() => isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`)}>
                   <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
-                    <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover block" />
+                    <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover block" />
                     {/* Muadil sayı badge — sadece orijinal parfümlerde */}
                     {isOrig && (
                       <div
@@ -699,7 +697,7 @@ export function BrandPage({ params }) {
                       <td className="px-[14px] py-[12px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[40px] h-[40px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                            <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-semibold text-[14px] text-(--color-navy)">{item.name}</span>
                         </div>

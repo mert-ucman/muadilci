@@ -764,9 +764,11 @@ export function DataProvider({ children }) {
     await batch.commit();
   };
 
+  const noImageUrl = landingImages?.noImageUrl || '';
+
   return (
     <DataCtx.Provider value={{
-      brands, perfumes, muadilPerfumes, comments, users, sliderImages, landingImages,
+      brands, perfumes, muadilPerfumes, comments, users, sliderImages, landingImages, noImageUrl,
       loading,
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,

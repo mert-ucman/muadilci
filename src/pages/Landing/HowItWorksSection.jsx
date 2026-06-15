@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import howItWorksBg from '@/img/how-it-works-bg.png';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
@@ -17,7 +16,7 @@ export function HowItWorksSection() {
   const { sm, xs } = useW();
   const { landingImages } = useData();
   const sectionRef = useRef(null);
-  const bgSrc = landingImages?.howItWorksBg || howItWorksBg;
+  const bgSrc = landingImages?.howItWorksBg || null;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -38,13 +37,15 @@ export function HowItWorksSection() {
       style={{ padding: sm ? '72px 20px' : '100px 48px' }}
     >
       {/* Background image */}
-      <img
-        src={bgSrc}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center"
-        onError={e => (e.target.style.display = 'none')}
-      />
+      {bgSrc && (
+        <img
+          src={bgSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          onError={e => (e.target.style.display = 'none')}
+        />
+      )}
       {/* Warm overlay to keep text readable */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,251,245,0.90)_0%,rgba(255,251,245,0.75)_50%,rgba(255,251,245,0.55)_100%)]" />
 

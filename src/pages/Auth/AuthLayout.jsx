@@ -1,39 +1,43 @@
 import { useRouter } from '@/contexts/RouterContext';
+import { useData } from '@/contexts/DataContext';
 import { FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { useW } from '@/hooks/useW';
 import logoDark from '@/img/logos/logo-dark-minified.png';
-import loginBg from '@/img/login page.png';
-import signUpBg from '@/img/sign-up.png';
 
-export { loginBg, signUpBg };
+const DEFAULT_HEADLINE_HTML = 'Kokuların<br><em style="color:#B8935A;font-style:italic">Zarif</em> Dünyasına<br>Hoş Geldiniz';
+const DEFAULT_SUBTEXT = 'Lüks parfümlerin muadillerini\nkeşfet, karşılaştır ve en iyisini bul.';
 
-const GOLD = 'rgb(184,147,90)';
-
-const DEFAULT_HEADLINE = (
-  <>Kokuların<br /><em style={{ color: GOLD, fontStyle: 'italic' }}>Zarif</em> Dünyasına<br />Hoş Geldiniz</>
-);
-
-export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headline = DEFAULT_HEADLINE }) {
+export function AuthLayout({ title, subtitle, children, imageKey = 'loginImage', wide = false }) {
   const { navigate } = useRouter();
+  const { landingImages } = useData();
   const { lg } = useW();
   useSeo({ title: title || 'Hesap', noindex: true });
 
+  const bgSrc = landingImages?.[imageKey] || null;
+  const headlineHtml = imageKey === 'signupImage'
+    ? (landingImages?.signupHeadline || DEFAULT_HEADLINE_HTML)
+    : (landingImages?.loginHeadline || DEFAULT_HEADLINE_HTML);
+  const subtextText = landingImages?.authSubtext || DEFAULT_SUBTEXT;
+  const subtextLines = subtextText.split('\n');
+
   return (
     <div className="min-h-screen bg-(--color-bg) flex items-center justify-center px-6 py-10">
-      <div className="flex w-full max-w-[920px] rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.13)]">
+      <div className={`flex w-full ${wide ? 'max-w-[1060px]' : 'max-w-[920px]'} rounded-3xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.13)]`}>
 
         {/* Left panel: visual */}
         {!lg && (
           <div
-            className="w-[400px] min-h-[560px] shrink-0 relative bg-cover bg-[center_top]"
-            style={{ backgroundImage: `url(${bgImage})` }}
+            className="w-[400px] min-h-[560px] shrink-0 relative"
+            style={{
+              background: bgSrc ? `url(${bgSrc}) center top / cover no-repeat` : 'linear-gradient(170deg, #1a1208 0%, #0f0a04 100%)',
+            }}
           >
             {/* Darkening gradient */}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(170deg, rgba(15,10,5,0.18) 0%, rgba(18,12,4,0.80) 65%)' }} />
 
             {/* Text */}
-            <div className="absolute bottom-0 left-0 right-0 p-10" style={{ padding: '40px 36px' }}>
+            <div className="absolute bottom-0 left-0 right-0" style={{ padding: '40px 36px' }}>
               <h2
                 style={{
                   fontFamily: FH,
@@ -44,9 +48,8 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
                   marginBottom: '18px',
                   letterSpacing: '-0.01em',
                 }}
-              >
-                {headline}
-              </h2>
+                dangerouslySetInnerHTML={{ __html: headlineHtml }}
+              />
               <p style={{
                 fontFamily: "'DM Sans', sans-serif",
                 fontSize: '12.5px',
@@ -55,8 +58,9 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
                 lineHeight: 1.85,
                 letterSpacing: '0.02em',
               }}>
-                Lüks parfümlerin muadillerini<br />
-                keşfet, karşılaştır ve en iyisini bul.
+                {subtextLines.map((line, i) => (
+                  <span key={i}>{line}{i < subtextLines.length - 1 && <br />}</span>
+                ))}
               </p>
             </div>
           </div>
@@ -90,7 +94,7 @@ export function AuthLayout({ title, subtitle, children, bgImage = loginBg, headl
             />
           </div>
 
-          <div className="w-full max-w-[360px]">
+          <div className={`w-full ${wide ? 'max-w-[520px]' : 'max-w-[360px]'}`}>
             <h1 className="text-[22px] font-black text-(--color-navy) mb-[6px] text-center">
               {title}
             </h1>

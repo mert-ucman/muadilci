@@ -7,7 +7,6 @@ import { C, F } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare, faRotateRight, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { TableScrollHint } from '@/components/ui';
-import noImage from '@/img/no-image.jpg';
 
 const PAGE_SIZE = 50;
 const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 dakika

@@ -21,7 +21,7 @@ import {
 } from 'firebase/auth';
 import {
   doc, getDoc, setDoc, updateDoc, writeBatch, deleteDoc,
-  serverTimestamp, collection, query, where, getDocs, onSnapshot,
+  serverTimestamp, collection, query, where, getDocs, onSnapshot, limit,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { uploadDataURL, deleteImageByUrl } from '@/lib/storage';
@@ -169,8 +169,12 @@ export function AuthProvider({ children }) {
         throw err;
       }
       email = usernameSnap.data().email;
-      // Admin/moderatör hesaplarında e-posta usernames'te tutulmaz (PII gizliliği);
-      // bu hesaplar yalnızca e-posta ile giriş yapar.
+      // Email usernames doc'ta yoksa (admin/mod hesapları) users koleksiyonundan bul
+      if (!email) {
+        const q = query(collection(db, 'users'), where('username', '==', identifier.toLowerCase().trim()), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) email = snap.docs[0].data().email;
+      }
       if (!email) {
         const err = new Error('Bu hesaba kullanıcı adıyla giriş yapılamıyor. Lütfen e-posta adresinizle giriş yapın.');
         err.code = 'username-login-disabled';

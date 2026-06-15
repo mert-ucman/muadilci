@@ -10,8 +10,6 @@ import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { faArrowUp, faHeart, faArrowDown, faArrowLeft, faLeaf } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import noImage from '@/img/no-image.jpg';
-
 function IconGrid() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -41,7 +39,7 @@ const COLS = [
 
 export function PerfumeDetailPage({ params }) {
   const { navigate, goBack } = useRouter();
-  const { perfumes, muadilPerfumes, comments, toggleMuadilFavorite, isMuadilFavorite } = useData();
+  const { perfumes, muadilPerfumes, comments, noImageUrl, toggleMuadilFavorite, isMuadilFavorite } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
   const [view, setView] = useState('list');
@@ -156,9 +154,9 @@ export function PerfumeDetailPage({ params }) {
               }}
             >
               <img
-                src={perfume.images?.[0]?.src || noImage}
+                src={perfume.images?.[0]?.src || noImageUrl || undefined}
                 alt={perfume.name}
-                onError={(e) => { e.currentTarget.src = noImage; }}
+                onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -274,7 +272,7 @@ export function PerfumeDetailPage({ params }) {
               return (
                 <Card key={m.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`)}>
                   <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
-                    <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                    <img src={m.image || noImageUrl || undefined} alt={m.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }}
                       className="absolute top-[10px] right-[10px] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer backdrop-blur-[4px] shadow-[0_2px_6px_rgba(0,0,0,.1)]"
@@ -362,7 +360,7 @@ export function PerfumeDetailPage({ params }) {
                       <td className="px-[14px] py-[12px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[36px] h-[36px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={m.image || noImage} alt={m.name} onError={(e) => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                            <img src={m.image || noImageUrl || undefined} alt={m.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{m.name}</span>
                         </div>

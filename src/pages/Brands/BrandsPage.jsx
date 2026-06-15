@@ -7,7 +7,6 @@ import { Card, TableScrollHint } from '@/components/ui';
 import { calcScores } from '@/utils/scoring';
 import { C, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import noImage from '@/img/no-image.jpg';
 
 const SORT_OPTIONS_ORIG = [
   { value: 'az',            label: 'A → Z' },
@@ -59,7 +58,7 @@ export function BrandsPage() {
     description: 'Orijinal ve muadil parfüm markalarını keşfet. Her markanın parfüm sayısı, kökeni ve topluluk puanlarıyla birlikte incele.',
   });
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite } = useData();
+  const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, noImageUrl } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
 
@@ -348,7 +347,7 @@ export function BrandsPage() {
                       color: isOrig ? C.gold : C.green,
                     }}
                   >
-                    <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
+                    <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                   </div>
                   <div className="pr-6 min-w-0">
                     <div
@@ -516,7 +515,7 @@ export function BrandsPage() {
                             border: `1px solid ${isOrig ? C.goldBorder : C.greenBorder}`,
                           }}
                         >
-                          <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
+                          <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                         </div>
                         <span className="font-semibold text-[14px] text-(--color-navy)" style={{ fontFamily: FH }}>{b.name}</span>
                       </div>

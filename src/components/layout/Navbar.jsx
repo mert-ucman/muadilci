@@ -6,14 +6,13 @@ import { useW } from '@/hooks/useW';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH } from '@/constants/theme';
 import logoDark from '@/img/logos/logo-dark-minified.png';
-import noImage from '@/img/no-image.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightToBracket, faUserPlus, faBars, faBell, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
-  const { perfumes, brands, muadilPerfumes, comments, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
+  const { perfumes, brands, muadilPerfumes, comments, noImageUrl, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
   const { lg } = useW();
 
   const [scrolled,       setScrolled]       = useState(false);
@@ -206,7 +205,7 @@ export function Navbar() {
                                 border: `1px solid ${C.border}`,
                               }}
                             >
-                              <img src={item.image || noImage} alt={item.label} onError={e => { e.currentTarget.src = noImage; }} className="w-full h-full object-cover" />
+                              <img src={item.image || noImageUrl || undefined} alt={item.label} onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                             </div>
                             <span
                               className="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap"

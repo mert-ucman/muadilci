@@ -9,7 +9,6 @@ import { usePerfumeLists } from '@/hooks/usePerfumeLists';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import noImage from '@/img/no-image.jpg';
 import { ListsTab } from './ListsTab';
 
 function getCroppedImg(src, pixelCrop, outputSize = 240) {
@@ -119,7 +118,7 @@ export function ProfilePage({ queryParams }) {
 
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
-  const { comments, perfumes, muadilPerfumes, brands, updateUser, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
+  const { comments, perfumes, muadilPerfumes, brands, noImageUrl, updateUser, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
 
   const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : queryParams?.tab === 'lists' ? 'lists' : 'info';
   const [tab, setTab] = useState(tabInit);
@@ -553,7 +552,7 @@ export function ProfilePage({ queryParams }) {
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
                           <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.goldBg, borderColor: C.goldBorder, color: C.gold }}>
-                            <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
+                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                           </div>
                           <div className="pr-6 min-w-0">
                             <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>
@@ -575,7 +574,7 @@ export function ProfilePage({ queryParams }) {
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
                           <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.greenBg, borderColor: C.greenBorder, color: C.green }}>
-                            <img src={b.logoImage || noImage} alt={b.name} className="w-full h-full object-cover" />
+                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                           </div>
                           <div className="pr-6 min-w-0">
                             <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>

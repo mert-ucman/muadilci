@@ -3,14 +3,13 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { useData } from '@/contexts/DataContext';
 import { C, F, FH } from '@/constants/theme';
-import similarImg from '@/img/similar-scent-best-equvalient.png';
 
 
 export function ComparisonSection() {
   const { navigate } = useRouter();
   const { sm, xs } = useW();
   const { landingImages } = useData();
-  const comparisonImgSrc = landingImages?.comparisonImg || similarImg;
+  const comparisonImgSrc = landingImages?.comparisonImg || null;
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -134,12 +133,12 @@ export function ComparisonSection() {
         {!xs && !sm && (
           <div className="relative overflow-hidden">
             {/* Background image */}
-            <img
+            {comparisonImgSrc && <img
               src={comparisonImgSrc}
               alt=""
               className="absolute inset-0 w-full h-full object-cover object-center"
               style={{ opacity: 0.65, filter: 'grayscale(10%)' }}
-            />
+            />}
 
             {/* Dark gradient on left edge to blend into text column */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,15,15,1)_0%,rgba(15,15,15,.3)_40%,transparent_100%)]" />
