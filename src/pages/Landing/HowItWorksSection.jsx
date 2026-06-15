@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import howItWorksBg from '@/img/how-it-works-bg.png';
+import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,7 +15,9 @@ const STEPS = [
 
 export function HowItWorksSection() {
   const { sm, xs } = useW();
+  const { landingImages } = useData();
   const sectionRef = useRef(null);
+  const bgSrc = landingImages?.howItWorksBg || howItWorksBg;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -36,7 +39,7 @@ export function HowItWorksSection() {
     >
       {/* Background image */}
       <img
-        src={howItWorksBg}
+        src={bgSrc}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover object-center"

@@ -21,6 +21,11 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import Cropper from 'react-easy-crop';
+import howItWorksBgImg from '@/img/how-it-works-bg.png';
+import similarScentImg from '@/img/similar-scent-best-equvalient.png';
+import leafBgImg from '@/img/real-person-real-experience.png';
+
+const CTA_FALLBACK = 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=70';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const RC = { admin: 'red', moderator: 'blue', user: 'gold' };
@@ -233,6 +238,119 @@ function SliderTab({ sliderImages, addSliderImage, removeSliderImage, updateSlid
           Henüz görsel eklenmedi. Görsel eklenene kadar landing page varsayılan görünümünü gösterir.
         </div>
       )}
+    </div>
+  );
+}
+
+const LANDING_SLOTS = [
+  { key: 'howItWorksBg',   label: 'Nasıl Çalışır Arkaplanı',  desc: 'HowItWorksSection arkaplan görseli',   aspect: '16/9', fallback: howItWorksBgImg },
+  { key: 'comparisonImg',  label: 'Karşılaştırma Bölümü',      desc: 'ComparisonSection sağ panel görseli',  aspect: '4/3',  fallback: similarScentImg },
+  { key: 'testimonialsBg', label: 'Yorumlar Arkaplanı',         desc: 'TestimonialsSection arkaplan görseli', aspect: '16/9', fallback: leafBgImg },
+  { key: 'ctaBg',          label: 'CTA Bölümü',                 desc: 'CTASection atmosfer görseli',          aspect: '16/9', fallback: CTA_FALLBACK },
+];
+
+function LandingImagesSection({ landingImages, updateLandingImage, MAX_SIZE_MB = 3 }) {
+  const [uploading, setUploading] = useState(null);
+  const [error, setError] = useState('');
+
+  const handleFile = async (key, file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setError('Sadece JPG, PNG veya WebP görseli yüklenebilir.'); return; }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) { setError(`"${file.name}" ${MAX_SIZE_MB}MB sınırını aşıyor.`); return; }
+    setError('');
+    setUploading(key);
+    try {
+      const dataURL = await compressToDataURL(file, 1920, 0.85);
+      const url = await uploadDataURL(dataURL, 'landing');
+      await updateLandingImage(key, url);
+    } catch {
+      setError('Görsel yüklenirken hata oluştu.');
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleReset = async (key) => {
+    await updateLandingImage(key, null);
+  };
+
+  return (
+    <div className="mt-10 pt-8" style={{ borderTop: `2px solid ${C.border}` }}>
+      <div className="mb-6">
+        <h2 className="text-[18px] font-[800] text-(--color-navy) mb-1">Landing Page Görselleri</h2>
+        <p className="text-[13px] text-(--color-text-light)">
+          Her bölüm için özel görsel yükleyebilirsiniz. Boş bırakılan slotlar varsayılan görseli kullanmaya devam eder.
+        </p>
+      </div>
+
+      {error && (
+        <div className="bg-[#fff5f5] border border-[#fecaca] rounded-[10px] px-[14px] py-[10px] text-[13px] text-(--color-red) mb-4">{error}</div>
+      )}
+
+      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+        {LANDING_SLOTS.map(({ key, label, desc, aspect, fallback }) => {
+          const currentUrl = landingImages?.[key];
+          const previewSrc = currentUrl || fallback;
+          const isUploading = uploading === key;
+          return (
+            <div key={key} className="rounded-[14px] overflow-hidden bg-white flex flex-col" style={{ border: `1px solid ${C.border}` }}>
+              {/* Preview */}
+              <div className="relative overflow-hidden bg-[#f0f0f0]" style={{ aspectRatio: aspect }}>
+                <img src={previewSrc} alt={label} className="w-full h-full object-cover" />
+                {!currentUrl && (
+                  <div className="absolute bottom-0 left-0 right-0 px-2 py-[5px] text-center text-[10px] font-semibold text-white/80 tracking-wide" style={{ background: 'rgba(0,0,0,.45)' }}>
+                    Şu an kullanılan (varsayılan)
+                  </div>
+                )}
+                {currentUrl && (
+                  <div className="absolute bottom-0 left-0 right-0 px-2 py-[5px] text-center text-[10px] font-semibold text-white tracking-wide" style={{ background: `rgba(184,147,90,.75)` }}>
+                    Özel görsel aktif
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-[rgba(255,255,255,.8)] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full animate-spin" style={{ border: `3px solid ${C.border}`, borderTop: `3px solid ${C.gold}` }} />
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="px-4 pt-3 pb-1 flex-1">
+                <div className="font-bold text-[13px] text-(--color-navy) mb-[2px]">{label}</div>
+                <div className="text-[11px] text-(--color-text-light)">{desc}</div>
+              </div>
+
+              {/* Actions — always at bottom */}
+              <div className="px-4 pb-4 pt-3">
+                <div className="flex gap-2">
+                  <label className="flex-1 flex items-center justify-center gap-[6px] h-[34px] rounded-[8px] cursor-pointer text-[12px] font-semibold transition-all duration-150"
+                    style={{ background: C.navy, color: '#fff', border: 'none' }}>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={isUploading}
+                      onChange={(e) => { handleFile(key, e.target.files[0]); e.target.value = ''; }}
+                    />
+                    <FontAwesomeIcon icon={faImage} style={{ fontSize: '12px' }} />
+                    {currentUrl ? 'Değiştir' : 'Yükle'}
+                  </label>
+                  {currentUrl && (
+                    <button
+                      onClick={() => handleReset(key)}
+                      disabled={isUploading}
+                      className="px-3 h-[34px] rounded-[8px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
+                      style={{ background: '#fff5f5', color: C.red, border: `1px solid #fecaca` }}
+                    >
+                      Sıfırla
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1428,7 +1546,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, landingImages, updateLandingImage } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -2587,15 +2705,21 @@ export function AdminPanel() {
 
         {/* Slider */}
         {tab === 'slider' && (
-          <SliderTab
-            sliderImages={sliderImages}
-            addSliderImage={addSliderImage}
-            removeSliderImage={removeSliderImage}
-            updateSliderImage={updateSliderImage}
-            reorderSliderImages={reorderSliderImages}
-            MAX_SLIDER={MAX_SLIDER}
-            MAX_SIZE_MB={MAX_SIZE_MB}
-          />
+          <>
+            <SliderTab
+              sliderImages={sliderImages}
+              addSliderImage={addSliderImage}
+              removeSliderImage={removeSliderImage}
+              updateSliderImage={updateSliderImage}
+              reorderSliderImages={reorderSliderImages}
+              MAX_SLIDER={MAX_SLIDER}
+              MAX_SIZE_MB={MAX_SIZE_MB}
+            />
+            <LandingImagesSection
+              landingImages={landingImages}
+              updateLandingImage={updateLandingImage}
+            />
+          </>
         )}
         {tab === 'favicon' && (
           <FaviconTab faviconUrl={faviconUrl} updateFavicon={updateFavicon} />

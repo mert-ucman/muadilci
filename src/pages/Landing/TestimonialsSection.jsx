@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useW } from '@/hooks/useW';
+import { useData } from '@/contexts/DataContext';
 import { C, F, FH } from '@/constants/theme';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -156,6 +157,8 @@ function TestimonialCard({ t, i }) {
 
 export function TestimonialsSection() {
   const { sm, xs } = useW();
+  const { landingImages } = useData();
+  const testimonialsBgSrc = landingImages?.testimonialsBg || leafBg;
   const sectionRef = useRef(null);
   const headingRef = useRef(null);
   const marqueeRef = useRef(null);
@@ -215,7 +218,7 @@ export function TestimonialsSection() {
     >
       {/* Full-section leaf background */}
       <img
-        src={leafBg}
+        src={testimonialsBgSrc}
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none z-0"

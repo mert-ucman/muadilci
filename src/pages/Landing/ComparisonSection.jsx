@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
+import { useData } from '@/contexts/DataContext';
 import { C, F, FH } from '@/constants/theme';
 import similarImg from '@/img/similar-scent-best-equvalient.png';
 
@@ -8,6 +9,8 @@ import similarImg from '@/img/similar-scent-best-equvalient.png';
 export function ComparisonSection() {
   const { navigate } = useRouter();
   const { sm, xs } = useW();
+  const { landingImages } = useData();
+  const comparisonImgSrc = landingImages?.comparisonImg || similarImg;
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -132,7 +135,7 @@ export function ComparisonSection() {
           <div className="relative overflow-hidden">
             {/* Background image */}
             <img
-              src={similarImg}
+              src={comparisonImgSrc}
               alt=""
               className="absolute inset-0 w-full h-full object-cover object-center"
               style={{ opacity: 0.65, filter: 'grayscale(10%)' }}

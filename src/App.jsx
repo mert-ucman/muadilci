@@ -1,28 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { matchRoute, NO_LAYOUT_PATHS } from '@/constants/routes';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { LandingPage }       from '@/pages/Landing';
-import { ComparisonPage }    from '@/pages/Comparison';
-import { PerfumesPage }      from '@/pages/Perfumes';
-import { BrandsPage }        from '@/pages/Brands/BrandsPage';
-import { BrandPage }         from '@/pages/Brands/BrandPage';
-import { PerfumeDetailPage } from '@/pages/PerfumeDetail';
-import { LoginPage }         from '@/pages/Auth/LoginPage';
-import { RegisterPage }      from '@/pages/Auth/RegisterPage';
-import { ForgotPasswordPage }        from '@/pages/Auth/ForgotPasswordPage';
-import { ResetPasswordPage }         from '@/pages/Auth/ResetPasswordPage';
-import { EmailVerificationPage }     from '@/pages/Auth/EmailVerificationPage';
-import { UsernameSetupPage }         from '@/pages/Auth/UsernameSetupPage';
-import { ProfilePage }       from '@/pages/Profile';
-import { ModerationPage }    from '@/pages/Moderation';
-import { AdminPanel }        from '@/pages/Admin';
-import { LeaderboardPage }   from '@/pages/Leaderboard';
-import { NotFoundPage }      from '@/pages/NotFound';
-import { PublicProfilePage } from '@/pages/PublicProfile';
+import { LandingPage } from '@/pages/Landing';
+
+const ComparisonPage    = lazy(() => import('@/pages/Comparison').then(m => ({ default: m.ComparisonPage })));
+const PerfumesPage      = lazy(() => import('@/pages/Perfumes').then(m => ({ default: m.PerfumesPage })));
+const BrandsPage        = lazy(() => import('@/pages/Brands/BrandsPage').then(m => ({ default: m.BrandsPage })));
+const BrandPage         = lazy(() => import('@/pages/Brands/BrandPage').then(m => ({ default: m.BrandPage })));
+const PerfumeDetailPage = lazy(() => import('@/pages/PerfumeDetail').then(m => ({ default: m.PerfumeDetailPage })));
+const LoginPage         = lazy(() => import('@/pages/Auth/LoginPage').then(m => ({ default: m.LoginPage })));
+const RegisterPage      = lazy(() => import('@/pages/Auth/RegisterPage').then(m => ({ default: m.RegisterPage })));
+const ForgotPasswordPage    = lazy(() => import('@/pages/Auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage     = lazy(() => import('@/pages/Auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const EmailVerificationPage = lazy(() => import('@/pages/Auth/EmailVerificationPage').then(m => ({ default: m.EmailVerificationPage })));
+const UsernameSetupPage     = lazy(() => import('@/pages/Auth/UsernameSetupPage').then(m => ({ default: m.UsernameSetupPage })));
+const ProfilePage       = lazy(() => import('@/pages/Profile').then(m => ({ default: m.ProfilePage })));
+const ModerationPage    = lazy(() => import('@/pages/Moderation').then(m => ({ default: m.ModerationPage })));
+const AdminPanel        = lazy(() => import('@/pages/Admin').then(m => ({ default: m.AdminPanel })));
+const LeaderboardPage   = lazy(() => import('@/pages/Leaderboard').then(m => ({ default: m.LeaderboardPage })));
+const NotFoundPage      = lazy(() => import('@/pages/NotFound').then(m => ({ default: m.NotFoundPage })));
+const PublicProfilePage = lazy(() => import('@/pages/PublicProfile').then(m => ({ default: m.PublicProfilePage })));
+
+function PageSpinner() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '36px', height: '36px', border: '3px solid #e5e7eb', borderTop: '3px solid #b8965a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
+}
 
 const ROUTES = [
   { pat: '/',                       C: LandingPage },
@@ -103,9 +112,11 @@ export function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
-{!noLayout && <Navbar />}
+      {!noLayout && <Navbar />}
       <div style={{ flex: 1 }}>
-        <Page params={params} queryParams={query} />
+        <Suspense fallback={<PageSpinner />}>
+          <Page params={params} queryParams={query} />
+        </Suspense>
       </div>
       {!noLayout && <Footer />}
     </div>

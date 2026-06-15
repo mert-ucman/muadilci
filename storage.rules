@@ -41,6 +41,13 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // Landing page bölüm görselleri
+    match /landing/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && validImage();
+      allow delete: if isAdmin();
+    }
+
     // Kullanıcı profil fotoğrafları
     match /users/{userId}/{allPaths=**} {
       allow read: if true;
