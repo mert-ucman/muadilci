@@ -105,6 +105,14 @@ export function BrandPage({ params }) {
   const coverPhoto = (item, orig) =>
     item.image || (orig ? photoMap.orig[item.id]?.[0] : photoMap.mu[item.id]?.[0]) || noImageUrl || undefined;
 
+  // Hedef (orijinal) parfüm id → cinsiyet. Muadilin cinsiyeti orijinalden çekilir.
+  const perfGenderById = useMemo(() => {
+    const m = {};
+    for (const p of perfumes) m[p.id] = p.gender || null;
+    return m;
+  }, [perfumes]);
+  const muadilGender = (item) => perfGenderById[item.targetPerfumeId] || item.gender || null;
+
   const [showTooltip, setShowTooltip] = useState(false);
   const [view, setView] = useState('list');
   const [genderFilter, setGenderFilter] = useState(null); // null = hepsi, 'erkek'|'kadin'|'unisex' = filtreli
@@ -126,8 +134,11 @@ export function BrandPage({ params }) {
   });
 
   const handleListSort = (key) => {
-    if (listSortKey === key) setListSortDir((d) => d === 'asc' ? 'desc' : 'asc');
-    else { setListSortKey(key); setListSortDir('asc'); }
+    const nextDir = listSortKey === key ? (listSortDir === 'asc' ? 'desc' : 'asc') : 'asc';
+    setListSortKey(key);
+    setListSortDir(nextDir);
+    // İsim sütunu sıralaması ile A→Z/Z→A dropdown'ını senkron tut
+    if (key === 'name') setSortDir(nextDir === 'asc' ? 'az' : 'za');
   };
 
   // Tüm hook'lar erken return'den ÖNCE — Rules of Hooks
@@ -149,10 +160,10 @@ export function BrandPage({ params }) {
           return haystack.includes(q);
         })
       : allItems;
-    if (!isOrig) return base;
+    // Cinsiyet filtresi: orijinalde parfümün kendi cinsiyeti, muadilde hedef orijinalin cinsiyeti
     let filtered = genderFilter
       ? base.filter((p) => {
-          const g = (p.gender || '').toLowerCase();
+          const g = (isOrig ? (p.gender || '') : (perfGenderById[p.targetPerfumeId] || p.gender || '')).toLowerCase();
           if (genderFilter === 'erkek') return g === 'erkek';
           if (genderFilter === 'kadin') return g === 'kadın';
           if (genderFilter === 'unisex') return g === 'unisex';
@@ -162,7 +173,7 @@ export function BrandPage({ params }) {
     return [...filtered].sort((a, b) =>
       sortDir === 'az' ? a.name.localeCompare(b.name, 'tr') : b.name.localeCompare(a.name, 'tr')
     );
-  }, [allItems, isOrig, genderFilter, sortDir, searchQ]);
+  }, [allItems, isOrig, genderFilter, sortDir, searchQ, perfGenderById]);
 
   const perfumeMuadilCount = useMemo(() => {
     const map = {};
@@ -301,14 +312,15 @@ export function BrandPage({ params }) {
                 <Badge color={isOrig ? 'gold' : 'green'}>{isOrig ? 'Orijinal Marka' : 'Muadil Marka'}</Badge>
                 {isOrig && brand.category && (
                   <div
-                    className="inline-flex items-center justify-center gap-[4px] px-[10px] py-[2px] rounded-[20px] text-[11px] font-bold"
+                    className="inline-flex items-center justify-center gap-[4px] px-[10px] rounded-[20px] text-[12px] font-bold"
                     style={{
+                      height: '22px',
                       background: brand.category === 'Niche' ? 'rgba(167,139,250,.25)' : 'rgba(147,197,253,.2)',
                       color: brand.category === 'Niche' ? '#c4b5fd' : '#93c5fd',
                       border: `1px solid ${brand.category === 'Niche' ? 'rgba(167,139,250,.4)' : 'rgba(147,197,253,.3)'}`,
                     }}
                   >
-                    <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} className="text-[11px]" />
+                    <FontAwesomeIcon icon={brand.category === 'Designer' ? faShirt : faGem} className="text-[12px]" />
                     <p className="m-0 p-0 w-max cap-center">{brand.category}</p>
                   </div>
                 )}
@@ -521,27 +533,29 @@ export function BrandPage({ params }) {
               />
             </div>
 
-            {/* Cinsiyet filtresi — sadece orijinal markada */}
-            {isOrig && (
-              <div className="flex gap-[6px]">
-                <GenderChip label="Erkek" field="erkek" />
-                <GenderChip label="Kadın" field="kadin" />
-                <GenderChip label="Unisex" field="unisex" />
-              </div>
-            )}
+            {/* Cinsiyet filtresi — orijinal ve muadil markada (muadilde hedeften alınır) */}
+            <div className="flex gap-[6px]">
+              <GenderChip label="Erkek" field="erkek" />
+              <GenderChip label="Kadın" field="kadin" />
+              <GenderChip label="Unisex" field="unisex" />
+            </div>
 
-            {/* Sıralama — sadece orijinal */}
-            {isOrig && (
-              <select
-                value={sortDir}
-                onChange={(e) => { setSortDir(e.target.value); setPage(1); }}
-                className="h-[34px] px-[10px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-(--color-text) text-[13px] cursor-pointer outline-none"
-                style={{ fontFamily: F }}
-              >
-                <option value="az">A → Z</option>
-                <option value="za">Z → A</option>
-              </select>
-            )}
+            {/* Sıralama — hem grid (sortDir) hem liste (name sütunu) sıralamasını sürer */}
+            <select
+              value={sortDir}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSortDir(v);
+                setListSortKey('name');
+                setListSortDir(v === 'az' ? 'asc' : 'desc');
+                setPage(1);
+              }}
+              className="h-[34px] px-[10px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-(--color-text) text-[13px] cursor-pointer outline-none"
+              style={{ fontFamily: F }}
+            >
+              <option value="az">A → Z</option>
+              <option value="za">Z → A</option>
+            </select>
           </div>
         </div>
 
@@ -626,12 +640,12 @@ export function BrandPage({ params }) {
         {view === 'list' && (() => {
           const LIST_COLS = isOrig
             ? [{ key: 'name', label: 'Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'muadil', label: 'Muadil' }]
-            : [{ key: 'name', label: 'Parfüm' }, { key: 'target', label: 'Hedef Parfüm' }, { key: 'scent', label: 'Koku' }, { key: 'projection', label: 'Yayılım' }, { key: 'longevity', label: 'Kalıcılık' }, { key: 'score', label: 'Genel Puan' }];
+            : [{ key: 'name', label: 'Parfüm' }, { key: 'target', label: 'Hedef Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'scent', label: 'Koku' }, { key: 'projection', label: 'Yayılım' }, { key: 'longevity', label: 'Kalıcılık' }, { key: 'score', label: 'Genel Puan' }];
 
           const allListItems = [...items].sort((a, b) => {
             let av, bv;
             if (listSortKey === 'name')       { av = a.name || ''; bv = b.name || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
-            if (listSortKey === 'gender')     { av = a.gender || ''; bv = b.gender || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
+            if (listSortKey === 'gender')     { av = (perfGenderById[a.targetPerfumeId] || a.gender || ''); bv = (perfGenderById[b.targetPerfumeId] || b.gender || ''); return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
             if (listSortKey === 'muadil')     { av = perfumeMuadilCount[a.id] || 0; bv = perfumeMuadilCount[b.id] || 0; return listSortDir === 'asc' ? av - bv : bv - av; }
             if (listSortKey === 'score')      { av = calcScores(a.id, comments).overall ?? -1; bv = calcScores(b.id, comments).overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
             if (listSortKey === 'scent')      { av = calcScores(a.id, comments).scent ?? -1; bv = calcScores(b.id, comments).scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
@@ -707,6 +721,10 @@ export function BrandPage({ params }) {
                         ? <td className="px-[14px] py-[12px] text-center"><GenderBadge gender={item.gender} /></td>
                         : <td className="px-[14px] py-[12px] text-[12px] text-(--color-text-mid)">{item.targetBrandName} {item.targetPerfumeName}</td>
                       }
+                      {/* Cinsiyet — hedef orijinal parfümden alınır (yalnızca muadil görünümü) */}
+                      {!isOrig && (
+                        <td className="px-[14px] py-[12px] text-center"><GenderBadge gender={muadilGender(item)} /></td>
+                      )}
                       {/* Orijinal: Muadil sayısı | Muadil: 4 puan sütunu */}
                       {isOrig
                         ? <td className="px-[14px] py-[12px] text-center">
