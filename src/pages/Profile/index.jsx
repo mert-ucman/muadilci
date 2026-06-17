@@ -552,7 +552,7 @@ export function ProfilePage({ queryParams }) {
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
                           <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.goldBg, borderColor: C.goldBorder, color: C.gold }}>
-                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
+                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                           </div>
                           <div className="pr-6 min-w-0">
                             <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>
@@ -574,7 +574,7 @@ export function ProfilePage({ queryParams }) {
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
                           <div className="w-10 h-10 rounded-full border flex items-center justify-center text-[11px] font-extrabold shrink-0 overflow-hidden" style={{ background: C.greenBg, borderColor: C.greenBorder, color: C.green }}>
-                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
+                            <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                           </div>
                           <div className="pr-6 min-w-0">
                             <div className="font-semibold text-sm text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontFamily: FH }}>{b.name}</div>

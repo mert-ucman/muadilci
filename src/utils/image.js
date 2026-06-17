@@ -30,7 +30,7 @@ export function fileToResizedDataURL(file, maxPx = 1280, quality = 0.85) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
         try {
-          resolve(canvas.toDataURL('image/jpeg', quality));
+          resolve(canvas.toDataURL('image/webp', quality));
         } catch (e) {
           reject(e);
         }

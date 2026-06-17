@@ -293,15 +293,15 @@ export function BrandPage({ params }) {
             <div
               className="rounded-full border-2 flex items-center justify-center font-extrabold text-white shrink-0 overflow-hidden"
               style={{
-                width: sm ? '64px' : '96px',
-                height: sm ? '64px' : '96px',
+                width: sm ? '64px' : '100px',
+                height: sm ? '64px' : '100px',
                 fontSize: sm ? '18px' : '26px',
-                background: 'rgba(255,255,255,.12)',
-                borderColor: 'rgba(255,255,255,.25)',
+                background: brand.logoImage ? 'white' : 'rgba(255,255,255,.12)',
+                borderColor: brand.logoImage ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.25)',
               }}
             >
               {brand.logoImage
-                ? <img src={brand.logoImage} alt={brand.name} className="w-full h-full object-cover" />
+                ? <img src={brand.logoImage} alt={brand.name} className="w-full h-full object-contain p-1" />
                 : brand.logo}
             </div>
             <div className="flex-1 min-w-0">
@@ -579,7 +579,7 @@ export function BrandPage({ params }) {
                 <Card key={item.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }}
                   onClick={() => isOrig ? navigate(`/${item.brandSlug}/${item.slug}`) : navigate(`/karsilastir?orijinal=${item.targetPerfumeId}&muadil=${item.id}`)}>
                   <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
-                    <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover block" />
+                    <img src={coverPhoto(item, isOrig)} alt={item.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover block" />
                     {/* Muadil sayı badge — sadece orijinal parfümlerde */}
                     {isOrig && (
                       <div
@@ -711,7 +711,7 @@ export function BrandPage({ params }) {
                       <td className="px-[14px] py-[12px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[40px] h-[40px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={coverPhoto(item, isOrig)} alt={item.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
+                            <img src={coverPhoto(item, isOrig)} alt={item.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-semibold text-[14px] text-(--color-navy)">{item.name}</span>
                         </div>

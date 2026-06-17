@@ -17,9 +17,6 @@ import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/fir
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -1272,7 +1269,7 @@ function compressToDataURL(file, maxW, quality, maxH = null) {
         canvas.width = scaledW;
         canvas.height = outH;
         canvas.getContext('2d').drawImage(img, 0, srcY, img.width, srcH, 0, 0, scaledW, outH);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(canvas.toDataURL('image/webp', quality));
       };
       img.onerror = reject;
       img.src = e.target.result;
@@ -2317,7 +2314,8 @@ export function AdminPanel() {
             setShowExportMenu(false);
           };
 
-          const exportXLSX = () => {
+          const exportXLSX = async () => {
+            const XLSX = await import('xlsx');
             const ws = XLSX.utils.json_to_sheet(exportRows);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Kullanıcılar');
@@ -2325,7 +2323,11 @@ export function AdminPanel() {
             setShowExportMenu(false);
           };
 
-          const exportPDF = () => {
+          const exportPDF = async () => {
+            const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+              import('jspdf'),
+              import('jspdf-autotable'),
+            ]);
             const doc = new jsPDF({ orientation: 'landscape' });
             doc.setFontSize(13);
             doc.text('Kullanıcı Listesi', 14, 14);
