@@ -3,14 +3,12 @@ import { useData } from '@/contexts/DataContext';
 import { FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { useW } from '@/hooks/useW';
-import logoDark from '@/img/logos/logo-dark-minified.png';
-
 const DEFAULT_HEADLINE_HTML = 'Kokuların<br><em style="color:#B8935A;font-style:italic">Zarif</em> Dünyasına<br>Hoş Geldiniz';
 const DEFAULT_SUBTEXT = 'Lüks parfümlerin muadillerini\nkeşfet, karşılaştır ve en iyisini bul.';
 
 export function AuthLayout({ title, subtitle, children, imageKey = 'loginImage', wide = false }) {
   const { navigate } = useRouter();
-  const { landingImages } = useData();
+  const { landingImages, logoUrl } = useData();
   const { lg } = useW();
   useSeo({ title: title || 'Hesap', noindex: true });
 
@@ -87,11 +85,7 @@ export function AuthLayout({ title, subtitle, children, imageKey = 'loginImage',
             onClick={() => navigate('/')}
             className="cursor-pointer mb-6"
           >
-            <img
-              src={logoDark}
-              alt="muadilci"
-              className="h-[72px] object-contain block"
-            />
+            {logoUrl && <img src={logoUrl} alt="muadilci" className="h-[72px] object-contain block" />}
           </div>
 
           <div className={`w-full ${wide ? 'max-w-[520px]' : 'max-w-[360px]'}`}>

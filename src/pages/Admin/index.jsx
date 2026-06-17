@@ -16,7 +16,7 @@ import { SecurityTab } from './SecurityTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation, faSignature } from '@fortawesome/free-solid-svg-icons';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -122,8 +122,10 @@ const TABS = [
   { k: 'muadil',          l: 'Muadil Parfümler',   icon: faStar },
   { k: 'reviews',         l: 'Tüm Yorumlar',       icon: faComments },
   { k: 'brand-profiles',  l: 'Marka Profilleri',   icon: faPalette },
-  { k: 'slider',          l: 'Slider',             icon: faImages },
+  { k: 'slider',          l: 'Görsel Yönetimi',    icon: faImages },
   { k: 'favicon',         l: 'Favicon',            icon: faImage },
+  { k: 'logo',            l: 'Navbar Logo',        icon: faSignature },
+  { k: 'footer-logo',    l: 'Footer Logo',        icon: faSignature },
   { k: 'merge-perfumes',  l: 'Parfüm Birleştir',  icon: faCodeMerge },
   { k: 'activity',        l: 'Hareketler',         icon: faClockRotateLeft },
   { k: 'security',        l: 'Güvenlik',           icon: faShieldHalved },
@@ -630,6 +632,160 @@ function FaviconTab({ faviconUrl, updateFavicon }) {
         <div className="flex gap-2">
           {preview && <Btn variant="secondary" onClick={() => { setPreview(null); setError(''); }}>İptal</Btn>}
           <Btn onClick={handleSave} disabled={!preview || uploading}>{uploading ? 'Yükleniyor…' : 'Favicon Kaydet'}</Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function LogoTab({ logoUrl, updateLogo }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview]     = useState(null);
+  const [error, setError]         = useState('');
+
+  const handleFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setError('Sadece görsel dosyaları desteklenir.'); return; }
+    if (file.size > 2 * 1024 * 1024) { setError('Dosya boyutu maks. 2 MB olmalıdır.'); return; }
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!preview) return;
+    setUploading(true);
+    try {
+      const url = await uploadDataURL(preview, 'brands');
+      await updateLogo(url);
+      setPreview(null);
+    } catch (e) {
+      setError('Yükleme başarısız: ' + (e?.message || 'bilinmeyen hata'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-[520px]">
+      <Card style={{ padding: '28px' }}>
+        <div className="font-bold text-[16px] text-(--color-navy) mb-5">Navbar Logo Yönetimi</div>
+
+        <div className="mb-6">
+          <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Mevcut Logo</div>
+          <div className="h-16 px-4 rounded-xl border border-(--color-border) bg-[#f9f9fb] flex items-center justify-center overflow-hidden" style={{ maxWidth: '200px' }}>
+            {logoUrl
+              ? <img src={logoUrl} alt="logo" className="h-full w-auto object-contain" style={{ maxWidth: '160px' }} />
+              : <span className="text-[11px] text-(--color-text-light)">Henüz logo yüklenmedi</span>
+            }
+          </div>
+        </div>
+
+        <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Yeni Logo Yükle</div>
+        <div
+          onClick={() => document.getElementById('logo-file-input').click()}
+          className="rounded-xl p-7 text-center cursor-pointer transition-all duration-200 mb-[14px]"
+          style={{ border: `2px dashed ${preview ? C.gold : C.border}`, background: preview ? C.goldBg : '#fafafa' }}>
+          <input id="logo-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
+          {preview ? (
+            <div className="flex flex-col items-center gap-[10px]">
+              <div className="h-16 px-4 rounded-lg flex items-center justify-center overflow-hidden" style={{ border: `1px solid ${C.goldBorder}`, background: '#fff' }}>
+                <img src={preview} alt="preview" className="h-full w-auto object-contain" style={{ maxWidth: '200px' }} />
+              </div>
+              <span className="text-xs text-(--color-gold) font-semibold">Önizleme — kaydetmek için aşağıdaki butona tıkla</span>
+            </div>
+          ) : (
+            <div>
+              <svg width="28" height="28" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" className="mb-2 mx-auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div className="text-[13px] text-(--color-text-mid)">Tıkla veya sürükle · PNG, SVG, WebP · Maks. 2 MB</div>
+              <div className="text-[11px] text-(--color-text-light) mt-1">Şeffaf arka plan olan PNG/SVG önerilir</div>
+            </div>
+          )}
+        </div>
+
+        {error && <div className="px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red) mb-[14px]">{error}</div>}
+
+        <div className="flex gap-2">
+          {preview && <Btn variant="secondary" onClick={() => { setPreview(null); setError(''); }}>İptal</Btn>}
+          <Btn onClick={handleSave} disabled={!preview || uploading}>{uploading ? 'Yükleniyor…' : 'Logo Kaydet'}</Btn>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function FooterLogoTab({ footerLogoUrl, updateFooterLogo }) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview]     = useState(null);
+  const [error, setError]         = useState('');
+
+  const handleFile = (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setError('Sadece görsel dosyaları desteklenir.'); return; }
+    if (file.size > 2 * 1024 * 1024) { setError('Dosya boyutu maks. 2 MB olmalıdır.'); return; }
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!preview) return;
+    setUploading(true);
+    try {
+      const url = await uploadDataURL(preview, 'brands');
+      await updateFooterLogo(url);
+      setPreview(null);
+    } catch (e) {
+      setError('Yükleme başarısız: ' + (e?.message || 'bilinmeyen hata'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-[520px]">
+      <Card style={{ padding: '28px' }}>
+        <div className="font-bold text-[16px] text-(--color-navy) mb-5">Footer Logo Yönetimi</div>
+
+        <div className="mb-6">
+          <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Mevcut Logo</div>
+          <div className="h-16 px-4 rounded-xl border border-(--color-border) bg-[#f9f9fb] flex items-center justify-center overflow-hidden" style={{ maxWidth: '200px' }}>
+            {footerLogoUrl
+              ? <img src={footerLogoUrl} alt="footer logo" className="h-full w-auto object-contain" style={{ maxWidth: '160px' }} />
+              : <span className="text-[11px] text-(--color-text-light)">Henüz logo yüklenmedi</span>
+            }
+          </div>
+        </div>
+
+        <div className="text-xs font-semibold text-(--color-text-light) uppercase tracking-[.05em] mb-[10px]">Yeni Logo Yükle</div>
+        <div
+          onClick={() => document.getElementById('footer-logo-file-input').click()}
+          className="rounded-xl p-7 text-center cursor-pointer transition-all duration-200 mb-[14px]"
+          style={{ border: `2px dashed ${preview ? C.gold : C.border}`, background: preview ? C.goldBg : '#fafafa' }}>
+          <input id="footer-logo-file-input" type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
+          {preview ? (
+            <div className="flex flex-col items-center gap-[10px]">
+              <div className="h-16 px-4 rounded-lg flex items-center justify-center overflow-hidden" style={{ border: `1px solid ${C.goldBorder}`, background: '#fff' }}>
+                <img src={preview} alt="preview" className="h-full w-auto object-contain" style={{ maxWidth: '200px' }} />
+              </div>
+              <span className="text-xs text-(--color-gold) font-semibold">Önizleme — kaydetmek için aşağıdaki butona tıkla</span>
+            </div>
+          ) : (
+            <div>
+              <svg width="28" height="28" fill="none" stroke={C.textLight} strokeWidth="1.5" viewBox="0 0 24 24" className="mb-2 mx-auto"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div className="text-[13px] text-(--color-text-mid)">Tıkla veya sürükle · PNG, SVG, WebP · Maks. 2 MB</div>
+              <div className="text-[11px] text-(--color-text-light) mt-1">Şeffaf arka plan olan PNG/SVG önerilir</div>
+            </div>
+          )}
+        </div>
+
+        {error && <div className="px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red) mb-[14px]">{error}</div>}
+
+        <div className="flex gap-2">
+          {preview && <Btn variant="secondary" onClick={() => { setPreview(null); setError(''); }}>İptal</Btn>}
+          <Btn onClick={handleSave} disabled={!preview || uploading}>{uploading ? 'Yükleniyor…' : 'Logo Kaydet'}</Btn>
         </div>
       </Card>
     </div>
@@ -1751,7 +1907,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, landingImages, updateLandingImage } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, logoUrl, updateLogo, footerLogoUrl, updateFooterLogo, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, landingImages, updateLandingImage } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -2933,6 +3089,14 @@ export function AdminPanel() {
         )}
         {tab === 'favicon' && (
           <FaviconTab faviconUrl={faviconUrl} updateFavicon={updateFavicon} />
+        )}
+
+        {tab === 'logo' && (
+          <LogoTab logoUrl={logoUrl} updateLogo={updateLogo} />
+        )}
+
+        {tab === 'footer-logo' && (
+          <FooterLogoTab footerLogoUrl={footerLogoUrl} updateFooterLogo={updateFooterLogo} />
         )}
 
         {tab === 'activity' && <ActivityTab />}

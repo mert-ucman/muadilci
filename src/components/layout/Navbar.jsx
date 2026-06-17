@@ -5,14 +5,13 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH } from '@/constants/theme';
-import logoDark from '@/img/logos/logo-dark-minified.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRightToBracket, faUserPlus, faBars, faBell, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 export function Navbar() {
   const { navigate, basePath } = useRouter();
   const { user, logout, isAdmin, isMod } = useAuth();
-  const { perfumes, brands, muadilPerfumes, comments, noImageUrl, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications } = useData();
+  const { perfumes, brands, muadilPerfumes, comments, noImageUrl, notifications, unreadNotifCount, notifHasMore, markNotificationRead, markAllNotificationsRead, loadMoreNotifications, clearAllNotifications, logoUrl } = useData();
   const { lg } = useW();
 
   const [scrolled,       setScrolled]       = useState(false);
@@ -95,7 +94,7 @@ export function Navbar() {
             onClick={e => { e.preventDefault(); navigate('/'); }}
             className="shrink-0 no-underline flex items-center"
           >
-            <img src={logoDark} alt="muadilci" className="h-[68px] w-auto" />
+            {logoUrl && <img src={logoUrl} alt="muadilci" className="h-[68px] w-auto" />}
           </a>
 
           {/* Desktop nav links */}
@@ -510,7 +509,7 @@ export function Navbar() {
               className="flex items-center justify-between px-5 py-[18px]"
               style={{ borderBottom: `1px solid ${C.border}` }}
             >
-              <img src={logoDark} alt="muadilci" className="h-8 w-auto" />
+              {logoUrl && <img src={logoUrl} alt="muadilci" className="h-8 w-auto" />}
               <button
                 onClick={() => closeDrawer()}
                 className="w-[34px] h-[34px] rounded-[8px] cursor-pointer flex items-center justify-center p-0 leading-none transition-[color,border-color] duration-200"

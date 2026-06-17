@@ -4,7 +4,6 @@ import { C, F, FH } from '@/constants/theme';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import logoDark from '@/img/logos/logo-dark-minified.png';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { CreateListModal } from './CreateListModal';
 
@@ -39,7 +38,7 @@ function ShareCard({ listTitle, username, listId, onDismiss }) {
           <div className="flex justify-end mb-2">
             <button onClick={handleClose} className="bg-transparent border-0 cursor-pointer text-(--color-text-light) text-[22px] leading-none p-[0_2px]">×</button>
           </div>
-          <img src={logoDark} alt="muadilci" className="h-10 mb-5 mx-auto" />
+          {logoUrl && <img src={logoUrl} alt="muadilci" className="h-10 mb-5 mx-auto" />}
 
           <div className="text-[11px] font-bold text-(--color-gold) tracking-[.15em] uppercase mb-2">
             Liste Paylaşımı
@@ -200,7 +199,7 @@ export function ListsTab({ userId, lists, loading, createList, updateList, delet
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [shareCard, setShareCard] = useState(null); // { listTitle, listId }
   const { user } = useAuth();
-  const { logActivity } = useData();
+  const { logActivity, logoUrl } = useData();
 
   const handleTemplateSelect = (title) => {
     setPrefilledTitle(title);

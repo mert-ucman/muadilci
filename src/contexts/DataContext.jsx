@@ -66,6 +66,8 @@ export function DataProvider({ children }) {
   const [sliderImages, setSliderImages] = useState([]);
   const [landingImages, setLandingImages] = useState({});
   const [faviconUrl, setFaviconUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [footerLogoUrl, setFooterLogoUrl] = useState('');
   const [globalBrandHeaders, setGlobalBrandHeaders] = useState({ original: '', muadil: '' });
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
@@ -123,6 +125,8 @@ export function DataProvider({ children }) {
       if (s.exists()) {
         const d = s.data();
         setFaviconUrl(d.faviconUrl || '');
+        setLogoUrl(d.logoUrl || '');
+        setFooterLogoUrl(d.footerLogoUrl || '');
         setGlobalBrandHeaders({ original: d.originalBrandHeader || '', muadil: d.muadilBrandHeader || '' });
       }
     }));
@@ -790,6 +794,12 @@ export function DataProvider({ children }) {
   const updateFavicon = async (url) => {
     await setDoc(doc(db, 'settings', 'site'), { faviconUrl: url }, { merge: true });
   };
+  const updateLogo = async (url) => {
+    await setDoc(doc(db, 'settings', 'site'), { logoUrl: url }, { merge: true });
+  };
+  const updateFooterLogo = async (url) => {
+    await setDoc(doc(db, 'settings', 'site'), { footerLogoUrl: url }, { merge: true });
+  };
   const updateBrandGlobalHeader = async (type, url) => {
     const field = type === 'original' ? 'originalBrandHeader' : 'muadilBrandHeader';
     await setDoc(doc(db, 'settings', 'site'), { [field]: url ?? null }, { merge: true });
@@ -852,6 +862,8 @@ export function DataProvider({ children }) {
       MAX_SLIDER, MAX_SIZE_MB,
       updateLandingImage,
       faviconUrl, updateFavicon,
+      logoUrl, updateLogo,
+      footerLogoUrl, updateFooterLogo,
       globalBrandHeaders, updateBrandGlobalHeader,
     }}>
       {children}
