@@ -43,7 +43,7 @@
   --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-accent:  'Elms Sans', 'DM Sans', sans-serif;
-  --font-ui:      'Inter', 'DM Sans', sans-serif;
+  --font-ui:      'DM Sans', sans-serif;
 }
 
 @media (max-width: 1024px) {

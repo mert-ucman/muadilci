@@ -11,6 +11,8 @@ import { useSeo } from '@/lib/seo';
 const SORT_OPTIONS_ORIG = [
   { value: 'az',            label: 'A → Z' },
   { value: 'za',            label: 'Z → A' },
+  { value: 'type_niche',    label: 'Tür: Niche Önce' },
+  { value: 'type_designer', label: 'Tür: Designer Önce' },
   { value: 'origin_asc',   label: 'Köken A → Z' },
   { value: 'origin_desc',  label: 'Köken Z → A' },
   { value: 'founded_asc',   label: 'Kuruluş Yılı (En Erken)' },
@@ -34,6 +36,23 @@ const SORT_OPTIONS_MUADIL = [
 ];
 
 const scoreColor = (v) => v == null ? C.textLight : v <= 4 ? C.red : v < 7 ? C.orange : C.green;
+
+const TYPE_META = {
+  Niche:    { label: 'Niche',    bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+  Designer: { label: 'Designer', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+};
+const TypeBadge = ({ category }) => {
+  const m = TYPE_META[category];
+  if (!m) return <span className="text-(--color-text-light) text-[13px]">—</span>;
+  return (
+    <span
+      className="inline-block text-[11px] font-bold px-[8px] py-[2px] rounded-full whitespace-nowrap"
+      style={{ background: m.bg, color: m.color, border: `1px solid ${m.border}` }}
+    >
+      {m.label}
+    </span>
+  );
+};
 
 function IconGrid() {
   return (
@@ -68,6 +87,7 @@ export function BrandsPage() {
   const [perPage, setPerPage]   = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
   const [page, setPage]         = useState(1);
   const [scoreFilter, setScoreFilter] = useState('all');
+  const [typeFilter, setTypeFilter]   = useState('all');
   const [searchQ, setSearchQ]   = useState('');
 
   useEffect(() => { localStorage.setItem('brands_tab',  tab);  }, [tab]);
@@ -77,7 +97,7 @@ export function BrandsPage() {
 
   const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
 
-  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); setSearchQ(''); };
+  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); setTypeFilter('all'); setSearchQ(''); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchPerPage = (n) => { setPerPage(n); setPage(1); };
   const handleSearch = (v) => { setSearchQ(v); setPage(1); };
@@ -131,6 +151,7 @@ export function BrandsPage() {
     const base = brands.filter(b => {
       if (b.type !== tab || !b.active) return false;
       if (q && !b.name.toLowerCase().includes(q) && !(b.origin || '').toLowerCase().includes(q)) return false;
+      if (typeFilter !== 'all' && tab === 'original' && b.category !== typeFilter) return false;
       if (sfType !== 'all' && tab === 'muadil') {
         const sc = brandScoreMap[b.id];
         if (sc == null) return false;
@@ -143,6 +164,8 @@ export function BrandsPage() {
       switch (sort) {
         case 'az':            return a.name.localeCompare(b.name, 'tr');
         case 'za':            return b.name.localeCompare(a.name, 'tr');
+        case 'type_niche':    { if (a.category === b.category) return 0; return a.category === 'Niche' ? -1 : 1; }
+        case 'type_designer': { if (a.category === b.category) return 0; return a.category === 'Designer' ? -1 : 1; }
         case 'founded_asc':   return (a.founded || 9999) - (b.founded || 9999);
         case 'founded_desc':  return (b.founded || 0) - (a.founded || 0);
         case 'perfumes_desc': return isOrig
@@ -162,7 +185,7 @@ export function BrandsPage() {
         default:              return 0;
       }
     });
-  }, [brands, tab, sort, isOrig, perfumeCountMap, muadilCountMap, muadilBrandProductCount, brandScoreMap, scoreFilter, searchQ]);
+  }, [brands, tab, sort, isOrig, perfumeCountMap, muadilCountMap, muadilBrandProductCount, brandScoreMap, scoreFilter, typeFilter, searchQ]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / perPage));
   const safePage   = Math.min(page, totalPages);
@@ -272,10 +295,10 @@ export function BrandsPage() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-[14px]">
+        {/* Search + Type filter */}
+        <div className="mb-[14px] flex items-center gap-[10px] flex-wrap">
           <div
-            className="flex items-center gap-2 bg-(--color-card) rounded-[10px] px-[14px] h-10 max-w-[400px] transition-[border-color,box-shadow] duration-200"
+            className="flex items-center gap-2 bg-(--color-card) rounded-[10px] px-[14px] h-10 max-w-[400px] flex-shrink-0 transition-[border-color,box-shadow] duration-200"
             style={{
               border: `1px solid ${searchQ ? C.gold : C.border}`,
               boxShadow: searchQ ? `0 0 0 3px ${C.goldBg}` : 'none',
@@ -299,6 +322,29 @@ export function BrandsPage() {
               </button>
             )}
           </div>
+          {isOrig && (
+            <div className="flex items-center gap-[6px]">
+              {[['all', 'Tümü'], ['Niche', 'Niche'], ['Designer', 'Designer']].map(([v, l]) => {
+                const m = TYPE_META[v];
+                const active = typeFilter === v;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => { setTypeFilter(v); setPage(1); }}
+                    className="h-[34px] px-[13px] rounded-full text-[12px] font-semibold border-none cursor-pointer transition-all duration-150 font-[--font-body]"
+                    style={{
+                      background: active ? (m ? m.bg : C.navy) : C.card,
+                      color: active ? (m ? m.color : '#fff') : C.textMid,
+                      border: `1px solid ${active ? (m ? m.border : C.navy) : C.border}`,
+                      fontWeight: active ? 700 : 500,
+                    }}
+                  >
+                    {l}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Total + page info */}
@@ -347,7 +393,7 @@ export function BrandsPage() {
                       color: isOrig ? C.gold : C.green,
                     }}
                   >
-                    <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
+                    <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                   </div>
                   <div className="pr-6 min-w-0">
                     <div
@@ -432,6 +478,7 @@ export function BrandsPage() {
           // Column → sort pairs (asc, desc)
           const COL_SORT = {
             'Marka':   ['az',           'za'],
+            'Tür':     ['type_niche',   'type_designer'],
             'Köken':   ['origin_asc',   'origin_desc'],
             'Kuruluş': ['founded_asc',  'founded_desc'],
             'Parfüm':  ['perfumes_desc','perfumes_asc'],
@@ -457,7 +504,7 @@ export function BrandsPage() {
             if (sort === pair[1]) return '↓';
             return null;
           };
-          const columns = ['Marka', 'Köken', isOrig ? 'Kuruluş' : null, 'Parfüm', isOrig ? 'Muadil' : null, !isOrig ? 'Puan' : null, 'Favori', ''].filter(v => v !== null);
+          const columns = ['Marka', isOrig ? 'Tür' : null, 'Köken', isOrig ? 'Kuruluş' : null, 'Parfüm', isOrig ? 'Muadil' : null, !isOrig ? 'Puan' : null, 'Favori', ''].filter(v => v !== null);
           return (
           <>
           <Card style={{ overflow: 'hidden' }}>
@@ -515,11 +562,12 @@ export function BrandsPage() {
                             border: `1px solid ${isOrig ? C.goldBorder : C.greenBorder}`,
                           }}
                         >
-                          <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
+                          <img src={b.logoImage || noImageUrl || undefined} alt={b.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} />
                         </div>
                         <span className="font-semibold text-[14px] text-(--color-navy)" style={{ fontFamily: FH }}>{b.name}</span>
                       </div>
                     </td>
+                    {isOrig && <td className="px-[14px] py-3 text-center"><TypeBadge category={b.category} /></td>}
                     <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">{b.origin || '—'}</td>
                     {isOrig && <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">{b.founded || '—'}</td>}
                     <td className="px-[14px] py-3 text-[13px] text-(--color-text-mid) text-center">

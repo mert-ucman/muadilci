@@ -145,29 +145,34 @@ export function PerfumeDetailPage({ params }) {
           className="grid gap-[24px] mb-[32px]"
           style={{ gridTemplateColumns: sm ? '1fr' : '260px 1fr' }}
         >
-          <Card style={{ padding: '0', overflow: 'hidden' }}>
+          <Card style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            {/* Görsel — 3/4 portrait → 260px genişlikte ~347px yükseklik ≈ kartın %68'i */}
             <div
-              className="w-full overflow-hidden flex items-center justify-center"
               style={{
-                aspectRatio: sm ? '16/9' : '4/3',
+                position: 'relative',
+                overflow: 'hidden',
                 background: `linear-gradient(135deg,${C.goldBg},#fff)`,
+                aspectRatio: sm ? '16/9' : '3/4',
               }}
             >
               <img
                 src={perfume.images?.[0]?.src || noImageUrl || undefined}
                 alt={perfume.name}
                 onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }}
-                className="w-full h-full object-cover"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
-            <div className="px-[18px] py-[16px]">
-              <div className="text-[18px] font-semibold text-(--color-navy) mb-[3px]" style={{ fontFamily: "'Inter', sans-serif" }}>{perfume.name}</div>
-              <div className="text-[13px] text-(--color-text-mid) mb-[12px]">{perfume.brandName}</div>
-              <div className="flex gap-[8px] flex-wrap">
-                <GenderBadge gender={perfume.gender} />
-                <Badge color="gold">{perfume.year}</Badge>
+            {/* İçerik — buton space-between ile aşağı yaslı */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '14px 18px' }}>
+              <div>
+                <div className="text-[18px] font-semibold text-(--color-navy) mb-[2px]" style={{ fontFamily: "'Inter', sans-serif" }}>{perfume.name}</div>
+                <div className="text-[13px] text-(--color-text-mid) mb-[10px]">{perfume.brandName}</div>
+                <div className="flex gap-[8px] flex-wrap">
+                  <GenderBadge gender={perfume.gender} />
+                  <Badge color="gold">{perfume.year}</Badge>
+                </div>
               </div>
-              <Btn style={{ marginTop: '14px', width: '100%', justifyContent: 'center' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}`)}>
+              <Btn style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}`)}>
                 Muadil Karşılaştır
               </Btn>
             </div>
@@ -272,7 +277,7 @@ export function PerfumeDetailPage({ params }) {
               return (
                 <Card key={m.id} hover style={{ padding: '0', cursor: 'pointer', overflow: 'hidden', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${perfume.id}&muadil=${m.id}`)}>
                   <div className="w-full bg-[#f0f0f0] overflow-hidden relative" style={{ aspectRatio: '4/3' }}>
-                    <img src={m.image || noImageUrl || undefined} alt={m.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
+                    <img src={m.image || noImageUrl || undefined} alt={m.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(uid, m.id); }}
                       className="absolute top-[10px] right-[10px] w-[30px] h-[30px] rounded-full flex items-center justify-center cursor-pointer backdrop-blur-[4px] shadow-[0_2px_6px_rgba(0,0,0,.1)]"
@@ -360,7 +365,7 @@ export function PerfumeDetailPage({ params }) {
                       <td className="px-[14px] py-[12px]">
                         <div className="flex items-center gap-[10px]">
                           <div className="w-[36px] h-[36px] rounded-[8px] bg-[#f0f0f0] overflow-hidden shrink-0">
-                            <img src={m.image || noImageUrl || undefined} alt={m.name} onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
+                            <img src={m.image || noImageUrl || undefined} alt={m.name} loading="lazy" decoding="async" onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
                           </div>
                           <span className="font-normal text-[14px] text-(--color-navy)" style={{ fontFamily: "'Inter', sans-serif" }}>{m.name}</span>
                         </div>

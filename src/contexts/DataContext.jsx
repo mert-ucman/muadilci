@@ -28,6 +28,33 @@ const col = (name) => collection(db, name);
 const docRef = (name, id) => doc(db, name, String(id));
 const snap2arr = (snapshot) => snapshot.docs.map((d) => ({ ...d.data(), id: d.id }));
 
+// ─── localStorage cache (30 dk TTL) ─────────────────────────────────────────
+const CACHE_TTL = 30 * 60 * 1000;
+
+function cacheRead(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw, (_k, v) => {
+      if (v && typeof v === 'object' && v._ts)
+        return { seconds: v.s, nanoseconds: v.n, toDate: () => new Date(v.s * 1000) };
+      return v;
+    });
+    if (Date.now() - parsed.ts > CACHE_TTL) return null;
+    return parsed.data;
+  } catch { return null; }
+}
+
+function cacheWrite(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }, (_k, v) => {
+      if (v && typeof v === 'object' && typeof v.seconds === 'number' && typeof v.toDate === 'function')
+        return { _ts: true, s: v.seconds, n: v.nanoseconds ?? 0 };
+      return v;
+    }));
+  } catch { /* localStorage kotası dolmuş olabilir */ }
+}
+
 export function DataProvider({ children }) {
   const { user } = useAuth();
 
@@ -50,13 +77,43 @@ export function DataProvider({ children }) {
     const total = 4;
     const tryDone = () => { if (++resolved >= total) setLoading(false); };
 
-    // Brands: küçük koleksiyon, onSnapshot kalabilir
-    unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => { setBrands(snap2arr(s)); tryDone(); }));
+    // Brands: cache'den pre-seed yap, gerçek zamanlı listener devam eder
+    const cachedBrands = cacheRead('mc_brands');
+    if (cachedBrands) setBrands(cachedBrands);
+    unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => {
+      const data = snap2arr(s);
+      setBrands(data);
+      cacheWrite('mc_brands', data);
+      tryDone();
+    }));
 
-    // Perfumes ve Muadils: büyük koleksiyonlar, yalnızca başlangıçta bir kez çekiliyor.
-    // Admin yazma işlemleri state'i manuel güncelliyor; real-time listener fatura şişirir.
-    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => { setPerfumes(snap2arr(s)); tryDone(); });
-    getDocs(query(col('muadils'), orderBy('name'))).then((s) => { setMuadil(snap2arr(s)); tryDone(); });
+    // Perfumes: cache varsa anında yükle (Firestore round-trip yok), yoksa fetch et
+    const cachedPerfumes = cacheRead('mc_perfumes');
+    if (cachedPerfumes) {
+      setPerfumes(cachedPerfumes);
+      tryDone();
+    } else {
+      getDocs(query(col('perfumes'), orderBy('name'))).then((s) => {
+        const data = snap2arr(s);
+        setPerfumes(data);
+        cacheWrite('mc_perfumes', data);
+        tryDone();
+      });
+    }
+
+    // Muadils: perfumes ile aynı strateji
+    const cachedMuadils = cacheRead('mc_muadils');
+    if (cachedMuadils) {
+      setMuadil(cachedMuadils);
+      tryDone();
+    } else {
+      getDocs(query(col('muadils'), orderBy('name'))).then((s) => {
+        const data = snap2arr(s);
+        setMuadil(data);
+        cacheWrite('mc_muadils', data);
+        tryDone();
+      });
+    }
 
     // Reviews: en son 200 yorum yeterli; geçmiş admin panelinden ayrıca çekiliyor
     unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)), (s) => { setComments(snap2arr(s)); tryDone(); }));
@@ -773,8 +830,12 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))),
-      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))),
+      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => {
+        const data = snap2arr(s); setPerfumes(data); cacheWrite('mc_perfumes', data);
+      }),
+      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => {
+        const data = snap2arr(s); setMuadil(data); cacheWrite('mc_muadils', data);
+      }),
       notifications, unreadNotifCount, notifHasMore,
       markNotificationRead, markAllNotificationsRead,
       loadMoreNotifications, clearAllNotifications,
