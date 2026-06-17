@@ -20,13 +20,23 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/firebase')) return 'vendor-firebase';
+          // React core — daima yüklenir
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/scheduler')) return 'vendor-react';
-          if (id.includes('node_modules/gsap')) return 'vendor-gsap';
-          if (id.includes('node_modules/xlsx')) return 'vendor-xlsx';
-          if (id.includes('node_modules/jspdf') || id.includes('node_modules/jspdf-autotable')) return 'vendor-pdf';
+          // Firebase — tüm @firebase/* sub-paketleri dahil, daima yüklenir
+          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase') || id.includes('node_modules/idb')) return 'vendor-firebase';
+          // FontAwesome — Navbar kullanıyor, daima yüklenir
           if (id.includes('node_modules/@fortawesome')) return 'vendor-icons';
-          if (id.includes('node_modules')) return 'vendor-misc';
+          // GSAP — LandingPage hero animasyonları
+          if (id.includes('node_modules/gsap')) return 'vendor-gsap';
+          // Admin-only ağır kütüphaneler — sadece /admin ziyaretinde yüklenir
+          if (
+            id.includes('node_modules/xlsx') ||
+            id.includes('node_modules/jspdf') ||
+            id.includes('node_modules/jspdf-autotable') ||
+            id.includes('node_modules/react-easy-crop') ||
+            id.includes('node_modules/qrcode')
+          ) return 'vendor-admin';
+          // Geri kalanlar: Rollup kendi akıllı bölmesini yapsın (catch-all yok)
         },
       },
     },
