@@ -17,6 +17,10 @@ export default defineConfig({
     exclude: ['jspdf', 'jspdf-autotable'],
   },
   build: {
+    modulePreload: {
+      resolveDependencies: (_filename, deps) =>
+        deps.filter((dep) => !dep.includes('vendor-admin')),
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
