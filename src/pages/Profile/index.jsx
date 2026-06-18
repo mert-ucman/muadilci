@@ -39,6 +39,13 @@ function getCroppedImg(src, pixelCrop, outputSize = 240) {
 const ROLE_LABEL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 const ROLE_COLOR = { admin: 'red', moderator: 'blue', user: 'gold' };
 
+const TABS = [
+  { k: 'info', l: 'Bilgilerim' },
+  { k: 'favorites', l: 'Favorilerim' },
+  { k: 'reviews', l: 'Yorumlarım' },
+  { k: 'lists', l: 'Listelerim' },
+];
+
 const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
 
 // Her kelimenin ilk harfini Türkçe uyumlu büyütür
@@ -122,6 +129,8 @@ export function ProfilePage({ queryParams }) {
 
   const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : queryParams?.tab === 'lists' ? 'lists' : 'info';
   const [tab, setTab] = useState(tabInit);
+  const [tabMenuOpen, setTabMenuOpen] = useState(false);
+  const tabMenuRef = useRef(null);
 
   const { lists, loading: listsLoading, createList, updateList, deleteList } = usePerfumeLists(user?.uid);
 
@@ -165,6 +174,14 @@ export function ProfilePage({ queryParams }) {
     }, 600);
     return () => clearTimeout(unDebounce.current);
   }, [newUsername, usernameEdit]);
+
+  // Mobil sekme dropdown'unda dışarı tıklayınca kapat
+  useEffect(() => {
+    if (!tabMenuOpen) return;
+    const onDoc = (e) => { if (tabMenuRef.current && !tabMenuRef.current.contains(e.target)) setTabMenuOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [tabMenuOpen]);
 
   if (!user) return (
     <div className="min-h-screen bg-(--color-bg) flex flex-col items-center justify-center gap-4">
@@ -427,15 +444,37 @@ export function ProfilePage({ queryParams }) {
             {photoErr}
           </div>
         )}
-        {/* Tabs — scrollable on mobile */}
-        <div className="tabs-scroll border-b border-(--color-border) mb-7">
-          {[{ k: 'info', l: 'Bilgilerim' }, { k: 'favorites', l: 'Favorilerim' }, { k: 'reviews', l: 'Yorumlarım' }, { k: 'lists', l: 'Listelerim' }].map(({ k, l }) => (
-            <button key={k} onClick={() => setTab(k)}
-              style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === k ? C.gold : 'transparent'}`, padding: '10px 16px', color: tab === k ? C.gold : C.textMid, fontSize: '14px', fontWeight: tab === k ? 700 : 500, cursor: 'pointer', fontFamily: F, marginBottom: '-1px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {l}
+        {/* Tabs — mobilde dropdown, masaüstünde yatay */}
+        {sm ? (
+          <div ref={tabMenuRef} className="relative mb-7">
+            <button onClick={() => setTabMenuOpen((o) => !o)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '12px 16px', fontSize: '15px', fontWeight: 700, color: C.gold, fontFamily: F, cursor: 'pointer' }}>
+              <span>{TABS.find((t) => t.k === tab)?.l}</span>
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ transform: tabMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
+                <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
-          ))}
-        </div>
+            {tabMenuOpen && (
+              <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', boxShadow: C.shadowMd }}>
+                {TABS.map(({ k, l }) => (
+                  <button key={k} onClick={() => { setTab(k); setTabMenuOpen(false); }}
+                    style={{ width: '100%', textAlign: 'left', background: tab === k ? C.goldBg : 'transparent', border: 'none', borderLeft: `3px solid ${tab === k ? C.gold : 'transparent'}`, padding: '12px 16px', fontSize: '14px', fontWeight: tab === k ? 700 : 500, color: tab === k ? C.gold : C.textMid, cursor: 'pointer', fontFamily: F }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="tabs-scroll border-b border-(--color-border) mb-7">
+            {TABS.map(({ k, l }) => (
+              <button key={k} onClick={() => setTab(k)}
+                style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === k ? C.gold : 'transparent'}`, padding: '10px 16px', color: tab === k ? C.gold : C.textMid, fontSize: '14px', fontWeight: tab === k ? 700 : 500, cursor: 'pointer', fontFamily: F, marginBottom: '-1px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {l}
+              </button>
+            ))}
+          </div>
+        )}
 
         {tab === 'info' && (
           <div className="max-w-[480px]">

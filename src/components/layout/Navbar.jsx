@@ -62,8 +62,20 @@ export function Navbar() {
     ...perfumes.map(p => ({ label: `${p.name} — ${p.brandName}`, url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
     ...brands.map(b   => ({ label: b.name, url: `/marka/${b.slug}`,           type: 'Marka',  image: b.logoImage || '' })),
   ];
-  const filtered = searchQ.length > 1
-    ? searchItems.filter(i => i.label.toLowerCase().includes(searchQ.toLowerCase())).slice(0, 6)
+  const q = searchQ.trim().toLowerCase();
+  // Marka eşleşmesini alaka düzeyine göre sırala: önce sorgu ile başlayanlar, sonra kısa adlar
+  const brandSort = (a, b) => {
+    const aw = a.label.toLowerCase().startsWith(q) ? 0 : 1;
+    const bw = b.label.toLowerCase().startsWith(q) ? 0 : 1;
+    if (aw !== bw) return aw - bw;
+    return a.label.length - b.label.length;
+  };
+  // Her zaman önce marka(lar), sonra parfümler
+  const filtered = q.length > 1
+    ? [
+        ...searchItems.filter(i => i.type === 'Marka'  && i.label.toLowerCase().includes(q)).sort(brandSort),
+        ...searchItems.filter(i => i.type === 'Parfüm' && i.label.toLowerCase().includes(q)),
+      ].slice(0, 6)
     : [];
 
   const roleLabel = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
