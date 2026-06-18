@@ -1,4 +1,6 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import DOMPurify from 'dompurify';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
@@ -348,7 +350,7 @@ function AuthPanelPreview({ imageUrl, headlineHtml, subtextText, label }) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px' }}>
           <div
             style={{ fontFamily: FH, fontSize: '14px', fontWeight: 400, color: '#fff', lineHeight: 1.32, marginBottom: '6px', letterSpacing: '-0.01em' }}
-            dangerouslySetInnerHTML={{ __html: headlineHtml || AUTH_DEFAULT_HTML }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headlineHtml || AUTH_DEFAULT_HTML) }}
           />
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '8px', fontWeight: 300, color: 'rgba(255,255,255,0.58)', lineHeight: 1.85 }}>
             {subLines.map((l, i) => <span key={i}>{l}{i < subLines.length - 1 && <br />}</span>)}
@@ -1356,6 +1358,350 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
   );
 }
 
+/* ─── Searchable Select ─────────────────────────────────────────────────── */
+function SearchableSelect({ options, value, onChange, placeholder = 'Ara veya seçin…', disabled = false, autoOpen = false }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const triggerRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+  const [highlighted, setHighlighted] = useState(0);
+  const wheelAccumRef = useRef(0);
+
+  useEffect(() => { if (autoOpen) setOpen(true); }, []);
+
+  const filtered = query.trim()
+    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+    : options;
+
+  const selected = options.find((o) => o.value === value);
+
+  const calcPos = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow < 260 ? rect.top - 270 : rect.bottom + 4;
+    setDropPos({ top: Math.max(8, top), left: rect.left, width: rect.width });
+  }, []);
+
+  useEffect(() => { setHighlighted(0); }, [query]);
+
+  useEffect(() => {
+    if (!open) { setQuery(''); return; }
+    calcPos();
+    setTimeout(() => inputRef.current?.focus(), 0);
+    const idx = filtered.findIndex((o) => o.value === value);
+    setHighlighted(idx >= 0 ? idx : 0);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (e) => {
+      if (!triggerRef.current?.contains(e.target) && !dropdownRef.current?.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onOutside);
+    window.addEventListener('scroll', calcPos, true);
+    window.addEventListener('resize', calcPos);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      window.removeEventListener('scroll', calcPos, true);
+      window.removeEventListener('resize', calcPos);
+    };
+  }, [open, calcPos]);
+
+  useEffect(() => {
+    if (!listRef.current || !open) return;
+    listRef.current.children[highlighted]?.scrollIntoView({ block: 'nearest' });
+  }, [highlighted, open]);
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    wheelAccumRef.current += e.deltaMode === 0 ? e.deltaY : e.deltaY * 20;
+    const steps = Math.trunc(wheelAccumRef.current / 80);
+    if (steps !== 0) {
+      wheelAccumRef.current -= steps * 80;
+      setHighlighted(prev => Math.max(0, Math.min(filtered.length - 1, prev + steps)));
+    }
+  };
+
+  const handleKey = (e) => {
+    if (!open) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); } return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlighted((p) => Math.min(p + 1, filtered.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlighted((p) => Math.max(p - 1, 0)); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (filtered[highlighted]) { onChange(filtered[highlighted].value); setOpen(false); } }
+    else if (e.key === 'Escape') { setOpen(false); }
+  };
+
+  const select = (val) => { onChange(val); setOpen(false); };
+  const hasValue = !!value;
+
+  const dropdown = open && createPortal(
+    <div
+      ref={dropdownRef}
+      style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999, borderRadius: '10px', overflow: 'hidden', border: `1.5px solid ${C.navy}`, background: '#fff', boxShadow: '0 8px 28px rgba(0,0,0,.16)' }}
+    >
+      <div style={{ padding: '7px 7px 5px', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ position: 'relative' }}>
+          <svg style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { handleKey(e); e.stopPropagation(); }}
+            placeholder="Ara…"
+            style={{ width: '100%', height: 30, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12, outline: 'none', paddingLeft: 28, paddingRight: 8, color: C.text, boxSizing: 'border-box', fontFamily: 'var(--font-body)' }}
+          />
+        </div>
+      </div>
+      <div ref={listRef} onWheel={handleWheel} style={{ overflowY: 'auto', maxHeight: 220 }}>
+        {filtered.length === 0
+          ? <div style={{ padding: '10px 12px', textAlign: 'center', fontSize: 12, color: C.textLight }}>Sonuç bulunamadı</div>
+          : filtered.map((o, i) => (
+            <div
+              key={o.value}
+              onMouseDown={() => select(o.value)}
+              onMouseEnter={() => setHighlighted(i)}
+              style={{ padding: '7px 12px', fontSize: 13, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: i === highlighted ? C.goldBg : o.value === value ? '#f0f4ff' : 'transparent', color: i === highlighted ? C.navy : o.value === value ? C.navy : C.text, fontWeight: o.value === value ? 700 : 400 }}
+            >
+              {o.label}
+            </div>
+          ))
+        }
+      </div>
+      {filtered.length > 0 && (
+        <div style={{ padding: '3px 12px', fontSize: 10, textAlign: 'right', color: C.textLight, borderTop: `1px solid ${C.border}` }}>
+          {filtered.length} sonuç · ↑↓ veya tekerlek
+        </div>
+      )}
+    </div>,
+    document.body
+  );
+
+  return (
+    <div className="relative w-full" onKeyDown={handleKey} tabIndex={disabled ? -1 : 0}>
+      <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((o) => !o)}
+        className="w-full h-[36px] rounded-[8px] px-[10px] text-[13px] text-left flex items-center justify-between gap-2 outline-none transition-all font-[family-name:var(--font-body)]"
+        style={{ border: `1.5px solid ${open ? C.navy : hasValue ? C.navy : C.border}`, background: disabled ? '#f5f5f5' : '#fff', color: hasValue ? C.text : C.textLight, cursor: disabled ? 'not-allowed' : 'pointer' }}
+      >
+        <span className="truncate">{selected ? selected.label : placeholder}</span>
+        <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: C.textLight }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {dropdown}
+    </div>
+  );
+}
+
+/* ─── Bulk Add Muadil Modal ─────────────────────────────────────────────── */
+function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
+  const mkRow = () => ({ id: Date.now() + Math.random(), targetPerfumeId: '' });
+  const [brandId, setBrandId] = useState('');
+  const [rows, setRows] = useState(() => [mkRow(), mkRow(), mkRow()]);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState([]);
+  const [lastAddedId, setLastAddedId] = useState(null);
+  const rowsEndRef = useRef(null);
+  const savingRef = useRef(false);
+  savingRef.current = saving;
+  const addRowRef = useRef(null);
+
+  const muadilBrands = brands.filter((b) => b.type === 'muadil').sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  const sortedPerfumes = [...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr'));
+  const perfumeOptions = sortedPerfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }));
+  const brandOptions = [{ value: '', label: 'Önce marka seçin' }, ...muadilBrands.map((b) => ({ value: String(b.id), label: b.name }))];
+
+  const setRow = (id, targetPerfumeId) => setRows((prev) => prev.map((r) => r.id === id ? { ...r, targetPerfumeId } : r));
+  const removeRow = (id) => setRows((prev) => prev.length > 1 ? prev.filter((r) => r.id !== id) : prev);
+
+  const addRow = () => {
+    const r = mkRow();
+    setRows((prev) => [...prev, r]);
+    setLastAddedId(r.id);
+    setTimeout(() => {
+      rowsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setLastAddedId(null);
+    }, 80);
+  };
+  addRowRef.current = addRow;
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !savingRef.current) {
+        e.preventDefault();
+        addRowRef.current();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleSave = async () => {
+    const brand = brands.find((b) => String(b.id) === brandId);
+    if (!brand) { setErrors(['Muadil marka seçilmedi.']); return; }
+
+    const validRows = rows.filter((r) => r.targetPerfumeId);
+    if (!validRows.length) { setErrors(['En az bir hedef parfüm seçilmeli.']); return; }
+
+    // Form içi aynı parfümü iki kez seçme kontrolü
+    const perfumeIds = validRows.map((r) => r.targetPerfumeId);
+    if (perfumeIds.length !== new Set(perfumeIds).size) {
+      setErrors(['Aynı hedef parfüm birden fazla satırda seçilmiş.']);
+      return;
+    }
+
+    // Veritabanındaki mükerrer kontrolü — targetPerfumeId + brandId ile
+    const skipped = [];
+    const toSave = [];
+    validRows.forEach((r) => {
+      const p = perfumes.find((x) => String(x.id) === r.targetPerfumeId);
+      if (!p) return;
+      const dup = muadilPerfumes.find(
+        (m) => String(m.targetPerfumeId) === String(r.targetPerfumeId) && String(m.brandId) === String(brandId)
+      );
+      if (dup) skipped.push({ muadilName: `${p.name} Benzeri`, target: `${p.brandName} — ${p.name}` });
+      else toSave.push(r);
+    });
+
+    if (!toSave.length) {
+      setErrors(skipped.map((s) => `"${s.muadilName}" zaten eklenmiş  ·  Hedef: ${s.target}`));
+      return;
+    }
+
+    setErrors([]);
+    setSaving(true);
+    try {
+      for (const r of toSave) {
+        const p = perfumes.find((x) => String(x.id) === r.targetPerfumeId);
+        const name = `${p.name} Benzeri`;
+        await onAdd({ name, slug: slugify(name), brandId, brandSlug: brand.slug, brandName: brand.name, targetPerfumeId: r.targetPerfumeId, targetPerfumeName: p.name, targetBrandName: p.brandName, gender: p.gender || '', description: '', image: '', images: [null, null, null] });
+      }
+      if (skipped.length) {
+        // Kaydedilenler eklendi, ama bazıları atlandı — modal açık kalsın, uyarı göster
+        const skippedTargets = new Set(skipped.map((s) => s.target));
+        setRows((prev) => prev.filter((r) => {
+          const p = perfumes.find((x) => String(x.id) === r.targetPerfumeId);
+          return p && skippedTargets.has(`${p.brandName} — ${p.name}`);
+        }));
+        setErrors(skipped.map((s) => `"${s.muadilName}" zaten eklenmiş  ·  Hedef: ${s.target}`));
+        setSaving(false);
+      } else {
+        onClose();
+      }
+    } catch {
+      setSaving(false);
+    }
+  };
+
+  const filledCount = rows.filter((r) => r.targetPerfumeId).length;
+
+  return (
+    <Modal open onClose={onClose} title="Toplu Muadil Parfüm Ekle" width="680px">
+      {/* Marka Seçimi */}
+      <div className="mb-5 pb-5" style={{ borderBottom: `1px solid ${C.border}` }}>
+        <label className="block text-[13px] font-semibold mb-[6px]" style={{ color: C.textMid }}>Muadil Marka *</label>
+        <SearchableSelect
+          options={brandOptions}
+          value={brandId}
+          onChange={setBrandId}
+          placeholder="Marka ara veya seçin…"
+        />
+        {brandId && (
+          <div className="mt-2 px-3 py-1.5 inline-flex items-center gap-1.5 rounded-lg text-[12px] font-semibold" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
+            <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            {brands.find((b) => String(b.id) === brandId)?.name}
+          </div>
+        )}
+      </div>
+
+      {/* Satır başlıkları */}
+      <div className="grid gap-x-3 px-1 mb-2" style={{ gridTemplateColumns: '22px 1fr 190px 28px' }}>
+        {['#', 'Hedef Orijinal Parfüm', 'Muadil Adı (otomatik)', ''].map((h, i) => (
+          <span key={i} className="text-[11px] font-bold uppercase tracking-[.05em]" style={{ color: C.textLight }}>{h}</span>
+        ))}
+      </div>
+
+      {/* Satırlar */}
+      <div className="flex flex-col gap-[6px] mb-3">
+        {rows.map((row, idx) => {
+          const p = perfumes.find((x) => String(x.id) === row.targetPerfumeId);
+          const muadilName = p ? `${p.name} Benzeri` : '';
+          return (
+            <div key={row.id} className="grid gap-x-3 items-center" style={{ gridTemplateColumns: '22px 1fr 190px 28px' }}>
+              <span className="text-[12px] font-bold text-center" style={{ color: C.textLight }}>{idx + 1}</span>
+              <SearchableSelect
+                options={perfumeOptions}
+                value={row.targetPerfumeId}
+                onChange={(val) => setRow(row.id, val)}
+                placeholder="Parfüm ara veya seçin…"
+                disabled={!brandId}
+                autoOpen={row.id === lastAddedId}
+              />
+              <div
+                className="h-[36px] rounded-[8px] px-[10px] flex items-center text-[12px] font-semibold truncate"
+                style={{ background: muadilName ? C.goldBg : '#f5f5f5', border: `1px solid ${muadilName ? C.goldBorder : C.border}`, color: muadilName ? C.gold : C.textLight }}
+              >
+                {muadilName || '—'}
+              </div>
+              <button
+                onClick={() => removeRow(row.id)}
+                disabled={rows.length === 1}
+                className="flex items-center justify-center w-7 h-7 rounded-[7px] border-none text-[17px] font-bold leading-none transition-all"
+                style={{ background: rows.length === 1 ? '#f5f5f5' : '#fff5f5', color: rows.length === 1 ? C.textLight : C.red, cursor: rows.length === 1 ? 'not-allowed' : 'pointer' }}
+              >×</button>
+            </div>
+          );
+        })}
+        <div ref={rowsEndRef} />
+      </div>
+
+      {/* Satır Ekle + kısayol ipucu */}
+      <div className="flex items-center gap-3 mb-5">
+        <button
+          onClick={addRow}
+          disabled={!brandId}
+          className="flex items-center gap-[6px] h-[34px] px-[14px] rounded-[8px] text-[13px] font-semibold transition-all"
+          style={{ border: `1.5px dashed ${brandId ? C.gold : C.border}`, color: brandId ? C.gold : C.textLight, background: brandId ? C.goldBg : '#fafafa', cursor: brandId ? 'pointer' : 'not-allowed' }}
+        >
+          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Satır Ekle
+        </button>
+        <span className="text-[11px]" style={{ color: C.textLight }}>
+          ya da{' '}
+          <kbd style={{ padding: '2px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: '#f0f0f0', border: `1px solid ${C.border}`, color: C.textMid, fontFamily: 'inherit' }}>Ctrl</kbd>
+          {' + '}
+          <kbd style={{ padding: '2px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, background: '#f0f0f0', border: `1px solid ${C.border}`, color: C.textMid, fontFamily: 'inherit' }}>↵</kbd>
+          {' '}— yeni satır ekler ve arama odaklanır
+        </span>
+      </div>
+
+      {errors.length > 0 && (
+        <div className="mb-4 px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg">
+          {errors.map((e, i) => <div key={i} className="text-[13px]" style={{ color: C.red }}>{e}</div>)}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-1">
+        <span className="text-[13px]" style={{ color: C.textLight }}>
+          {filledCount} / {rows.length} satır dolu
+        </span>
+        <div className="flex gap-2">
+          <Btn variant="secondary" onClick={onClose}>İptal</Btn>
+          <Btn onClick={handleSave} disabled={saving || !brandId || !filledCount}>
+            {saving ? 'Kaydediliyor…' : `${filledCount} Muadil Kaydet`}
+          </Btn>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 function ImageCropModal({ src, aspect, outputW, outputH, title, onConfirm, onCancel }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -2035,6 +2381,7 @@ export function AdminPanel() {
   const [showBM, setShowBM] = useState(false);
   const [showPM, setShowPM] = useState(false);
   const [showMM, setShowMM] = useState(false);
+  const [showBulkMM, setShowBulkMM] = useState(false);
   const [selUser, setSelUser] = useState(null);
   const [selPerf, setSelPerf] = useState(null);
   const [selMuadil, setSelMuadil] = useState(null);
@@ -2857,7 +3204,10 @@ export function AdminPanel() {
                 {selectedIds.size > 0 ? (
                   <Btn variant="danger" onClick={openBulkDel}>Seçilenleri Sil ({selectedIds.size})</Btn>
                 ) : <div />}
-                <Btn onClick={() => setShowMM(true)}>+ Muadil Parfüm Ekle</Btn>
+                <div className="flex gap-2">
+                  <Btn variant="secondary" onClick={() => setShowBulkMM(true)}>Toplu Ekle</Btn>
+                  <Btn onClick={() => setShowMM(true)}>+ Muadil Parfüm Ekle</Btn>
+                </div>
               </div>
               <Card style={{ overflow: 'hidden' }}>
                 <div className="px-[18px] py-[14px] border-b border-(--color-border) flex items-center gap-3 flex-wrap">
@@ -3451,6 +3801,16 @@ export function AdminPanel() {
           muadilPerfumes={muadilPerfumes}
           onClose={() => setShowMM(false)}
           onAdd={(data) => { addMuadil(data); setShowMM(false); }}
+        />
+      )}
+
+      {showBulkMM && (
+        <BulkAddMuadilModal
+          brands={brands}
+          perfumes={perfumes}
+          muadilPerfumes={muadilPerfumes}
+          onClose={() => setShowBulkMM(false)}
+          onAdd={addMuadil}
         />
       )}
 
