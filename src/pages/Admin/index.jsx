@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import DOMPurify from 'dompurify';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
@@ -350,7 +349,7 @@ function AuthPanelPreview({ imageUrl, headlineHtml, subtextText, label }) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px' }}>
           <div
             style={{ fontFamily: FH, fontSize: '14px', fontWeight: 400, color: '#fff', lineHeight: 1.32, marginBottom: '6px', letterSpacing: '-0.01em' }}
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headlineHtml || AUTH_DEFAULT_HTML) }}
+            dangerouslySetInnerHTML={{ __html: headlineHtml || AUTH_DEFAULT_HTML }}
           />
           <p style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '8px', fontWeight: 300, color: 'rgba(255,255,255,0.58)', lineHeight: 1.85 }}>
             {subLines.map((l, i) => <span key={i}>{l}{i < subLines.length - 1 && <br />}</span>)}

@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { FH } from '@/constants/theme';
@@ -47,7 +46,7 @@ export function AuthLayout({ title, subtitle, children, imageKey = 'loginImage',
                   marginBottom: '18px',
                   letterSpacing: '-0.01em',
                 }}
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headlineHtml) }}
+                dangerouslySetInnerHTML={{ __html: headlineHtml }}
               />
               <p style={{
                 fontFamily: "'DM Sans', sans-serif",
