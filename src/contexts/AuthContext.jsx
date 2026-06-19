@@ -193,6 +193,11 @@ export function AuthProvider({ children }) {
             err.code = 'auth/too-many-requests';
             throw err;
           }
+          if (code === 'functions/unavailable' || code === 'functions/deadline-exceeded' || !navigator.onLine) {
+            const err = new Error('İnternet bağlantısı yok.');
+            err.code = 'auth/network-request-failed';
+            throw err;
+          }
           // permission-denied (yanlış parola) ve diğer hatalar → kimlik bilgisi hatası
           const err = new Error('E-posta/kullanıcı adı veya şifre hatalı.');
           err.code = 'auth/invalid-credential';

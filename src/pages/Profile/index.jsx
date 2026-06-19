@@ -11,7 +11,7 @@ import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { ListsTab } from './ListsTab';
 
-function getCroppedImg(src, pixelCrop, outputSize = 240) {
+function getCroppedImg(src, pixelCrop, outputSize = 300) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -26,7 +26,7 @@ function getCroppedImg(src, pixelCrop, outputSize = 240) {
           Math.round(pixelCrop.width), Math.round(pixelCrop.height),
           0, 0, outputSize, outputSize
         );
-        resolve(canvas.toDataURL('image/jpeg', 0.88));
+        resolve(canvas.toDataURL('image/webp', 0.80));
       } catch (e) {
         reject(e);
       }
@@ -150,6 +150,9 @@ export function ProfilePage({ queryParams }) {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoErr, setPhotoErr] = useState('');
   const [avatarHover, setAvatarHover] = useState(false);
+  const [photoMenu, setPhotoMenu] = useState(false);
+  const [viewPhotoModal, setViewPhotoModal] = useState(false);
+  const photoMenuRef = useRef(null);
   const fileInputRef = useRef(null);
   const [cropSrc, setCropSrc] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -182,6 +185,14 @@ export function ProfilePage({ queryParams }) {
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [tabMenuOpen]);
+
+  // Fotoğraf menüsü dışarı tıklayınca kapat
+  useEffect(() => {
+    if (!photoMenu) return;
+    const onDoc = (e) => { if (photoMenuRef.current && !photoMenuRef.current.contains(e.target)) setPhotoMenu(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [photoMenu]);
 
   if (!user) return (
     <div className="min-h-screen bg-(--color-bg) flex flex-col items-center justify-center gap-4">
@@ -218,6 +229,7 @@ export function ProfilePage({ queryParams }) {
   const onCropComplete = useCallback((_, pixels) => { setCroppedAreaPixels(pixels); }, []);
 
   const MAX_MB = 2;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
@@ -225,7 +237,7 @@ export function ProfilePage({ queryParams }) {
     e.target.value = '';
     const mb = file.size / 1024 / 1024;
     if (mb > MAX_MB) { setPhotoErr(`Dosya boyutu ${mb.toFixed(1)} MB — maksimum ${MAX_MB} MB olabilir.`); return; }
-    if (!file.type.startsWith('image/')) { setPhotoErr('Lütfen geçerli bir görsel dosyası seçin (JPG, PNG, WEBP).'); return; }
+    if (!ALLOWED_TYPES.includes(file.type)) { setPhotoErr('Lütfen JPG veya PNG dosyası seçin.'); return; }
     setPhotoErr('');
     setCropErr('');
     const reader = new FileReader();
@@ -322,7 +334,7 @@ export function ProfilePage({ queryParams }) {
               </div>
               {/* Gereksinimler */}
               <div className="flex gap-3 flex-wrap mb-3">
-                {[`Maks. ${MAX_MB} MB`, 'JPG · PNG · WEBP', 'Kare kırpılır'].map((t) => (
+                {[`Maks. ${MAX_MB} MB`, 'JPG · PNG', 'Kare kırpılır'].map((t) => (
                   <span key={t} className="text-[11px] text-(--color-text-light) bg-(--color-bg) rounded-[6px] px-2 py-[3px] border border-(--color-border)">{t}</span>
                 ))}
               </div>
@@ -396,12 +408,12 @@ export function ProfilePage({ queryParams }) {
       <div style={{ background: `linear-gradient(135deg,${C.navy},${C.navyLight})`, padding: sm ? '28px 16px' : '40px 32px' }}>
         <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
           {/* Avatar */}
-          <div className="relative shrink-0"
+          <div className="relative shrink-0" ref={photoMenuRef}
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
           >
             <div
-              onClick={() => !photoLoading && fileInputRef.current?.click()}
+              onClick={() => { if (photoLoading) return; if (user.photoURL) setPhotoMenu(v => !v); else fileInputRef.current?.click(); }}
               style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', border: '3px solid rgba(255,255,255,.25)' }}
             >
               {user.photoURL
@@ -420,6 +432,24 @@ export function ProfilePage({ queryParams }) {
                 </div>
               )}
             </div>
+            {photoMenu && user.photoURL && (
+              <div className="absolute left-0 top-[calc(100%+8px)] z-50 bg-white rounded-[10px] shadow-lg border border-(--color-border) overflow-hidden min-w-[170px]">
+                <button
+                  onClick={() => { setPhotoMenu(false); setViewPhotoModal(true); }}
+                  className="w-full text-left px-4 py-[10px] text-[13px] text-(--color-navy) font-semibold"
+                  style={{ background: 'white', cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f0f0f0'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'white'; }}
+                >Profil resmini gör</button>
+                <button
+                  onClick={() => { setPhotoMenu(false); fileInputRef.current?.click(); }}
+                  className="w-full text-left px-4 py-[10px] text-[13px] text-(--color-navy) font-semibold border-t border-(--color-border)"
+                  style={{ background: 'white', cursor: 'pointer' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#f0f0f0'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'white'; }}
+                >Profil resmini değiştir</button>
+              </div>
+            )}
             {user.photoURL && !photoLoading && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeletePhoto(); }}
@@ -427,8 +457,24 @@ export function ProfilePage({ queryParams }) {
                 style={{ fontFamily: F }}
               >×</button>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+            <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} />
           </div>
+
+          {/* Profil resmini görüntüleme modalı */}
+          {viewPhotoModal && user.photoURL && (
+            <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center" onClick={() => setViewPhotoModal(false)}>
+              <img
+                src={user.photoURL}
+                alt={user.name}
+                className="max-w-[90vw] max-h-[90vh] rounded-[12px] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={() => setViewPhotoModal(false)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white text-[20px] leading-none"
+              >×</button>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div style={{ fontSize: sm ? '20px' : '26px' }} className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap">{user.name}</div>
             <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>

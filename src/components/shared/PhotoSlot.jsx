@@ -20,12 +20,12 @@ export function PhotoSlot({ label, value, onChange, disabled }) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) { setErr('Sadece görsel yüklenebilir.'); return; }
-    if (file.size > 5 * 1024 * 1024) { setErr('Dosya 5MB sınırını aşıyor.'); return; }
+    if (!['image/jpeg', 'image/png'].includes(file.type)) { setErr('Sadece JPG veya PNG yüklenebilir.'); return; }
+    if (file.size > 3 * 1024 * 1024) { setErr('Dosya 3MB sınırını aşıyor.'); return; }
     setErr('');
     setLoading(true);
     try {
-      const dataUrl = await fileToResizedDataURL(file);
+      const dataUrl = await fileToResizedDataURL(file, 900, 0.82);
       onChange(dataUrl);
     } catch {
       setErr('Görsel işlenemedi.');
@@ -37,7 +37,7 @@ export function PhotoSlot({ label, value, onChange, disabled }) {
   return (
     <div>
       <div className="text-[12px] font-semibold mb-[6px]" style={{ color: C.textMid }}>{label}</div>
-      <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+      <input ref={inputRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" onChange={handleFile} className="hidden" />
       {value ? (
         <div className="relative rounded-[10px] overflow-hidden" style={{ aspectRatio: '1/1', border: `1px solid ${C.border}` }}>
           <img src={value} alt={label} className="w-full h-full object-cover" />

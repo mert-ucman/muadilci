@@ -77,23 +77,14 @@ function ActiveUsersPanel() {
           {presence.map((p) => (
             <div key={p.id}
               onClick={() => p.userUsername && navigate(`/@${p.userUsername}`)}
-              className="flex items-center gap-2 bg-white border border-(--color-green-border) rounded-[20px] py-[5px] pr-3 pl-1.5 transition-shadow duration-150"
+              className="flex items-center gap-1.5 bg-white border border-(--color-green-border) rounded-[20px] py-[5px] px-3 transition-shadow duration-150"
               style={{ cursor: p.userUsername ? 'pointer' : 'default' }}
               onMouseEnter={e => { if (p.userUsername) e.currentTarget.style.boxShadow = `0 2px 8px ${C.greenBorder}`; }}
               onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
             >
-              {/* Avatar */}
-              <div className="w-[26px] h-[26px] rounded-full overflow-hidden shrink-0 flex items-center justify-center text-[11px] font-bold text-white relative"
-                style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}>
-                {p.photoURL
-                  ? <img src={p.photoURL} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none'; }} />
-                  : (p.userName?.[0]?.toUpperCase() || '?')}
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-(--color-green) border-[1.5px] border-white" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-(--color-navy) leading-[1.2]">{p.userName}</div>
-                <div className="text-[10px] text-(--color-text-light)">{timeAgo(p.lastSeen)}</div>
-              </div>
+              <span className="w-2 h-2 rounded-full bg-(--color-green) shrink-0" />
+              <span className="text-xs font-bold text-(--color-navy)">{p.userName}</span>
+              <span className="text-[10px] text-(--color-text-light)">{timeAgo(p.lastSeen)}</span>
             </div>
           ))}
         </div>

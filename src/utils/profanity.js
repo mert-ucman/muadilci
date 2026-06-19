@@ -109,65 +109,72 @@ function removeVowels(str) {
 }
 
 // ─── Ana kontrol fonksiyonu ─────────────────────────────────────────────────
-/**
- * @param {string} text  Kontrol edilecek metin
- * @returns {boolean}    true → hakaret içeriyor
- */
-export function containsProfanity(text) {
-  if (!text || !text.trim()) return false;
+function _scan(text) {
+  if (!text || !text.trim()) return [];
 
-  const norm     = normalize(text);
-  const compact  = stripSeparators(norm);           // ayraçsız
-  const collapsed = collapseRepeats(compact);        // tekrarsız + ayraçsız
+  const norm      = normalize(text);
+  const compact   = stripSeparators(norm);
+  const collapsed = collapseRepeats(compact);
 
-  // Sesli-harf-çıkarma bypass'ı KELİME BAZINDA yapılır. Tüm metni birleştirip
-  // sesli harf atmak, bitişik kelimeler arasında sahte eşleşme üretiyordu
-  // (ör. "aldım çok" → "ldmck" ⊃ "mck" = amcık). Kelime bazında bölünce bu olmaz.
-  const tokenNoVowels = norm
-    .split(/[^a-z0-9]+/)
-    .filter(Boolean)
-    .map((tok) => removeVowels(collapseRepeats(tok)));
+  // Token'ı hem sesli-harfsiz formu hem de sesli harf sayısıyla sakla.
+  // Sesli harf sayısı ≤1 olan token bypass girişimi sayılır; normal Türkçe
+  // kelimeler çok sesli harf içerdiğinden yanlış pozitif üretmez.
+  const tokens = norm.split(/[^a-z0-9]+/).filter(Boolean).map((tok) => ({
+    bare: removeVowels(collapseRepeats(tok)),
+    vowels: (tok.match(/[aeiou]/g) || []).length,
+  }));
 
-  // Banned word'ün dönüşümlerini önbelleğe al
   function check(word) {
-    const nw         = normalize(word);
-    const nwCollapsed = collapseRepeats(nw);         // tekrar harf normalize
-    const nwNoVowels  = removeVowels(nwCollapsed);   // sesli harfsiz versiyonu
+    const nw          = normalize(word);
+    const nwCollapsed = collapseRepeats(nw);
+    const nwNoVowels  = removeVowels(nwCollapsed);
 
-    // — Substring kontrolleri —
-    if (norm.includes(nw))         return true;  // doğrudan eşleşme
-    if (compact.includes(nw))      return true;  // ayraç bypass
-    if (collapsed.includes(nwCollapsed)) return true; // tekrar harf bypass
+    if (norm.includes(nw))               return true;
+    if (compact.includes(nw))            return true;
+    if (collapsed.includes(nwCollapsed)) return true;
 
-    // — Sesli harf çıkarma bypass (kelime bazında, TAM eşleşme) —
-    // "içerir" yerine tam eşleşme: "sks"(seks) ⊄ "sksk"(sıkışık), "yrk"(yarrak)=="yrk".
-    // En az 3 ünsüz gerektirir + çakışan kökler muaf.
     if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
-      if (tokenNoVowels.some((t) => t === nwNoVowels)) return true;
+      if (tokens.some((t) => t.bare === nwNoVowels && t.vowels <= 1)) return true;
     }
-
     return false;
   }
 
-  // 1) Substring taraması
+  const matched = [];
+
   for (const word of BANNED_SUBSTR) {
-    if (check(word)) return true;
+    if (check(word)) matched.push(word);
   }
 
-  // 2) Tam kelime taraması (kısa / muğlak kelimeler)
   for (const word of BANNED_WHOLE) {
     const nw          = normalize(word);
-    const nwCollapsed  = collapseRepeats(nw);
-    const nwNoVowels   = removeVowels(nwCollapsed);
+    const nwCollapsed = collapseRepeats(nw);
+    const nwNoVowels  = removeVowels(nwCollapsed);
 
-    const re          = new RegExp(`(^|[^a-z0-9])${nwCollapsed}([^a-z0-9]|$)`);
-    if (re.test(norm) || re.test(compact) || re.test(collapsed)) return true;
-
-    // sesli harf çıkarma: kelime bazında TAM eşleşme
+    const re = new RegExp(`(^|[^a-z0-9])${nwCollapsed}([^a-z0-9]|$)`);
+    if (re.test(norm) || re.test(compact) || re.test(collapsed)) {
+      matched.push(word);
+      continue;
+    }
     if (nwNoVowels.length >= 3 && !VOWEL_STRIP_EXEMPT.has(nw)) {
-      if (tokenNoVowels.some((t) => t === nwNoVowels)) return true;
+      if (tokens.some((t) => t.bare === nwNoVowels && t.vowels <= 1)) matched.push(word);
     }
   }
 
-  return false;
+  return matched;
+}
+
+/**
+ * @param {string} text
+ * @returns {boolean} true → hakaret içeriyor
+ */
+export function containsProfanity(text) {
+  return _scan(text).length > 0;
+}
+
+/**
+ * @param {string} text
+ * @returns {string[]} eşleşen yasaklı kelimeler
+ */
+export function findProfanityMatches(text) {
+  return _scan(text);
 }

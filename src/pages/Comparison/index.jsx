@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
-import { containsProfanity } from '@/utils/profanity';
+import { containsProfanity, findProfanityMatches } from '@/utils/profanity';
 import { validateReviewText, REVIEW_MIN_LENGTH } from '@/utils/reviewValidation';
 import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
@@ -74,7 +74,30 @@ function MultiChips({ options, value, onChange }) {
   );
 }
 
-function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOriginalDefault, onSubmit, onCancel, submitError }) {
+const REVIEW_PREVIEW_LENGTH = 300;
+
+function ReviewText({ text }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!text) return null;
+  if (text.length <= REVIEW_PREVIEW_LENGTH) {
+    return <p className="text-[13px] leading-relaxed" style={{ color: C.text }}>{text}</p>;
+  }
+  return (
+    <p className="text-[13px] leading-relaxed" style={{ color: C.text }}>
+      {expanded ? text : <>{text.slice(0, REVIEW_PREVIEW_LENGTH)}…</>}
+      {' '}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="font-semibold cursor-pointer"
+        style={{ color: C.gold, background: 'none', border: 'none', padding: 0 }}
+      >
+        {expanded ? 'Daha az göster' : 'Devamını oku'}
+      </button>
+    </p>
+  );
+}
+
+function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOriginalDefault, onSubmit, onCancel, submitError, submitLoading }) {
   const [cSim, setCSim] = useState(initialValues?.sim ?? 5);
   const [cProj, setCProj] = useState(initialValues?.proj ?? 5);
   const [cLon, setCLon] = useState(initialValues?.lon ?? 5);
@@ -87,6 +110,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
   const [cSeasons, setCSeasons] = useState(initialValues?.seasons ?? []);
   const [cOccasions, setCOccasions] = useState(initialValues?.occasions ?? []);
   const [profanityError, setProfanityError] = useState(false);
+  const [profanityMatches, setProfanityMatches] = useState([]);
   const [textError, setTextError] = useState('');
   const [cOrigImg, setCOrigImg] = useState(initialValues?.origImg ?? null);
   const [cMuadilImg, setCMuadilImg] = useState(initialValues?.muadilImg ?? null);
@@ -99,7 +123,8 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
 
   const submit = () => {
     if (!cText.trim()) return;
-    if (containsProfanity(cText)) { setProfanityError(true); return; }
+    const matches = findProfanityMatches(cText);
+    if (matches.length > 0) { setProfanityError(true); setProfanityMatches(matches); return; }
     if (!textCheck.ok) { setTextError(textCheck.reason); return; }
     if (hasPhoto && !cConsent) { setConsentError(true); return; }
     onSubmit({
@@ -111,7 +136,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
   };
 
   return (
-    <div className="fade-in rounded-xl p-4 mb-[18px]" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
+    <div className="fade-in rounded-xl p-4 mb-[18px] relative" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}` }}>
       {isEditMode && <div className="text-[13px] font-bold mb-3" style={{ color: C.gold }}>Yorumunu Düzenle</div>}
       <div className="mb-3" style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : '1fr 1fr 1fr', gap: '12px' }}>
         {[['Benzerlik', cSim, setCSim], ['Yayılım', cProj, setCProj], ['Kalıcılık', cLon, setCLon]].map(([l, v, sv]) => (
@@ -126,7 +151,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
       </div>
       <textarea
         value={cText}
-        onChange={(e) => { setCText(e.target.value); if (profanityError) setProfanityError(containsProfanity(e.target.value)); if (textError) setTextError(''); }}
+        onChange={(e) => { setCText(e.target.value); if (profanityError) { const m = findProfanityMatches(e.target.value); setProfanityError(m.length > 0); setProfanityMatches(m); } if (textError) setTextError(''); }}
         placeholder="Deneyiminizi en az 40 karakterle paylaşın..."
         rows={3}
         className="w-full rounded-lg px-3 py-[10px] text-[14px] outline-none resize-none box-border transition-[border-color] duration-200"
@@ -136,9 +161,18 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
         {cText.trim().length}/{REVIEW_MIN_LENGTH} karakter
       </div>
       {profanityError && (
-        <div className="flex items-center gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
+        <div className="flex items-start gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-[1px]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>
+            Hakaret veya uygunsuz ifade içeren yorumlar yapılamaz.
+            {profanityMatches.length > 0 && (
+              <span className="block mt-[3px] font-normal text-[12px]">
+                Tespit edilen ifade{profanityMatches.length > 1 ? 'ler' : ''}: {profanityMatches.map((w, i) => (
+                  <span key={w}><b>"{w}"</b>{i < profanityMatches.length - 1 ? ', ' : ''}</span>
+                ))}
+              </span>
+            )}
+          </span>
         </div>
       )}
       {textError && !profanityError && (
@@ -202,9 +236,19 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
       {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.textMid }}>Yorumu düzenlemeniz için 5dk süreniz vardır.</div>}
       {submitError && <div className="text-[13px] rounded-lg px-3 py-2 mb-2" style={{ color: C.red, background: '#fff5f5', border: '1px solid #fecaca' }}>{submitError}</div>}
       <div className="flex gap-2 justify-end">
-        <Btn variant="secondary" size="sm" onClick={onCancel}>İptal</Btn>
-        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError || !textCheck.ok}>{isEditMode ? 'Güncelle' : 'Gönder'}</Btn>
+        <Btn variant="secondary" size="sm" onClick={onCancel} disabled={submitLoading}>İptal</Btn>
+        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError || !textCheck.ok || submitLoading}>
+          {submitLoading
+            ? <span className="flex items-center gap-2"><span className="w-[14px] h-[14px] rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />Gönderiliyor…</span>
+            : (isEditMode ? 'Güncelle' : 'Gönder')}
+        </Btn>
       </div>
+      {submitLoading && (
+        <div className="absolute inset-0 rounded-xl bg-white/60 flex flex-col items-center justify-center gap-3 z-10">
+          <div className="w-8 h-8 rounded-full border-[3px] border-(--color-gold-border) border-t-(--color-gold) animate-spin" />
+          <span className="text-[14px] font-semibold" style={{ color: C.gold }}>Yorum gönderiliyor…</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -256,6 +300,7 @@ export function ComparisonPage({ queryParams }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editInitials, setEditInitials] = useState(null);
   const [submitError, setSubmitError] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [, setEditTick] = useState(0); // 5dk düzenleme penceresi dolunca yeniden render
@@ -344,6 +389,7 @@ export function ComparisonPage({ queryParams }) {
   const submitC = async (data) => {
     if (!user || !selMuadil) return;
     setSubmitError('');
+    setSubmitLoading(true);
     try {
       // Yeni eklenen data URL'leri Storage'a yükle (zaten http URL ise olduğu gibi bırakılır)
       let originalImage = data.originalImage ?? null;
@@ -370,6 +416,8 @@ export function ComparisonPage({ queryParams }) {
     } catch (e) {
       if (e.code === 'rate-limited' || e.code === 'review-rejected') setSubmitError(e.message);
       else setSubmitError('Gönderilemedi. Lütfen tekrar deneyin.');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -807,6 +855,7 @@ export function ComparisonPage({ queryParams }) {
                   sm={sm}
                   ownsOriginalDefault={!!(user && selOrig && ownsOriginalPerfume(user.uid, selOrig.id))}
                   submitError={submitError}
+                  submitLoading={submitLoading}
                   onSubmit={submitC}
                   onCancel={() => { setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
                 />
@@ -960,7 +1009,7 @@ export function ComparisonPage({ queryParams }) {
                           </div>
                         </div>
                       </div>
-                      <p className="text-[13px] leading-relaxed" style={{ color: C.text }}>{c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text}</p>
+                      <ReviewText text={c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text} />
                     </div>
                   );
                 })}

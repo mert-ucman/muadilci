@@ -56,6 +56,8 @@ export function LoginPage() {
           console.error('[MFA login error]', mfaErr?.code, mfaErr?.message);
           setErr('Doğrulama başlatılamadı. Tekrar deneyin.');
         }
+      } else if (e.code === 'auth/network-request-failed' || !navigator.onLine) {
+        setErr('İnternet bağlantınız yok. Lütfen bağlantınızı kontrol edin.');
       } else if (
         e.code === 'auth/user-not-found' ||
         e.code === 'auth/wrong-password' ||
