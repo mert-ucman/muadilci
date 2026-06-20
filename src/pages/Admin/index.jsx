@@ -9,7 +9,7 @@ import { slugify } from '@/utils/strings';
 import { Card, Badge, Btn, Modal, Input, Select, Textarea, TableScrollHint } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
-import { uploadDataURL } from '@/lib/storage';
+import { uploadDataURL, uploadBrandLogo } from '@/lib/storage';
 import { db } from '@/lib/firebase';
 import { ActivityTab } from './ActivityTab';
 import { BrandProfilesTab } from './BrandProfilesTab';
@@ -1072,7 +1072,7 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
     setCropModal({ open: false, src: '' });
     setEbf((s) => ({ ...s, _logoUploading: true, _logoErr: '' }));
     try {
-      const url = await uploadDataURL(dataURL, 'brands');
+      const url = await uploadBrandLogo(dataURL, ebf.slug);
       setEbf((s) => ({ ...s, logoImage: url, _logoUploading: false }));
     } catch {
       setEbf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false }));
@@ -1179,7 +1179,7 @@ function AddBrandModal({ brands, onClose, onAdd, initialType = 'original' }) {
     setCropModal({ open: false, src: '' });
     setBf((s) => ({ ...s, _logoUploading: true, _logoErr: '' }));
     try {
-      const url = await uploadDataURL(dataURL, 'brands');
+      const url = await uploadBrandLogo(dataURL, bf.slug);
       setBf((s) => ({ ...s, logoImage: url, _logoUploading: false }));
     } catch {
       setBf((s) => ({ ...s, _logoErr: 'Görsel yüklenirken hata oluştu.', _logoUploading: false }));

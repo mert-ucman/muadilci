@@ -82,6 +82,22 @@ export async function fixCacheHeaders(urls) {
 }
 
 /**
+ * Marka logosunu sabit slug bazlı path'e yükler ve token'sız public URL döner.
+ * brands/** için allow read: if true olduğundan token gerekmez; dosya aynı path'e
+ * yeniden yüklendiğinde URL değişmez.
+ */
+export async function uploadBrandLogo(dataURL, slug) {
+  if (!dataURL) return dataURL;
+  if (isRemoteUrl(dataURL)) return dataURL;
+  const path = `brands/${slug}.webp`;
+  const r = ref(storage, path);
+  await uploadString(r, dataURL, 'data_url', { contentType: 'image/webp', cacheControl: 'public, max-age=31536000' });
+  const bucket = storage.app.options.storageBucket;
+  const encoded = path.split('/').map(encodeURIComponent).join('%2F');
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encoded}?alt=media`;
+}
+
+/**
  * Bir Storage indirme URL'sine karşılık gelen dosyayı siler.
  * base64/boş/harici URL ise sessizce yok sayılır. Hata fırlatmaz (best-effort).
  */

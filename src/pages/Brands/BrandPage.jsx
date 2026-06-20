@@ -296,12 +296,12 @@ export function BrandPage({ params }) {
                 width: sm ? '64px' : '100px',
                 height: sm ? '64px' : '100px',
                 fontSize: sm ? '18px' : '26px',
-                background: brand.logoImage ? 'white' : 'rgba(255,255,255,.12)',
-                borderColor: brand.logoImage ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.25)',
+                background: 'rgba(255,255,255,.12)',
+                borderColor: 'rgba(255,255,255,.25)',
               }}
             >
               {brand.logoImage
-                ? <img src={brand.logoImage} alt={brand.name} className="w-full h-full object-contain p-1" />
+                ? <img src={brand.logoImage} alt={brand.name} className="w-full h-full object-cover" />
                 : brand.logo}
             </div>
             <div className="flex-1 min-w-0">
