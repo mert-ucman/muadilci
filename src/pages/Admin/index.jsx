@@ -1065,6 +1065,7 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
     bio: brand.bio || '',
     instagram: brand.instagram || '',
     website: brand.website || '',
+    arabClone: brand.arabClone || false,
   }));
   const [cropModal, setCropModal] = useState({ open: false, src: '' });
 
@@ -1110,6 +1111,16 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
               ))}
             </div>
           </div>
+        )}
+        {ebf.type === 'muadil' && (
+          <label className="mt-2 flex items-start gap-2.5 px-4 py-3 rounded-[10px] cursor-pointer transition-all duration-150"
+            style={{ border: `1px solid ${ebf.arabClone ? C.gold : C.border}`, background: ebf.arabClone ? C.goldBg : '#fafafa' }}>
+            <input type="checkbox" checked={ebf.arabClone} onChange={(e) => setEbf({ ...ebf, arabClone: e.target.checked })} style={{ accentColor: C.gold, marginTop: '2px' }} />
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: ebf.arabClone ? C.gold : C.textMid }}>Arap Klonu</div>
+              <div className="text-[12px] mt-0.5" style={{ color: C.textLight }}>Muadiller "Benzeri" eki almaz; her parfüme kendi adını yazarsınız (ör. 9 P.M.).</div>
+            </div>
+          </label>
         )}
         <div className="mt-1">
           <div className="text-xs font-semibold text-(--color-text-mid) mb-1.5">Logo Görseli</div>
@@ -1171,7 +1182,7 @@ function BrandEditModal({ brand, onClose, onDelete, onSave }) {
 
 /* ─── Add Brand Modal ─────────────────────────────────────────────────── */
 function AddBrandModal({ brands, onClose, onAdd, initialType = 'original' }) {
-  const [bf, setBf] = useState({ name: '', slug: '', type: initialType, origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '', instagram: '', website: '' });
+  const [bf, setBf] = useState({ name: '', slug: '', type: initialType, origin: '', founded: '', logo: '', logoImage: '', category: 'Designer', bio: '', instagram: '', website: '', arabClone: false });
   const [brandErr, setBrandErr] = useState('');
   const [cropModal, setCropModal] = useState({ open: false, src: '' });
 
@@ -1219,6 +1230,16 @@ function AddBrandModal({ brands, onClose, onAdd, initialType = 'original' }) {
               ))}
             </div>
           </div>
+        )}
+        {bf.type === 'muadil' && (
+          <label className="mt-2 flex items-start gap-2.5 px-4 py-3 rounded-[10px] cursor-pointer transition-all duration-150"
+            style={{ border: `1px solid ${bf.arabClone ? C.gold : C.border}`, background: bf.arabClone ? C.goldBg : '#fafafa' }}>
+            <input type="checkbox" checked={bf.arabClone} onChange={(e) => setBf({ ...bf, arabClone: e.target.checked })} style={{ accentColor: C.gold, marginTop: '2px' }} />
+            <div>
+              <div className="text-[13px] font-semibold" style={{ color: bf.arabClone ? C.gold : C.textMid }}>Arap Klonu</div>
+              <div className="text-[12px] mt-0.5" style={{ color: C.textLight }}>Muadiller "Benzeri" eki almaz; her parfüme kendi adını yazarsınız (ör. 9 P.M.).</div>
+            </div>
+          </label>
         )}
         <div className="mt-1">
           <div className="text-xs font-semibold text-(--color-text-mid) mb-1.5">Logo Görseli</div>
@@ -1307,6 +1328,7 @@ function AddPerfumeModal({ brands, perfumes, onClose, onAdd }) {
 function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
   const [mf, setMf] = useState({ name: '', slug: '', brandId: '', targetPerfumeId: '', gender: '', description: '', images: [null, null, null] });
   const [muadilErr, setMuadilErr] = useState('');
+  const isArabClone = !!brands.find((x) => String(x.id) === mf.brandId)?.arabClone;
 
   const handleAdd = () => {
     if (!mf.name || !mf.brandId || !mf.targetPerfumeId) return;
@@ -1326,13 +1348,20 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
   return (
     <Modal open onClose={onClose} title="Muadil Parfüm Ekle" width="540px">
       <div className="grid grid-cols-2 gap-[10px]">
-        <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf({ ...mf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
-        <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => {
+        <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf((s) => {
+          const arab = !!brands.find((x) => String(x.id) === e.target.value)?.arabClone;
+          const p = perfumes.find((x) => String(x.id) === s.targetPerfumeId);
+          // Arap klonu markasında ad elle yazılır; değilse parfüm adından "Benzeri" üretilir.
+          return { ...s, brandId: e.target.value, name: arab ? '' : (p ? `${p.name} Benzeri` : s.name) };
+        })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
+        <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => setMf((s) => {
           const p = perfumes.find((x) => String(x.id) === e.target.value);
+          const arab = !!brands.find((x) => String(x.id) === s.brandId)?.arabClone;
           // Muadil adı yalnızca parfüm adından üretilir (marka adı HARİÇ).
           // Ör. "Kenzo Homme Marine" seçilirse → "Homme Marine Benzeri".
-          setMf({ ...mf, targetPerfumeId: e.target.value, name: p ? `${p.name} Benzeri` : '', gender: p?.gender || '' });
-        }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
+          // Arap klonunda ad elle yazıldığı için otomatik üretilmez.
+          return { ...s, targetPerfumeId: e.target.value, name: arab ? s.name : (p ? `${p.name} Benzeri` : ''), gender: p?.gender || '' };
+        })} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
       </div>
       {mf.gender && (
         <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fb] border border-(--color-border) rounded-lg text-[13px] text-(--color-text-mid)">
@@ -1341,11 +1370,13 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
           <span className="ml-auto text-[11px] text-(--color-text-light)">Hedef parfümden alındı</span>
         </div>
       )}
-      {mf.name && (
+      {isArabClone ? (
+        <Input label="Muadil Parfüm Adı *" value={mf.name} onChange={(e) => setMf({ ...mf, name: e.target.value })} placeholder="Ör. 9 P.M." />
+      ) : (mf.name && (
         <div className="mt-0.5 px-3 py-2 bg-(--color-gold-bg) border border-(--color-gold-border) rounded-lg text-[13px] text-(--color-navy) font-semibold">
           Muadil adı: <span className="text-(--color-gold)">{mf.name}</span>
         </div>
-      )}
+      ))}
       <Textarea label="Açıklama" value={mf.description} onChange={(e) => setMf({ ...mf, description: e.target.value })} rows={3} />
       <PerfumeImageSlots images={mf.images} onChange={(imgs) => setMf({ ...mf, images: imgs })} />
       {muadilErr && <div className="mt-[10px] px-3 py-2 bg-[#fff5f5] border border-[#fecaca] rounded-lg text-[13px] text-(--color-red)">{muadilErr}</div>}
@@ -1369,7 +1400,7 @@ function SearchableSelect({ options, value, onChange, placeholder = 'Ara veya se
   const [highlighted, setHighlighted] = useState(0);
   const wheelAccumRef = useRef(0);
 
-  useEffect(() => { if (autoOpen) setOpen(true); }, []);
+  useEffect(() => { if (autoOpen && !disabled) setOpen(true); }, [autoOpen, disabled]);
 
   const filtered = query.trim()
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
@@ -1500,9 +1531,9 @@ function SearchableSelect({ options, value, onChange, placeholder = 'Ara veya se
 
 /* ─── Bulk Add Muadil Modal ─────────────────────────────────────────────── */
 function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
-  const mkRow = () => ({ id: Date.now() + Math.random(), targetPerfumeId: '' });
+  const mkRow = () => ({ id: Date.now() + Math.random(), targetPerfumeId: '', name: '' });
   const [brandId, setBrandId] = useState('');
-  const [rows, setRows] = useState(() => [mkRow(), mkRow(), mkRow()]);
+  const [rows, setRows] = useState(() => [mkRow()]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState([]);
   const [lastAddedId, setLastAddedId] = useState(null);
@@ -1511,12 +1542,14 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
   savingRef.current = saving;
   const addRowRef = useRef(null);
 
+  const isArabClone = !!brands.find((b) => String(b.id) === brandId)?.arabClone;
   const muadilBrands = brands.filter((b) => b.type === 'muadil').sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   const sortedPerfumes = [...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr'));
   const perfumeOptions = sortedPerfumes.map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }));
   const brandOptions = [{ value: '', label: 'Önce marka seçin' }, ...muadilBrands.map((b) => ({ value: String(b.id), label: b.name }))];
 
   const setRow = (id, targetPerfumeId) => setRows((prev) => prev.map((r) => r.id === id ? { ...r, targetPerfumeId } : r));
+  const setRowName = (id, name) => setRows((prev) => prev.map((r) => r.id === id ? { ...r, name } : r));
   const removeRow = (id) => setRows((prev) => prev.length > 1 ? prev.filter((r) => r.id !== id) : prev);
 
   const addRow = () => {
@@ -1555,6 +1588,12 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
       return;
     }
 
+    // Arap klonu markasında her satıra muadil parfüm adı yazılmalı
+    if (isArabClone && validRows.some((r) => !r.name || !r.name.trim())) {
+      setErrors(['Arap klonu markasında her satır için muadil parfüm adı girilmeli.']);
+      return;
+    }
+
     // Veritabanındaki mükerrer kontrolü — targetPerfumeId + brandId ile
     const skipped = [];
     const toSave = [];
@@ -1564,7 +1603,7 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
       const dup = muadilPerfumes.find(
         (m) => String(m.targetPerfumeId) === String(r.targetPerfumeId) && String(m.brandId) === String(brandId)
       );
-      if (dup) skipped.push({ muadilName: `${p.name} Benzeri`, target: `${p.brandName} — ${p.name}` });
+      if (dup) skipped.push({ muadilName: isArabClone ? (r.name?.trim() || p.name) : `${p.name} Benzeri`, target: `${p.brandName} — ${p.name}` });
       else toSave.push(r);
     });
 
@@ -1578,7 +1617,7 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
     try {
       for (const r of toSave) {
         const p = perfumes.find((x) => String(x.id) === r.targetPerfumeId);
-        const name = `${p.name} Benzeri`;
+        const name = isArabClone ? r.name.trim() : `${p.name} Benzeri`;
         await onAdd({ name, slug: slugify(name), brandId, brandSlug: brand.slug, brandName: brand.name, targetPerfumeId: r.targetPerfumeId, targetPerfumeName: p.name, targetBrandName: p.brandName, gender: p.gender || '', description: '', image: '', images: [null, null, null] });
       }
       if (skipped.length) {
@@ -1608,8 +1647,9 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
         <SearchableSelect
           options={brandOptions}
           value={brandId}
-          onChange={setBrandId}
+          onChange={(val) => { setBrandId(val); if (val && rows[0]) setLastAddedId(rows[0].id); }}
           placeholder="Marka ara veya seçin…"
+          autoOpen
         />
         {brandId && (
           <div className="mt-2 px-3 py-1.5 inline-flex items-center gap-1.5 rounded-lg text-[12px] font-semibold" style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
@@ -1621,7 +1661,7 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
 
       {/* Satır başlıkları */}
       <div className="grid gap-x-3 px-1 mb-2" style={{ gridTemplateColumns: '22px 1fr 190px 28px' }}>
-        {['#', 'Hedef Orijinal Parfüm', 'Muadil Adı (otomatik)', ''].map((h, i) => (
+        {['#', 'Hedef Orijinal Parfüm', isArabClone ? 'Muadil Adı' : 'Muadil Adı (otomatik)', ''].map((h, i) => (
           <span key={i} className="text-[11px] font-bold uppercase tracking-[.05em]" style={{ color: C.textLight }}>{h}</span>
         ))}
       </div>
@@ -1642,12 +1682,23 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
                 disabled={!brandId}
                 autoOpen={row.id === lastAddedId}
               />
-              <div
-                className="h-[36px] rounded-[8px] px-[10px] flex items-center text-[12px] font-semibold truncate"
-                style={{ background: muadilName ? C.goldBg : '#f5f5f5', border: `1px solid ${muadilName ? C.goldBorder : C.border}`, color: muadilName ? C.gold : C.textLight }}
-              >
-                {muadilName || '—'}
-              </div>
+              {isArabClone ? (
+                <input
+                  value={row.name}
+                  onChange={(e) => setRowName(row.id, e.target.value)}
+                  disabled={!row.targetPerfumeId}
+                  placeholder="Parfüm adı"
+                  className="h-[36px] box-border w-full rounded-[8px] px-[10px] text-[12px] font-semibold bg-white outline-none font-[family-name:var(--font-body)]"
+                  style={{ border: `1px solid ${row.name ? C.goldBorder : C.border}`, color: C.navy }}
+                />
+              ) : (
+                <div
+                  className="h-[36px] rounded-[8px] px-[10px] flex items-center text-[12px] font-semibold truncate"
+                  style={{ background: muadilName ? C.goldBg : '#f5f5f5', border: `1px solid ${muadilName ? C.goldBorder : C.border}`, color: muadilName ? C.gold : C.textLight }}
+                >
+                  {muadilName || '—'}
+                </div>
+              )}
               <button
                 onClick={() => removeRow(row.id)}
                 disabled={rows.length === 1}
