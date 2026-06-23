@@ -5,7 +5,7 @@ import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 import { calcAllMuadilScores, calcAllBrandScores } from '@/utils/scoring';
-import { faTrophy, faMedal } from '@fortawesome/free-solid-svg-icons';
+import { faTrophy, faMedal, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 function ScoreBadge({ score, count }) {
@@ -142,8 +142,13 @@ export function LeaderboardPage() {
       if (!muadil) continue;
       rows.push({ muadil, ...scores });
     }
+    // Eşitlik-bozucu: aynı skorda çok yorumlu önce, sonra ada göre alfabetik
     return rows
-      .sort((a, b) => b.bayesianScore - a.bayesianScore)
+      .sort((a, b) =>
+        b.bayesianScore - a.bayesianScore ||
+        b.reviewCount - a.reviewCount ||
+        a.muadil.name.localeCompare(b.muadil.name, 'tr')
+      )
       .slice(0, 10);
   }, [muadilScoreMap, muadilPerfumes]);
 
@@ -159,9 +164,18 @@ export function LeaderboardPage() {
       style={{ padding: xs ? '20px 16px 40px' : sm ? '28px 16px 60px' : '40px 0 80px' }}
     >
       <div
-        className="max-w-[1320px] mx-auto"
+        className="max-w-[1320px] mx-auto relative"
         style={{ padding: sm ? '0' : w >= 1280 ? '0 48px' : '0 32px' }}
       >
+
+        {/* Geliştirme aşaması rozeti — sağ üst köşe; metin cap-center ile dikeyde tam ortalı */}
+        <div
+          className="absolute top-0 right-0 inline-flex items-center gap-[6px] rounded-[20px] px-[12px] z-10"
+          style={{ background: C.orangeBg, border: '1px solid #f0c878', color: C.orange, height: '24px', fontFamily: F }}
+        >
+          <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '11px' }} />
+          <p className="m-0 p-0 w-max cap-center text-[11px] font-semibold tracking-[.02em]">Geliştirilme Aşamasındadır</p>
+        </div>
 
         {/* Header */}
         <div className="mb-8 text-center">

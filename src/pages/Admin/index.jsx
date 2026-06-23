@@ -1389,7 +1389,7 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
 }
 
 /* ─── Searchable Select ─────────────────────────────────────────────────── */
-function SearchableSelect({ options, value, onChange, placeholder = 'Ara veya seçin…', disabled = false, autoOpen = false }) {
+function SearchableSelect({ options, value, onChange, onCommit, placeholder = 'Ara veya seçin…', disabled = false, autoOpen = false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
@@ -1460,11 +1460,11 @@ function SearchableSelect({ options, value, onChange, placeholder = 'Ara veya se
     if (!open) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); } return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); setHighlighted((p) => Math.min(p + 1, filtered.length - 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlighted((p) => Math.max(p - 1, 0)); }
-    else if (e.key === 'Enter') { e.preventDefault(); if (filtered[highlighted]) { onChange(filtered[highlighted].value); setOpen(false); } }
+    else if (e.key === 'Enter') { e.preventDefault(); if (filtered[highlighted]) { onChange(filtered[highlighted].value); setOpen(false); onCommit?.(filtered[highlighted].value); } }
     else if (e.key === 'Escape') { setOpen(false); }
   };
 
-  const select = (val) => { onChange(val); setOpen(false); };
+  const select = (val) => { onChange(val); setOpen(false); onCommit?.(val); };
   const hasValue = !!value;
 
   const dropdown = open && createPortal(
@@ -1538,6 +1538,7 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
   const [errors, setErrors] = useState([]);
   const [lastAddedId, setLastAddedId] = useState(null);
   const rowsEndRef = useRef(null);
+  const nameInputRefs = useRef({});
   const savingRef = useRef(false);
   savingRef.current = saving;
   const addRowRef = useRef(null);
@@ -1678,12 +1679,14 @@ function BulkAddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }
                 options={perfumeOptions}
                 value={row.targetPerfumeId}
                 onChange={(val) => setRow(row.id, val)}
+                onCommit={() => { if (isArabClone) setTimeout(() => nameInputRefs.current[row.id]?.focus(), 0); }}
                 placeholder="Parfüm ara veya seçin…"
                 disabled={!brandId}
                 autoOpen={row.id === lastAddedId}
               />
               {isArabClone ? (
                 <input
+                  ref={(el) => { nameInputRefs.current[row.id] = el; }}
                   value={row.name}
                   onChange={(e) => setRowName(row.id, e.target.value)}
                   disabled={!row.targetPerfumeId}

@@ -15,7 +15,9 @@ const MIN_REVIEWS = 5;
 
 function bayesianAvg(itemAvg, itemCount, globalMean, C) {
   if (itemCount === 0 || globalMean === null) return null;
-  return parseFloat(((C * globalMean + itemCount * itemAvg) / (C + itemCount)).toFixed(2));
+  // Tam hassasiyet döndürülür — yuvarlama yalnızca gösterim katmanında yapılır.
+  // Aksi halde ~8000 ürünün skoru 2 ondalıkta beraberlik yapar ve ilk 10 belirsizleşir.
+  return (C * globalMean + itemCount * itemAvg) / (C + itemCount);
 }
 
 function weightedMean(entries) {
@@ -47,7 +49,7 @@ export function calcScores(muadilId, allComments) {
 // Döndürür: Map<muadilId, { avgScore, reviewCount, bayesianScore }>
 //   - avgScore:     kullanıcıya gösterilen dürüst ortalama (1 ondalık)
 //   - reviewCount:  onaylı yorum sayısı
-//   - bayesianScore: sıralama için kullanılan güvenilir puan (2 ondalık)
+//   - bayesianScore: sıralama için kullanılan güvenilir puan (tam hassasiyet; gösterimde 4 ondalık)
 //
 // Kullanım: const scoreMap = calcAllMuadilScores(muadilPerfumes, comments);
 export function calcAllMuadilScores(muadils, allComments) {
@@ -61,28 +63,29 @@ export function calcAllMuadilScores(muadils, allComments) {
     if (ok.length < MIN_REVIEWS) continue;
     const overall = ok.reduce((s, c) => s + (c.similarity + c.projection + c.longevity) / 3, 0) / ok.length;
     rawScores.set(m.id, {
-      avgScore: parseFloat(overall.toFixed(1)),
+      avgScore: parseFloat(overall.toFixed(1)), // kullanıcıya dürüst gösterim (1 ondalık)
+      rawAvg: overall,                          // sıralama/Bayesian için tam hassasiyet
       reviewCount: ok.length,
     });
   }
 
   if (!rawScores.size) return new Map();
 
-  // 2. Global ağırlıklı ortalama (çok oylu ürünler daha fazla ağırlık taşır)
+  // 2. Global ağırlıklı ortalama (çok oylu ürünler daha fazla ağırlık taşır) — tam hassasiyet
   const globalMean = weightedMean(
-    [...rawScores.values()].map(({ avgScore, reviewCount }) => ({
-      score: avgScore,
+    [...rawScores.values()].map(({ rawAvg, reviewCount }) => ({
+      score: rawAvg,
       weight: reviewCount,
     }))
   );
 
-  // 3. Bayesian skor
+  // 3. Bayesian skor — ham (yuvarlanmamış) ortalama üzerinden, beraberlikleri en aza indirir
   const result = new Map();
-  for (const [id, { avgScore, reviewCount }] of rawScores.entries()) {
+  for (const [id, { avgScore, rawAvg, reviewCount }] of rawScores.entries()) {
     result.set(id, {
       avgScore,
       reviewCount,
-      bayesianScore: bayesianAvg(avgScore, reviewCount, globalMean, C_PRODUCT),
+      bayesianScore: bayesianAvg(rawAvg, reviewCount, globalMean, C_PRODUCT),
     });
   }
 
@@ -108,15 +111,15 @@ export function calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap)
     if (!scored.length) continue;
 
     const ratedProductCount = scored.length;
+    const totalReviews = scored.reduce((s, { reviewCount }) => s + reviewCount, 0);
     // Marka ortalaması: ürünlerin Bayesian puanlarının yorum sayısıyla ağırlıklı ortalaması
-    const brandAvgScore = parseFloat(
-      (weightedMean(scored.map(({ bayesianScore, reviewCount }) => ({
-        score: bayesianScore,
-        weight: reviewCount,
-      }))) ?? 0
-    ).toFixed(2));
+    // — tam hassasiyet; yuvarlama yalnızca gösterimde yapılır
+    const brandAvgScore = weightedMean(scored.map(({ bayesianScore, reviewCount }) => ({
+      score: bayesianScore,
+      weight: reviewCount,
+    }))) ?? 0;
 
-    brandRows.push({ brand, brandAvgScore, ratedProductCount });
+    brandRows.push({ brand, brandAvgScore, ratedProductCount, totalReviews });
   }
 
   if (!brandRows.length) return [];
@@ -130,10 +133,16 @@ export function calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap)
   );
 
   // 3. Marka Bayesian skoru + sırala
+  // Eşitlik-bozucu: aynı skorda → daha çok yorum (daha güvenilir) → daha çok puanlı ürün → ada göre
   return brandRows
     .map((row) => ({
       ...row,
       brandBayesianScore: bayesianAvg(row.brandAvgScore, row.ratedProductCount, globalBrandMean, C_BRAND),
     }))
-    .sort((a, b) => b.brandBayesianScore - a.brandBayesianScore);
+    .sort((a, b) =>
+      b.brandBayesianScore - a.brandBayesianScore ||
+      b.totalReviews - a.totalReviews ||
+      b.ratedProductCount - a.ratedProductCount ||
+      a.brand.name.localeCompare(b.brand.name, 'tr')
+    );
 }
