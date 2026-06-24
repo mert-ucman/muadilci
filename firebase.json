@@ -36,7 +36,7 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/coming-soon.html"
       }
     ]
   },
