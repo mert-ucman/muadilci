@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -80,9 +80,30 @@ export function Navbar() {
 
   const roleLabel = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 
-  const openDrawer  = () => { setMobileOpen(true);  setTimeout(() => setDrawerVisible(true),  16); };
-  const closeDrawer = () => { setDrawerVisible(false); setTimeout(() => setMobileOpen(false), 480); };
+  const scrollYRef = useRef(0);
+  const openDrawer  = () => {
+    scrollYRef.current = window.scrollY;
+    document.body.style.cssText += `;position:fixed;top:-${scrollYRef.current}px;width:100%;overflow-y:scroll`;
+    setMobileOpen(true);
+    setTimeout(() => setDrawerVisible(true), 16);
+  };
+  const closeDrawer = () => {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflowY = '';
+    window.scrollTo(0, scrollYRef.current);
+    setDrawerVisible(false);
+    setTimeout(() => setMobileOpen(false), 480);
+  };
   const handleNav   = (u) => { navigate(u); closeDrawer(); setMenuOpen(false); };
+
+  useEffect(() => () => {
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflowY = '';
+  }, []);
 
   return (
     <>

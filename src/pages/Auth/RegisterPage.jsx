@@ -167,6 +167,7 @@ export function RegisterPage() {
 
   const submit = async () => {
     if (!name || !username || !email || !pass) { setErr('Tüm alanları doldurun.'); return; }
+    if (name.trim().length < 2) { setErr('Ad Soyad en az 2 karakter olmalıdır.'); return; }
     if (!EMAIL_RE.test(email)) { setErr('Geçerli bir e-posta girin.'); return; }
     if (!USERNAME_RE.test(username.toLowerCase())) { setErr('Kullanıcı adı geçersiz. 3–20 karakter, yalnızca harf, rakam, _ ve - kullanın.'); return; }
     if (usernameStatus === 'taken') { setErr('Bu kullanıcı adı zaten alınmış.'); return; }
@@ -218,6 +219,7 @@ export function RegisterPage() {
                 onBlur={() => setFN(false)}
                 onKeyDown={(e) => e.key === 'Enter' && submit()}
                 placeholder=""
+                maxLength={60}
                 className={inpClass}
                 style={{ border: `1px solid ${fN ? 'var(--color-gold)' : 'var(--color-border)'}` }}
               />
@@ -257,6 +259,7 @@ export function RegisterPage() {
                 onBlur={(e) => { setFE(false); validateEmail(e.target.value); }}
                 onKeyDown={(e) => e.key === 'Enter' && submit()}
                 placeholder=""
+                maxLength={100}
                 className={inpClass}
                 style={{ border: `1px solid ${emailErr ? 'var(--color-red-border)' : fE ? 'var(--color-gold)' : 'var(--color-border)'}` }}
               />
@@ -276,6 +279,7 @@ export function RegisterPage() {
                   onBlur={() => setFP(false)}
                   onKeyDown={(e) => e.key === 'Enter' && submit()}
                   placeholder=""
+                  maxLength={128}
                   className={inpClass}
                   style={{ paddingRight: '44px', border: `1px solid ${fP ? 'var(--color-gold)' : 'var(--color-border)'}` }}
                 />
@@ -306,6 +310,7 @@ export function RegisterPage() {
               onBlur={() => setFC(false)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
               placeholder=""
+              maxLength={128}
               className={inpClass}
               style={{ paddingRight: '44px', border: `1px solid ${fC ? 'var(--color-gold)' : 'var(--color-border)'}` }}
             />

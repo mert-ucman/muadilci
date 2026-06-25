@@ -222,6 +222,17 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, username, email, password) => {
+    const trimmedName = name.trim();
+    if (!trimmedName || trimmedName.length < 2 || trimmedName.length > 60) {
+      const err = new Error('Ad Soyad 2-60 karakter arasında olmalıdır.');
+      err.code = 'invalid-name';
+      throw err;
+    }
+    if (email.length > 100) {
+      const err = new Error('E-posta adresi çok uzun.');
+      err.code = 'invalid-email';
+      throw err;
+    }
     const usernameKey = username.toLowerCase().trim();
     // Rezerve / küfürlü kullanıcı adları yasak
     if (isInvalidUsername(usernameKey)) {

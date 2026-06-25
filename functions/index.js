@@ -182,7 +182,7 @@ exports.resolveLoginEmail = onCall({ secrets: [WEB_API_KEY], region: 'us-central
 //   3) Çok kısa / düşük eforlu yorum reddi (reviewValidation.js)
 // ════════════════════════════════════════════════════════════════════════════
 
-const NEW_ACCOUNT_BLOCK_MS = 24 * 60 * 60 * 1000;   // ilk 24 saat yorum yok
+const NEW_ACCOUNT_BLOCK_MS = 0;   // yeni hesap bekleme süresi kaldırıldı
 
 // IP bazlı (1 saatlik pencere)
 const IP_WINDOW_MS         = 60 * 60 * 1000;
