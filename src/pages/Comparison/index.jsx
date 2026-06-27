@@ -14,7 +14,7 @@ import { uploadDataURL } from '@/lib/storage';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach, faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Mevsim ve kullanım ortamı seçenekleri (çoklu seçim). Form, istatistikler ve
@@ -33,9 +33,12 @@ const OCCASION_OPTS = [
   { key: 'gunduz', label: 'Gündüz', icon: faSun },
   { key: 'gece',   label: 'Gece',   icon: faMoon },
   { key: 'deniz',  label: 'Deniz',  icon: faUmbrellaBeach },
+  { key: 'tumu',   label: 'Tümü',   icon: faList },
 ];
 const SEASON_KEYS = SEASON_OPTS.map((o) => o.key);
+const INDIVIDUAL_SEASONS = ['yaz', 'kis', 'ilkbahar', 'sonbahar'];
 const OCCASION_KEYS = OCCASION_OPTS.map((o) => o.key);
+const INDIVIDUAL_OCCASIONS = ['ofis', 'date', 'gunluk', 'gunduz', 'gece', 'deniz'];
 
 // Evet / Hayır seçim ikilisi (üçüncü tıkta seçim kalkar → "belirtilmemiş")
 function YesNo({ value, onChange }) {
@@ -55,16 +58,27 @@ function YesNo({ value, onChange }) {
 }
 
 // Çoklu seçilebilir ikon+etiket pill grubu (mevsim / kullanım ortamı)
-function MultiChips({ options, value, onChange }) {
-  const toggle = (key) => onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+function MultiChips({ options, value, onChange, disabled = [] }) {
+  const toggle = (key) => {
+    if (disabled.includes(key)) return;
+    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+  };
   return (
     <div className="flex gap-2 flex-wrap">
       {options.map((o) => {
         const on = value.includes(o.key);
+        const off = disabled.includes(o.key);
         return (
           <button type="button" key={o.key} onClick={() => toggle(o.key)}
-            className="inline-flex items-center justify-center gap-[6px] rounded-[20px] px-[12px] py-[6px] text-[12px] font-semibold cursor-pointer transition-all duration-150"
-            style={{ border: `1px solid ${on ? C.gold : C.border}`, background: on ? C.goldBg : '#fff', color: on ? C.goldDeep : C.textLight }}>
+            disabled={off}
+            className="inline-flex items-center justify-center gap-[6px] rounded-[20px] px-[12px] py-[6px] text-[12px] font-semibold transition-all duration-150"
+            style={{
+              border: `1px solid ${on ? C.gold : C.border}`,
+              background: on ? C.goldBg : '#fff',
+              color: on ? C.goldDeep : C.textLight,
+              opacity: off ? 0.38 : 1,
+              cursor: off ? 'not-allowed' : 'pointer',
+            }}>
             <FontAwesomeIcon icon={o.icon} style={{ width: '12px', height: '12px' }} />
             <p className="m-0 p-0 w-max cap-center">{o.label}</p>
           </button>
@@ -109,6 +123,30 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
   const [cOwnsOriginal, setCOwnsOriginal] = useState(initialValues?.ownsOriginal ?? (ownsOriginalDefault ? true : null));
   const [cSeasons, setCSeasons] = useState(initialValues?.seasons ?? []);
   const [cOccasions, setCOccasions] = useState(initialValues?.occasions ?? []);
+
+  const handleSeasonChange = (next) => {
+    if (next.includes('dortMevsim') && !cSeasons.includes('dortMevsim')) {
+      setCSeasons(['dortMevsim']);
+      return;
+    }
+    if (INDIVIDUAL_SEASONS.every((k) => next.includes(k))) {
+      setCSeasons(['dortMevsim']);
+      return;
+    }
+    setCSeasons(next);
+  };
+
+  const handleOccasionChange = (next) => {
+    if (next.includes('tumu') && !cOccasions.includes('tumu')) {
+      setCOccasions(['tumu']);
+      return;
+    }
+    if (INDIVIDUAL_OCCASIONS.every((k) => next.includes(k))) {
+      setCOccasions(['tumu']);
+      return;
+    }
+    setCOccasions(next);
+  };
   const [profanityError, setProfanityError] = useState(false);
   const [profanityMatches, setProfanityMatches] = useState([]);
   const [textError, setTextError] = useState('');
@@ -206,11 +244,11 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
       </div>
       <div className="mb-[12px]">
         <div className="text-[13px] text-(--color-text-mid) font-semibold mb-2">Bu parfüm hangi mevsim için daha uygun?</div>
-        <MultiChips options={SEASON_OPTS} value={cSeasons} onChange={setCSeasons} />
+        <MultiChips options={SEASON_OPTS} value={cSeasons} onChange={handleSeasonChange} disabled={cSeasons.includes('dortMevsim') ? INDIVIDUAL_SEASONS : []} />
       </div>
       <div className="mb-[12px]">
         <div className="text-[13px] text-(--color-text-mid) font-semibold mb-2">Bu parfüm hangi ortam için daha uygun?</div>
-        <MultiChips options={OCCASION_OPTS} value={cOccasions} onChange={setCOccasions} />
+        <MultiChips options={OCCASION_OPTS} value={cOccasions} onChange={handleOccasionChange} disabled={cOccasions.includes('tumu') ? INDIVIDUAL_OCCASIONS : []} />
       </div>
       <div className="mb-[12px]">
         <div className="text-[13px] font-semibold mb-2" style={{ color: C.textMid }}>

@@ -198,7 +198,7 @@ const USER_HARD_REVIEWS    = 12;
 
 // Mevsim / kullanım ortamı geçerli anahtarları (client'tan gelen değerler bunlarla sınırlanır)
 const SEASON_KEYS = ['yaz', 'kis', 'ilkbahar', 'sonbahar', 'dortMevsim'];
-const OCCASION_KEYS = ['ofis', 'date', 'gunluk', 'gunduz', 'gece', 'deniz'];
+const OCCASION_KEYS = ['ofis', 'date', 'gunluk', 'gunduz', 'gece', 'deniz', 'tumu'];
 const sanitizeKeys = (arr, allowed) =>
   Array.isArray(arr) ? [...new Set(arr.filter((x) => allowed.includes(x)))] : [];
 
