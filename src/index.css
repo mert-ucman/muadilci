@@ -88,10 +88,15 @@ input, button, textarea, select {
 
 img { max-width: 100%; display: block; }
 
-/* Thin, luxury scrollbar */
-::-webkit-scrollbar       { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D4C5A9; border-radius: 2px; }
+/* Luxury scrollbar — belirgin ama zarif, köşeleri yuvarlatılmış */
+html { scrollbar-color: #C9A46B #F5F2EE; }
+::-webkit-scrollbar       { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #F5F2EE; border-radius: 999px; }
+::-webkit-scrollbar-thumb {
+  background: #C9A46B;
+  border-radius: 999px;
+  border: 2px solid #F5F2EE;
+}
 ::-webkit-scrollbar-thumb:hover { background: #B8935A; }
 
 /* ── Keyframes ─────────────────────────────────────────────────────── */

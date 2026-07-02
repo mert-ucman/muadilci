@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -10,7 +10,9 @@ import { Card, Select, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { PhotoSlot } from '@/components/shared/PhotoSlot';
 import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
+import { Lightbox } from '@/components/shared/Lightbox';
 import { uploadDataURL } from '@/lib/storage';
+import { useMuadilComments } from '@/hooks/useMuadilComments';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
@@ -154,6 +156,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
   const [cMuadilImg, setCMuadilImg] = useState(initialValues?.muadilImg ?? null);
   const [cConsent, setCConsent] = useState(false);
   const [consentError, setConsentError] = useState(false);
+  const [ownsOriginalError, setOwnsOriginalError] = useState(false);
 
   const hasPhoto = !!(cOrigImg || cMuadilImg);
 
@@ -164,6 +167,7 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
     const matches = findProfanityMatches(cText);
     if (matches.length > 0) { setProfanityError(true); setProfanityMatches(matches); return; }
     if (!textCheck.ok) { setTextError(textCheck.reason); return; }
+    if (cOwnsOriginal === null) { setOwnsOriginalError(true); return; }
     if (hasPhoto && !cConsent) { setConsentError(true); return; }
     onSubmit({
       similarity: cSim, projection: cProj, longevity: cLon, text: cText, recommend: cRecommend,
@@ -238,9 +242,14 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
         <span className="text-[13px] text-(--color-text-mid) font-semibold">Bu parfüm kör alışa uygun mu?</span>
         <YesNo value={cBlindBuy} onChange={setCBlindBuy} />
       </div>
-      <div className="flex items-center gap-3 mb-[12px] flex-wrap">
-        <span className="text-[13px] text-(--color-text-mid) font-semibold">Bu parfümün orijinaline sahip misiniz?</span>
-        <YesNo value={cOwnsOriginal} onChange={setCOwnsOriginal} />
+      <div className="mb-[12px]">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[13px] font-semibold" style={{ color: ownsOriginalError ? C.red : C.textMid }}>
+            Orijinal kokuyu kokladım <span style={{ color: C.red }}>*</span>
+          </span>
+          <YesNo value={cOwnsOriginal} onChange={(v) => { setCOwnsOriginal(v); if (ownsOriginalError) setOwnsOriginalError(false); }} />
+        </div>
+        {ownsOriginalError && <div className="text-[12px] mt-1" style={{ color: C.red }}>Lütfen bu soruyu yanıtlayın.</div>}
       </div>
       <div className="mb-[12px]">
         <div className="text-[13px] text-(--color-text-mid) font-semibold mb-2">Bu parfüm hangi mevsim için daha uygun?</div>
@@ -341,6 +350,9 @@ export function ComparisonPage({ queryParams }) {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [commentSortDir, setCommentSortDir] = useState('desc');
+  const [commentFilter, setCommentFilter] = useState('all');
+  const [commentLightbox, setCommentLightbox] = useState(null);
   const [, setEditTick] = useState(0); // 5dk düzenleme penceresi dolunca yeniden render
 
 
@@ -356,12 +368,30 @@ export function ComparisonPage({ queryParams }) {
   const muadilBrand = selMuadil ? brands.find((b) => b.slug === selMuadil.brandSlug || String(b.id) === String(selMuadil.brandId)) : null;
   const origBrand   = selOrig   ? brands.find((b) => b.slug === selOrig.brandSlug   || String(b.id) === String(selOrig.brandId))   : null;
 
-  const muadilComments = selMuadil
-    ? comments.filter((c) => c.muadilPerfumeId === selMuadil.id && (isMod || c.status === 'approved' || c.status === 'pending_update' || (c.status === 'pending' && c.userId === user?.uid)))
-    : [];
-  const userReview = selMuadil && user
-    ? comments.find((c) => c.muadilPerfumeId === selMuadil.id && c.userId === user.uid)
-    : null;
+  const { comments: muadilComments, ownReview: userReview, hasMore: hasMoreComments, loadingMore: loadingMoreComments, loadMore: loadMoreComments, totalCount: muadilCommentsTotal } =
+    useMuadilComments(selMuadil?.id ?? null, { userId: user?.uid ?? null, isMod, sortDir: commentSortDir });
+
+  // Filtre yüklenmiş sayfa üzerinde uygulanır; toplam sayı (başlık) her zaman gerçek toplamı gösterir
+  const filteredMuadilComments = muadilComments.filter((c) => {
+    if (commentFilter === 'recommend') return c.recommend === true;
+    if (commentFilter === 'not_recommend') return c.recommend === false;
+    if (commentFilter === 'owns_original') return c.ownsOriginal === true;
+    if (commentFilter === 'with_photo') return !!(c.originalImage || c.muadilImage);
+    return true;
+  });
+  useEffect(() => { setCommentFilter('all'); }, [selMuadil?.id]);
+
+  // Yorum listesinin altındaki sentinel görünür olduğunda otomatik bir sayfa daha yükle
+  const commentsSentinelRef = useRef(null);
+  useEffect(() => {
+    const el = commentsSentinelRef.current;
+    if (!el || !hasMoreComments) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !loadingMoreComments) loadMoreComments();
+    }, { rootMargin: '400px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMoreComments, loadingMoreComments, loadMoreComments]);
 
   // Kullanıcı yorumunu yalnızca gönderimden sonraki 5 dakika içinde düzenleyebilir.
   // (mod/admin bu sınırdan muaftır — kurallar tarafında da aynı şekilde)
@@ -877,11 +907,41 @@ export function ComparisonPage({ queryParams }) {
             {/* Comments */}
             <Card style={{ padding: '22px' }}>
               <div className="flex justify-between items-center mb-[18px] pb-[14px]" style={{ borderBottom: `1px solid ${C.border}` }}>
-                <span className="font-bold text-[16px] text-(--color-navy)">Yorumlar ({muadilComments.length})</span>
+                <span className="font-bold text-[16px] text-(--color-navy)">Yorumlar ({muadilCommentsTotal})</span>
                 {user && !showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
                 {user && !showCForm && userReview && canEditReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
                 {user && !showCForm && userReview && !canEditReview && <span className="text-[12px] text-(--color-text-light)">Düzenleme süresi doldu</span>}
               </div>
+
+              {muadilCommentsTotal > 0 && (
+                <div className="flex gap-3 flex-wrap" style={{ marginTop: '-8px' }}>
+                  <div style={{ width: sm ? '100%' : '190px' }}>
+                    <Select
+                      label="Sırala"
+                      value={commentSortDir}
+                      onChange={(e) => setCommentSortDir(e.target.value)}
+                      options={[
+                        { value: 'desc', label: 'En Yeni' },
+                        { value: 'asc', label: 'En Eski' },
+                      ]}
+                    />
+                  </div>
+                  <div style={{ width: sm ? '100%' : '220px' }}>
+                    <Select
+                      label="Filtrele"
+                      value={commentFilter}
+                      onChange={(e) => setCommentFilter(e.target.value)}
+                      options={[
+                        { value: 'all', label: 'Tümü' },
+                        { value: 'recommend', label: 'Tavsiye Ediyor' },
+                        { value: 'not_recommend', label: 'Tavsiye Etmiyor' },
+                        { value: 'owns_original', label: 'Orijinaline Sahip' },
+                        { value: 'with_photo', label: 'Fotoğraflı' },
+                      ]}
+                    />
+                  </div>
+                </div>
+              )}
 
               {showCForm && (
                 <CommentForm
@@ -907,8 +967,11 @@ export function ComparisonPage({ queryParams }) {
               )}
 
               {muadilComments.length === 0 && <div className="text-center text-(--color-text-light) text-[14px] py-8">Henüz yorum yok.</div>}
-              <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))', gap: '12px' }}>
-                {muadilComments.map((c) => {
+              {muadilComments.length > 0 && filteredMuadilComments.length === 0 && (
+                <div className="text-center text-(--color-text-light) text-[14px] py-8">Bu filtreye uygun yorum yok.</div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {filteredMuadilComments.map((c) => {
                   const isDeleted = c.userId === 'deleted';
                   const commentUser = isDeleted ? null : users.find((u) => u.uid === c.userId);
                   const liveRole = commentUser?.role || c.userRole;
@@ -931,7 +994,7 @@ export function ComparisonPage({ queryParams }) {
                     ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
                     : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
                   return (
-                    <div key={c.id} className="rounded-xl px-4 py-[14px] relative overflow-hidden"
+                    <div key={c.id} className="rounded-xl px-4 py-[14px] relative overflow-hidden transition-all duration-200 ease-out hover:-translate-y-[3px] hover:shadow-[0_12px_28px_-8px_rgba(184,147,90,0.4)]"
                       style={{
                         border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
                         background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
@@ -1048,10 +1111,34 @@ export function ComparisonPage({ queryParams }) {
                         </div>
                       </div>
                       <ReviewText text={c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text} />
+                      {(c.originalImage || c.muadilImage) && (
+                        <div className="flex gap-2 mt-[10px]">
+                          {[
+                            { src: c.originalImage, label: 'Orijinal şişesi' },
+                            { src: c.muadilImage, label: 'Muadil şişesi' },
+                          ].filter((p) => p.src).map((p, i) => (
+                            <img
+                              key={p.label}
+                              src={p.src}
+                              alt={p.label}
+                              title={p.label}
+                              loading="lazy"
+                              onClick={() => setCommentLightbox({ photos: [c.originalImage, c.muadilImage].filter(Boolean), index: i })}
+                              className="w-[64px] h-[64px] rounded-lg object-cover cursor-zoom-in"
+                              style={{ border: `1px solid ${C.border}` }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
+              {hasMoreComments && (
+                <div ref={commentsSentinelRef} className="text-center text-[12px] text-(--color-text-light) py-[18px]">
+                  {loadingMoreComments ? 'Yorumlar yükleniyor…' : ''}
+                </div>
+              )}
             </Card>
           </div>
         ) : (
@@ -1064,6 +1151,14 @@ export function ComparisonPage({ queryParams }) {
           </Card>
         )}
       </div>
+      {commentLightbox && (
+        <Lightbox
+          photos={commentLightbox.photos}
+          index={commentLightbox.index}
+          onClose={() => setCommentLightbox(null)}
+          onIndex={(i) => setCommentLightbox((prev) => ({ ...prev, index: i }))}
+        />
+      )}
     </div>
   );
 }
