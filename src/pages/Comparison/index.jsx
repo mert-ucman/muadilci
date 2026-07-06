@@ -16,7 +16,7 @@ import { useMuadilComments } from '@/hooks/useMuadilComments';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach, faList } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach, faList, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Mevsim ve kullanım ortamı seçenekleri (çoklu seçim). Form, istatistikler ve
@@ -371,8 +371,12 @@ export function ComparisonPage({ queryParams }) {
   const { comments: muadilComments, ownReview: userReview, hasMore: hasMoreComments, loadingMore: loadingMoreComments, loadMore: loadMoreComments, totalCount: muadilCommentsTotal } =
     useMuadilComments(selMuadil?.id ?? null, { userId: user?.uid ?? null, isMod, sortDir: commentSortDir });
 
+  // Kullanıcının kendi yorumu her zaman ayrı/sabit pinlenmiş olarak gösterilir;
+  // normal listeden (dolayısıyla filtre/sıralamadan) hariç tutulur.
+  const nonOwnMuadilComments = userReview ? muadilComments.filter((c) => c.id !== userReview.id) : muadilComments;
+
   // Filtre yüklenmiş sayfa üzerinde uygulanır; toplam sayı (başlık) her zaman gerçek toplamı gösterir
-  const filteredMuadilComments = muadilComments.filter((c) => {
+  const filteredMuadilComments = nonOwnMuadilComments.filter((c) => {
     if (commentFilter === 'recommend') return c.recommend === true;
     if (commentFilter === 'not_recommend') return c.recommend === false;
     if (commentFilter === 'owns_original') return c.ownsOriginal === true;
@@ -392,6 +396,21 @@ export function ComparisonPage({ queryParams }) {
     io.observe(el);
     return () => io.disconnect();
   }, [hasMoreComments, loadingMoreComments, loadMoreComments]);
+
+  // Profildeki "Yorumlarım" listesinden ?yorum=1 ile gelindiğinde kendi yorumuna otomatik kaydır
+  const ownReviewRef = useRef(null);
+  const [ownReviewFocused, setOwnReviewFocused] = useState(false);
+  const scrolledToOwnReviewRef = useRef(false);
+  useEffect(() => {
+    if (scrolledToOwnReviewRef.current || !queryParams?.yorum || !userReview) return;
+    scrolledToOwnReviewRef.current = true;
+    const t = setTimeout(() => {
+      ownReviewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setOwnReviewFocused(true);
+      setTimeout(() => setOwnReviewFocused(false), 2200);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [queryParams?.yorum, userReview]);
 
   // Kullanıcı yorumunu yalnızca gönderimden sonraki 5 dakika içinde düzenleyebilir.
   // (mod/admin bu sınırdan muaftır — kurallar tarafında da aynı şekilde)
@@ -513,11 +532,187 @@ export function ComparisonPage({ queryParams }) {
   const mBrandOpts = [{ value: '', label: 'Muadil Marka Seçin' }, ...mBrands.map((b) => ({ value: b, label: b }))];
   const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
 
+  // Tek bir yorum kartını render eder; hem normal listede hem de en üstteki
+  // sabit "Benim Yorumum" kopyasında aynı görünüm için kullanılır.
+  const renderCommentCard = (c, { pinned = false, innerRef = null } = {}) => {
+    const isDeleted = c.userId === 'deleted';
+    const commentUser = isDeleted ? null : users.find((u) => u.uid === c.userId);
+    const liveRole = commentUser?.role || c.userRole;
+    const isAdmin = liveRole === 'admin';
+    const isModerator = liveRole === 'moderator';
+    const liveName = isDeleted
+      ? 'Silinmiş Kullanıcı'
+      : isModerator
+        ? '@moderatör'
+        : commentUser
+          ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
+          : c.userName;
+    const livePhoto = isDeleted ? null : (commentUser?.photoURL || c.userPhotoURL || null);
+    const liveAvatar = isDeleted ? '×' : (commentUser?.avatar || c.userAvatar);
+    const avatarBg = isDeleted
+      ? '#e2e8f0'
+      : isAdmin
+      ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
+      : isModerator
+      ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
+      : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
+    const focused = pinned && ownReviewFocused;
+    return (
+      <div key={c.id} ref={innerRef} className="rounded-xl px-4 py-[14px] relative overflow-hidden transition-all duration-200 ease-out hover:-translate-y-[3px] hover:shadow-[0_12px_28px_-8px_rgba(184,147,90,0.4)]"
+        style={{
+          border: `1px solid ${focused ? C.gold : isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
+          background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
+          boxShadow: focused ? `0 0 0 3px ${C.goldBorder}` : 'none',
+        }}>
+        {/* Admin şerit */}
+        {isAdmin && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
+        {isModerator && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
+        <div className="flex gap-[10px] mb-2">
+          <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[13px] text-white font-bold shrink-0 overflow-hidden"
+            style={{ background: avatarBg, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none' }}>
+            {livePhoto
+              ? <img src={livePhoto} alt={liveName} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              : isAdmin ? <FontAwesomeIcon icon={faCrown} style={{ fontSize: '14px' }} /> : liveAvatar
+            }
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center flex-wrap gap-1">
+              <div className="flex items-center gap-[6px] flex-wrap">
+                {isAdmin ? (
+                  <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-[10px] py-[2px] text-[12px] font-extrabold"
+                    style={{ background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, color: C.goldLight }}>
+                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                      <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /> {liveName}
+                    </p>
+                  </div>
+                ) : isModerator ? (
+                  <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-[10px] py-[2px] text-[12px] font-bold" style={{ background: '#ede9fe', border: '1px solid #a78bfa', color: '#5b21b6' }}>
+                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                      <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /> {liveName}
+                    </p>
+                  </div>
+                ) : isDeleted ? (
+                  <span className="text-[13px] text-(--color-text-light) italic">{liveName}</span>
+                ) : commentUser?.username ? (
+                  <a href={`/@${commentUser.username}`}
+                    onClick={(e) => { e.preventDefault(); navigate(`/@${commentUser.username}`); }}
+                    className="font-bold text-[13px] no-underline cursor-pointer transition-colors duration-150"
+                    style={{ color: C.text }}
+                    onMouseEnter={e => e.currentTarget.style.color = C.gold}
+                    onMouseLeave={e => e.currentTarget.style.color = C.text}
+                  >{liveName}</a>
+                ) : (
+                  <span className="font-bold text-[13px]" style={{ color: C.text }}>{liveName}</span>
+                )}
+                {pinned && <Badge color="blue">Benim Yorumum</Badge>}
+              </div>
+              <div className="flex gap-[6px] items-center">
+                {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
+                {c.status === 'pending_update' && <Badge color="orange">Güncelleme Bekliyor</Badge>}
+                <span className="text-[11px] text-(--color-text-light)">{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
+                {!isDeleted && user?.uid === c.userId && (
+                  confirmDeleteId === c.id
+                    ? <span className="flex gap-1 items-center">
+                        <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
+                          className="text-[11px] font-bold text-white bg-[#e53e3e] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
+                          style={{ fontFamily: F }}>Sil</button>
+                        <button onClick={() => setConfirmDeleteId(null)}
+                          className="text-[11px] text-(--color-text-mid) bg-[#f0f0f0] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
+                          style={{ fontFamily: F }}>Vazgeç</button>
+                      </span>
+                    : <button onClick={() => setConfirmDeleteId(c.id)}
+                        className="bg-transparent border-none cursor-pointer p-[2px] flex items-center opacity-60"
+                        style={{ color: C.textLight }}
+                        title="Yorumu sil">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                      </button>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-[10px] mt-[3px] text-[12px] text-(--color-text-mid) flex-wrap items-center">
+              <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
+              <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
+              <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
+              <span style={{ color: C.border }}>|</span>
+              <span>Puan <strong style={{ color: C.gold }}>{((c.similarity + c.projection + c.longevity) / 3).toFixed(1)}/10</strong></span>
+              {c.recommend === true && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                  style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, color: C.green }}>
+                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
+                  </p>
+                </div>
+              )}
+              {c.recommend === false && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                  style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red }}>
+                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
+                  </p>
+                </div>
+              )}
+              {(c.blindBuy === true || c.blindBuy === false) && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                  style={{ background: C.blueBg, border: '1px solid #bfdbfe', color: C.blue }}>
+                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} /> Kör alış: {c.blindBuy ? 'Evet' : 'Hayır'}
+                  </p>
+                </div>
+              )}
+              {c.ownsOriginal === true && (
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                  style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
+                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '10px' }} /> Orijinale sahip
+                  </p>
+                </div>
+              )}
+              {[...SEASON_OPTS, ...OCCASION_OPTS]
+                .filter((o) => (c.seasons || []).includes(o.key) || (c.occasions || []).includes(o.key))
+                .map((o) => (
+                  <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-semibold"
+                    style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
+                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                      <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.label}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+        <ReviewText text={c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text} />
+        {(c.originalImage || c.muadilImage) && (
+          <div className="flex gap-2 mt-[10px]">
+            {[
+              { src: c.originalImage, label: 'Orijinal şişesi' },
+              { src: c.muadilImage, label: 'Muadil şişesi' },
+            ].filter((p) => p.src).map((p, i) => (
+              <img
+                key={p.label}
+                src={p.src}
+                alt={p.label}
+                title={p.label}
+                loading="lazy"
+                onClick={() => setCommentLightbox({ photos: [c.originalImage, c.muadilImage].filter(Boolean), index: i })}
+                className="w-[64px] h-[64px] rounded-lg object-cover cursor-zoom-in"
+                style={{ border: `1px solid ${C.border}` }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-(--color-bg)" style={{ padding: xs ? '16px' : sm ? '20px 16px' : '32px' }}>
       <div className="max-w-[1320px] mx-auto">
         <h1 className="font-black text-(--color-navy) mb-[6px]" style={{ fontSize: sm ? '22px' : '26px' }}>Parfüm Karşılaştır</h1>
-        <p className="text-(--color-text-light) text-[14px] mb-6">Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
+        <p className="text-(--color-text-light) text-[14px] mb-1">Orijinal parfümü ve muadilini seçerek karşılaştırın</p>
+        <div className="flex items-center gap-[6px] text-(--color-text-light) text-[12px] mb-6">
+          <FontAwesomeIcon icon={faCircleInfo} style={{ fontSize: '11px' }} />
+          <span>Parfüm fotoğrafları topluluk üyelerimiz tarafından yüklenir.</span>
+        </div>
 
         {/* Selectors */}
         <div className="flex justify-end mb-2 min-h-[30px]">
@@ -966,173 +1161,19 @@ export function ComparisonPage({ queryParams }) {
                 </div>
               )}
 
-              {muadilComments.length === 0 && <div className="text-center text-(--color-text-light) text-[14px] py-8">Henüz yorum yok.</div>}
-              {muadilComments.length > 0 && filteredMuadilComments.length === 0 && (
+              {userReview && (
+                <>
+                  {renderCommentCard(userReview, { pinned: true, innerRef: ownReviewRef })}
+                  <div style={{ height: '1px', background: C.border, opacity: 0.6, margin: '14px 0' }} />
+                </>
+              )}
+
+              {nonOwnMuadilComments.length === 0 && !userReview && <div className="text-center text-(--color-text-light) text-[14px] py-8">Henüz yorum yok.</div>}
+              {nonOwnMuadilComments.length > 0 && filteredMuadilComments.length === 0 && (
                 <div className="text-center text-(--color-text-light) text-[14px] py-8">Bu filtreye uygun yorum yok.</div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {filteredMuadilComments.map((c) => {
-                  const isDeleted = c.userId === 'deleted';
-                  const commentUser = isDeleted ? null : users.find((u) => u.uid === c.userId);
-                  const liveRole = commentUser?.role || c.userRole;
-                  const isAdmin = liveRole === 'admin';
-                  const isModerator = liveRole === 'moderator';
-                  const liveName = isDeleted
-                    ? 'Silinmiş Kullanıcı'
-                    : isModerator
-                      ? '@moderatör'
-                      : commentUser
-                        ? (commentUser.username ? `@${commentUser.username}` : commentUser.name)
-                        : c.userName;
-                  const livePhoto = isDeleted ? null : (commentUser?.photoURL || c.userPhotoURL || null);
-                  const liveAvatar = isDeleted ? '×' : (commentUser?.avatar || c.userAvatar);
-                  const avatarBg = isDeleted
-                    ? '#e2e8f0'
-                    : isAdmin
-                    ? 'linear-gradient(135deg,#1a1205,#3d2b0e)'
-                    : isModerator
-                    ? 'linear-gradient(135deg,#3730a3,#6d28d9)'
-                    : `linear-gradient(135deg,${C.gold},${C.goldLight})`;
-                  return (
-                    <div key={c.id} className="rounded-xl px-4 py-[14px] relative overflow-hidden transition-all duration-200 ease-out hover:-translate-y-[3px] hover:shadow-[0_12px_28px_-8px_rgba(184,147,90,0.4)]"
-                      style={{
-                        border: `1px solid ${isAdmin ? C.goldBorder : isModerator ? '#c4b5fd' : c.status === 'pending' ? C.goldBorder : C.border}`,
-                        background: isAdmin ? '#fffdf5' : isModerator ? '#faf5ff' : c.status === 'pending' ? C.goldBg : C.card,
-                      }}>
-                      {/* Admin şerit */}
-                      {isAdmin && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg,${C.gold},${C.goldLight},${C.gold})` }} />}
-                      {isModerator && <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: 'linear-gradient(90deg,#6d28d9,#a78bfa,#6d28d9)' }} />}
-                      <div className="flex gap-[10px] mb-2">
-                        <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center text-[13px] text-white font-bold shrink-0 overflow-hidden"
-                          style={{ background: avatarBg, boxShadow: isAdmin ? `0 0 0 2px ${C.gold}` : isModerator ? '0 0 0 2px #a78bfa' : 'none' }}>
-                          {livePhoto
-                            ? <img src={livePhoto} alt={liveName} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                            : isAdmin ? <FontAwesomeIcon icon={faCrown} style={{ fontSize: '14px' }} /> : liveAvatar
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center flex-wrap gap-1">
-                            <div className="flex items-center gap-[6px] flex-wrap">
-                              {isAdmin ? (
-                                <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-extrabold"
-                                  style={{ background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, color: C.goldLight }}>
-                                  <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max cap-center">{liveName}</p>
-                                </div>
-                              ) : isModerator ? (
-                                <div className="inline-flex items-center gap-[5px] rounded-md px-[9px] py-[2px] text-[12px] font-bold" style={{ background: '#ede9fe', border: '1px solid #a78bfa', color: '#5b21b6' }}>
-                                  <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /><p className="m-0 p-0 w-max cap-center">{liveName}</p>
-                                </div>
-                              ) : isDeleted ? (
-                                <span className="text-[13px] text-(--color-text-light) italic">{liveName}</span>
-                              ) : commentUser?.username ? (
-                                <a href={`/@${commentUser.username}`}
-                                  onClick={(e) => { e.preventDefault(); navigate(`/@${commentUser.username}`); }}
-                                  className="font-bold text-[13px] no-underline cursor-pointer transition-colors duration-150"
-                                  style={{ color: C.text }}
-                                  onMouseEnter={e => e.currentTarget.style.color = C.gold}
-                                  onMouseLeave={e => e.currentTarget.style.color = C.text}
-                                >{liveName}</a>
-                              ) : (
-                                <span className="font-bold text-[13px]" style={{ color: C.text }}>{liveName}</span>
-                              )}
-                            </div>
-                            <div className="flex gap-[6px] items-center">
-                              {c.status === 'pending' && <Badge color="orange">Bekliyor</Badge>}
-                              {c.status === 'pending_update' && <Badge color="orange">Güncelleme Bekliyor</Badge>}
-                              <span className="text-[11px] text-(--color-text-light)">{c.createdAt?.toDate?.()?.toLocaleDateString('tr-TR') || c.date || ''}</span>
-                              {!isDeleted && user?.uid === c.userId && (
-                                confirmDeleteId === c.id
-                                  ? <span className="flex gap-1 items-center">
-                                      <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteId(null); setShowCForm(false); setIsEditMode(false); setEditInitials(null); }}
-                                        className="text-[11px] font-bold text-white bg-[#e53e3e] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
-                                        style={{ fontFamily: F }}>Sil</button>
-                                      <button onClick={() => setConfirmDeleteId(null)}
-                                        className="text-[11px] text-(--color-text-mid) bg-[#f0f0f0] border-none rounded-[5px] px-2 py-[2px] cursor-pointer"
-                                        style={{ fontFamily: F }}>Vazgeç</button>
-                                    </span>
-                                  : <button onClick={() => setConfirmDeleteId(c.id)}
-                                      className="bg-transparent border-none cursor-pointer p-[2px] flex items-center opacity-60"
-                                      style={{ color: C.textLight }}
-                                      title="Yorumu sil">
-                                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                                    </button>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-[10px] mt-[3px] text-[12px] text-(--color-text-mid) flex-wrap items-center">
-                            <span>Benzerlik <strong style={{ color: C.gold }}>{c.similarity}/10</strong></span>
-                            <span>Yayılım <strong style={{ color: C.gold }}>{c.projection}/10</strong></span>
-                            <span>Kalıcılık <strong style={{ color: C.gold }}>{c.longevity}/10</strong></span>
-                            <span style={{ color: C.border }}>|</span>
-                            <span>Puan <strong style={{ color: C.gold }}>{((c.similarity + c.projection + c.longevity) / 3).toFixed(1)}/10</strong></span>
-                            {c.recommend === true && (
-                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
-                                style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, color: C.green }}>
-                                <p className="m-0 p-0 w-max flex items-center gap-1">
-                                  <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
-                                </p>
-                              </div>
-                            )}
-                            {c.recommend === false && (
-                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
-                                style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red }}>
-                                <p className="m-0 p-0 w-max flex items-center gap-1">
-                                  <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
-                                </p>
-                              </div>
-                            )}
-                            {(c.blindBuy === true || c.blindBuy === false) && (
-                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
-                                style={{ background: C.blueBg, border: '1px solid #bfdbfe', color: C.blue }}>
-                                <p className="m-0 p-0 w-max flex items-center gap-1">
-                                  <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} /> Kör alış: {c.blindBuy ? 'Evet' : 'Hayır'}
-                                </p>
-                              </div>
-                            )}
-                            {c.ownsOriginal === true && (
-                              <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
-                                style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
-                                <p className="m-0 p-0 w-max flex items-center gap-1">
-                                  <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '10px' }} /> Orijinale sahip
-                                </p>
-                              </div>
-                            )}
-                            {[...SEASON_OPTS, ...OCCASION_OPTS]
-                              .filter((o) => (c.seasons || []).includes(o.key) || (c.occasions || []).includes(o.key))
-                              .map((o) => (
-                                <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-semibold"
-                                  style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
-                                  <p className="m-0 p-0 w-max flex items-center gap-1">
-                                    <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.label}
-                                  </p>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                      <ReviewText text={c.status === 'pending_update' ? (c.text || c.pendingUpdate?.text) : c.text} />
-                      {(c.originalImage || c.muadilImage) && (
-                        <div className="flex gap-2 mt-[10px]">
-                          {[
-                            { src: c.originalImage, label: 'Orijinal şişesi' },
-                            { src: c.muadilImage, label: 'Muadil şişesi' },
-                          ].filter((p) => p.src).map((p, i) => (
-                            <img
-                              key={p.label}
-                              src={p.src}
-                              alt={p.label}
-                              title={p.label}
-                              loading="lazy"
-                              onClick={() => setCommentLightbox({ photos: [c.originalImage, c.muadilImage].filter(Boolean), index: i })}
-                              className="w-[64px] h-[64px] rounded-lg object-cover cursor-zoom-in"
-                              style={{ border: `1px solid ${C.border}` }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                {filteredMuadilComments.map((c) => renderCommentCard(c))}
               </div>
               {hasMoreComments && (
                 <div ref={commentsSentinelRef} className="text-center text-[12px] text-(--color-text-light) py-[18px]">

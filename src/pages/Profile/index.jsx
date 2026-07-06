@@ -161,6 +161,15 @@ export function ProfilePage({ queryParams }) {
   const [cropLoading, setCropLoading] = useState(false);
   const [cropErr, setCropErr] = useState('');
 
+  // Yorumlarım / Favorilerim: arama + "ilk 10 + daha fazla göster"
+  const PAGE_STEP = 10;
+  const [reviewSearch, setReviewSearch] = useState('');
+  const [reviewVisibleCount, setReviewVisibleCount] = useState(PAGE_STEP);
+  const [favSearch, setFavSearch] = useState('');
+  const [favVisibleCounts, setFavVisibleCounts] = useState({ origBrands: PAGE_STEP, muadilBrands: PAGE_STEP, perfumes: PAGE_STEP, muadils: PAGE_STEP, comps: PAGE_STEP });
+  useEffect(() => { setReviewVisibleCount(PAGE_STEP); }, [reviewSearch]);
+  useEffect(() => { setFavVisibleCounts({ origBrands: PAGE_STEP, muadilBrands: PAGE_STEP, perfumes: PAGE_STEP, muadils: PAGE_STEP, comps: PAGE_STEP }); }, [favSearch]);
+
   // Kullanıcı adı real-time kontrol
   useEffect(() => {
     if (!usernameEdit) return;
@@ -480,7 +489,13 @@ export function ProfilePage({ queryParams }) {
             <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
             <div className="flex gap-2 mt-2"><Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge></div>
           </div>
-          <Btn variant="danger" size={sm ? 'sm' : 'md'} onClick={() => { logout(); navigate('/'); }}>Çıkış Yap</Btn>
+          <button
+            onClick={() => { logout(); navigate('/'); }}
+            className="inline-flex items-center justify-center rounded-[20px] px-[16px] py-[7px] text-[13px] font-semibold cursor-pointer border-none shrink-0"
+            style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red, fontFamily: F }}
+          >
+            <p className="m-0 p-0 w-max cap-center">Çıkış Yap</p>
+          </button>
         </div>
       </div>
 
@@ -592,15 +607,13 @@ export function ProfilePage({ queryParams }) {
 
         {tab === 'favorites' && (() => {
           const favBrandIds = getUserFavoriteBrands(user.uid || user.id);
-          const favBrands = brands.filter((b) => favBrandIds.includes(b.id));
-          const origFavBrands = favBrands.filter((b) => b.type === 'original');
-          const muadilFavBrands = favBrands.filter((b) => b.type === 'muadil');
+          const favBrandsAll = brands.filter((b) => favBrandIds.includes(b.id));
           const favPerfumeIds = getUserFavoritePerfumes(user.uid || user.id);
-          const favPerfumes = perfumes.filter((p) => favPerfumeIds.includes(p.id));
+          const favPerfumesAll = perfumes.filter((p) => favPerfumeIds.includes(p.id));
           const favMuadilIds = getUserFavoriteMuadils(user.uid || user.id);
-          const favMuadils = muadilPerfumes.filter((m) => favMuadilIds.includes(m.id));
-          const favComps = getUserFavoriteComps(user.uid || user.id);
-          const hasAny = favBrands.length || favPerfumes.length || favMuadils.length || favComps.length;
+          const favMuadilsAll = muadilPerfumes.filter((m) => favMuadilIds.includes(m.id));
+          const favCompsAll = getUserFavoriteComps(user.uid || user.id);
+          const hasAny = favBrandsAll.length || favPerfumesAll.length || favMuadilsAll.length || favCompsAll.length;
 
           if (!hasAny) return (
             <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>
@@ -611,6 +624,20 @@ export function ProfilePage({ queryParams }) {
               <Btn onClick={() => navigate('/markalar')}>Keşfetmeye Başla</Btn>
             </div>
           );
+
+          const norm = (s) => (s || '').toLocaleLowerCase('tr-TR');
+          const q = norm(favSearch.trim());
+          const matches = (...parts) => !q || norm(parts.filter(Boolean).join(' ')).includes(q);
+
+          const origFavBrands = favBrandsAll.filter((b) => b.type === 'original' && matches(b.name));
+          const muadilFavBrands = favBrandsAll.filter((b) => b.type === 'muadil' && matches(b.name));
+          const favPerfumes = favPerfumesAll.filter((p) => matches(p.name, p.brandName));
+          const favMuadils = favMuadilsAll.filter((m) => matches(m.name, m.brandName, m.targetBrandName, m.targetPerfumeName));
+          const favComps = favCompsAll
+            .map(({ origId, muadilId }) => ({ origId, muadilId, orig: perfumes.find((p) => String(p.id) === String(origId)), muadil: muadilPerfumes.find((m) => String(m.id) === String(muadilId)) }))
+            .filter(({ orig, muadil }) => orig && muadil && matches(orig.brandName, orig.name, muadil.brandName, muadil.name));
+
+          const totalMatches = origFavBrands.length + muadilFavBrands.length + favPerfumes.length + favMuadils.length + favComps.length;
 
           const grid = { display: 'grid', gridTemplateColumns: xs ? '1fr' : 'repeat(auto-fill,minmax(200px,1fr))', gap: '12px' };
           const FavBtn = ({ onClick }) => (
@@ -626,13 +653,25 @@ export function ProfilePage({ queryParams }) {
             </h3>
           );
 
+          const MoreBtn = ({ shown, total, onClick }) => shown < total && (
+            <div className="flex justify-center mt-3">
+              <Btn variant="ghost" size="sm" onClick={onClick}>+{total - shown} Daha Göster</Btn>
+            </div>
+          );
+
           return (
             <div>
+              <div className="mb-5"><Input placeholder="Favorilerimde ara (marka, parfüm)…" value={favSearch} onChange={(e) => setFavSearch(e.target.value)} /></div>
+
+              {q && totalMatches === 0 && (
+                <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>Aramanıza uygun favori bulunamadı.</div>
+              )}
+
               {origFavBrands.length > 0 && (
                 <div className="mb-7">
                   <SectionTitle title="Orijinal Markalar" color={C.gold} count={origFavBrands.length} />
                   <div style={grid}>
-                    {origFavBrands.map((b) => (
+                    {origFavBrands.slice(0, favVisibleCounts.origBrands).map((b) => (
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
@@ -647,6 +686,7 @@ export function ProfilePage({ queryParams }) {
                       </Card>
                     ))}
                   </div>
+                  <MoreBtn shown={Math.min(favVisibleCounts.origBrands, origFavBrands.length)} total={origFavBrands.length} onClick={() => setFavVisibleCounts((v) => ({ ...v, origBrands: origFavBrands.length }))} />
                 </div>
               )}
 
@@ -654,7 +694,7 @@ export function ProfilePage({ queryParams }) {
                 <div className="mb-7">
                   <SectionTitle title="Muadil Markalar" color={C.green} count={muadilFavBrands.length} />
                   <div style={grid}>
-                    {muadilFavBrands.map((b) => (
+                    {muadilFavBrands.slice(0, favVisibleCounts.muadilBrands).map((b) => (
                       <Card key={b.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/marka/${b.slug}`)} onMouseDown={(e) => { if (e.button === 1) { e.preventDefault(); window.open(`/marka/${b.slug}`, '_blank'); } }}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleBrandFavorite(user.uid || user.id, b.id); }} />
                         <div className="flex gap-3 items-center">
@@ -669,6 +709,7 @@ export function ProfilePage({ queryParams }) {
                       </Card>
                     ))}
                   </div>
+                  <MoreBtn shown={Math.min(favVisibleCounts.muadilBrands, muadilFavBrands.length)} total={muadilFavBrands.length} onClick={() => setFavVisibleCounts((v) => ({ ...v, muadilBrands: muadilFavBrands.length }))} />
                 </div>
               )}
 
@@ -676,7 +717,7 @@ export function ProfilePage({ queryParams }) {
                 <div className="mb-7">
                   <SectionTitle title="Orijinal Parfümler" color={C.gold} count={favPerfumes.length} />
                   <div style={grid}>
-                    {favPerfumes.map((p) => (
+                    {favPerfumes.slice(0, favVisibleCounts.perfumes).map((p) => (
                       <Card key={p.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/${p.brandSlug}/${p.slug}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); togglePerfumeFavorite(user.uid || user.id, p.id); }} />
                         <div className="font-bold text-sm text-(--color-navy) pr-7 mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</div>
@@ -684,6 +725,7 @@ export function ProfilePage({ queryParams }) {
                       </Card>
                     ))}
                   </div>
+                  <MoreBtn shown={Math.min(favVisibleCounts.perfumes, favPerfumes.length)} total={favPerfumes.length} onClick={() => setFavVisibleCounts((v) => ({ ...v, perfumes: favPerfumes.length }))} />
                 </div>
               )}
 
@@ -691,7 +733,7 @@ export function ProfilePage({ queryParams }) {
                 <div className="mb-7">
                   <SectionTitle title="Muadil Parfümler" color={C.green} count={favMuadils.length} />
                   <div style={grid}>
-                    {favMuadils.map((m) => (
+                    {favMuadils.slice(0, favVisibleCounts.muadils).map((m) => (
                       <Card key={m.id} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`)}>
                         <FavBtn onClick={(e) => { e.stopPropagation(); toggleMuadilFavorite(user.uid || user.id, m.id); }} />
                         <div className="font-bold text-sm text-(--color-navy) pr-7 mb-[3px] overflow-hidden text-ellipsis whitespace-nowrap">{m.name}</div>
@@ -700,6 +742,7 @@ export function ProfilePage({ queryParams }) {
                       </Card>
                     ))}
                   </div>
+                  <MoreBtn shown={Math.min(favVisibleCounts.muadils, favMuadils.length)} total={favMuadils.length} onClick={() => setFavVisibleCounts((v) => ({ ...v, muadils: favMuadils.length }))} />
                 </div>
               )}
 
@@ -707,41 +750,52 @@ export function ProfilePage({ queryParams }) {
                 <div className="mb-7">
                   <SectionTitle title="Karşılaştırmalar" color={C.navy} count={favComps.length} />
                   <div style={{ display: 'grid', gridTemplateColumns: xs ? '1fr' : 'repeat(auto-fill,minmax(240px,1fr))', gap: '12px' }}>
-                    {favComps.map(({ origId, muadilId }) => {
-                      const orig = perfumes.find((p) => String(p.id) === String(origId));
-                      const muadil = muadilPerfumes.find((m) => String(m.id) === String(muadilId));
-                      if (!orig || !muadil) return null;
-                      return (
-                        <Card key={`${origId}_${muadilId}`} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${origId}&muadil=${muadilId}`)}>
-                          <FavBtn onClick={(e) => { e.stopPropagation(); toggleCompFavorite(user.uid || user.id, origId, muadilId); }} />
-                          <div className="flex flex-col gap-[6px] pr-7">
-                            <div>
-                              <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">ORİJİNAL</div>
-                              <div className="font-bold text-[13px] text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap">{orig.brandName} — {orig.name}</div>
-                            </div>
-                            <div className="h-px bg-(--color-border-light)" />
-                            <div>
-                              <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">MUADİL</div>
-                              <div className="font-bold text-[13px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: C.green }}>{muadil.brandName} — {muadil.name}</div>
-                            </div>
+                    {favComps.slice(0, favVisibleCounts.comps).map(({ origId, muadilId, orig, muadil }) => (
+                      <Card key={`${origId}_${muadilId}`} hover style={{ padding: '16px', cursor: 'pointer', position: 'relative' }} onClick={() => navigate(`/karsilastir?orijinal=${origId}&muadil=${muadilId}`)}>
+                        <FavBtn onClick={(e) => { e.stopPropagation(); toggleCompFavorite(user.uid || user.id, origId, muadilId); }} />
+                        <div className="flex flex-col gap-[6px] pr-7">
+                          <div>
+                            <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">ORİJİNAL</div>
+                            <div className="font-bold text-[13px] text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap">{orig.brandName} — {orig.name}</div>
                           </div>
-                        </Card>
-                      );
-                    })}
+                          <div className="h-px bg-(--color-border-light)" />
+                          <div>
+                            <div className="text-[11px] text-(--color-text-light) font-semibold mb-[2px]">MUADİL</div>
+                            <div className="font-bold text-[13px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: C.green }}>{muadil.brandName} — {muadil.name}</div>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
+                  <MoreBtn shown={Math.min(favVisibleCounts.comps, favComps.length)} total={favComps.length} onClick={() => setFavVisibleCounts((v) => ({ ...v, comps: favComps.length }))} />
                 </div>
               )}
             </div>
           );
         })()}
 
-        {tab === 'reviews' && (
-          <div className="flex flex-col gap-3">
-            {!myComments.length && <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>Henüz yorum yapmadınız.</div>}
-            {myComments.map((c) => {
-              const mp = muadilPerfumes.find((m) => m.id === c.muadilPerfumeId || m.id === c.muadilId);
-              return (
-                <Card key={c.id} style={{ padding: sm ? '14px 16px' : '18px 22px' }}>
+        {tab === 'reviews' && (() => {
+          const norm = (s) => (s || '').toLocaleLowerCase('tr-TR');
+          const q = norm(reviewSearch.trim());
+          const withPerfume = myComments.map((c) => ({ c, mp: muadilPerfumes.find((m) => m.id === c.muadilPerfumeId || m.id === c.muadilId) }));
+          const filtered = q
+            ? withPerfume.filter(({ c, mp }) => norm([mp?.brandName, mp?.name, c.text].filter(Boolean).join(' ')).includes(q))
+            : withPerfume;
+          const shown = filtered.slice(0, reviewVisibleCount);
+          const remaining = filtered.length - shown.length;
+
+          return (
+            <div className="flex flex-col gap-3">
+              {myComments.length > 0 && (
+                <div className="mb-1"><Input placeholder="Yorumlarımda ara (parfüm, marka, yorum metni)…" value={reviewSearch} onChange={(e) => setReviewSearch(e.target.value)} /></div>
+              )}
+              {!myComments.length && <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>Henüz yorum yapmadınız.</div>}
+              {myComments.length > 0 && filtered.length === 0 && (
+                <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>Aramanıza uygun yorum bulunamadı.</div>
+              )}
+              {shown.map(({ c, mp }) => (
+                <Card key={c.id} hover style={{ padding: sm ? '14px 16px' : '18px 22px' }}
+                  onClick={mp ? () => navigate(`/karsilastir?orijinal=${mp.targetPerfumeId}&muadil=${mp.id}&yorum=1`) : undefined}>
                   <div className="flex justify-between items-start mb-2 gap-2 flex-wrap">
                     <span className="font-bold text-(--color-navy) text-[15px] flex-1 min-w-0">{mp ? `${mp.brandName} — ${mp.name}` : 'Parfüm'}</span>
                     <div className="flex gap-2 items-center shrink-0">
@@ -749,14 +803,14 @@ export function ProfilePage({ queryParams }) {
                       <span className="text-xs text-(--color-text-light)">{c.date}</span>
                       {confirmDeleteCommentId === c.id
                         ? <span className="flex gap-1 items-center">
-                            <button onClick={async () => { await deleteComment(c.id); setConfirmDeleteCommentId(null); }}
+                            <button onClick={async (e) => { e.stopPropagation(); await deleteComment(c.id); setConfirmDeleteCommentId(null); }}
                               className="text-[11px] font-bold text-white bg-[#e53e3e] border-0 rounded-[5px] px-2 py-[2px] cursor-pointer"
                               style={{ fontFamily: F }}>Sil</button>
-                            <button onClick={() => setConfirmDeleteCommentId(null)}
+                            <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteCommentId(null); }}
                               className="text-[11px] text-(--color-text-mid) bg-[#f0f0f0] border-0 rounded-[5px] px-2 py-[2px] cursor-pointer"
                               style={{ fontFamily: F }}>Vazgeç</button>
                           </span>
-                        : <button onClick={() => setConfirmDeleteCommentId(c.id)}
+                        : <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteCommentId(c.id); }}
                             className="bg-transparent border-0 cursor-pointer p-[2px] text-(--color-text-light) flex items-center opacity-60"
                             title="Yorumu sil">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -771,10 +825,15 @@ export function ProfilePage({ queryParams }) {
                   </div>
                   <p className="text-sm text-(--color-text) leading-[1.6]">{c.text}</p>
                 </Card>
-              );
-            })}
-          </div>
-        )}
+              ))}
+              {remaining > 0 && (
+                <div className="flex justify-center mt-2">
+                  <Btn variant="ghost" size="sm" onClick={() => setReviewVisibleCount(filtered.length)}>+{remaining} Yorumu Göster</Btn>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {tab === 'lists' && (
           <ListsTab
             userId={user.uid}
