@@ -35,16 +35,19 @@ export function EmailVerificationPage() {
   const [checkErr, setCheckErr]     = useState('');
   const [remaining, setRemaining]   = useState(null);
 
-  // Hesap silinmesine kalan süre — Auth/Firestore createdAt üzerinden hesaplanır
+  // Hesap silinmesine kalan süre — Auth/Firestore createdAt üzerinden hesaplanır.
+  // Yeni kayıt sonrası createdAt henüz sunucudan çözülmemiş serverTimestamp()
+  // placeholder'ı olabilir (.toDate yok) — bu durumda "şimdi" kabul edilir,
+  // zaten kayıt gerçekten az önce olmuştur.
   useEffect(() => {
-    const createdMs = user?.createdAt?.toDate?.().getTime();
-    if (!createdMs) return;
+    if (!user) return;
+    const createdMs = user.createdAt?.toDate?.().getTime() ?? Date.now();
     const deadline = createdMs + ACCOUNT_TTL_MS;
     const tick = () => setRemaining(deadline - Date.now());
     tick();
     const id = setInterval(tick, 30_000);
     return () => clearInterval(id);
-  }, [user?.createdAt]);
+  }, [user, user?.createdAt]);
 
   // Geri sayım
   useEffect(() => {
