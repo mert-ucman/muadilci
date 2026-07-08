@@ -2842,12 +2842,13 @@ export function AdminPanel() {
           });
           const q = userQuery.trim().toLowerCase();
           const displayed = q
-            ? allSorted.filter((u) => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (RL[u.role] || '').toLowerCase().includes(q))
+            ? allSorted.filter((u) => (u.name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q) || (RL[u.role] || '').toLowerCase().includes(q))
             : allSorted.slice(0, 10);
           const submitSearch = () => setUserQuery(userInput);
 
           const exportRows = allSorted.map((u) => ({
             'Ad Soyad':       u.name  || '—',
+            'Kullanıcı Adı':  u.username ? `@${u.username}` : '—',
             'E-posta':        u.email || '—',
             'Rol':            RL[u.role] || u.role || '—',
             'Durum':          u.deleted ? 'Silindi' : (u.role === 'admin' || u.active ? 'Aktif' : 'Dondurulmuş'),
@@ -2913,7 +2914,7 @@ export function AdminPanel() {
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
-                      placeholder="İsim veya e-posta ara…"
+                      placeholder="İsim, e-posta veya kullanıcı adı ara…"
                       className="h-[34px] border border-(--color-border) rounded-lg text-[13px] text-(--color-text) bg-white outline-none font-[family-name:var(--font-body)] w-[220px]"
                       style={{ padding: '0 10px', paddingRight: userInput ? '60px' : '10px' }}
                     />
@@ -2961,6 +2962,7 @@ export function AdminPanel() {
                 <table className="w-full min-w-[700px] border-collapse">
                   <thead><tr className="bg-[#f9f9fb]">
                     <th style={thBase}>Kullanıcı</th>
+                    <th style={thBase}>Kullanıcı Adı</th>
                     <th style={thBase}>E-posta</th>
                     <th style={thBase}>Rol</th>
                     <th style={thBase}>Durum</th>
@@ -2983,6 +2985,7 @@ export function AdminPanel() {
                             <button onClick={() => setSelUser(u)} className="font-semibold text-sm text-(--color-navy) bg-transparent border-none cursor-pointer underline font-[family-name:var(--font-body)]">{u.name || '—'}</button>
                           </div>
                         </td>
+                        <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{u.username ? `@${u.username}` : '—'}</td>
                         <td className="px-[14px] py-[11px] text-[13px] text-(--color-text-mid)">{u.email}</td>
                         <td style={tdStyle}><Badge color={RC[u.role] || 'gold'}>{RL[u.role] || u.role}</Badge></td>
                         <td style={tdStyle}>
@@ -3008,7 +3011,7 @@ export function AdminPanel() {
                         </td>
                       </tr>
                     ))}
-                    {!displayed.length && <tr><td colSpan={7} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
+                    {!displayed.length && <tr><td colSpan={8} className="px-[14px] py-8 text-center text-(--color-text-light)">Sonuç bulunamadı.</td></tr>}
                   </tbody>
                 </table>
               </div>

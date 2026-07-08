@@ -111,6 +111,11 @@ export function AuthProvider({ children }) {
   const [authInitialized, setAuthInitialized] = useState(false);
   // Kullanıcı kendi hesabını silerken otomatik-çıkış listener'ını sustur
   const selfDeletingRef = useRef(false);
+  // register() akışı sürerken onAuthStateChanged'in araya girip kullanıcı
+  // belgesini eksik veriyle (username: null) oluşturmasını engeller — aksi
+  // halde createUserWithEmailAndPassword'ün tetiklediği bu listener ile
+  // register()'ın kendi Firestore yazması arasında race condition oluşur.
+  const pendingRegistrationRef = useRef(false);
   // İnaktivite timer ref'i
   const inactivityTimerRef = useRef(null);
   // BroadcastChannel: sekmeler arası aktivite senkronizasyonu
@@ -138,6 +143,9 @@ export function AuthProvider({ children }) {
         }, 0);
         return;
       }
+      // register() Firestore belgesini kendi verisiyle (username dahil) yazıyor;
+      // bu listener araya girip eksik veriyle üzerine yazmasın.
+      if (pendingRegistrationRef.current) return;
       // Token'ı tazele: kullanıcı başka sekmede/cihazda doğruladıysa
       // emailVerified güncel değeri ancak reload sonrası okunabilir
       try { await firebaseUser.reload(); } catch { /* offline vb. */ }
@@ -248,34 +256,40 @@ export function AuthProvider({ children }) {
       err.code = 'username-taken';
       throw err;
     }
-    // Firebase Auth kullanıcısı oluştur
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    // users ve usernames belgelerini batch ile yaz (mail göndermeden ÖNCE,
-    // mail hatası kaydı yarıda bırakmasın)
-    const userData = {
-      uid: cred.user.uid,
-      name,
-      username: usernameKey,
-      email,
-      avatar: name[0].toUpperCase(),
-      role: 'user',
-      active: true,
-      createdAt: serverTimestamp(),
-    };
-    const batch = writeBatch(db);
-    batch.set(doc(db, 'users', cred.user.uid), userData);
-    batch.set(usernameRef, { uid: cred.user.uid, email });
-    await batch.commit();
-    syncPublicProfile(cred.user.uid, { uid: cred.user.uid, name, username: usernameKey, photoURL: null, role: 'user' });
-    // Doğrulama maili gönder — hata olsa bile kayıt tamamlanmış olur,
-    // kullanıcı doğrulama sayfasından "tekrar gönder" diyebilir
+    // Firebase Auth kullanıcısı oluştur — bu, onAuthStateChanged'i tetikler,
+    // bu yüzden aşağıdaki Firestore yazması bitene kadar o listener'ı durdur.
+    pendingRegistrationRef.current = true;
     try {
-      await sendEmailVerification(cred.user);
-    } catch (mailErr) {
-      console.error('[register] Doğrulama maili gönderilemedi:', mailErr?.code, mailErr?.message);
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: name });
+      // users ve usernames belgelerini batch ile yaz (mail göndermeden ÖNCE,
+      // mail hatası kaydı yarıda bırakmasın)
+      const userData = {
+        uid: cred.user.uid,
+        name,
+        username: usernameKey,
+        email,
+        avatar: name[0].toUpperCase(),
+        role: 'user',
+        active: true,
+        createdAt: serverTimestamp(),
+      };
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', cred.user.uid), userData);
+      batch.set(usernameRef, { uid: cred.user.uid, email });
+      await batch.commit();
+      syncPublicProfile(cred.user.uid, { uid: cred.user.uid, name, username: usernameKey, photoURL: null, role: 'user' });
+      // Doğrulama maili gönder — hata olsa bile kayıt tamamlanmış olur,
+      // kullanıcı doğrulama sayfasından "tekrar gönder" diyebilir
+      try {
+        await sendEmailVerification(cred.user);
+      } catch (mailErr) {
+        console.error('[register] Doğrulama maili gönderilemedi:', mailErr?.code, mailErr?.message);
+      }
+      setUser({ ...userData, uid: cred.user.uid });
+    } finally {
+      pendingRegistrationRef.current = false;
     }
-    setUser({ ...userData, uid: cred.user.uid });
   };
 
   const checkUsername = async (username) => {

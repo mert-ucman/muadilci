@@ -3,6 +3,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Btn } from '@/components/ui';
 
 const RESEND_COOLDOWN = 60; // saniye
+// Sunucu tarafında (functions/index.js → cleanupUnverifiedUsers) doğrulanmamış
+// hesaplar kayıttan 24 saat sonra otomatik silinir — bu değer o süreyle eşleşmeli.
+const ACCOUNT_TTL_MS = 24 * 60 * 60 * 1000;
+
+function formatRemaining(ms) {
+  const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours} saat ${minutes} dakika`;
+  return `${minutes} dakika`;
+}
 
 function EnvelopeIcon() {
   return (
@@ -22,6 +33,18 @@ export function EmailVerificationPage() {
   const [sendOk, setSendOk]         = useState(false);
   const [checking, setChecking]     = useState(false);
   const [checkErr, setCheckErr]     = useState('');
+  const [remaining, setRemaining]   = useState(null);
+
+  // Hesap silinmesine kalan süre — Auth/Firestore createdAt üzerinden hesaplanır
+  useEffect(() => {
+    const createdMs = user?.createdAt?.toDate?.().getTime();
+    if (!createdMs) return;
+    const deadline = createdMs + ACCOUNT_TTL_MS;
+    const tick = () => setRemaining(deadline - Date.now());
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, [user?.createdAt]);
 
   // Geri sayım
   useEffect(() => {
@@ -66,7 +89,7 @@ export function EmailVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-(--color-bg) flex items-center justify-center p-5 font-[--font-body]">
+    <div className="min-h-screen bg-(--color-bg) flex items-center justify-center p-5 font-[family-name:var(--font-body)]">
       <div className="bg-white rounded-[20px] shadow-[0_8px_40px_rgba(0,0,0,.1)] px-10 py-12 max-w-[440px] w-full text-center">
         {/* Icon */}
         <div className="w-[88px] h-[88px] rounded-full bg-(--color-gold-bg) border-2 border-(--color-gold-border) flex items-center justify-center mx-auto mb-6 text-(--color-gold)">
@@ -79,9 +102,21 @@ export function EmailVerificationPage() {
         <p className="text-[14px] text-(--color-text-mid) leading-[1.7] mb-2">
           <strong className="text-(--color-text)">{user?.email}</strong> adresine bir doğrulama bağlantısı gönderdik.
         </p>
-        <p className="text-[13px] text-(--color-text-light) leading-[1.6] mb-7">
+        <p className="text-[13px] text-(--color-text-light) leading-[1.6] mb-5">
           Bağlantıya tıkladıktan sonra aşağıdaki butona basın.
         </p>
+
+        {remaining != null && (
+          <div
+            className="rounded-[10px] px-[14px] py-[10px] text-[13px] mb-7 text-left leading-[1.6]"
+            style={{ background: 'var(--color-orange-bg)', border: '1px solid #f0c878', color: 'var(--color-orange)' }}
+          >
+            {remaining > 0
+              ? <>Hesabınızın doğrulanması için kalan süre: <strong>{formatRemaining(remaining)}</strong>. Bu süre içinde doğrulanmazsa hesabınız otomatik olarak silinir.</>
+              : <>Doğrulama süreniz doldu. Hesabınız kısa süre içinde otomatik olarak silinecek.</>
+            }
+          </div>
+        )}
 
         {/* Verify button */}
         <Btn
@@ -114,7 +149,7 @@ export function EmailVerificationPage() {
           <button
             onClick={handleResend}
             disabled={sending || cooldown > 0}
-            className="bg-transparent border-none p-1 text-[13px] font-semibold font-[--font-body]"
+            className="bg-transparent border-none p-1 text-[13px] font-semibold font-[family-name:var(--font-body)]"
             style={{
               cursor: cooldown > 0 ? 'default' : 'pointer',
               color: cooldown > 0 ? 'var(--color-text-light)' : 'var(--color-gold)',
@@ -139,7 +174,7 @@ export function EmailVerificationPage() {
         {/* Logout */}
         <button
           onClick={() => logout()}
-          className="bg-transparent border-none cursor-pointer text-[13px] text-(--color-text-light) font-[--font-body] underline underline-offset-[3px]"
+          className="bg-transparent border-none cursor-pointer text-[13px] text-(--color-text-light) font-[family-name:var(--font-body)] underline underline-offset-[3px]"
         >
           Farklı bir hesapla giriş yap
         </button>

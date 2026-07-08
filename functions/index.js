@@ -1,4 +1,5 @@
 const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
@@ -102,6 +103,60 @@ exports.deleteAuthOnUserDeleted = onDocumentUpdated('users/{uid}', async (event)
     throw e;
   }
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Doğrulanmamış hesap temizliği — kayıttan 24 saat sonra hâlâ e-postasını
+//  doğrulamamış kullanıcıları siler (Auth + Firestore users/usernames).
+//  Aksi halde kullanıcı adı sonsuza dek rezerve kalır ve gerçek kullanıcılar
+//  o adı hiç alamaz.
+// ════════════════════════════════════════════════════════════════════════════
+
+const UNVERIFIED_TTL_MS = 24 * 60 * 60 * 1000;
+
+exports.cleanupUnverifiedUsers = onSchedule(
+  { schedule: 'every 60 minutes', region: 'us-central1', timeZone: 'Europe/Istanbul' },
+  async () => {
+    const db = admin.firestore();
+    const cutoffMs = Date.now() - UNVERIFIED_TTL_MS;
+    let deletedCount = 0;
+    let pageToken;
+
+    do {
+      const page = await admin.auth().listUsers(1000, pageToken);
+      pageToken = page.pageToken;
+
+      const targets = page.users.filter((u) => {
+        if (u.emailVerified) return false;
+        // Google hesapları Firebase tarafından zaten doğrulanmış sayılır — ek güvence
+        if (u.providerData.some((p) => p.providerId === 'google.com')) return false;
+        return new Date(u.metadata.creationTime).getTime() < cutoffMs;
+      });
+
+      for (const authUser of targets) {
+        const uid = authUser.uid;
+        try {
+          const userSnap = await db.collection('users').doc(uid).get();
+          const userData = userSnap.exists ? userSnap.data() : null;
+          // Admin/moderatör hesapları yanlışlıkla doğrulanmamış görünse bile dokunma
+          if (userData && (userData.role === 'admin' || userData.role === 'moderator')) continue;
+
+          const batch = db.batch();
+          batch.delete(db.collection('users').doc(uid));
+          if (userData?.username) batch.delete(db.collection('usernames').doc(userData.username));
+          await batch.commit();
+
+          await admin.auth().deleteUser(uid);
+          deletedCount++;
+          console.log(`✓ Doğrulanmamış hesap silindi (24s+): ${uid} (${authUser.email ?? ''})`);
+        } catch (e) {
+          console.error(`✗ Doğrulanmamış hesap silinemedi (${uid}):`, e);
+        }
+      }
+    } while (pageToken);
+
+    console.log(`Doğrulanmamış hesap temizliği tamamlandı: ${deletedCount} hesap silindi.`);
+  },
+);
 
 // ════════════════════════════════════════════════════════════════════════════
 //  Kullanıcı adıyla giriş — admin/moderatör e-postasını sızdırmadan çözüm
