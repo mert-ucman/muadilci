@@ -581,13 +581,13 @@ export function ComparisonPage({ queryParams }) {
                 {isAdmin ? (
                   <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-[10px] py-[2px] text-[12px] font-extrabold"
                     style={{ background: 'linear-gradient(135deg,#1a1205,#3d2b0e)', border: `1px solid ${C.gold}`, color: C.goldLight }}>
-                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
                       <FontAwesomeIcon icon={faCrown} style={{ fontSize: '10px' }} /> {liveName}
                     </p>
                   </div>
                 ) : isModerator ? (
                   <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-[10px] py-[2px] text-[12px] font-bold" style={{ background: '#ede9fe', border: '1px solid #a78bfa', color: '#5b21b6' }}>
-                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
                       <FontAwesomeIcon icon={faShield} style={{ fontSize: '10px' }} /> {liveName}
                     </p>
                   </div>
@@ -636,43 +636,43 @@ export function ComparisonPage({ queryParams }) {
               <span style={{ color: C.border }}>|</span>
               <span>Puan <strong style={{ color: C.gold }}>{((c.similarity + c.projection + c.longevity) / 3).toFixed(1)}/10</strong></span>
               {c.recommend === true && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-bold"
                   style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}`, color: C.green }}>
-                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                  <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
                     <FontAwesomeIcon icon={faThumbsUp} style={{ fontSize: '10px' }} /> Tavsiye ediyor
                   </p>
                 </div>
               )}
               {c.recommend === false && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-bold"
                   style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red }}>
-                  <p className="m-0 p-0 w-max flex items-center gap-1">
+                  <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
                     <FontAwesomeIcon icon={faThumbsDown} style={{ fontSize: '10px' }} /> Tavsiye etmiyor
                   </p>
                 </div>
               )}
               {(c.blindBuy === true || c.blindBuy === false) && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-bold"
                   style={{ background: C.blueBg, border: '1px solid #bfdbfe', color: C.blue }}>
-                  <p className="m-0 p-0 w-max flex items-center gap-1">
-                    <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} /> Kör alış: {c.blindBuy ? 'Evet' : 'Hayır'}
+                  <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
+                    <FontAwesomeIcon icon={faEye} style={{ fontSize: '10px' }} /> {c.blindBuy ? 'Kör Alışa Uygun' : 'Kör Alışa Uygun Değil'}
                   </p>
                 </div>
               )}
               {c.ownsOriginal === true && (
-                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-bold"
+                <div className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-bold"
                   style={{ background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>
-                  <p className="m-0 p-0 w-max flex items-center gap-1">
-                    <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '10px' }} /> Orijinale sahip
+                  <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
+                    <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '10px' }} /> Orijinal kokuyu kokladım
                   </p>
                 </div>
               )}
               {[...SEASON_OPTS, ...OCCASION_OPTS]
                 .filter((o) => (c.seasons || []).includes(o.key) || (c.occasions || []).includes(o.key))
                 .map((o) => (
-                  <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-[2px] font-semibold"
+                  <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-semibold"
                     style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
-                    <p className="m-0 p-0 w-max flex items-center gap-1">
+                    <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
                       <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.label}
                     </p>
                   </div>
@@ -1044,12 +1044,12 @@ export function ComparisonPage({ queryParams }) {
                     <div className="w-[36px] h-[36px] rounded-full flex items-center justify-center shrink-0" style={{ background: C.orangeBg }}>
                       <FontAwesomeIcon icon={faBottleDroplet} style={{ fontSize: '15px', color: C.orange }} />
                     </div>
-                    <div className="text-[13px] font-bold text-(--color-text)">Orijinale sahiplik</div>
+                    <div className="text-[13px] font-bold text-(--color-text)">Orijinal koku deneyimi</div>
                   </div>
                   {ownsPct !== null ? (
                     <>
                       <div className="text-[13px] text-(--color-text-mid) mb-[8px]">
-                        Kullanıcıların <strong style={{ color: C.orange }}>%{ownsPct}</strong>'i bu parfümün orijinaline sahip
+                        Kullanıcıların <strong style={{ color: C.orange }}>%{ownsPct}</strong>'i bu parfümün orijinalini kokladı
                       </div>
                       <div className="w-full h-[10px] rounded-full overflow-hidden" style={{ background: C.orangeBg }}>
                         <div style={{ width: `${ownsPct}%`, height: '100%', background: `linear-gradient(90deg, ${C.orange}, #e8a85a)` }} />
