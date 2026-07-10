@@ -2,14 +2,17 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
+import { calcScores } from '@/utils/scoring';
 import { C, F, FH } from '@/constants/theme';
 
 const INTERVAL = 5500;
 
 /* ── Comparison card shown in the right column ─────────────────────── */
 function CompareCard({ perfumes, muadilPerfumes }) {
-  const { noImageUrl } = useData();
-  const muadil  = [...muadilPerfumes].sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))[0];
+  const { noImageUrl, comments } = useData();
+  // reviewCount gönderim anında artar (onay beklerken de sayılır), bu yüzden
+  // gerçekte görünür (onaylı) yorum sayısına göre sıralanır.
+  const muadil  = [...muadilPerfumes].sort((a, b) => calcScores(b.id, comments).count - calcScores(a.id, comments).count)[0];
   const perfume = muadil ? perfumes.find(p => p.id === muadil.targetPerfumeId) : null;
 
   const origImg   = perfume?.images?.[0]?.src || noImageUrl || undefined;

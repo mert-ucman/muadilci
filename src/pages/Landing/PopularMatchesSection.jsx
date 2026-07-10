@@ -8,8 +8,10 @@ export function PopularMatchesSection() {
   const { navigate } = useRouter();
   const { muadilPerfumes, comments, loading } = useData();
   const { sm } = useW();
+  // reviewCount alanı sunucuda gönderim anında artar (onay beklerken de sayılır),
+  // bu yüzden sıralama için gerçekte görünür (onaylı) yorum sayısı kullanılır.
   const top = [...muadilPerfumes]
-    .sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))
+    .sort((a, b) => calcScores(b.id, comments).count - calcScores(a.id, comments).count)
     .slice(0, 3);
   const showSkeleton = top.length === 0 && loading;
 
