@@ -90,8 +90,9 @@ export function DataProvider({ children }) {
     }));
 
     // Perfumes: cache varsa anında yükle (Firestore round-trip yok), yoksa fetch et
+    // Boş dizi geçersiz cache sayılır — aksi halde bir kere boş dönen sorgu 30dk boyunca hiç düzelmez
     const cachedPerfumes = cacheRead('mc_perfumes');
-    if (cachedPerfumes) {
+    if (cachedPerfumes?.length) {
       setPerfumes(cachedPerfumes);
       tryDone();
     } else {
@@ -105,7 +106,7 @@ export function DataProvider({ children }) {
 
     // Muadils: perfumes ile aynı strateji
     const cachedMuadils = cacheRead('mc_muadils');
-    if (cachedMuadils) {
+    if (cachedMuadils?.length) {
       setMuadil(cachedMuadils);
       tryDone();
     } else {

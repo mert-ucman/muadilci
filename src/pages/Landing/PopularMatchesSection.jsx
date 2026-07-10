@@ -6,11 +6,12 @@ import { C, F } from '@/constants/theme';
 
 export function PopularMatchesSection() {
   const { navigate } = useRouter();
-  const { muadilPerfumes, comments } = useData();
+  const { muadilPerfumes, comments, loading } = useData();
   const { sm } = useW();
   const top = [...muadilPerfumes]
     .sort((a, b) => (b.reviewCount ?? 0) - (a.reviewCount ?? 0))
     .slice(0, 3);
+  const showSkeleton = top.length === 0 && loading;
 
   return (
     <div className="bg-[#f7f8fc]" style={{ padding: sm ? '48px 16px' : '72px 32px' }}>
@@ -33,6 +34,27 @@ export function PopularMatchesSection() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: sm ? '1fr' : 'repeat(auto-fill,minmax(300px,1fr))', gap: '16px' }}>
+          {showSkeleton && [0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white border border-(--color-border) rounded-[16px] p-5 overflow-hidden relative"
+              style={{ boxShadow: C.shadow, minHeight: '128px' }}
+              aria-busy="true"
+            >
+              <div
+                className="absolute inset-0 opacity-70"
+                style={{
+                  background: 'linear-gradient(100deg, transparent 0%, rgba(184,147,90,.06) 45%, rgba(184,147,90,.06) 55%, transparent 100%)',
+                  backgroundSize: '1200px 100%',
+                  animation: 'shimmer 2s linear infinite',
+                }}
+              />
+              <div className="mb-[14px] h-[15px] w-3/4 rounded bg-(--color-border-light)" />
+              <div className="mb-2 h-[12px] w-1/2 rounded bg-(--color-border-light)" />
+              <div className="h-[5px] rounded-[3px] bg-(--color-border-light)" />
+              <div className="mt-4 pt-[10px] border-t border-(--color-border-light) h-[12px] w-1/3 rounded bg-(--color-border-light)" />
+            </div>
+          ))}
           {top.map((mp) => {
             const sc = calcScores(mp.id, comments);
             return (
