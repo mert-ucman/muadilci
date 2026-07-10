@@ -30,7 +30,8 @@ export function LoginPage() {
     try {
       await loginWithGoogle();
       navigate('/');
-    } catch {
+    } catch (e) {
+      console.error('[handleGoogle]', e?.code, e?.message);
       setErr('Google ile giriş yapılamadı. Tekrar deneyin.');
     } finally {
       setGoogleLoading(false);

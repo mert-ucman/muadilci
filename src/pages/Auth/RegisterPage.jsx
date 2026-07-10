@@ -158,7 +158,8 @@ export function RegisterPage() {
     try {
       await loginWithGoogle();
       navigate('/');
-    } catch {
+    } catch (e) {
+      console.error('[handleGoogle]', e?.code, e?.message);
       setErr('Google ile kayıt olunamadı. Tekrar deneyin.');
     } finally {
       setGoogleLoading(false);
