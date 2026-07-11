@@ -168,13 +168,17 @@ export function LeaderboardPage() {
         style={{ padding: sm ? '0' : w >= 1280 ? '0 48px' : '0 32px' }}
       >
 
-        {/* Geliştirme aşaması rozeti — sağ üst köşe; metin cap-center ile dikeyde tam ortalı */}
+        {/* Geliştirme aşaması rozeti — masaüstünde sağ üst köşe, mobilde başlığın üstünde ortalı (çakışmayı önler) */}
         <div
-          className="absolute top-0 right-0 inline-flex items-center gap-[6px] rounded-[20px] px-[12px] z-10"
-          style={{ background: C.orangeBg, border: '1px solid #f0c878', color: C.orange, height: '24px', fontFamily: F }}
+          className={sm ? 'flex justify-center mb-3' : 'absolute top-0 right-0 z-10'}
         >
-          <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '11px' }} />
-          <p className="m-0 p-0 w-max cap-center text-[11px] font-semibold tracking-[.02em]">Geliştirilme Aşamasındadır</p>
+          <div
+            className="inline-flex items-center gap-[6px] rounded-[20px] px-[12px]"
+            style={{ background: C.orangeBg, border: '1px solid #f0c878', color: C.orange, height: '24px', fontFamily: F }}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '11px' }} />
+            <p className="m-0 p-0 w-max cap-center text-[11px] font-semibold tracking-[.02em]">Geliştirilme Aşamasındadır</p>
+          </div>
         </div>
 
         {/* Header */}
