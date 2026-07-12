@@ -82,14 +82,18 @@ export async function fixCacheHeaders(urls) {
 }
 
 /**
- * Marka logosunu sabit slug bazlı path'e yükler ve token'sız public URL döner.
- * brands/** için allow read: if true olduğundan token gerekmez; dosya aynı path'e
- * yeniden yüklendiğinde URL değişmez.
+ * Marka logosunu benzersiz path'e yükler ve token'sız public URL döner.
+ * brands/** için allow read: if true olduğundan token gerekmez.
+ * Dosya adına rastgele son ek eklenir: (1) yeni marka eklerken slug henüz boş
+ * olabilir — sabit ad kullanılırsa tüm markalar brands/.webp'de çakışırdı;
+ * (2) sabit ad + 1 yıllık immutable cache, logoyu değiştirince tarayıcının
+ * eski görseli göstermesine yol açardı. Benzersiz ad ikisini de önler.
  */
 export async function uploadBrandLogo(dataURL, slug) {
   if (!dataURL) return dataURL;
   if (isRemoteUrl(dataURL)) return dataURL;
-  const path = `brands/${slug}.webp`;
+  const base = (slug || '').trim().replace(/[^a-z0-9-]/gi, '') || 'brand';
+  const path = `brands/${base}-${rand()}.webp`;
   const r = ref(storage, path);
   await uploadString(r, dataURL, 'data_url', { contentType: 'image/webp', cacheControl: 'public, max-age=31536000' });
   const bucket = storage.app.options.storageBucket;
