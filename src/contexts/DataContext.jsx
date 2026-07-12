@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, getDoc, getDocs,
@@ -31,19 +31,32 @@ const snap2arr = (snapshot) => snapshot.docs.map((d) => ({ ...d.data(), id: d.id
 // ─── localStorage cache (30 dk TTL) ─────────────────────────────────────────
 const CACHE_TTL = 30 * 60 * 1000;
 
+// Timestamp'ler hem localStorage cache'inde hem statik katalog JSON'unda
+// {_ts:true, s, n} olarak saklanır — okurken Firestore Timestamp benzeri objeye çevrilir
+const tsReviver = (_k, v) => {
+  if (v && typeof v === 'object' && v._ts)
+    return { seconds: v.s, nanoseconds: v.n, toDate: () => new Date(v.s * 1000) };
+  return v;
+};
+
 function cacheRead(key) {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
-    const parsed = JSON.parse(raw, (_k, v) => {
-      if (v && typeof v === 'object' && v._ts)
-        return { seconds: v.s, nanoseconds: v.n, toDate: () => new Date(v.s * 1000) };
-      return v;
-    });
+    const parsed = JSON.parse(raw, tsReviver);
     if (Date.now() - parsed.ts > CACHE_TTL) return null;
     return parsed.data;
   } catch { return null; }
 }
+
+// ─── Statik katalog ──────────────────────────────────────────────────────────
+// Cloud Function (rebuildCatalogCron) public koleksiyonları Storage'a tek JSON
+// olarak yazar; ziyaretçiler Firestore yerine bunu indirir. Doküman başına
+// okuma ücreti yok — yalnızca staff canlı Firestore dinler (admin panel anlık).
+const catalogFileUrl = (name) =>
+  `https://firebasestorage.googleapis.com/v0/b/${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}/o/${encodeURIComponent(`catalog/${name}`)}?alt=media`;
+const CATALOG_URL = catalogFileUrl('catalog.json');
+const REVIEWS_URL = catalogFileUrl('reviews.json');
 
 function cacheWrite(key, data) {
   try {
@@ -61,7 +74,10 @@ export function DataProvider({ children }) {
   const [brands, setBrands] = useState([]);
   const [perfumes, setPerfumes] = useState([]);
   const [muadilPerfumes, setMuadil] = useState([]);
-  const [comments, setComments] = useState([]);
+  // Yorum kaynakları: statik dosya (herkes) + kendi yorumları (üye) + canlı 200 (staff)
+  const [catalogComments, setCatalogComments] = useState([]);
+  const [ownComments, setOwnComments] = useState([]);
+  const [staffComments, setStaffComments] = useState(null);
   const [users, setUsers] = useState([]);
   const [sliderImages, setSliderImages] = useState([]);
   const [landingImages, setLandingImages] = useState({});
@@ -69,58 +85,146 @@ export function DataProvider({ children }) {
   const [logoUrl, setLogoUrl] = useState('');
   const [footerLogoUrl, setFooterLogoUrl] = useState('');
   const [globalBrandHeaders, setGlobalBrandHeaders] = useState({ original: '', muadil: '' });
-  const [loading, setLoading] = useState(true);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [reviewsReady, setReviewsReady] = useState(false);
+  const loading = !(catalogReady && reviewsReady);
   const [notifications, setNotifications] = useState([]);
 
-  // ─── Real-time listeners ─────────────────────────────────────────────────
+  const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+
+  // Katalog payload'ını (statik JSON, localStorage cache'i veya Firestore
+  // fallback'i) state'lere uygular — üç kaynak da aynı şekli kullanır
+  const applyCatalog = (c) => {
+    if (Array.isArray(c.brands)) setBrands(c.brands);
+    if (Array.isArray(c.perfumes)) setPerfumes(c.perfumes);
+    if (Array.isArray(c.muadils)) setMuadil(c.muadils);
+    if (Array.isArray(c.sliderImages))
+      setSliderImages([...c.sliderImages].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+    const site = c.settingsSite;
+    if (site) {
+      setFaviconUrl(site.faviconUrl || '');
+      setLogoUrl(site.logoUrl || '');
+      setFooterLogoUrl(site.footerLogoUrl || '');
+      setGlobalBrandHeaders({ original: site.originalBrandHeader || '', muadil: site.muadilBrandHeader || '' });
+    }
+    setLandingImages(c.settingsLandingImages ?? {});
+  };
+
+  // ─── Katalog: ziyaretçi statik JSON okur, Firestore'a hiç dokunmaz ────────
   useEffect(() => {
+    let cancelled = false;
+
+    // Eski cache anahtarları artık kullanılmıyor — yer kaplamasın
+    try { ['mc_brands', 'mc_perfumes', 'mc_muadils'].forEach((k) => localStorage.removeItem(k)); } catch { /* noop */ }
+
+    // Cache'den anında boya (varsa); fetch sonucu gelince üzerine yazılır
+    const cached = cacheRead('mc_catalog');
+    if (cached) applyCatalog(cached);
+
+    (async () => {
+      try {
+        const res = await fetch(CATALOG_URL);
+        if (!res.ok) throw new Error(`catalog ${res.status}`);
+        const catalog = JSON.parse(await res.text(), tsReviver);
+        if (cancelled) return;
+        applyCatalog(catalog);
+        cacheWrite('mc_catalog', catalog);
+      } catch {
+        // Katalog henüz üretilmemiş / erişilemedi → eski yol: Firestore'dan tek seferlik oku
+        if (cancelled) return;
+        try {
+          const [bSnap, pSnap, mSnap, sSnap, siteSnap, landSnap] = await Promise.all([
+            getDocs(query(col('brands'), orderBy('name'))),
+            getDocs(query(col('perfumes'), orderBy('name'))),
+            getDocs(query(col('muadils'), orderBy('name'))),
+            getDocs(col('sliderImages')),
+            getDoc(doc(db, 'settings', 'site')),
+            getDoc(doc(db, 'settings', 'landingImages')),
+          ]);
+          if (cancelled) return;
+          const catalog = {
+            brands: snap2arr(bSnap),
+            perfumes: snap2arr(pSnap),
+            muadils: snap2arr(mSnap),
+            sliderImages: snap2arr(sSnap),
+            settingsSite: siteSnap.exists() ? siteSnap.data() : null,
+            settingsLandingImages: landSnap.exists() ? landSnap.data() : null,
+          };
+          applyCatalog(catalog);
+          cacheWrite('mc_catalog', catalog);
+        } catch { /* offline vb. — cache'de ne varsa onunla devam */ }
+      } finally {
+        if (!cancelled) setCatalogReady(true);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // ─── Yorumlar ──────────────────────────────────────────────────────────────
+  // Ziyaretçiler onaylı yorumları statik reviews.json'dan okur — Firestore okuma
+  // maliyeti sıfır ve eski "son 200" limiti kalktığından puan hesapları
+  // (Leaderboard, popüler eşleşmeler) TÜM onaylı yorumları görür.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(REVIEWS_URL);
+        if (!res.ok) throw new Error(`reviews ${res.status}`);
+        const data = JSON.parse(await res.text(), tsReviver);
+        if (!cancelled && Array.isArray(data.reviews)) setCatalogComments(data.reviews);
+      } catch {
+        // Dosya henüz üretilmemiş / erişilemedi → eski yol: son 200 yorumu tek seferlik oku
+        if (cancelled) return;
+        try {
+          const s = await getDocs(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)));
+          if (!cancelled) setCatalogComments(snap2arr(s));
+        } catch { /* offline vb. */ }
+      } finally {
+        if (!cancelled) setReviewsReady(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Üye: kendi yorumları (onay bekleyenler dahil) statik dosyayı beklemeden
+  // anında görünsün/silinsin diye küçük canlı sorgu — yalnızca kendi dokümanları
+  useEffect(() => {
+    if (!user?.uid || isStaff) { setOwnComments([]); return; }
+    const unsub = onSnapshot(query(col('reviews'), where('userId', '==', user.uid)), (s) => setOwnComments(snap2arr(s)));
+    return () => unsub();
+  }, [user?.uid, isStaff]);
+
+  // Staff: moderasyon rozeti/paneli pending yorumları da canlı görmeli
+  useEffect(() => {
+    if (!isStaff) { setStaffComments(null); return; }
+    const unsub = onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)), (s) => {
+      setStaffComments(snap2arr(s));
+      setReviewsReady(true);
+    });
+    return () => unsub();
+  }, [isStaff]);
+
+  // Birleştirme: staff canlı listeyi olduğu gibi kullanır; üyede statik listedeki
+  // kendi yorumları canlı kopyayla değiştirilir (sildiği yorum statik dosya
+  // yenilenene kadar hortlamasın, yeni yorumu beklemeden görünsün)
+  const comments = useMemo(() => {
+    if (staffComments) return staffComments;
+    if (!user?.uid) return catalogComments;
+    const map = new Map();
+    catalogComments.forEach((c) => { if (c.userId !== user.uid) map.set(c.id, c); });
+    ownComments.forEach((c) => map.set(c.id, c));
+    return [...map.values()].sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+  }, [staffComments, catalogComments, ownComments, user?.uid]);
+
+  // ─── Staff: admin paneli anlık veri görsün diye canlı Firestore ───────────
+  // Katalog JSON'u en fazla ~5 dk gecikmeli; düzenleme yapan admin/moderatör
+  // kendi değişikliğini beklemeden görmeli. Staff sayısı az olduğundan bu
+  // dinleyicilerin okuma maliyeti ihmal edilebilir.
+  useEffect(() => {
+    if (!isStaff) return;
     const unsubs = [];
-    let resolved = 0;
-    const total = 4;
-    const tryDone = () => { if (++resolved >= total) setLoading(false); };
-
-    // Brands: cache'den pre-seed yap, gerçek zamanlı listener devam eder
-    const cachedBrands = cacheRead('mc_brands');
-    if (cachedBrands) setBrands(cachedBrands);
-    unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => {
-      const data = snap2arr(s);
-      setBrands(data);
-      cacheWrite('mc_brands', data);
-      tryDone();
-    }));
-
-    // Perfumes: cache varsa anında yükle (Firestore round-trip yok), yoksa fetch et
-    // Boş dizi geçersiz cache sayılır — aksi halde bir kere boş dönen sorgu 30dk boyunca hiç düzelmez
-    const cachedPerfumes = cacheRead('mc_perfumes');
-    if (cachedPerfumes?.length) {
-      setPerfumes(cachedPerfumes);
-      tryDone();
-    } else {
-      getDocs(query(col('perfumes'), orderBy('name'))).then((s) => {
-        const data = snap2arr(s);
-        setPerfumes(data);
-        cacheWrite('mc_perfumes', data);
-        tryDone();
-      });
-    }
-
-    // Muadils: perfumes ile aynı strateji
-    const cachedMuadils = cacheRead('mc_muadils');
-    if (cachedMuadils?.length) {
-      setMuadil(cachedMuadils);
-      tryDone();
-    } else {
-      getDocs(query(col('muadils'), orderBy('name'))).then((s) => {
-        const data = snap2arr(s);
-        setMuadil(data);
-        cacheWrite('mc_muadils', data);
-        tryDone();
-      });
-    }
-
-    // Reviews: en son 200 yorum yeterli; geçmiş admin panelinden ayrıca çekiliyor
-    unsubs.push(onSnapshot(query(col('reviews'), orderBy('createdAt', 'desc'), limit(200)), (s) => { setComments(snap2arr(s)); tryDone(); }));
-
+    unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => setBrands(snap2arr(s))));
     unsubs.push(onSnapshot(col('sliderImages'), (s) => setSliderImages(snap2arr(s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)))));
     unsubs.push(onSnapshot(doc(db, 'settings', 'site'), (s) => {
       if (s.exists()) {
@@ -134,9 +238,10 @@ export function DataProvider({ children }) {
     unsubs.push(onSnapshot(doc(db, 'settings', 'landingImages'), (s) => {
       setLandingImages(s.exists() ? s.data() : {});
     }));
-
+    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s)));
+    getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s)));
     return () => unsubs.forEach((u) => u());
-  }, []);
+  }, [isStaff]);
 
   // Tüm kullanıcı listesi yalnızca moderatör/admin için yüklenir (e-posta gibi
   // PII'nin her ziyaretçiye inmesini engeller; kurallar da bunu zorunlu kılar)
@@ -376,12 +481,12 @@ export function DataProvider({ children }) {
         pendingUpdate: null,
         updatedAt: submittedAt ?? serverTimestamp(),
       });
-      setComments((prev) => prev.map((c) => c.id === id
+      setStaffComments((prev) => prev && prev.map((c) => c.id === id
         ? { ...c, status: 'approved', text, similarity, projection, longevity, recommend: recommend ?? null, blindBuy: blindBuy ?? null, ownsOriginal: ownsOriginal ?? null, seasons: Array.isArray(seasons) ? seasons : [], occasions: Array.isArray(occasions) ? occasions : [], pendingUpdate: null }
         : c));
     } else {
       await updateDoc(docRef('reviews', id), { status: 'approved' });
-      setComments((prev) => prev.map((c) => c.id === id ? { ...c, status: 'approved' } : c));
+      setStaffComments((prev) => prev && prev.map((c) => c.id === id ? { ...c, status: 'approved' } : c));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
@@ -413,7 +518,7 @@ export function DataProvider({ children }) {
     const review = reviewSnap.data();
     if (review.status === 'pending_update') {
       await updateDoc(docRef('reviews', id), { status: 'approved', pendingUpdate: null });
-      setComments((prev) => prev.map((c) => c.id === id ? { ...c, status: 'approved', pendingUpdate: null } : c));
+      setStaffComments((prev) => prev && prev.map((c) => c.id === id ? { ...c, status: 'approved', pendingUpdate: null } : c));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
@@ -438,7 +543,7 @@ export function DataProvider({ children }) {
       }
     } else {
       await deleteDoc(docRef('reviews', id));
-      setComments((prev) => prev.filter((c) => c.id !== id));
+      setStaffComments((prev) => prev && prev.filter((c) => c.id !== id));
       if (review.userId && review.userId !== 'deleted') {
         try {
           const muadil = muadilPerfumes.find((m) => String(m.id) === String(review.muadilId));
@@ -841,12 +946,8 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => {
-        const data = snap2arr(s); setPerfumes(data); cacheWrite('mc_perfumes', data);
-      }),
-      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => {
-        const data = snap2arr(s); setMuadil(data); cacheWrite('mc_muadils', data);
-      }),
+      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))),
+      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))),
       notifications, unreadNotifCount, notifHasMore,
       markNotificationRead, markAllNotificationsRead,
       loadMoreNotifications, clearAllNotifications,

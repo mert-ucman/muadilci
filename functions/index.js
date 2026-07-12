@@ -1,9 +1,10 @@
-const { onDocumentUpdated, onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { onDocumentUpdated, onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
+const zlib = require('zlib');
 const { validateReviewText } = require('./reviewValidation');
 
 admin.initializeApp();
@@ -474,3 +475,132 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
 
   return { ok: true, status: result.status, abuseFlag: result.abuseFlag, abuseReason: result.abuseReason, id: result.reviewId };
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Statik katalog — public koleksiyonlar (brands/perfumes/muadils/slider/
+//  settings) tek bir JSON dosyası olarak Storage'a yazılır; ziyaretçiler bu
+//  dosyayı okur. Böylece her sayfa açılışında binlerce Firestore doküman
+//  okuması yerine sıfır Firestore maliyeti oluşur. Akış:
+//   1) Bu koleksiyonlarda herhangi bir yazma → catalogMeta/status.dirty = true
+//   2) 5 dakikada bir çalışan cron, dirty ise kataloğu yeniden üretir
+//  Admin panel bu dosyayı KULLANMAZ (staff canlı Firestore okur) — yani
+//  buradaki 5 dk'lık gecikme yalnızca ziyaretçilerin gördüğü veriye yansır.
+// ════════════════════════════════════════════════════════════════════════════
+
+const CATALOG_PATH = 'catalog/catalog.json';
+const REVIEWS_PATH = 'catalog/reviews.json';
+
+// Timestamp'ler client'taki cache formatıyla aynı şekilde ({_ts,s,n}) saklanır;
+// DataContext okurken bunları toDate'li objelere geri çevirir.
+const catalogJsonReplacer = (_k, v) => {
+  if (v instanceof admin.firestore.Timestamp) return { _ts: true, s: v.seconds, n: v.nanoseconds };
+  return v;
+};
+
+async function rebuildCatalog() {
+  const db = admin.firestore();
+  const [brands, perfumes, muadils, sliderImages, siteSnap, landingSnap] = await Promise.all([
+    db.collection('brands').orderBy('name').get(),
+    db.collection('perfumes').orderBy('name').get(),
+    db.collection('muadils').orderBy('name').get(),
+    db.collection('sliderImages').get(),
+    db.doc('settings/site').get(),
+    db.doc('settings/landingImages').get(),
+  ]);
+  const arr = (s) => s.docs.map((d) => ({ ...d.data(), id: d.id }));
+  const payload = {
+    generatedAt: Date.now(),
+    brands: arr(brands),
+    perfumes: arr(perfumes),
+    muadils: arr(muadils),
+    sliderImages: arr(sliderImages),
+    settingsSite: siteSnap.exists ? siteSnap.data() : null,
+    settingsLandingImages: landingSnap.exists ? landingSnap.data() : null,
+  };
+  const json = JSON.stringify(payload, catalogJsonReplacer);
+  await saveCatalogFile(CATALOG_PATH, json);
+  console.log(`✓ Katalog üretildi: ${payload.brands.length} marka, ${payload.perfumes.length} parfüm, ${payload.muadils.length} muadil (${(json.length / 1024).toFixed(0)} KB ham)`);
+}
+
+// Onaylı (herkese görünür) yorumlar ayrı dosyada tutulur: yorum trafiği katalogdan
+// daha sık değiştiği için her yorum onayında koca kataloğu yeniden üretmeye gerek
+// kalmaz — yalnızca reviews koleksiyonu okunur.
+async function rebuildReviewsCatalog() {
+  const db = admin.firestore();
+  // 'in' tek alan olduğu için composite index gerekmez; sıralama bellekte yapılır
+  const snap = await db.collection('reviews').where('status', 'in', ['approved', 'pending_update']).get();
+  const reviews = snap.docs
+    .map((d) => ({ ...d.data(), id: d.id }))
+    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
+  const json = JSON.stringify({ generatedAt: Date.now(), reviews }, catalogJsonReplacer);
+  await saveCatalogFile(REVIEWS_PATH, json);
+  console.log(`✓ Yorum kataloğu üretildi: ${reviews.length} onaylı yorum (${(json.length / 1024).toFixed(0)} KB ham)`);
+}
+
+// gzip + contentEncoding: tarayıcı şeffaf açar, indirme boyutu ~5-10 kat küçülür
+async function saveCatalogFile(path, json) {
+  await admin.storage().bucket().file(path).save(zlib.gzipSync(Buffer.from(json)), {
+    resumable: false,
+    metadata: {
+      contentType: 'application/json',
+      contentEncoding: 'gzip',
+      // 5 dk CDN/tarayıcı cache'i — cron periyoduyla uyumlu
+      cacheControl: 'public, max-age=300',
+    },
+  });
+}
+
+const markDirty = (flagField, markField) => async () => {
+  await admin.firestore().doc('catalogMeta/status').set({
+    [flagField]: true,
+    [markField]: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+};
+const markCatalogDirty = markDirty('dirty', 'markedAt');
+const markReviewsDirty = markDirty('reviewsDirty', 'reviewsMarkedAt');
+
+exports.catalogDirtyOnBrand    = onDocumentWritten('brands/{id}', markCatalogDirty);
+exports.catalogDirtyOnPerfume  = onDocumentWritten('perfumes/{id}', markCatalogDirty);
+exports.catalogDirtyOnMuadil   = onDocumentWritten('muadils/{id}', markCatalogDirty);
+exports.catalogDirtyOnSlider   = onDocumentWritten('sliderImages/{id}', markCatalogDirty);
+exports.catalogDirtyOnSettings = onDocumentWritten('settings/{id}', markCatalogDirty);
+exports.catalogDirtyOnReview   = onDocumentWritten('reviews/{id}', markReviewsDirty);
+
+// Tek dosyanın "kirliyse yeniden üret" döngüsü. markedAt karşılaştırması: build
+// sırasında yeni bir değişiklik geldiyse bayrak dirty kalır (kayıp güncelleme olmasın)
+async function rebuildIfDirty(meta, metaRef, { flagField, markField, path, rebuild }) {
+  const db = admin.firestore();
+  let needsBuild = !meta.exists || meta.data()[flagField] === true;
+  if (!needsBuild) {
+    // Dosya hiç üretilmemiş ya da silinmişse de üret (ilk kurulum / kurtarma)
+    const [exists] = await admin.storage().bucket().file(path).exists();
+    needsBuild = !exists;
+  }
+  if (!needsBuild) return;
+
+  const markedBefore = meta.exists ? (meta.data()[markField]?.toMillis?.() ?? 0) : 0;
+  await rebuild();
+
+  await db.runTransaction(async (tx) => {
+    const cur = await tx.get(metaRef);
+    const markedNow = cur.exists ? (cur.data()[markField]?.toMillis?.() ?? 0) : 0;
+    tx.set(metaRef, {
+      [flagField]: markedNow > markedBefore,
+      builtAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+}
+
+exports.rebuildCatalogCron = onSchedule(
+  { schedule: 'every 5 minutes', region: 'us-central1', timeZone: 'Europe/Istanbul' },
+  async () => {
+    const metaRef = admin.firestore().doc('catalogMeta/status');
+    const meta = await metaRef.get();
+    await rebuildIfDirty(meta, metaRef, {
+      flagField: 'dirty', markField: 'markedAt', path: CATALOG_PATH, rebuild: rebuildCatalog,
+    });
+    await rebuildIfDirty(meta, metaRef, {
+      flagField: 'reviewsDirty', markField: 'reviewsMarkedAt', path: REVIEWS_PATH, rebuild: rebuildReviewsCatalog,
+    });
+  },
+);

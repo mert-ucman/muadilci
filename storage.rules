@@ -13,6 +13,13 @@ service firebase.storage {
         request.resource.contentType.matches('image/.*');
     }
 
+    // Statik katalog JSON'u — Cloud Function yazar (Admin SDK kuralları baypas
+    // eder), ziyaretçiler Firestore yerine bunu okur; client asla yazamaz
+    match /catalog/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Parfüm / muadil görselleri — herkese açık okuma, admin yazma
     match /perfumes/{allPaths=**} {
       allow read: if true;
