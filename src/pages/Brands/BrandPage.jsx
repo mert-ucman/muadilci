@@ -123,7 +123,10 @@ export function BrandPage({ params }) {
   const [page, setPage] = useState(1);
   const PER_PAGE = 25;
 
-  const brand = brands.find((b) => b.slug === params?.brandSlug);
+  // Pasif marka herkese kapalı sayılır — bulunamadı ile aynı davranır, direkt
+  // linkle/eski sekmeyle girişi de kapatır (listelerden gizlemek yetmiyordu)
+  const rawBrand = brands.find((b) => b.slug === params?.brandSlug);
+  const brand = rawBrand?.active === false ? null : rawBrand;
   useSeo({
     title: brand ? brand.name : 'Marka',
     description: brand
