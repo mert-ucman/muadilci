@@ -8,6 +8,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '@/lib/firebase';
 import { deleteImageByUrl } from '@/lib/storage';
 import { useAuth } from './AuthContext';
+import { useRouter } from './RouterContext';
 
 // Yorum gönderimi sunucu tarafı korumalı callable üzerinden yapılır
 const submitReviewFn = httpsCallable(getFunctions(undefined, 'us-central1'), 'submitReview');
@@ -70,6 +71,7 @@ function cacheWrite(key, data) {
 
 export function DataProvider({ children }) {
   const { user } = useAuth();
+  const { path } = useRouter();
 
   const [brands, setBrands] = useState([]);
   const [perfumes, setPerfumes] = useState([]);
@@ -91,6 +93,7 @@ export function DataProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
 
   const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+  const isAdminRoute = path.startsWith('/admin');
 
   // Katalog payload'ını (statik JSON, localStorage cache'i veya Firestore
   // fallback'i) state'lere uygular — üç kaynak da aynı şekli kullanır
@@ -219,10 +222,15 @@ export function DataProvider({ children }) {
 
   // ─── Staff: admin paneli anlık veri görsün diye canlı Firestore ───────────
   // Katalog JSON'u en fazla ~5 dk gecikmeli; düzenleme yapan admin/moderatör
-  // kendi değişikliğini beklemeden görmeli. Staff sayısı az olduğundan bu
-  // dinleyicilerin okuma maliyeti ihmal edilebilir.
+  // kendi değişikliğini beklemeden görmeli. Bu kaynaklar yalnızca Admin
+  // panelinin kendi sekmelerinde düzenlendiğinden yalnızca /admin'deyken
+  // dinlenir — staff sitede normal gezinirken gereksiz okumaya yol açmasın diye.
+  // perfumes/muadils (1.541 + 7.731 doküman) burada YOK — pahalı oldukları
+  // için yalnızca ihtiyaç duyan sekmelerde AdminPanel tarafından lazy
+  // (refreshPerfumes/refreshMuadils ile) çekilir; diğer sekmelerde catalog.json
+  // kaynaklı state yeterli.
   useEffect(() => {
-    if (!isStaff) return;
+    if (!isStaff || !isAdminRoute) return;
     const unsubs = [];
     unsubs.push(onSnapshot(query(col('brands'), orderBy('name')), (s) => setBrands(snap2arr(s))));
     unsubs.push(onSnapshot(col('sliderImages'), (s) => setSliderImages(snap2arr(s).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)))));
@@ -238,10 +246,8 @@ export function DataProvider({ children }) {
     unsubs.push(onSnapshot(doc(db, 'settings', 'landingImages'), (s) => {
       setLandingImages(s.exists() ? s.data() : {});
     }));
-    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s)));
-    getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s)));
     return () => unsubs.forEach((u) => u());
-  }, [isStaff]);
+  }, [isStaff, isAdminRoute]);
 
   // Tüm kullanıcı listesi yalnızca moderatör/admin için yüklenir (e-posta gibi
   // PII'nin her ziyaretçiye inmesini engeller; kurallar da bunu zorunlu kılar)
@@ -939,6 +945,18 @@ export function DataProvider({ children }) {
 
   const noImageUrl = landingImages?.noImageUrl || '';
 
+  // Admin panelinin perfumes/muadils (1.541 + 7.731 doküman) tam listesini
+  // sekme değişse de, admin panelinden çıkıp tekrar girse de aynı tarayıcı
+  // oturumunda (sayfa yenilenene kadar) yalnızca BİR KEZ çeksin diye —
+  // DataProvider sayfa yenilenmedikçe unmount olmadığından ref burada kalıcı.
+  const fullAdminCatalogFetched = useRef(false);
+  const ensureFullAdminCatalog = useCallback(() => {
+    if (fullAdminCatalogFetched.current) return;
+    fullAdminCatalogFetched.current = true;
+    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s)));
+    getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s)));
+  }, []);
+
   return (
     <DataCtx.Provider value={{
       brands, perfumes, muadilPerfumes, comments, users, sliderImages, landingImages, noImageUrl,
@@ -946,8 +964,9 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))),
-      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))),
+      ensureFullAdminCatalog,
+      refreshPerfumes: () => { fullAdminCatalogFetched.current = true; return getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))); },
+      refreshMuadils: () => { fullAdminCatalogFetched.current = true; return getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))); },
       notifications, unreadNotifCount, notifHasMore,
       markNotificationRead, markAllNotificationsRead,
       loadMoreNotifications, clearAllNotifications,

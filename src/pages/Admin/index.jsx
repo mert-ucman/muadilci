@@ -2306,7 +2306,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, logoUrl, updateLogo, footerLogoUrl, updateFooterLogo, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, landingImages, updateLandingImage } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, logoUrl, updateLogo, footerLogoUrl, updateFooterLogo, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, ensureFullAdminCatalog, landingImages, updateLandingImage } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -2571,6 +2571,16 @@ export function AdminPanel() {
       setRefreshing(false);
     }
   };
+
+  // perfumes/muadils (1.541 + 7.731 doküman) yalnızca gerçekten ihtiyaç duyan
+  // sekmelerde çekilir; guard DataContext'te (ensureFullAdminCatalog) tutulduğu
+  // için sekme değişse de, admin panelinden çıkıp tekrar girse de aynı tarayıcı
+  // oturumunda yalnızca BİR KEZ tetiklenir — diğer sekmelerde catalog.json
+  // kaynaklı state yeterli, gereksiz okumaya yol açmaz.
+  useEffect(() => {
+    const needsFullCatalog = ['original-brands', 'muadil-brands', 'perfumes', 'muadil', 'merge-perfumes'].includes(tab);
+    if (needsFullCatalog) ensureFullAdminCatalog();
+  }, [tab]);
 
   useEffect(() => {
     setShowFloatingRefresh(false);
