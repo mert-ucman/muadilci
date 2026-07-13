@@ -4,7 +4,7 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { Card, TableScrollHint } from '@/components/ui';
-import { calcScores } from '@/utils/scoring';
+import { calcBrandScoreMap } from '@/utils/scoring';
 import { C, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
 
@@ -129,17 +129,13 @@ export function BrandsPage() {
     return map;
   }, [muadilPerfumes]);
 
-  // Muadil marka puanı: markaya ait tüm muadil parfümlerin overall ortalaması
+  // Muadil marka puanı: "En İyiler" ile aynı Bayesian formülü (calcBrandScoreMap).
+  // Düz ortalama değil — tek şanslı ürün markayı uçuramaz, çok yorumlu markalar öne çıkar.
   const brandScoreMap = useMemo(() => {
+    const scoreMap = calcBrandScoreMap(brands, muadilPerfumes, comments);
     const map = {};
     brands.filter(b => b.type === 'muadil').forEach(b => {
-      const brandMuadils = muadilPerfumes.filter(m => m.brandId === b.id);
-      const scored = brandMuadils
-        .map(m => calcScores(m.id, comments).overall)
-        .filter(v => v !== null);
-      map[b.id] = scored.length > 0
-        ? parseFloat((scored.reduce((s, v) => s + v, 0) / scored.length).toFixed(1))
-        : null;
+      map[b.id] = scoreMap.has(b.id) ? scoreMap.get(b.id) : null;
     });
     return map;
   }, [brands, muadilPerfumes, comments]);

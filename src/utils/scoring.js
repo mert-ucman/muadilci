@@ -1,15 +1,25 @@
 // ── Sabit parametreler ────────────────────────────────────────────────────────
 // C_PRODUCT: Bu kadar oydan önce ürün puanı global ortalamaya çekilir.
-//            5 → 5 oyda %50 kendi puanı / %50 global ortalama
-const C_PRODUCT = 10;
+//            5 → 5 oyda %50 kendi puanı / %50 global ortalama.
+//            Tek bir şanslı (9.3) ya da troll (1.0) yorumun ürünü uçurmasını/batırmasını engeller.
+const C_PRODUCT = 5;
 
-// C_BRAND: Bir markanın bu kadar puanlı ürünü olana kadar marka puanı global
-//          marka ortalamasına çekilir. 5 → 5 puanlı üründe %50/%50
-const C_BRAND = 5;
+// C_BRAND: Bir markanın toplam yorumu bu sayıya ulaşana kadar marka puanı global
+//          marka ortalamasına çekilir (kanıt = toplam yorum, ürün sayısı değil).
+//          8 → 8 yorumda marka %50 kendi puanına güvenilir.
+const C_BRAND = 8;
 
-// MIN_REVIEWS: En İyiler listesine girebilmek için gereken minimum onaylı yorum sayısı.
-//              C_PRODUCT/2 = 5 → bu noktada puan %33 güvenilir, listeye girmeye yeterli.
-const MIN_REVIEWS = 5;
+// MIN_REVIEWS: Bir ürünün puanlanabilmesi (ortalama + Bayesian) için gereken minimum
+//              onaylı yorum sayısı. Gürültüyü Bayesian yumuşattığı için sert baraja
+//              gerek yok; 1 → yorumu olan her ürün puanlanır, güveni C_PRODUCT ayarlar.
+//              Bu yalnızca KATALOG puanını (Markalar listesi/profil) besler.
+const MIN_REVIEWS = 1;
+
+// LEADERBOARD_MIN_REVIEWS: "En İyiler" top-10 VİTRİNİNE girmek için gereken minimum yorum.
+//   Puanlamadan ayrı bir editoryal bar — puan yine düşük eşikle hesaplanır (katalogla aynı),
+//   ama top-10'a yalnızca yeterince değerlendirilmiş ürün/marka çıkar. Gerçek veri birikene
+//   kadar liste rahatça boş/az kalabilir. Ürün: kendi yorumu; marka: toplam yorumu bu sayıyı geçmeli.
+export const LEADERBOARD_MIN_REVIEWS = 10;
 
 // ── Yardımcı ─────────────────────────────────────────────────────────────────
 
@@ -124,20 +134,21 @@ export function calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap)
 
   if (!brandRows.length) return [];
 
-  // 2. Global marka ortalaması (ürün sayısıyla ağırlıklı)
+  // 2. Global marka ortalaması (toplam yorum sayısıyla ağırlıklı — hacimli marka daha çok söz sahibi)
   const globalBrandMean = weightedMean(
-    brandRows.map(({ brandAvgScore, ratedProductCount }) => ({
+    brandRows.map(({ brandAvgScore, totalReviews }) => ({
       score: brandAvgScore,
-      weight: ratedProductCount,
+      weight: totalReviews,
     }))
   );
 
   // 3. Marka Bayesian skoru + sırala
+  // Kanıt = toplam yorum: 1 üründen 50 yorum alan marka, 1 üründen 1 yorum alandan çok daha güvenilir.
   // Eşitlik-bozucu: aynı skorda → daha çok yorum (daha güvenilir) → daha çok puanlı ürün → ada göre
   return brandRows
     .map((row) => ({
       ...row,
-      brandBayesianScore: bayesianAvg(row.brandAvgScore, row.ratedProductCount, globalBrandMean, C_BRAND),
+      brandBayesianScore: bayesianAvg(row.brandAvgScore, row.totalReviews, globalBrandMean, C_BRAND),
     }))
     .sort((a, b) =>
       b.brandBayesianScore - a.brandBayesianScore ||
@@ -145,4 +156,24 @@ export function calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap)
       b.ratedProductCount - a.ratedProductCount ||
       a.brand.name.localeCompare(b.brand.name, 'tr')
     );
+}
+
+// ── Katalog için marka puanı haritası (BrandsPage / BrandPage) ────────────────
+//
+// "En İyiler" listesiyle BİREBİR aynı Bayesian formülü kullanılır — böylece aynı
+// marka her iki yerde de aynı puanı gösterir. Düz aritmetik ortalamanın yerini alır:
+// tek şanslı ürün marka puanını uçuramaz, çok yorumlu tutarlı markalar öne çıkar.
+//
+// Döndürür: Map<brandId, number>  (gösterim için 1 ondalık; puanı olmayan marka haritada yer almaz)
+export function calcBrandScoreMap(brands, muadilPerfumes, comments) {
+  const activeMuadils = muadilPerfumes.filter((m) => m.active !== false);
+  const muadilScoreMap = calcAllMuadilScores(activeMuadils, comments);
+  const muadilBrands = brands.filter((b) => b.type === 'muadil' && b.active !== false);
+  const rows = calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap);
+
+  const map = new Map();
+  for (const row of rows) {
+    map.set(row.brand.id, parseFloat(row.brandBayesianScore.toFixed(1)));
+  }
+  return map;
 }

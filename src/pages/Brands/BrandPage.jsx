@@ -3,7 +3,7 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
-import { calcScores } from '@/utils/scoring';
+import { calcScores, calcBrandScoreMap } from '@/utils/scoring';
 import { Card, Badge, ScoreBar, TableScrollHint } from '@/components/ui';
 import { faShirt, faGem, faArrowLeft, faHeart, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -186,6 +186,12 @@ export function BrandPage({ params }) {
     return map;
   }, [muadilPerfumes]);
 
+  // Marka puanı: "En İyiler" / Markalar listesiyle aynı Bayesian formülü.
+  const brandOverall = useMemo(() => {
+    if (!brand || isOrig) return null;
+    return calcBrandScoreMap(brands, muadilPerfumes, comments).get(brand.id) ?? null;
+  }, [brand, isOrig, brands, muadilPerfumes, comments]);
+
   if (!brand) return (
     <div className="px-[60px] py-[60px] text-center text-(--color-text-light)">
       Marka bulunamadı.
@@ -196,13 +202,6 @@ export function BrandPage({ params }) {
   const muadilCount = isOrig
     ? muadilPerfumes.filter((m) => brandPerfumeIds.has(m.targetPerfumeId)).length
     : null;
-
-  const brandOverall = (() => {
-    if (isOrig) return null;
-    const scores = allItems.map((m) => calcScores(m.id, comments).overall).filter((v) => v !== null);
-    if (!scores.length) return null;
-    return parseFloat((scores.reduce((s, v) => s + v, 0) / scores.length).toFixed(1));
-  })();
 
   const favActive = isBrandFavorite(user?.uid, brand.id);
 
@@ -482,9 +481,9 @@ export function BrandPage({ params }) {
                           }}
                         >
                           <div className="font-bold text-(--color-navy) mb-[8px] text-[13px]">Marka Puanı Nasıl Hesaplanır?</div>
-                          <div className="mb-[6px]">Bu markaya ait tüm muadil parfümlerin <span className="font-semibold text-(--color-gold)">Genel Puanları</span> toplanır ve ortalaması alınır.</div>
-                          <div className="mb-[6px]">Her parfümün genel puanı; <span className="font-semibold">koku yakınlığı</span>, <span className="font-semibold">yayılım</span> ve <span className="font-semibold">kalıcılık</span> ortalamasından oluşur.</div>
-                          <div className="pt-[8px] border-t border-(--color-border-light) text-(--color-text-mid)">Marka puanı bu parfüm puanlarının eşit ağırlıklı ortalamasıdır (0–10).</div>
+                          <div className="mb-[6px]">Her parfümün <span className="font-semibold text-(--color-gold)">Genel Puanı</span>; <span className="font-semibold">koku yakınlığı</span>, <span className="font-semibold">yayılım</span> ve <span className="font-semibold">kalıcılık</span> ortalamasından oluşur.</div>
+                          <div className="mb-[6px]">Marka puanı bu parfüm puanlarının <span className="font-semibold">yorum sayısıyla ağırlıklı</span> ortalamasıdır — çok yorum alan ürün daha çok söz sahibidir.</div>
+                          <div className="pt-[8px] border-t border-(--color-border-light) text-(--color-text-mid)">Az yorumlu markalar topluluk ortalamasına yakın tutulur; puan yorumlar biriktikçe kendi değerine oturur (0–10).</div>
                         </div>
                       )}
                     </div>

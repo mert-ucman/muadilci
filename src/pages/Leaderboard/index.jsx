@@ -4,7 +4,7 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useW } from '@/hooks/useW';
 import { C, F } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { calcAllMuadilScores, calcAllBrandScores } from '@/utils/scoring';
+import { calcAllMuadilScores, calcAllBrandScores, LEADERBOARD_MIN_REVIEWS } from '@/utils/scoring';
 import { faTrophy, faMedal, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -79,7 +79,7 @@ function PerfumeTable({ rows, navigate }) {
   );
 }
 
-function BrandTable({ rows, navigate }) {
+function BrandTable({ rows, navigate, noImageUrl }) {
   return (
     <div>
       {rows.map((row, i) => (
@@ -97,11 +97,15 @@ function BrandTable({ rows, navigate }) {
           onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
         >
           <RankNum n={i + 1} />
-          <div
-            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-[10px] font-black text-white shrink-0"
-            style={{ background: `linear-gradient(135deg,${C.gold},${C.goldLight})` }}
-          >
-            {row.brand.logo}
+          <div className="w-[38px] h-[38px] rounded-[10px] overflow-hidden shrink-0 bg-(--color-bg-soft)">
+            <img
+              src={row.brand.logoImage || noImageUrl || undefined}
+              alt={row.brand.name}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[14px] font-bold text-(--color-text) whitespace-nowrap overflow-hidden text-ellipsis">
@@ -124,7 +128,7 @@ export function LeaderboardPage() {
     description: 'En yüksek puan alan muadil parfümler ve markalar. Topluluğun en beğendiği orijinal-muadil eşleşmelerini keşfet.',
   });
 
-  const { muadilPerfumes, comments, brands } = useData();
+  const { muadilPerfumes, comments, brands, noImageUrl } = useData();
   const { navigate } = useRouter();
   const { w, sm, xs } = useW();
 
@@ -135,9 +139,11 @@ export function LeaderboardPage() {
   );
 
   // Top 10 muadil: bayesianScore ile sıralanır, avgScore gösterilir
+  // Vitrin barı: yalnızca en az LEADERBOARD_MIN_REVIEWS yoruma ulaşan ürünler listelenir
   const topMuadils = useMemo(() => {
     const rows = [];
     for (const [id, scores] of muadilScoreMap.entries()) {
+      if (scores.reviewCount < LEADERBOARD_MIN_REVIEWS) continue;
       const muadil = muadilPerfumes.find((m) => m.id === id);
       if (!muadil) continue;
       rows.push({ muadil, ...scores });
@@ -153,9 +159,12 @@ export function LeaderboardPage() {
   }, [muadilScoreMap, muadilPerfumes]);
 
   // Top 10 marka: brandBayesianScore ile sıralanır, brandAvgScore gösterilir
+  // Vitrin barı: yalnızca toplam yorumu LEADERBOARD_MIN_REVIEWS'e ulaşan markalar listelenir
   const topBrands = useMemo(() => {
     const muadilBrands = brands.filter((b) => b.type === 'muadil' && b.active !== false);
-    return calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap).slice(0, 10);
+    return calcAllBrandScores(muadilBrands, muadilPerfumes, muadilScoreMap)
+      .filter((row) => row.totalReviews >= LEADERBOARD_MIN_REVIEWS)
+      .slice(0, 10);
   }, [brands, muadilPerfumes, muadilScoreMap]);
 
   return (
@@ -258,7 +267,7 @@ export function LeaderboardPage() {
             </div>
 
             {topBrands.length > 0 ? (
-              <BrandTable rows={topBrands} navigate={navigate} />
+              <BrandTable rows={topBrands} navigate={navigate} noImageUrl={noImageUrl} />
             ) : (
               <div className="text-center py-10 text-(--color-text-light) text-[14px]">
                 Henüz yeterli puan verisi yok.

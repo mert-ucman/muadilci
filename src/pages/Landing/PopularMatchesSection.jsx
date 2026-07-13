@@ -27,7 +27,7 @@ export function PopularMatchesSection() {
             <h2 className="text-[clamp(20px,3vw,32px)] font-black text-(--color-navy)">En çok incelenen muadiller</h2>
           </div>
           <button
-            onClick={() => navigate('/karsilastir')}
+            onClick={() => navigate('/parfumler?tab=muadil&sort=score_desc')}
             className="bg-transparent border border-(--color-border) rounded-[10px] px-[18px] py-[9px] text-(--color-text-mid) text-[13px] font-semibold cursor-pointer"
             style={{ fontFamily: F }}
           >

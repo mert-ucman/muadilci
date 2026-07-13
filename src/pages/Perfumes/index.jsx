@@ -73,12 +73,23 @@ const MUADIL_COLS = [
   { key: 'score',       label: 'Genel Puan' },
 ];
 
+// URL'den gelen dropdown sıralama değerini (örn. "score_desc") liste sütun sıralamasına çevirir.
+// Landing "Tümünü Gör" gibi linkler ?sort=score_desc ile hem dropdown'u hem liste sütununu ayarlar.
+const parseListSortParam = (s) => {
+  if (!s) return null;
+  const i = s.lastIndexOf('_');
+  if (i < 0) return null;
+  const dir = s.slice(i + 1);
+  if (dir !== 'asc' && dir !== 'desc') return null;
+  return { key: s.slice(0, i), dir };
+};
+
 export function PerfumesPage() {
   useSeo({
     title: 'Parfümler',
     description: 'Tüm orijinal parfümleri ve muadillerini incele; marka, cinsiyet ve nota bazında filtrele, koku ve kalıcılık puanlarına göre sırala.',
   });
-  const { navigate } = useRouter();
+  const { navigate, query } = useRouter();
   const { perfumes, muadilPerfumes, comments, noImageUrl, togglePerfumeFavorite, isPerfumeFavorite, toggleMuadilFavorite, isMuadilFavorite } = useData();
 
   // Onaylı yorumlardan parfüm/muadil fotoğraf haritası (yeni → eski). Kart/satır kapakları buradan.
@@ -96,17 +107,19 @@ export function PerfumesPage() {
   const { user } = useAuth();
   const { sm, xs } = useW();
 
-  const [pTab,        setPTab]        = useState(() => localStorage.getItem('perf_tab')  || 'original');
+  // URL query (?tab=muadil&sort=score_desc) varsa localStorage'ı geçersiz kılar — Landing yönlendirmeleri için.
+  const qListSort = parseListSortParam(query.sort);
+  const [pTab,        setPTab]        = useState(() => (query.tab === 'muadil' || query.tab === 'original') ? query.tab : (localStorage.getItem('perf_tab') || 'original'));
   const [view,        setView]        = useState(() => localStorage.getItem('perf_view_v2') || 'list');
-  const [sort,        setSort]        = useState(() => localStorage.getItem('perf_sort_v2') || 'name_asc');
+  const [sort,        setSort]        = useState(() => query.sort || localStorage.getItem('perf_sort_v2') || 'name_asc');
   const [perPage,     setPerPage]     = useState(() => Number(localStorage.getItem('perf_pp')) || 20);
   const [page,        setPage]        = useState(1);
   const [filter,        setFilter]        = useState('all');
   const [scoreFilter,   setScoreFilter]   = useState('all');
   const [genderFilterM, setGenderFilterM] = useState('all');
   const [search,      setSearch]      = useState('');
-  const [listSortKey, setListSortKey] = useState('name');
-  const [listSortDir, setListSortDir] = useState('asc');
+  const [listSortKey, setListSortKey] = useState(() => qListSort?.key || 'name');
+  const [listSortDir, setListSortDir] = useState(() => qListSort?.dir || 'asc');
 
   useEffect(() => { localStorage.setItem('perf_tab',  pTab);          }, [pTab]);
   useEffect(() => { localStorage.setItem('perf_view_v2', view);          }, [view]);
