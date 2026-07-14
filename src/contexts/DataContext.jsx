@@ -945,18 +945,10 @@ export function DataProvider({ children }) {
 
   const noImageUrl = landingImages?.noImageUrl || '';
 
-  // Admin panelinin perfumes/muadils (1.541 + 7.731 doküman) tam listesini
-  // sekme değişse de, admin panelinden çıkıp tekrar girse de aynı tarayıcı
-  // oturumunda (sayfa yenilenene kadar) yalnızca BİR KEZ çeksin diye —
-  // DataProvider sayfa yenilenmedikçe unmount olmadığından ref burada kalıcı.
-  const fullAdminCatalogFetched = useRef(false);
-  const ensureFullAdminCatalog = useCallback(() => {
-    if (fullAdminCatalogFetched.current) return;
-    fullAdminCatalogFetched.current = true;
-    getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s)));
-    getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s)));
-  }, []);
-
+  // Admin panelinde perfumes/muadils (1.541 + 7.731 doküman) tam listesi mount'ta
+  // catalog.json'dan gelir (bedava); Firestore'dan taze tam liste yalnızca admin
+  // "Yenile" butonuyla bilinçli çekilir — panelin her açılışında gereksiz ~9.272
+  // okuma yapmaması için.
   return (
     <DataCtx.Provider value={{
       brands, perfumes, muadilPerfumes, comments, users, sliderImages, landingImages, noImageUrl,
@@ -964,9 +956,8 @@ export function DataProvider({ children }) {
       addBrand, updateBrand, deleteBrand,
       addPerfume, updatePerfume, deletePerfume,
       addMuadil, updateMuadil, deleteMuadil,
-      ensureFullAdminCatalog,
-      refreshPerfumes: () => { fullAdminCatalogFetched.current = true; return getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))); },
-      refreshMuadils: () => { fullAdminCatalogFetched.current = true; return getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))); },
+      refreshPerfumes: () => getDocs(query(col('perfumes'), orderBy('name'))).then((s) => setPerfumes(snap2arr(s))),
+      refreshMuadils: () => getDocs(query(col('muadils'), orderBy('name'))).then((s) => setMuadil(snap2arr(s))),
       notifications, unreadNotifCount, notifHasMore,
       markNotificationRead, markAllNotificationsRead,
       loadMoreNotifications, clearAllNotifications,

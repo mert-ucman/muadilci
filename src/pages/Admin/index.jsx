@@ -2306,7 +2306,7 @@ export function AdminPanel() {
   useSeo({ title: 'Yönetim', noindex: true });
   const { isAdmin, reauthenticate } = useAuth();
   const { navigate } = useRouter();
-  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, logoUrl, updateLogo, footerLogoUrl, updateFooterLogo, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, ensureFullAdminCatalog, landingImages, updateLandingImage } = useData();
+  const { brands, perfumes, muadilPerfumes, users, comments, addBrand, updateUser, deleteUser, addPerfume, updatePerfume, deletePerfume, addMuadil, updateMuadil, deleteMuadil, updateBrand, deleteBrand, fetchReviewsByDateRange, adminDeleteReviews, sliderImages, addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages, MAX_SLIDER, MAX_SIZE_MB, faviconUrl, updateFavicon, logoUrl, updateLogo, footerLogoUrl, updateFooterLogo, globalBrandHeaders, updateBrandGlobalHeader, refreshPerfumes, refreshMuadils, landingImages, updateLandingImage } = useData();
 
   const { sm, xs } = useW();
   const [tab, setTabRaw] = useState('dashboard');
@@ -2572,15 +2572,12 @@ export function AdminPanel() {
     }
   };
 
-  // perfumes/muadils (1.541 + 7.731 doküman) yalnızca gerçekten ihtiyaç duyan
-  // sekmelerde çekilir; guard DataContext'te (ensureFullAdminCatalog) tutulduğu
-  // için sekme değişse de, admin panelinden çıkıp tekrar girse de aynı tarayıcı
-  // oturumunda yalnızca BİR KEZ tetiklenir — diğer sekmelerde catalog.json
-  // kaynaklı state yeterli, gereksiz okumaya yol açmaz.
-  useEffect(() => {
-    const needsFullCatalog = ['original-brands', 'muadil-brands', 'perfumes', 'muadil', 'merge-perfumes'].includes(tab);
-    if (needsFullCatalog) ensureFullAdminCatalog();
-  }, [tab]);
+  // perfumes/muadils (1.541 + 7.731 doküman) artık sekme açılışında OTOMATIK
+  // Firestore'dan çekilmez. Tüm admin tabloları mount'ta catalog.json'dan gelen
+  // (bedava, ≤5 dk taze) state ile render edilir; kendi düzenlemeler optimistic
+  // olarak anında görünür. Firestore'dan taze tam liste yalnızca "Yenile"
+  // butonuyla (refreshPerfumes/refreshMuadils) bilinçli çekilir — panelin her
+  // açılışında ~9.272 gereksiz okuma yapmasını önlemek için.
 
   useEffect(() => {
     setShowFloatingRefresh(false);
@@ -3049,7 +3046,7 @@ export function AdminPanel() {
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
                   </button>
-                  <button onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
+                  <button onClick={handleRefresh} disabled={refreshing} title="Firestore'dan en güncel tam listeyi çeker. Kendi düzenlemelerin zaten anında görünür; bunu yalnızca başka birinin değişikliğini görmek için kullan." className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
@@ -3145,7 +3142,7 @@ export function AdminPanel() {
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
                   </button>
-                  <button ref={refreshBtnRef} onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
+                  <button ref={refreshBtnRef} onClick={handleRefresh} disabled={refreshing} title="Firestore'dan en güncel tam listeyi çeker. Kendi düzenlemelerin zaten anında görünür; bunu yalnızca başka birinin değişikliğini görmek için kullan." className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                     {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
@@ -3281,6 +3278,10 @@ export function AdminPanel() {
                   <button onClick={() => setExportModal(true)} className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold cursor-pointer font-[family-name:var(--font-body)]">
                     <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Listeye Aktar
+                  </button>
+                  <button onClick={handleRefresh} disabled={refreshing} title="Firestore'dan en güncel tam listeyi çeker. Kendi düzenlemelerin zaten anında görünür; bunu yalnızca başka birinin değişikliğini görmek için kullan." className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[7px] border border-(--color-border) bg-white text-(--color-text-mid) text-xs font-semibold font-[family-name:var(--font-body)]" style={{ cursor: refreshing ? 'default' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    {refreshing ? 'Yenileniyor…' : 'Yenile'}
                   </button>
                   {(() => {
                       const list = ['', ...muadilBrandList];
