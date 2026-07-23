@@ -82,7 +82,7 @@ export function BrandsPage() {
   const { sm, xs } = useW();
 
   const [tab, setTab]           = useState(() => localStorage.getItem('brands_tab')  || 'original');
-  const [sort, setSort]         = useState(() => localStorage.getItem('brands_sort_v2') || 'az');
+  const [sort, setSort]         = useState(() => localStorage.getItem('brands_sort_v2') || (tab === 'muadil' ? 'score_desc' : 'az'));
   const [view, setView]         = useState(() => localStorage.getItem('brands_view_v2') || 'list');
   const [perPage, setPerPage]   = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
   const [page, setPage]         = useState(1);
@@ -97,7 +97,7 @@ export function BrandsPage() {
 
   const PER_PAGE_OPTS = [10, 20, 50, 75, 100];
 
-  const switchTab  = (v) => { setTab(v); setPage(1); setScoreFilter('all'); setTypeFilter('all'); setSearchQ(''); };
+  const switchTab  = (v) => { setTab(v); setSort(v === 'muadil' ? 'score_desc' : 'az'); setPage(1); setScoreFilter('all'); setTypeFilter('all'); setSearchQ(''); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchPerPage = (n) => { setPerPage(n); setPage(1); };
   const handleSearch = (v) => { setSearchQ(v); setPage(1); };

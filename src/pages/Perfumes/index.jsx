@@ -118,8 +118,8 @@ export function PerfumesPage() {
   const [scoreFilter,   setScoreFilter]   = useState('all');
   const [genderFilterM, setGenderFilterM] = useState('all');
   const [search,      setSearch]      = useState('');
-  const [listSortKey, setListSortKey] = useState(() => qListSort?.key || 'name');
-  const [listSortDir, setListSortDir] = useState(() => qListSort?.dir || 'asc');
+  const [listSortKey, setListSortKey] = useState(() => qListSort?.key || (pTab === 'muadil' ? 'score' : 'name'));
+  const [listSortDir, setListSortDir] = useState(() => qListSort?.dir || (pTab === 'muadil' ? 'desc' : 'asc'));
 
   useEffect(() => { localStorage.setItem('perf_tab',  pTab);          }, [pTab]);
   useEffect(() => { localStorage.setItem('perf_view_v2', view);          }, [view]);
@@ -127,7 +127,7 @@ export function PerfumesPage() {
   useEffect(() => { localStorage.setItem('perf_pp',   String(perPage)); }, [perPage]);
 
   // Tab değişince sayfa sıfırla
-  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); setListSortKey('name'); setListSortDir('asc'); };
+  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); setListSortKey(v === 'muadil' ? 'score' : 'name'); setListSortDir(v === 'muadil' ? 'desc' : 'asc'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchFilter = (v) => { setFilter(v); setPage(1); };
   const switchSearch = (v) => { setSearch(v); setPage(1); };

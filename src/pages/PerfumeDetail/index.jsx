@@ -43,8 +43,8 @@ export function PerfumeDetailPage({ params }) {
   const { user } = useAuth();
   const { sm, xs } = useW();
   const [view, setView] = useState('list');
-  const [sortKey, setSortKey] = useState('name');
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortKey, setSortKey] = useState('overall');
+  const [sortDir, setSortDir] = useState('desc');
 
   const perfume = perfumes.find((p) => p.brandSlug === params?.brandSlug && p.slug === params?.perfumeSlug);
 

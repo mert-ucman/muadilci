@@ -91,6 +91,12 @@ export function BrandPage({ params }) {
   const { user } = useAuth();
   const { sm, xs } = useW();
 
+  // Pasif marka herkese kapalı sayılır — bulunamadı ile aynı davranır, direkt
+  // linkle/eski sekmeyle girişi de kapatır (listelerden gizlemek yetmiyordu)
+  const rawBrand = brands.find((b) => b.slug === params?.brandSlug);
+  const brand = rawBrand?.active === false ? null : rawBrand;
+  const isOrig = brand?.type === 'original';
+
   // Onaylı yorumlardan görsel haritası (Parfümler sayfasıyla aynı mantık).
   // Muadil/orijinalin kendi 'image' alanı boşsa kapak olarak kullanıcı görselini kullan.
   const photoMap = useMemo(() => {
@@ -117,16 +123,12 @@ export function BrandPage({ params }) {
   const [view, setView] = useState('list');
   const [genderFilter, setGenderFilter] = useState(null); // null = hepsi, 'erkek'|'kadin'|'unisex' = filtreli
   const [sortDir, setSortDir] = useState('az');
-  const [listSortKey, setListSortKey] = useState('name');
-  const [listSortDir, setListSortDir] = useState('asc');
+  const [listSortKey, setListSortKey] = useState(isOrig ? 'name' : 'score');
+  const [listSortDir, setListSortDir] = useState(isOrig ? 'asc' : 'desc');
   const [searchQ, setSearchQ] = useState('');
   const [page, setPage] = useState(1);
   const PER_PAGE = 25;
 
-  // Pasif marka herkese kapalı sayılır — bulunamadı ile aynı davranır, direkt
-  // linkle/eski sekmeyle girişi de kapatır (listelerden gizlemek yetmiyordu)
-  const rawBrand = brands.find((b) => b.slug === params?.brandSlug);
-  const brand = rawBrand?.active === false ? null : rawBrand;
   useSeo({
     title: brand ? brand.name : 'Marka',
     description: brand
@@ -145,7 +147,6 @@ export function BrandPage({ params }) {
   };
 
   // Tüm hook'lar erken return'den ÖNCE — Rules of Hooks
-  const isOrig = brand?.type === 'original';
   const allItems = useMemo(() => {
     if (!brand) return [];
     return isOrig
