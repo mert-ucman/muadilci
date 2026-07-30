@@ -59,24 +59,37 @@ export function Navbar() {
   if (isAdmin) navLinks.push({ l: 'Yönetim',    u: '/admin' });
 
   const searchItems = [
-    ...perfumes.map(p => ({ label: `${p.name} — ${p.brandName}`, url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
-    ...brands.map(b   => ({ label: b.name, url: `/marka/${b.slug}`,           type: 'Marka',  image: b.logoImage || '' })),
+    // `text`: parfüm adı + marka birlikte aranır → kelime sırası önemli değil
+    ...perfumes.map(p => ({ label: `${p.name} — ${p.brandName}`, text: `${p.name} ${p.brandName}`.toLowerCase(), url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
+    ...brands.map(b   => ({ label: b.name, text: b.name.toLowerCase(), url: `/marka/${b.slug}`, type: 'Marka',  image: b.logoImage || '' })),
   ];
   const q = searchQ.trim().toLowerCase();
+  // Sorgu kelimelere bölünür; her kelime metinde geçmeli (sıra bağımsız, ortadaki kelime de eşleşir)
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const matchesAll = (item) => tokens.every(t => item.text.includes(t));
   // Marka eşleşmesini alaka düzeyine göre sırala: önce sorgu ile başlayanlar, sonra kısa adlar
   const brandSort = (a, b) => {
-    const aw = a.label.toLowerCase().startsWith(q) ? 0 : 1;
-    const bw = b.label.toLowerCase().startsWith(q) ? 0 : 1;
+    const aw = a.text.startsWith(tokens[0] || '') ? 0 : 1;
+    const bw = b.text.startsWith(tokens[0] || '') ? 0 : 1;
     if (aw !== bw) return aw - bw;
     return a.label.length - b.label.length;
   };
-  // Her zaman önce marka(lar), sonra parfümler
+  // Her zaman önce marka(lar), sonra parfümler — tüm sonuçlar gösterilir (adet sınırı yok)
   const filtered = q.length > 1
     ? [
-        ...searchItems.filter(i => i.type === 'Marka'  && i.label.toLowerCase().includes(q)).sort(brandSort),
-        ...searchItems.filter(i => i.type === 'Parfüm' && i.label.toLowerCase().includes(q)),
-      ].slice(0, 6)
+        ...searchItems.filter(i => i.type === 'Marka'  && matchesAll(i)).sort(brandSort),
+        ...searchItems.filter(i => i.type === 'Parfüm' && matchesAll(i)),
+      ]
     : [];
+
+  // Enter → Parfümler sayfası (Orijinal sekmesi) + arama otomatik doldurulur ve uygulanır
+  const submitSearch = () => {
+    const term = searchQ.trim();
+    if (!term) return;
+    navigate(`/parfumler?tab=original&search=${encodeURIComponent(term)}`);
+    setSearchOpen(false);
+    setSearchQ('');
+  };
 
   const roleLabel = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
 
@@ -192,6 +205,7 @@ export function Navbar() {
                   onChange={e => { setSearchQ(e.target.value); setSearchOpen(true); }}
                   onFocus={() => setSearchOpen(true)}
                   onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+                  onKeyDown={e => { if (e.key === 'Enter') submitSearch(); }}
                   placeholder="Parfüm veya marka ara..."
                   className="flex-1 border-none outline-none text-[13px] bg-transparent"
                   style={{ color: C.text, fontFamily: F }}
@@ -218,37 +232,39 @@ export function Navbar() {
                         className="px-[14px] pt-[10px] pb-1 text-[10px] font-semibold uppercase tracking-[.1em]"
                         style={{ color: C.textMuted }}
                       >
-                        Sonuçlar
+                        {filtered.length} sonuç bulundu
                       </div>
-                      {filtered.map((item, i) => (
-                        <div
-                          key={i}
-                          onMouseDown={() => { navigate(item.url); setSearchOpen(false); setSearchQ(''); }}
-                          className="flex justify-between items-center px-[14px] py-[9px] cursor-pointer gap-[10px] transition-[background] duration-150"
-                          onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <div className="flex items-center gap-[10px] min-w-0">
-                            <div
-                              className="w-[30px] h-[30px] overflow-hidden shrink-0"
-                              style={{
-                                borderRadius: item.type === 'Marka' ? '50%' : '6px',
-                                background: C.surface,
-                                border: `1px solid ${C.border}`,
-                              }}
-                            >
-                              <img src={item.image || noImageUrl || undefined} alt={item.label} onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
+                      <div className="max-h-[340px] overflow-y-auto">
+                        {filtered.map((item, i) => (
+                          <div
+                            key={i}
+                            onMouseDown={() => { navigate(item.url); setSearchOpen(false); setSearchQ(''); }}
+                            className="flex justify-between items-center px-[14px] py-[9px] cursor-pointer gap-[10px] transition-[background] duration-150"
+                            onMouseEnter={e => e.currentTarget.style.background = C.goldBg}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                          >
+                            <div className="flex items-center gap-[10px] min-w-0">
+                              <div
+                                className="w-[30px] h-[30px] overflow-hidden shrink-0"
+                                style={{
+                                  borderRadius: item.type === 'Marka' ? '50%' : '6px',
+                                  background: C.surface,
+                                  border: `1px solid ${C.border}`,
+                                }}
+                              >
+                                <img src={item.image || noImageUrl || undefined} alt={item.label} onError={e => { e.currentTarget.onerror = null; noImageUrl ? (e.currentTarget.src = noImageUrl) : (e.currentTarget.style.display = 'none'); }} className="w-full h-full object-cover" />
+                              </div>
+                              <span
+                                className="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap"
+                                style={{ color: C.text }}
+                              >
+                                {item.label}
+                              </span>
                             </div>
-                            <span
-                              className="text-[13px] overflow-hidden text-ellipsis whitespace-nowrap"
-                              style={{ color: C.text }}
-                            >
-                              {item.label}
-                            </span>
+                            <Badge color={item.type === 'Parfüm' ? 'gold' : 'blue'}>{item.type}</Badge>
                           </div>
-                          <Badge color={item.type === 'Parfüm' ? 'gold' : 'blue'}>{item.type}</Badge>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </>
                   ) : (
                     <div className="p-5 text-center text-[13px]" style={{ color: C.textLight }}>
@@ -566,6 +582,7 @@ export function Navbar() {
                 <input
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { submitSearch(); closeDrawer(); } }}
                   placeholder="Ara..."
                   className="flex-1 border-none outline-none text-[14px] bg-transparent"
                   style={{ color: C.text, fontFamily: F }}

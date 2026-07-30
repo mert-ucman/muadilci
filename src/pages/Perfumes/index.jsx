@@ -117,7 +117,7 @@ export function PerfumesPage() {
   const [filter,        setFilter]        = useState('all');
   const [scoreFilter,   setScoreFilter]   = useState('all');
   const [genderFilterM, setGenderFilterM] = useState('all');
-  const [search,      setSearch]      = useState('');
+  const [search,      setSearch]      = useState(() => query.search || '');
   const [listSortKey, setListSortKey] = useState(() => qListSort?.key || (pTab === 'muadil' ? 'score' : 'name'));
   const [listSortDir, setListSortDir] = useState(() => qListSort?.dir || (pTab === 'muadil' ? 'desc' : 'asc'));
 
@@ -125,6 +125,15 @@ export function PerfumesPage() {
   useEffect(() => { localStorage.setItem('perf_view_v2', view);          }, [view]);
   useEffect(() => { localStorage.setItem('perf_sort_v2', sort);          }, [sort]);
   useEffect(() => { localStorage.setItem('perf_pp',   String(perPage)); }, [perPage]);
+
+  // Navbar'dan Enter ile gelinince (?tab=original&search=...) arama otomatik uygulanır.
+  // Zaten sayfadayken tekrar arama yapılırsa da URL değişince senkronize olur.
+  useEffect(() => {
+    if (query.tab === 'muadil' || query.tab === 'original') setPTab(query.tab);
+  }, [query.tab]);
+  useEffect(() => {
+    if (query.search !== undefined) { setSearch(query.search); setPage(1); }
+  }, [query.search]);
 
   // Tab değişince sayfa sıfırla
   const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); setListSortKey(v === 'muadil' ? 'score' : 'name'); setListSortDir(v === 'muadil' ? 'desc' : 'asc'); };
@@ -177,23 +186,24 @@ export function PerfumesPage() {
   });
 
   const filtO = useMemo(() => {
-    const base = perfumes.filter((p) =>
-      (filter === 'all' || p.gender === filter) &&
-      (p.name.toLowerCase().includes(search.toLowerCase()) || p.brandName.toLowerCase().includes(search.toLowerCase()))
-    );
+    // Sorgu kelimelere bölünür; her kelime ad+marka metninde geçmeli (sıra bağımsız, ortadaki kelime de eşleşir)
+    const tokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const base = perfumes.filter((p) => {
+      if (filter !== 'all' && p.gender !== filter) return false;
+      const text = `${p.name} ${p.brandName}`.toLowerCase();
+      return tokens.every((t) => text.includes(t));
+    });
     return applyOrigSort(base, sort);
   }, [perfumes, filter, search, sort, muadilCountMap]);
 
   const filtM = useMemo(() => {
     const [sfType, sfVal] = scoreFilter === 'all' ? ['all', null] : scoreFilter.split('_');
     const sfNum = sfVal != null ? Number(sfVal) : null;
+    const tokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const base = muadilPerfumes.filter((m) => {
       if (genderFilterM !== 'all' && m.gender !== genderFilterM) return false;
-      const matchText =
-        m.name.toLowerCase().includes(search.toLowerCase()) ||
-        m.brandName.toLowerCase().includes(search.toLowerCase()) ||
-        (m.targetPerfumeName || '').toLowerCase().includes(search.toLowerCase());
-      if (!matchText) return false;
+      const text = `${m.name} ${m.brandName} ${m.targetPerfumeName || ''}`.toLowerCase();
+      if (!tokens.every((t) => text.includes(t))) return false;
       if (sfType !== 'all') {
         const overall = muadilScores[m.id]?.overall;
         if (overall == null) return false;
