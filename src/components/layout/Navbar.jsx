@@ -584,28 +584,45 @@ export function Navbar() {
                   onChange={e => setSearchQ(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { submitSearch(); closeDrawer(); } }}
                   placeholder="Ara..."
-                  className="flex-1 border-none outline-none text-[14px] bg-transparent"
+                  className="flex-1 border-none outline-none text-[14px] bg-transparent min-w-0"
                   style={{ color: C.text, fontFamily: F }}
                 />
+                {searchQ && (
+                  <button
+                    onClick={() => setSearchQ('')}
+                    className="shrink-0 border-none bg-transparent text-[12px] font-semibold cursor-pointer px-1"
+                    style={{ color: C.gold, fontFamily: F }}
+                  >
+                    Temizle
+                  </button>
+                )}
               </div>
               {searchQ.length > 1 && filtered.length > 0 && (
                 <div
                   className="mt-2 rounded-[8px] overflow-hidden"
                   style={{ border: `1px solid ${C.border}` }}
                 >
-                  {filtered.map((item, i) => (
-                    <div
-                      key={i}
-                      onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
-                      className="px-3 py-[10px] text-[13px] cursor-pointer"
-                      style={{
-                        color: C.text,
-                        borderBottom: i < filtered.length - 1 ? `1px solid ${C.borderLight}` : 'none',
-                      }}
-                    >
-                      {item.label}
-                    </div>
-                  ))}
+                  <div
+                    className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[.1em]"
+                    style={{ color: C.textMuted }}
+                  >
+                    {filtered.length} sonuç bulundu
+                  </div>
+                  <div className="max-h-[260px] overflow-y-auto">
+                    {filtered.map((item, i) => (
+                      <div
+                        key={i}
+                        onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
+                        className="px-3 py-[10px] text-[13px] cursor-pointer"
+                        style={{
+                          color: C.text,
+                          borderTop: `1px solid ${C.borderLight}`,
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
