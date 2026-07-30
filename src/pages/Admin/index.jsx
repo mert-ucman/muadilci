@@ -975,7 +975,7 @@ function PerfumeEditModal({ perfume, brands, onClose, onDelete, onSave }) {
       <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Parfüm Adı *" value={ef.name} onChange={(e) => setEf({ ...ef, name: e.target.value })} />
         <Input label="Slug" value={ef.slug} onChange={(e) => setEf({ ...ef, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
-        <Select label="Marka *" value={ef.brandId} onChange={(e) => setEf({ ...ef, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))]} />
+        <SearchableSelect label="Marka *" placeholder="Marka ara veya seçin…" value={ef.brandId} onChange={(val) => setEf({ ...ef, brandId: val })} options={brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))} />
         <Select label="Cinsiyet" value={ef.gender} onChange={(e) => setEf({ ...ef, gender: e.target.value })} options={[{ value: '', label: '—' }, ...['Erkek', 'Kadın', 'Unisex'].map((g) => ({ value: g, label: g }))]} />
         <Input label="Çıkış Yılı" type="number" value={ef.year} onChange={(e) => setEf({ ...ef, year: e.target.value })} />
       </div>
@@ -1026,11 +1026,11 @@ function MuadilEditModal({ muadil, brands, perfumes, onClose, onDelete, onSave }
       <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Muadil Adı *" value={emf.name} onChange={(e) => setEmf({ ...emf, name: e.target.value })} />
         <Input label="Slug" value={emf.slug} onChange={(e) => setEmf({ ...emf, slug: e.target.value.toLowerCase().replace(/ /g, '-').replace(/^-+/, '') })} />
-        <Select label="Muadil Marka *" value={emf.brandId} onChange={(e) => setEmf({ ...emf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
-        <Select label="Hedef Orijinal *" value={emf.targetPerfumeId} onChange={(e) => {
-          const p = perfumes.find((x) => String(x.id) === e.target.value);
-          setEmf({ ...emf, targetPerfumeId: e.target.value, gender: p?.gender || emf.gender || '' });
-        }} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
+        <SearchableSelect label="Muadil Marka *" placeholder="Marka ara veya seçin…" value={emf.brandId} onChange={(val) => setEmf({ ...emf, brandId: val })} options={brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))} />
+        <SearchableSelect label="Hedef Orijinal *" placeholder="Parfüm ara veya seçin…" value={emf.targetPerfumeId} onChange={(val) => {
+          const p = perfumes.find((x) => String(x.id) === val);
+          setEmf({ ...emf, targetPerfumeId: val, gender: p?.gender || emf.gender || '' });
+        }} options={[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))} />
       </div>
       {emf.gender && (
         <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fb] border border-(--color-border) rounded-lg text-[13px] text-(--color-text-mid)">
@@ -1306,7 +1306,7 @@ function AddPerfumeModal({ brands, perfumes, onClose, onAdd }) {
     <Modal open onClose={onClose} title="Yeni Parfüm Ekle" width="560px">
       <div className="grid grid-cols-2 gap-[10px]">
         <Input label="Parfüm Adı *" value={pf.name} onChange={(e) => setPf({ ...pf, name: e.target.value })} placeholder="Sauvage" />
-        <Select label="Marka *" value={pf.brandId} onChange={(e) => setPf({ ...pf, brandId: e.target.value })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))]} />
+        <SearchableSelect label="Marka *" placeholder="Marka ara veya seçin…" value={pf.brandId} onChange={(val) => setPf({ ...pf, brandId: val })} options={brands.filter((b) => b.type === 'original').map((b) => ({ value: String(b.id), label: b.name }))} />
         <Select label="Cinsiyet" value={pf.gender} onChange={(e) => setPf({ ...pf, gender: e.target.value })} options={['Erkek', 'Kadın', 'Unisex'].map((g) => ({ value: g, label: g }))} />
         <Input label="Çıkış Yılı" type="number" value={pf.year} onChange={(e) => setPf({ ...pf, year: e.target.value })} placeholder="2015" />
       </div>
@@ -1348,20 +1348,20 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
   return (
     <Modal open onClose={onClose} title="Muadil Parfüm Ekle" width="540px">
       <div className="grid grid-cols-2 gap-[10px]">
-        <Select label="Muadil Marka *" value={mf.brandId} onChange={(e) => setMf((s) => {
-          const arab = !!brands.find((x) => String(x.id) === e.target.value)?.arabClone;
+        <SearchableSelect label="Muadil Marka *" placeholder="Marka ara veya seçin…" value={mf.brandId} onChange={(val) => setMf((s) => {
+          const arab = !!brands.find((x) => String(x.id) === val)?.arabClone;
           const p = perfumes.find((x) => String(x.id) === s.targetPerfumeId);
           // Arap klonu markasında ad elle yazılır; değilse parfüm adından "Benzeri" üretilir.
-          return { ...s, brandId: e.target.value, name: arab ? '' : (p ? `${p.name} Benzeri` : s.name) };
-        })} options={[{ value: '', label: 'Marka seçin' }, ...brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))]} />
-        <Select label="Hedef Orijinal *" value={mf.targetPerfumeId} onChange={(e) => setMf((s) => {
-          const p = perfumes.find((x) => String(x.id) === e.target.value);
+          return { ...s, brandId: val, name: arab ? '' : (p ? `${p.name} Benzeri` : s.name) };
+        })} options={brands.filter((b) => b.type === 'muadil').map((b) => ({ value: String(b.id), label: b.name }))} />
+        <SearchableSelect label="Hedef Orijinal *" placeholder="Parfüm ara veya seçin…" value={mf.targetPerfumeId} onChange={(val) => setMf((s) => {
+          const p = perfumes.find((x) => String(x.id) === val);
           const arab = !!brands.find((x) => String(x.id) === s.brandId)?.arabClone;
           // Muadil adı yalnızca parfüm adından üretilir (marka adı HARİÇ).
           // Ör. "Kenzo Homme Marine" seçilirse → "Homme Marine Benzeri".
           // Arap klonunda ad elle yazıldığı için otomatik üretilmez.
-          return { ...s, targetPerfumeId: e.target.value, name: arab ? s.name : (p ? `${p.name} Benzeri` : ''), gender: p?.gender || '' };
-        })} options={[{ value: '', label: 'Parfüm seçin' }, ...[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))]} />
+          return { ...s, targetPerfumeId: val, name: arab ? s.name : (p ? `${p.name} Benzeri` : ''), gender: p?.gender || '' };
+        })} options={[...perfumes].sort((a, b) => `${a.brandName} ${a.name}`.localeCompare(`${b.brandName} ${b.name}`, 'tr')).map((p) => ({ value: String(p.id), label: `${p.brandName} — ${p.name}` }))} />
       </div>
       {mf.gender && (
         <div className="flex items-center gap-2 px-3 py-2 bg-[#f8f9fb] border border-(--color-border) rounded-lg text-[13px] text-(--color-text-mid)">
@@ -1389,7 +1389,7 @@ function AddMuadilModal({ brands, perfumes, muadilPerfumes, onClose, onAdd }) {
 }
 
 /* ─── Searchable Select ─────────────────────────────────────────────────── */
-function SearchableSelect({ options, value, onChange, onCommit, placeholder = 'Ara veya seçin…', disabled = false, autoOpen = false }) {
+function SearchableSelect({ label, options, value, onChange, onCommit, placeholder = 'Ara veya seçin…', disabled = false, autoOpen = false }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
@@ -1510,21 +1510,26 @@ function SearchableSelect({ options, value, onChange, onCommit, placeholder = 'A
   );
 
   return (
-    <div className="relative w-full" onKeyDown={handleKey} tabIndex={disabled ? -1 : 0}>
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setOpen((o) => !o)}
-        className="w-full h-[36px] rounded-[8px] px-[10px] text-[13px] text-left flex items-center justify-between gap-2 outline-none transition-all font-[family-name:var(--font-body)]"
-        style={{ border: `1.5px solid ${open ? C.navy : hasValue ? C.navy : C.border}`, background: disabled ? '#f5f5f5' : '#fff', color: hasValue ? C.text : C.textLight, cursor: disabled ? 'not-allowed' : 'pointer' }}
-      >
-        <span className="truncate">{selected ? selected.label : placeholder}</span>
-        <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: C.textLight }}>
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-      {dropdown}
+    <div className="w-full">
+      {label && (
+        <label className="block text-[13px] font-semibold mb-[6px]" style={{ color: disabled ? C.textLight : C.textMid }}>{label}</label>
+      )}
+      <div className="relative w-full" onKeyDown={handleKey} tabIndex={disabled ? -1 : 0}>
+        <button
+          ref={triggerRef}
+          type="button"
+          disabled={disabled}
+          onClick={() => !disabled && setOpen((o) => !o)}
+          className="w-full h-[36px] rounded-[8px] px-[10px] text-[13px] text-left flex items-center justify-between gap-2 outline-none transition-all font-[family-name:var(--font-body)]"
+          style={{ border: `1.5px solid ${open ? C.navy : hasValue ? C.navy : C.border}`, background: disabled ? '#f5f5f5' : '#fff', color: hasValue ? C.text : C.textLight, cursor: disabled ? 'not-allowed' : 'pointer' }}
+        >
+          <span className="truncate">{selected ? selected.label : placeholder}</span>
+          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: C.textLight }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        {dropdown}
+      </div>
     </div>
   );
 }
