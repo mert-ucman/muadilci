@@ -140,13 +140,16 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
           Karşılaştırmaya Başla
         </button>
         <button
-          onClick={() => navigate('/kayit')}
-          className="bg-transparent border border-(--color-border) rounded-[8px] px-7 py-[13px] text-(--color-text-mid) text-[14px] font-medium cursor-pointer tracking-[.01em] transition-[border-color,color] duration-200"
+          onClick={() => navigate('/parfumler?tab=muadil&sort=score_desc')}
+          className="group inline-flex items-center gap-2 bg-transparent border border-(--color-border) rounded-[8px] px-7 py-[13px] text-(--color-text-mid) text-[14px] font-medium cursor-pointer tracking-[.01em] transition-[border-color,color] duration-200"
           style={{ fontFamily: F }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.text; e.currentTarget.style.color = C.text; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
         >
-          Ücretsiz Üye Ol
+          Muadil Parfüm Listesine Git
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-1">
+            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
       </div>
 
@@ -209,13 +212,16 @@ function HeroOverlay({ navigate, lg }) {
             Karşılaştırmaya Başla
           </button>
           <button
-            onClick={() => navigate('/kayit')}
-            className="bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
+            onClick={() => navigate('/parfumler?tab=muadil&sort=score_desc')}
+            className="group inline-flex items-center gap-2 bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
             style={{ fontFamily: F }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
           >
-            Ücretsiz Üye Ol
+            Muadil Parfüm Listesine Git
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-1">
+              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
         </div>
       </div>
