@@ -16,7 +16,7 @@ import { useMuadilComments } from '@/hooks/useMuadilComments';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach, faList, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faHeart, faArrowDown, faCrown, faShield, faThumbsUp, faThumbsDown, faMagnifyingGlass, faChevronRight, faEye, faBottleDroplet, faSun, faSnowflake, faSeedling, faLeaf, faCalendarDays, faBriefcase, faShirt, faMoon, faUmbrellaBeach, faList, faCircleInfo, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // Mevsim ve kullanım ortamı seçenekleri (çoklu seçim). Form, istatistikler ve
@@ -1168,7 +1168,16 @@ export function ComparisonPage({ queryParams }) {
                 </>
               )}
 
-              {nonOwnMuadilComments.length === 0 && !userReview && <div className="text-center text-(--color-text-light) text-[14px] py-8">Henüz yorum yok.</div>}
+              {nonOwnMuadilComments.length === 0 && !userReview && !showCForm && (
+                <div className="text-center py-10 px-4">
+                  <div className="text-(--color-text-light) mb-3" style={{ fontSize: '30px' }}>
+                    <FontAwesomeIcon icon={faPenToSquare} />
+                  </div>
+                  <div className="text-[15px] font-semibold text-(--color-navy) mb-1" style={{ fontFamily: F }}>Bu karşılaştırma için henüz yorum yok</div>
+                  <div className={`text-[13px] text-(--color-text-light) ${user ? 'mb-4' : ''}`} style={{ fontFamily: F }}>İlk değerlendirmeyi sen yaparak topluluğa yön ver.</div>
+                  {user && <Btn size="sm" onClick={() => setShowCForm(true)}>İlk Yorumu Sen Yap</Btn>}
+                </div>
+              )}
               {nonOwnMuadilComments.length > 0 && filteredMuadilComments.length === 0 && (
                 <div className="text-center text-(--color-text-light) text-[14px] py-8">Bu filtreye uygun yorum yok.</div>
               )}
