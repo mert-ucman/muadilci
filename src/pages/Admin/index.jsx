@@ -2824,23 +2824,6 @@ export function AdminPanel() {
               ))}
             </div>
 
-            <div className="grid gap-[18px]" style={{ gridTemplateColumns: sm ? '1fr' : '1fr 1fr' }}>
-              <Card style={{ padding: '20px' }}>
-                <h3 className="font-bold text-(--color-navy) mb-3">Son Kullanıcılar</h3>
-                {users.slice(-4).reverse().map((u) => (
-                  <div key={u.id} className="flex gap-[10px] items-center pb-[10px] mb-[10px]" style={{ borderBottom: `1px solid ${C.borderLight}` }}>
-                    <div className="w-[30px] h-[30px] rounded-full bg-(--color-gold-bg) flex items-center justify-center text-[13px] font-bold text-(--color-gold) overflow-hidden shrink-0">
-                      {u.photoURL
-                        ? <img src={u.photoURL} alt={u.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                        : (u.avatar?.length === 1 ? u.avatar : u.name?.[0]?.toUpperCase() || '?')
-                      }
-                    </div>
-                    <div className="flex-1"><div className="text-[13px] font-semibold text-(--color-text)">{u.name}</div><div className="text-xs text-(--color-text-light)">{u.email}</div></div>
-                    <Badge color={RC[u.role]}>{RL[u.role]}</Badge>
-                  </div>
-                ))}
-              </Card>
-            </div>
           </div>
         )}
 
