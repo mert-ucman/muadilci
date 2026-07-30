@@ -142,7 +142,7 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
           Karşılaştırmaya Başla
         </button>
         <button
-          onClick={() => navigate('/parfumler?tab=muadil&sort=score_desc')}
+          onClick={() => navigate('/parfumler?tab=muadil&sort=reviews_desc')}
           className="group inline-flex items-center gap-2 bg-transparent border border-(--color-border) rounded-[8px] px-7 py-[13px] text-(--color-text-mid) text-[14px] font-medium cursor-pointer tracking-[.01em] transition-[border-color,color] duration-200"
           style={{ fontFamily: F }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = C.text; e.currentTarget.style.color = C.text; }}
@@ -212,7 +212,7 @@ function HeroOverlay({ navigate, lg }) {
             Karşılaştırmaya Başla
           </button>
           <button
-            onClick={() => navigate('/parfumler?tab=muadil&sort=score_desc')}
+            onClick={() => navigate('/parfumler?tab=muadil&sort=reviews_desc')}
             className="group inline-flex items-center gap-2 bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
             style={{ fontFamily: F }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}

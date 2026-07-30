@@ -42,6 +42,8 @@ const ORIG_SORT_OPTS = [
   { value: 'muadil_asc', label: 'Muadil (En Az)' },
 ];
 const MUADIL_SORT_OPTS = [
+  { value: 'reviews_desc',    label: 'Yorum (En Çok)' },
+  { value: 'reviews_asc',     label: 'Yorum (En Az)' },
   { value: 'name_asc',        label: 'A → Z' },
   { value: 'name_desc',       label: 'Z → A' },
   { value: 'score_desc',      label: 'Puan (En Yüksek)' },
@@ -112,14 +114,14 @@ export function PerfumesPage() {
   const qListSort = parseListSortParam(query.sort);
   const [pTab,        setPTab]        = useState(() => (query.tab === 'muadil' || query.tab === 'original') ? query.tab : (localStorage.getItem('perf_tab') || 'original'));
   const [view,        setView]        = useState(() => localStorage.getItem('perf_view_v2') || 'list');
-  const [sort,        setSort]        = useState(() => query.sort || localStorage.getItem('perf_sort_v2') || 'name_asc');
+  const [sort,        setSort]        = useState(() => query.sort || localStorage.getItem('perf_sort_v2') || (pTab === 'muadil' ? 'reviews_desc' : 'name_asc'));
   const [perPage,     setPerPage]     = useState(() => Number(localStorage.getItem('perf_pp')) || 20);
   const [page,        setPage]        = useState(1);
   const [filter,        setFilter]        = useState('all');
   const [scoreFilter,   setScoreFilter]   = useState('all');
   const [genderFilterM, setGenderFilterM] = useState('all');
   const [search,      setSearch]      = useState(() => query.search || '');
-  const [listSortKey, setListSortKey] = useState(() => qListSort?.key || (pTab === 'muadil' ? 'score' : 'name'));
+  const [listSortKey, setListSortKey] = useState(() => qListSort?.key || (pTab === 'muadil' ? 'reviews' : 'name'));
   const [listSortDir, setListSortDir] = useState(() => qListSort?.dir || (pTab === 'muadil' ? 'desc' : 'asc'));
 
   useEffect(() => { localStorage.setItem('perf_tab',  pTab);          }, [pTab]);
@@ -137,7 +139,7 @@ export function PerfumesPage() {
   }, [query.search]);
 
   // Tab değişince sayfa sıfırla
-  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort('name_asc'); setListSortKey(v === 'muadil' ? 'score' : 'name'); setListSortDir(v === 'muadil' ? 'desc' : 'asc'); };
+  const switchTab = (v) => { setPTab(v); setFilter('all'); setScoreFilter('all'); setGenderFilterM('all'); setSearch(''); setPage(1); setSort(v === 'muadil' ? 'reviews_desc' : 'name_asc'); setListSortKey(v === 'muadil' ? 'reviews' : 'name'); setListSortDir(v === 'muadil' ? 'desc' : 'asc'); };
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchFilter = (v) => { setFilter(v); setPage(1); };
   const switchSearch = (v) => { setSearch(v); setPage(1); };
@@ -175,6 +177,9 @@ export function PerfumesPage() {
     switch (sk) {
       case 'name_asc':    return a.name.localeCompare(b.name, 'tr');
       case 'name_desc':   return b.name.localeCompare(a.name, 'tr');
+      // Yorum (En Çok): eşit yorum sayısında yüksek genel puan üstte
+      case 'reviews_desc':    return ((muadilScores[b.id]?.count) ?? 0) - ((muadilScores[a.id]?.count) ?? 0) || ((muadilScores[b.id]?.overall) ?? -1) - ((muadilScores[a.id]?.overall) ?? -1);
+      case 'reviews_asc':     return ((muadilScores[a.id]?.count) ?? 0) - ((muadilScores[b.id]?.count) ?? 0);
       case 'brand_asc':   return (a.brandName || '').localeCompare(b.brandName || '', 'tr');
       case 'brand_desc':  return (b.brandName || '').localeCompare(a.brandName || '', 'tr');
       case 'score_desc':      return ((muadilScores[b.id]?.overall) ?? -1) - ((muadilScores[a.id]?.overall) ?? -1);
@@ -242,7 +247,7 @@ export function PerfumesPage() {
         if (listSortKey === 'targetPerf')  { av = a.targetPerfumeName || ''; bv = b.targetPerfumeName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetBrand') { av = a.targetBrandName || ''; bv = b.targetBrandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'gender')      { av = a.gender || ''; bv = b.gender || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
-        if (listSortKey === 'reviews')    { av = muadilScores[a.id]?.count ?? 0; bv = muadilScores[b.id]?.count ?? 0; return listSortDir === 'asc' ? av - bv : bv - av; }
+        if (listSortKey === 'reviews')    { av = muadilScores[a.id]?.count ?? 0; bv = muadilScores[b.id]?.count ?? 0; if (av !== bv) return listSortDir === 'asc' ? av - bv : bv - av; return (muadilScores[b.id]?.overall ?? -1) - (muadilScores[a.id]?.overall ?? -1); }
         if (listSortKey === 'score')      { av = muadilScores[a.id]?.overall ?? -1; bv = muadilScores[b.id]?.overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'scent')      { av = muadilScores[a.id]?.scent ?? -1; bv = muadilScores[b.id]?.scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'projection') { av = muadilScores[a.id]?.projection ?? -1; bv = muadilScores[b.id]?.projection ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
