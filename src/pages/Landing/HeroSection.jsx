@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
@@ -147,9 +149,7 @@ function HeroText({ navigate, brands, perfumes, muadilPerfumes }) {
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textMid; }}
         >
           Muadil Parfüm Listesine Git
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-1">
-            <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <FontAwesomeIcon icon={faChevronRight} className="text-[12px] transition-transform duration-200 group-hover:translate-x-1" />
         </button>
       </div>
 
@@ -219,9 +219,7 @@ function HeroOverlay({ navigate, lg }) {
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
           >
             Muadil Parfüm Listesine Git
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="transition-transform duration-200 group-hover:translate-x-1">
-              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <FontAwesomeIcon icon={faChevronRight} className="text-[12px] transition-transform duration-200 group-hover:translate-x-1" />
           </button>
         </div>
       </div>

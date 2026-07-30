@@ -3,13 +3,14 @@ import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { C, F, FH } from '@/constants/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagnifyingGlass, faScaleBalanced, faStar, faBullseye } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass, faScaleBalanced, faArrowPointer } from '@fortawesome/free-solid-svg-icons';
+import { faComments } from '@fortawesome/free-regular-svg-icons';
 
 const STEPS = [
-  { icon: faMagnifyingGlass, n: '01', title: 'Orijinalini Seç',  desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
+  { icon: faArrowPointer,    n: '01', title: 'Orijinalini Seç',  desc: 'Hayalindeki lüks parfümü marka ve model olarak seç.' },
   { icon: faScaleBalanced,   n: '02', title: 'Muadilleri Gör',   desc: 'Aynı koku profiline sahip muadilleri yan yana gör.' },
-  { icon: faStar,            n: '03', title: 'Yorumları Oku',    desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
-  { icon: faBullseye,        n: '04', title: 'En Yakını Bul',    desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
+  { icon: faComments,        n: '03', title: 'Yorumları Oku',    desc: 'Gerçek kullanıcıların benzerlik, yayılım ve kalıcılık puanlarını incele.' },
+  { icon: faMagnifyingGlass, n: '04', title: 'En Yakını Bul',    desc: 'Orijinale en yakın muadili bul, eşsiz bir koku deneyimi yaşa.' },
 ];
 
 export function HowItWorksSection() {

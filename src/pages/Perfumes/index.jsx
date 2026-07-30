@@ -67,6 +67,7 @@ const MUADIL_COLS = [
   { key: 'targetPerf',  label: 'Hedef Parfüm' },
   { key: 'targetBrand', label: 'Hedef Marka' },
   { key: 'gender',      label: 'Cinsiyet' },
+  { key: 'reviews',     label: 'Yorum' },
   { key: 'scent',       label: 'Benzerlik' },
   { key: 'projection',  label: 'Yayılım' },
   { key: 'longevity',   label: 'Kalıcılık' },
@@ -241,6 +242,7 @@ export function PerfumesPage() {
         if (listSortKey === 'targetPerf')  { av = a.targetPerfumeName || ''; bv = b.targetPerfumeName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'targetBrand') { av = a.targetBrandName || ''; bv = b.targetBrandName || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
         if (listSortKey === 'gender')      { av = a.gender || ''; bv = b.gender || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
+        if (listSortKey === 'reviews')    { av = muadilScores[a.id]?.count ?? 0; bv = muadilScores[b.id]?.count ?? 0; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'score')      { av = muadilScores[a.id]?.overall ?? -1; bv = muadilScores[b.id]?.overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'scent')      { av = muadilScores[a.id]?.scent ?? -1; bv = muadilScores[b.id]?.scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
         if (listSortKey === 'projection') { av = muadilScores[a.id]?.projection ?? -1; bv = muadilScores[b.id]?.projection ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
@@ -562,6 +564,9 @@ export function PerfumesPage() {
                           <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid)">{item.targetPerfumeName || '—'}</td>
                           <td className="px-[14px] py-[10px] text-[13px] text-(--color-text-mid)">{item.targetBrandName || '—'}</td>
                           <td className="px-[14px] py-[10px] text-center"><GenderBadge gender={item.gender} /></td>
+                          <td className="px-[14px] py-[10px] text-center">
+                            <span className="font-bold text-[13px]" style={{ color: ms?.count ? C.navy : C.textLight }}>{ms?.count ?? 0}</span>
+                          </td>
                           <td className="px-[14px] py-[10px] text-center">
                             <span className="font-bold text-[13px]" style={{ color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
                           </td>
