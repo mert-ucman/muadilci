@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useW } from '@/hooks/useW';
 import { calcScores, calcBrandScoreMap } from '@/utils/scoring';
 import { Card, Badge, ScoreBar, TableScrollHint } from '@/components/ui';
-import { faShirt, faGem, faArrowLeft, faHeart, faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faShirt, faGem, faArrowLeft, faHeart, faGlobe, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { GenderBadge } from '@/components/shared';
 import { C, F, FH } from '@/constants/theme';
@@ -120,10 +120,12 @@ export function BrandPage({ params }) {
   const muadilGender = (item) => perfGenderById[item.targetPerfumeId] || item.gender || null;
 
   const [showTooltip, setShowTooltip] = useState(false);
+  const [favLoginMsg, setFavLoginMsg] = useState(false); // giriş yapmamış kullanıcı favoriye basınca uyarı
+  const favLoginMsgTimer = useRef(0);
   const [view, setView] = useState('list');
   const [genderFilter, setGenderFilter] = useState(null); // null = hepsi, 'erkek'|'kadin'|'unisex' = filtreli
   const [sortDir, setSortDir] = useState('az');
-  const [listSortKey, setListSortKey] = useState(isOrig ? 'name' : 'score');
+  const [listSortKey, setListSortKey] = useState(isOrig ? 'name' : 'reviews');
   const [listSortDir, setListSortDir] = useState(isOrig ? 'asc' : 'desc');
   const [searchQ, setSearchQ] = useState('');
   const [page, setPage] = useState(1);
@@ -154,7 +156,8 @@ export function BrandPage({ params }) {
       : muadilPerfumes.filter((m) => m.brandId === brand.id);
   }, [brand, isOrig, perfumes, muadilPerfumes]);
 
-  const items = useMemo(() => {
+  // Arama + cinsiyet filtresi (sıralama ayrı: muadilScoreMap'e ihtiyaç duyduğundan aşağıda)
+  const filteredItems = useMemo(() => {
     const q = searchQ.trim().toLowerCase();
     let base = q
       ? allItems.filter((p) => {
@@ -165,7 +168,7 @@ export function BrandPage({ params }) {
         })
       : allItems;
     // Cinsiyet filtresi: orijinalde parfümün kendi cinsiyeti, muadilde hedef orijinalin cinsiyeti
-    let filtered = genderFilter
+    return genderFilter
       ? base.filter((p) => {
           const g = (isOrig ? (p.gender || '') : (perfGenderById[p.targetPerfumeId] || p.gender || '')).toLowerCase();
           if (genderFilter === 'erkek') return g === 'erkek';
@@ -174,10 +177,7 @@ export function BrandPage({ params }) {
           return true;
         })
       : base;
-    return [...filtered].sort((a, b) =>
-      sortDir === 'az' ? a.name.localeCompare(b.name, 'tr') : b.name.localeCompare(a.name, 'tr')
-    );
-  }, [allItems, isOrig, genderFilter, sortDir, searchQ, perfGenderById]);
+  }, [allItems, isOrig, genderFilter, searchQ, perfGenderById]);
 
   const perfumeMuadilCount = useMemo(() => {
     const map = {};
@@ -192,6 +192,39 @@ export function BrandPage({ params }) {
     if (!brand || isOrig) return null;
     return calcBrandScoreMap(brands, muadilPerfumes, comments).get(brand.id) ?? null;
   }, [brand, isOrig, brands, muadilPerfumes, comments]);
+
+  // Muadil skorları (koku/yayılım/kalıcılık/genel puan + yorum sayısı) tek seferde
+  // hesaplanır; hem sıralama hem tablo hücreleri bu haritayı kullanır.
+  const muadilScoreMap = useMemo(() => {
+    const map = {};
+    if (!brand || isOrig) return map;
+    for (const m of allItems) map[m.id] = calcScores(m.id, comments);
+    return map;
+  }, [brand, isOrig, allItems, comments]);
+
+  // Sıralanmış liste — hem grid hem tablo görünümü bu diziyi kullanır ki
+  // uygulanan sıralama iki görünüme de yansısın.
+  const items = useMemo(() => {
+    const dir = listSortDir === 'asc' ? 1 : -1;
+    const gender = (p) => (isOrig ? (p.gender || '') : (perfGenderById[p.targetPerfumeId] || p.gender || ''));
+    return [...filteredItems].sort((a, b) => {
+      switch (listSortKey) {
+        case 'gender':     return dir * gender(a).localeCompare(gender(b), 'tr');
+        case 'muadil':     return dir * ((perfumeMuadilCount[a.id] || 0) - (perfumeMuadilCount[b.id] || 0));
+        case 'reviews': {
+          const ac = muadilScoreMap[a.id]?.count ?? 0, bc = muadilScoreMap[b.id]?.count ?? 0;
+          if (ac !== bc) return dir * (ac - bc);
+          return dir * ((muadilScoreMap[a.id]?.overall ?? -1) - (muadilScoreMap[b.id]?.overall ?? -1));
+        }
+        case 'score':      return dir * ((muadilScoreMap[a.id]?.overall ?? -1) - (muadilScoreMap[b.id]?.overall ?? -1));
+        case 'scent':      return dir * ((muadilScoreMap[a.id]?.scent ?? -1) - (muadilScoreMap[b.id]?.scent ?? -1));
+        case 'projection': return dir * ((muadilScoreMap[a.id]?.projection ?? -1) - (muadilScoreMap[b.id]?.projection ?? -1));
+        case 'longevity':  return dir * ((muadilScoreMap[a.id]?.longevity ?? -1) - (muadilScoreMap[b.id]?.longevity ?? -1));
+        case 'name':
+        default:           return dir * (a.name || '').localeCompare(b.name || '', 'tr');
+      }
+    });
+  }, [filteredItems, isOrig, listSortKey, listSortDir, perfGenderById, perfumeMuadilCount, muadilScoreMap]);
 
   if (!brand) return (
     <div className="px-[60px] py-[60px] text-center text-(--color-text-light)">
@@ -254,7 +287,7 @@ export function BrandPage({ params }) {
           padding: sm ? '32px 16px' : '48px 32px',
         }}
       >
-        <div className="max-w-[960px] mx-auto">
+        <div className="max-w-[1320px] mx-auto">
           {/* Üst bar */}
           <div className="flex justify-between items-center mb-[20px]">
             <button
@@ -272,20 +305,35 @@ export function BrandPage({ params }) {
               <FontAwesomeIcon icon={faArrowLeft} className="text-[12px]" />
               Geri Dön
             </button>
-            <button
-              onClick={() => { if (user?.uid) toggleBrandFavorite(user.uid, brand.id); }}
-              className="inline-flex items-center gap-[7px] rounded-[10px] px-[14px] py-[7px] text-[13px] font-semibold"
-              style={{
-                background: favActive ? 'rgba(184,150,90,.25)' : 'rgba(255,255,255,.12)',
-                border: `1px solid ${favActive ? 'rgba(184,150,90,.5)' : 'rgba(255,255,255,.2)'}`,
-                color: favActive ? C.goldLight : 'rgba(255,255,255,.85)',
-                cursor: user ? 'pointer' : 'default',
-                fontFamily: F,
-              }}
-            >
-              <FontAwesomeIcon icon={faHeart} className="text-[13px]" />
-              {favActive ? 'Favorilerde' : 'Favoriye Ekle'}
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  if (user?.uid) { toggleBrandFavorite(user.uid, brand.id); return; }
+                  setFavLoginMsg(true);
+                  clearTimeout(favLoginMsgTimer.current);
+                  favLoginMsgTimer.current = setTimeout(() => setFavLoginMsg(false), 3000);
+                }}
+                className="inline-flex items-center gap-[7px] rounded-[10px] px-[14px] py-[7px] text-[13px] font-semibold cursor-pointer"
+                style={{
+                  background: favActive ? 'rgba(184,150,90,.25)' : 'rgba(255,255,255,.12)',
+                  border: `1px solid ${favActive ? 'rgba(184,150,90,.5)' : 'rgba(255,255,255,.2)'}`,
+                  color: favActive ? C.goldLight : 'rgba(255,255,255,.85)',
+                  fontFamily: F,
+                }}
+              >
+                <FontAwesomeIcon icon={faHeart} className="text-[13px]" />
+                {favActive ? 'Favorilerde' : 'Favoriye Ekle'}
+              </button>
+              {favLoginMsg && (
+                <button
+                  onClick={() => navigate('/giris')}
+                  className="absolute right-0 top-[calc(100%+8px)] whitespace-nowrap rounded-[10px] px-[12px] py-[8px] text-[12px] font-semibold cursor-pointer z-20 shadow-[0_8px_24px_rgba(0,0,0,.18)]"
+                  style={{ background: '#fff', color: C.text, border: `1px solid ${C.border}`, fontFamily: F }}
+                >
+                  Favorilere eklemek için lütfen giriş yapın
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Marka bilgisi */}
@@ -498,7 +546,7 @@ export function BrandPage({ params }) {
 
       {/* İçerik */}
       <div
-        className="max-w-[960px] mx-auto"
+        className="max-w-[1320px] mx-auto"
         style={{ padding: sm ? '24px 16px' : '36px 32px' }}
       >
 
@@ -520,17 +568,15 @@ export function BrandPage({ params }) {
           <div className="flex items-center gap-[8px] flex-wrap">
             {/* Arama kutusu */}
             <div className="relative flex-1 min-w-[200px] max-w-[320px]">
-              <svg
-                width="14" height="14" viewBox="0 0 20 20" fill="none"
-                stroke={C.textLight} strokeWidth="2" strokeLinecap="round"
-                className="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none"
-              >
-                <circle cx="9" cy="9" r="7"/><line x1="16" y1="16" x2="12.5" y2="12.5"/>
-              </svg>
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none text-[13px]"
+                style={{ color: C.textLight }}
+              />
               <input
                 value={searchQ}
                 onChange={(e) => { setSearchQ(e.target.value); setPage(1); }}
-                placeholder={isOrig ? 'Parfüm ara...' : 'Parfüm veya hedef ara...'}
+                placeholder={isOrig ? 'Parfüm ara...' : 'Muadil parfüm ara...'}
                 className="w-full box-border h-[34px] pl-[32px] pr-[10px] rounded-[8px] border border-(--color-border) bg-(--color-card) text-(--color-text) text-[13px] outline-none"
                 style={{ fontFamily: F }}
               />
@@ -574,7 +620,7 @@ export function BrandPage({ params }) {
             style={{ gridTemplateColumns: xs ? '1fr' : sm ? '1fr 1fr' : 'repeat(auto-fill,minmax(240px,1fr))' }}
           >
             {pageItems.map((item) => {
-              const ms = !isOrig ? calcScores(item.id, comments) : null;
+              const ms = !isOrig ? muadilScoreMap[item.id] : null;
               const mCount = isOrig ? (perfumeMuadilCount[item.id] || 0) : null;
               const uid = user?.uid || user?.id;
               const fav = !isOrig ? isMuadilFavorite(uid, item.id) : false;
@@ -642,20 +688,10 @@ export function BrandPage({ params }) {
         {/* List View */}
         {view === 'list' && (() => {
           const LIST_COLS = isOrig
-            ? [{ key: 'name', label: 'Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'muadil', label: 'Muadil' }]
-            : [{ key: 'name', label: 'Parfüm' }, { key: 'target', label: 'Hedef Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'scent', label: 'Koku' }, { key: 'projection', label: 'Yayılım' }, { key: 'longevity', label: 'Kalıcılık' }, { key: 'score', label: 'Genel Puan' }];
+            ? [{ key: 'name', label: 'Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'muadil', label: 'Muadil Sayısı' }]
+            : [{ key: 'name', label: 'Parfüm' }, { key: 'target', label: 'Hedef Parfüm' }, { key: 'gender', label: 'Cinsiyet' }, { key: 'reviews', label: 'Değerlendirme' }, { key: 'scent', label: 'Benzerlik' }, { key: 'projection', label: 'Yayılım' }, { key: 'longevity', label: 'Kalıcılık' }, { key: 'score', label: 'Genel Puan' }];
 
-          const allListItems = [...items].sort((a, b) => {
-            let av, bv;
-            if (listSortKey === 'name')       { av = a.name || ''; bv = b.name || ''; return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
-            if (listSortKey === 'gender')     { av = (perfGenderById[a.targetPerfumeId] || a.gender || ''); bv = (perfGenderById[b.targetPerfumeId] || b.gender || ''); return listSortDir === 'asc' ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr'); }
-            if (listSortKey === 'muadil')     { av = perfumeMuadilCount[a.id] || 0; bv = perfumeMuadilCount[b.id] || 0; return listSortDir === 'asc' ? av - bv : bv - av; }
-            if (listSortKey === 'score')      { av = calcScores(a.id, comments).overall ?? -1; bv = calcScores(b.id, comments).overall ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
-            if (listSortKey === 'scent')      { av = calcScores(a.id, comments).scent ?? -1; bv = calcScores(b.id, comments).scent ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
-            if (listSortKey === 'projection') { av = calcScores(a.id, comments).projection ?? -1; bv = calcScores(b.id, comments).projection ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
-            if (listSortKey === 'longevity')  { av = calcScores(a.id, comments).longevity ?? -1; bv = calcScores(b.id, comments).longevity ?? -1; return listSortDir === 'asc' ? av - bv : bv - av; }
-            return 0;
-          });
+          const allListItems = items; // sıralama yukarıdaki `items` memo'sunda yapıldı (grid ile ortak)
 
           const totalPages = Math.max(1, Math.ceil(allListItems.length / PER_PAGE));
           const safePage = Math.min(page, totalPages);
@@ -698,7 +734,7 @@ export function BrandPage({ params }) {
               </thead>
               <tbody>
                 {listItems.map((item) => {
-                  const ms = !isOrig ? calcScores(item.id, comments) : null;
+                  const ms = !isOrig ? muadilScoreMap[item.id] : null;
                   const mCount = isOrig ? (perfumeMuadilCount[item.id] || 0) : null;
                   const uid = user?.uid || user?.id;
                   const fav = !isOrig ? isMuadilFavorite(uid, item.id) : false;
@@ -743,6 +779,9 @@ export function BrandPage({ params }) {
                             </div>
                           </td>
                         : <>
+                            <td className="px-[14px] py-[12px] text-center">
+                              <span style={{ fontWeight: 700, fontSize: '13px', color: (ms?.count ?? 0) > 0 ? C.textMid : C.textLight }}>{ms?.count ?? 0}</span>
+                            </td>
                             <td className="px-[14px] py-[12px] text-center">
                               <span style={{ fontWeight: 700, fontSize: '13px', color: scoreColor(ms?.scent ?? null) }}>{ms?.scent != null ? `${ms.scent}/10` : '—'}</span>
                             </td>

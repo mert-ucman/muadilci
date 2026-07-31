@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useRouter } from '@/contexts/RouterContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -33,6 +33,34 @@ function PageSpinner() {
   );
 }
 
+// Katalog + yorumlar inene kadar gösterilen tam ekran yükleme.
+// Gerçek indirme baytları takip edilmediğinden yüzde, ~%95'e doğru
+// yavaşlayarak yaklaşan simüle bir sayaçtır; veri hazır olunca ekran kalkar.
+function LoadingScreen({ logoUrl }) {
+  const [pct, setPct] = useState(6);
+  useEffect(() => {
+    let raf, cur = 6;
+    const tick = () => {
+      cur += (95 - cur) * 0.02;
+      setPct(Math.min(95, Math.round(cur)));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '22px', background: '#f8f9fb', padding: '24px' }}>
+      {logoUrl
+        ? <img src={logoUrl} alt="muadilci" style={{ height: '38px', objectFit: 'contain' }} />
+        : <div style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '.14em', color: '#1a1a2e', textTransform: 'uppercase' }}>muadilci</div>}
+      <div style={{ width: 'min(320px, 80vw)', height: '6px', borderRadius: '999px', background: '#e5e7eb', overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,#b8965a,#d4b578)', borderRadius: '999px', transition: 'width .2s ease-out' }} />
+      </div>
+      <div style={{ fontSize: '13px', fontWeight: 600, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>Yükleniyor %{pct}</div>
+    </div>
+  );
+}
+
 const ROUTES = [
   { pat: '/',                       C: LandingPage },
   { pat: '/parfumler',              C: PerfumesPage },
@@ -54,8 +82,8 @@ const ROUTES = [
 
 export function App() {
   const { basePath, query, navigate } = useRouter();
-  const { loading, user, isAdmin, isMod } = useAuth();
-  const { faviconUrl } = useData();
+  const { loading: authLoading, user, isAdmin, isMod } = useAuth();
+  const { faviconUrl, logoUrl, loading: dataLoading } = useData();
 
   useEffect(() => {
     if (!faviconUrl) return;
@@ -66,7 +94,7 @@ export function App() {
 
   // Route korumaları — render sırasında değil, effect içinde yönlendir
   useEffect(() => {
-    if (loading) return;
+    if (authLoading) return;
     if (!user && (basePath === '/profil' || basePath === '/moderasyon' || basePath === '/admin')) {
       navigate('/giris');
     } else if (user && !isMod && basePath === '/moderasyon') {
@@ -76,16 +104,13 @@ export function App() {
     } else if (user && (basePath === '/giris' || basePath === '/kayit')) {
       navigate('/');
     }
-  }, [loading, user, isAdmin, isMod, basePath]);
+  }, [authLoading, user, isAdmin, isMod, basePath]);
 
   const noLayout = NO_LAYOUT_PATHS.includes(basePath);
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fb' }}>
-      <div style={{ width: '36px', height: '36px', border: '3px solid #e5e7eb', borderTop: '3px solid #b8965a', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  // Auth + katalog/yorum verisi hazır olana kadar yüzdeli yükleme ekranı.
+  // (Aksi halde veri gelmeden sayfalar "Marka bulunamadı" / boş kart gösteriyordu.)
+  if (authLoading || dataLoading) return <LoadingScreen logoUrl={logoUrl} />;
 
   // E-posta doğrulama gate — Google kullanıcıları, admin ve şifre sıfırlama hariç
   if (user && !user.emailVerified && user.provider !== 'google.com' && !isAdmin && basePath !== '/sifre-yenile') {

@@ -60,8 +60,9 @@ export function Navbar() {
 
   const searchItems = [
     // `text`: parfüm adı + marka birlikte aranır → kelime sırası önemli değil
-    ...perfumes.map(p => ({ label: `${p.name} — ${p.brandName}`, text: `${p.name} ${p.brandName}`.toLowerCase(), url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
-    ...brands.map(b   => ({ label: b.name, text: b.name.toLowerCase(), url: `/marka/${b.slug}`, type: 'Marka',  image: b.logoImage || '' })),
+    // Yalnızca aktif kayıtlar: pasif marka/parfüm tıklanınca "bulunamadı" sayfasına düşürüyordu
+    ...perfumes.filter(p => p.active !== false).map(p => ({ label: `${p.name} — ${p.brandName}`, text: `${p.name} ${p.brandName}`.toLowerCase(), url: `/${p.brandSlug}/${p.slug}`, type: 'Parfüm', image: p.image || '' })),
+    ...brands.filter(b => b.active !== false).map(b   => ({ label: b.name, text: b.name.toLowerCase(), url: `/marka/${b.slug}`, type: 'Marka',  image: b.logoImage || '' })),
   ];
   const q = searchQ.trim().toLowerCase();
   // Sorgu kelimelere bölünür; her kelime metinde geçmeli (sıra bağımsız, ortadaki kelime de eşleşir)
@@ -131,7 +132,7 @@ export function Navbar() {
       >
         <div
           className="max-w-[1280px] mx-auto h-24 flex items-center gap-8"
-          style={{ padding: lg ? '0 20px' : '0 48px' }}
+          style={{ padding: lg ? '0 16px' : '0' }}
         >
 
           {/* Logo */}
@@ -213,7 +214,7 @@ export function Navbar() {
                 {searchQ && (
                   <button
                     onClick={() => setSearchQ('')}
-                    className="bg-transparent border-none cursor-pointer text-base leading-none p-0"
+                    className="bg-transparent border-none cursor-pointer text-xl leading-none p-0 shrink-0"
                     style={{ color: C.textLight }}
                   >
                     ×
