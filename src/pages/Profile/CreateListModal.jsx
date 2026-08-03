@@ -65,9 +65,9 @@ function CustomInputs({ row, idx, updateRow }) {
   );
 }
 
-export function CreateListModal({ open, onClose, onSave, initialTitle = '', initialItems = null, editMode = false, perfumes = [], muadilPerfumes = [] }) {
+export function CreateListModal({ open, onClose, onSave, initialTitle = '', initialCategory = 'original', initialItems = null, editMode = false, perfumes = [], muadilPerfumes = [] }) {
   const [title, setTitle] = useState(initialTitle);
-  const [category, setCategory] = useState('original');
+  const [category, setCategory] = useState(initialCategory);
   const [rows, setRows] = useState(() => initialItems ? initialItems.map((it) => ({ ...newRow(), ...it })) : [newRow()]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
@@ -77,7 +77,7 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
-      setCategory('original');
+      setCategory(initialCategory);
       setRows(initialItems ? initialItems.map((it) => ({ ...newRow(), ...it })) : [newRow()]);
       setErr('');
       setInfoDismissed(false);
@@ -117,6 +117,7 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
   };
 
   const handleCategoryChange = (cat) => {
+    if (editMode) return; // Düzenlemede kategori değiştirilemez
     setCategory(cat);
     setRows([newRow()]);
   };
@@ -186,27 +187,34 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
       <div className="mb-[18px]">
         <label className="block text-[12px] font-semibold text-(--color-text-mid) mb-2 tracking-[.03em]">KATEGORİ</label>
         <div className="flex gap-[10px]">
-          {[{ v: 'original', l: 'Orijinal Parfümler' }, { v: 'muadil', l: 'Muadil Parfümler' }].map(({ v, l }) => (
-            <label key={v} style={{
-              display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer',
-              padding: '8px 14px', borderRadius: '8px',
-              border: `1px solid ${category === v ? C.gold : C.border}`,
-              background: category === v ? C.goldBg : 'transparent',
-              transition: 'all 0.15s',
-            }}>
-              <input
-                type="radio"
-                name="list-category"
-                value={v}
-                checked={category === v}
-                onChange={() => handleCategoryChange(v)}
-                style={{ accentColor: C.gold, cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: '13px', fontWeight: category === v ? 700 : 500, color: category === v ? C.gold : C.textMid, fontFamily: F }}>
-                {l}
-              </span>
-            </label>
-          ))}
+          {[{ v: 'original', l: 'Orijinal Parfümler' }, { v: 'muadil', l: 'Muadil Parfümler' }].map(({ v, l }) => {
+            const selected = category === v;
+            const locked = editMode && !selected; // Düzenlemede seçili olmayan kategori kilitli
+            return (
+              <label key={v} style={{
+                display: 'flex', alignItems: 'center', gap: '7px',
+                cursor: locked ? 'not-allowed' : 'pointer',
+                padding: '8px 14px', borderRadius: '8px',
+                border: `1px solid ${selected ? C.gold : C.border}`,
+                background: selected ? C.goldBg : 'transparent',
+                opacity: locked ? 0.45 : 1,
+                transition: 'all 0.15s',
+              }}>
+                <input
+                  type="radio"
+                  name="list-category"
+                  value={v}
+                  checked={selected}
+                  disabled={locked}
+                  onChange={() => handleCategoryChange(v)}
+                  style={{ accentColor: C.gold, cursor: locked ? 'not-allowed' : 'pointer' }}
+                />
+                <span style={{ fontSize: '13px', fontWeight: selected ? 700 : 500, color: selected ? C.gold : C.textMid, fontFamily: F }}>
+                  {l}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 

@@ -426,6 +426,7 @@ export function ListsTab({ userId, lists, loading, createList, updateList, delet
         onClose={() => { setShowCreateModal(false); setEditingList(null); }}
         onSave={handleSave}
         initialTitle={prefilledTitle}
+        initialCategory={editingList?.category ?? 'original'}
         initialItems={editingList?.items?.map((it) => ({ ...it, _id: Math.random().toString(36).slice(2) })) ?? null}
         editMode={!!editingList}
         perfumes={perfumes}
