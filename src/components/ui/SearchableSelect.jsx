@@ -25,9 +25,15 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
   const calcPos = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    const margin = 8;
+    // Dropdown en az 240px (ama ekrandan taşmadan) — dar mobil kutularda isimler kesilmesin
+    const width = Math.min(window.innerWidth - margin * 2, Math.max(rect.width, 240));
+    let left = rect.left;
+    if (left + width > window.innerWidth - margin) left = window.innerWidth - margin - width;
+    if (left < margin) left = margin;
     const spaceBelow = window.innerHeight - rect.bottom;
     const top = spaceBelow < 260 ? rect.top - 270 : rect.bottom + 4;
-    setDropPos({ top: Math.max(8, top), left: rect.left, width: rect.width });
+    setDropPos({ top: Math.max(8, top), left, width });
   }, []);
 
   useEffect(() => { setHighlighted(0); }, [query]);
