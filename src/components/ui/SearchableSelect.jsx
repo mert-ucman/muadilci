@@ -51,7 +51,11 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
   useEffect(() => {
     if (!open) { setQuery(''); return; }
     calcPos();
-    setTimeout(() => inputRef.current?.focus(), 0);
+    // Dokunmatik cihazlarda arama kutusunu OTOMATİK odaklama: odak klavyeyi açar,
+    // iOS de odaklı input'u görünür tutmak için sayfayı yukarı kaydırır. Kullanıcı
+    // yazmak isterse arama kutusuna kendisi dokunur. Masaüstünde otomatik odak kalır.
+    const isCoarse = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches;
+    if (!isCoarse) setTimeout(() => inputRef.current?.focus(), 0);
     const idx = filtered.findIndex((o) => o.value === value);
     setHighlighted(idx >= 0 ? idx : 0);
   }, [open]);
