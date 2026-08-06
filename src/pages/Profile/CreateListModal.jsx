@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Btn } from '@/components/ui';
+import { Modal, Btn, SearchableSelect } from '@/components/ui';
 import { C, F } from '@/constants/theme';
 
 const MAX_ITEMS = 10;
@@ -22,20 +22,6 @@ function rowDisplayName(row) {
   }
   if (row.brandName && row.perfumeName) return `${row.brandName} — ${row.perfumeName}`;
   return '';
-}
-
-function InlineSelect({ value, onChange, options, placeholder, disabled }) {
-  return (
-    <select value={value} onChange={onChange} disabled={disabled} style={{
-      flex: 1, border: `1px solid ${C.border}`, borderRadius: '8px',
-      padding: '7px 10px', fontSize: '13px',
-      color: value ? C.text : C.textLight, background: disabled ? C.bg : C.card,
-      outline: 'none', cursor: disabled ? 'not-allowed' : 'pointer', minWidth: 0,
-    }}>
-      <option value="">{placeholder}</option>
-      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
-  );
 }
 
 function CustomInputs({ row, idx, updateRow }) {
@@ -240,19 +226,23 @@ export function CreateListModal({ open, onClose, onSave, initialTitle = '', init
               <CustomInputs row={row} idx={idx} updateRow={updateRow} />
             ) : (
               <>
-                <InlineSelect
-                  value={row.brandName}
-                  onChange={(e) => handleBrandChange(idx, e.target.value)}
-                  options={brandOptions}
-                  placeholder="Marka seçin..."
-                />
-                <InlineSelect
-                  value={row.perfumeId}
-                  onChange={(e) => handlePerfumeChange(idx, e.target.value, row.brandName)}
-                  options={perfumesForBrand(row.brandName)}
-                  placeholder="Parfüm seçin..."
-                  disabled={!row.brandName}
-                />
+                <div style={{ flex: '0 0 38%', minWidth: 0 }}>
+                  <SearchableSelect
+                    value={row.brandName}
+                    onChange={(val) => handleBrandChange(idx, val)}
+                    options={brandOptions}
+                    placeholder="Marka ara…"
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <SearchableSelect
+                    value={row.perfumeId}
+                    onChange={(val) => handlePerfumeChange(idx, val, row.brandName)}
+                    options={perfumesForBrand(row.brandName)}
+                    placeholder="Parfüm ara…"
+                    disabled={!row.brandName}
+                  />
+                </div>
               </>
             )}
 

@@ -4,6 +4,7 @@ export { Card }     from './Card';
 export { Modal }    from './Modal';
 export { Input }    from './Input';
 export { Select }   from './Select';
+export { SearchableSelect } from './SearchableSelect';
 export { Textarea } from './Textarea';
 export { ScoreBar }        from './ScoreBar';
 export { TableScrollHint } from './TableScrollHint';
