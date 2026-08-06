@@ -26,14 +26,24 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const margin = 8;
+    const gap = 4;
     // Dropdown en az 240px (ama ekrandan taşmadan) — dar mobil kutularda isimler kesilmesin
     const width = Math.min(window.innerWidth - margin * 2, Math.max(rect.width, 240));
     let left = rect.left;
     if (left + width > window.innerWidth - margin) left = window.innerWidth - margin - width;
     if (left < margin) left = margin;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const top = spaceBelow < 260 ? rect.top - 270 : rect.bottom + 4;
-    setDropPos({ top: Math.max(8, top), left, width });
+
+    const spaceBelow = window.innerHeight - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
+    // Aşağıda yeterli yer yoksa ve yukarıda daha çok yer varsa yukarı aç
+    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+    const cap = (space) => Math.max(160, Math.min(space - gap, 340));
+    if (openUp) {
+      // Tetikleyicinin üstüne çıpala (bottom); kısa içerikte de tetikleyiciye yapışık kalır
+      setDropPos({ bottom: window.innerHeight - rect.top + gap, left, width, maxHeight: cap(spaceAbove) });
+    } else {
+      setDropPos({ top: rect.bottom + gap, left, width, maxHeight: cap(spaceBelow) });
+    }
   }, []);
 
   useEffect(() => { setHighlighted(0); }, [query]);
@@ -90,9 +100,9 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
   const dropdown = open && createPortal(
     <div
       ref={dropdownRef}
-      style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, width: dropPos.width, zIndex: 9999, borderRadius: '10px', overflow: 'hidden', border: `1.5px solid ${C.navy}`, background: '#fff', boxShadow: '0 8px 28px rgba(0,0,0,.16)' }}
+      style={{ position: 'fixed', top: dropPos.top, bottom: dropPos.bottom, left: dropPos.left, width: dropPos.width, maxHeight: dropPos.maxHeight, display: 'flex', flexDirection: 'column', zIndex: 9999, borderRadius: '10px', overflow: 'hidden', border: `1.5px solid ${C.navy}`, background: '#fff', boxShadow: '0 8px 28px rgba(0,0,0,.16)' }}
     >
-      <div style={{ padding: '7px 7px 5px', borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: '7px 7px 5px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
         <div style={{ position: 'relative' }}>
           <svg style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="13" height="13" fill="none" stroke={C.textLight} strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input
@@ -105,7 +115,7 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
           />
         </div>
       </div>
-      <div ref={listRef} onWheel={handleWheel} style={{ overflowY: 'auto', maxHeight: 220 }}>
+      <div ref={listRef} onWheel={handleWheel} style={{ overflowY: 'auto', flex: 1, minHeight: 0 }}>
         {filtered.length === 0
           ? <div style={{ padding: '10px 12px', textAlign: 'center', fontSize: 12, color: C.textLight }}>Sonuç bulunamadı</div>
           : filtered.map((o, i) => (
@@ -121,7 +131,7 @@ export function SearchableSelect({ label, options, value, onChange, onCommit, pl
         }
       </div>
       {filtered.length > 0 && (
-        <div style={{ padding: '3px 12px', fontSize: 10, textAlign: 'right', color: C.textLight, borderTop: `1px solid ${C.border}` }}>
+        <div style={{ padding: '3px 12px', fontSize: 10, textAlign: 'right', color: C.textLight, borderTop: `1px solid ${C.border}`, flexShrink: 0 }}>
           {filtered.length} sonuç · ↑↓ veya tekerlek
         </div>
       )}
