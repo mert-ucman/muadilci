@@ -39,6 +39,17 @@ const LAST_ACTIVITY_KEY = 'muadilci_last_activity';
 // BroadcastChannel mesaj tipi
 const ACTIVITY_MSG = 'user_activity';
 
+// Doğrulanmamış hesap yaşam süresi — functions/index.js → cleanupUnverifiedUsers
+// ile AYNI olmalı. Süresi dolan doğrulanmamış hesabın oturumu açılamaz (giriş
+// yasağı); cron hesabı ≤10 dk içinde zaten siler.
+const UNVERIFIED_TTL_MS = 48 * 60 * 60 * 1000;
+function isUnverifiedExpired(firebaseUser, provider, role) {
+  if (role === 'admin' || role === 'moderator') return false;
+  if (provider === 'google.com' || firebaseUser.emailVerified) return false;
+  const created = new Date(firebaseUser.metadata?.creationTime || 0).getTime();
+  return created > 0 && Date.now() - created >= UNVERIFIED_TTL_MS;
+}
+
 const RESERVED_WORDS = [
   'admin', 'mod', 'moderator', 'moderatör', 'muadilci',
   'support', 'destek', 'official', 'resmi', 'sistem',
@@ -155,6 +166,13 @@ export function AuthProvider({ children }) {
       if (authCallbackGenRef.current !== gen) return; // daha yeni bir callback var
       if (!userData) { setUser(null); setAuthInitialized(true); return; } // deleted hesap → çıkış yapıldı
       const provider = fresh.providerData[0]?.providerId || 'password';
+      // 48 saat doğrulanmamış → oturum açılamaz (cron hesabı zaten siliyor)
+      if (isUnverifiedExpired(fresh, provider, userData.role)) {
+        await signOut(auth);
+        setUser(null);
+        setAuthInitialized(true);
+        return;
+      }
       // Yeni sekme veya sayfa yenilemesinde inaktivite sayacını sıfırla.
       // Yoksa kullanıcı başka bir browser sekmesinde 10+ dk geçirirse bu sekme
       // eski timestamp'i görüp tüm sekmeleri otomatik logout eder.
@@ -222,6 +240,13 @@ export function AuthProvider({ children }) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     const userData = await fetchOrCreateUserDoc(cred.user);
     const provider = cred.user.providerData[0]?.providerId || 'password';
+    // 48 saat doğrulanmamış → giriş yasak (hesap siliniyor)
+    if (isUnverifiedExpired(cred.user, provider, userData?.role)) {
+      await signOut(auth);
+      const err = new Error('Doğrulama süresi (48 saat) doldu. Hesabınız siliniyor; lütfen tekrar üye olun.');
+      err.code = 'auth/account-expired';
+      throw err;
+    }
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     const u = { ...userData, uid: cred.user.uid };
     writeActivityLog(u, 'login', { method: 'email' });

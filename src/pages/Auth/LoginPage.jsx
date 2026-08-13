@@ -67,6 +67,8 @@ export function LoginPage() {
         setErr('E-posta/kullanıcı adı veya şifre hatalı.');
       } else if (e.code === 'auth/too-many-requests') {
         setErr('Çok fazla deneme yapıldı. Lütfen bekleyin.');
+      } else if (e.code === 'auth/account-expired') {
+        setErr('Doğrulama süresi (48 saat) doldu ve hesabınız siliniyor. Lütfen tekrar üye olun.');
       } else {
         setErr('Giriş yapılamadı. Tekrar deneyin.');
       }

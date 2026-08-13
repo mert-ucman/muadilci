@@ -106,16 +106,47 @@ exports.deleteAuthOnUserDeleted = onDocumentUpdated('users/{uid}', async (event)
 });
 
 // ════════════════════════════════════════════════════════════════════════════
-//  Doğrulanmamış hesap temizliği — kayıttan 24 saat sonra hâlâ e-postasını
-//  doğrulamamış kullanıcıları siler (Auth + Firestore users/usernames).
-//  Aksi halde kullanıcı adı sonsuza dek rezerve kalır ve gerçek kullanıcılar
-//  o adı hiç alamaz.
+//  Doğrulanmamış hesap temizliği — kayıttan 48 saat sonra hâlâ e-postasını
+//  doğrulamamış kullanıcıları VE tüm içeriklerini kalıcı olarak siler.
+//  Silinenler: Auth hesabı + users belgesi (+ favorites/perfumeLists alt
+//  koleksiyonları) + usernames rezervasyonu (serbest kalır) + publicProfiles +
+//  kullanıcının tüm reviews belgeleri (muadil sayaçları düzeltilir).
+//  10 dakikada bir çalışır → 48 saat dolan hesaplar neredeyse anında temizlenir.
 // ════════════════════════════════════════════════════════════════════════════
 
-const UNVERIFIED_TTL_MS = 24 * 60 * 60 * 1000;
+const UNVERIFIED_TTL_MS = 48 * 60 * 60 * 1000;
+
+// Bir kullanıcının tüm yorumlarını siler ve ilgili muadillerin reviewCount
+// sayacını düşürür (yorum oluşturmada +1 yapıldığı için tam tersini uygular).
+async function purgeUserReviews(db, uid) {
+  const snap = await db.collection('reviews').where('userId', '==', uid).get();
+  if (snap.empty) return;
+
+  // Muadil başına silinen yorum sayısını topla
+  const perMuadil = new Map();
+  for (const d of snap.docs) {
+    const mId = d.data().muadilId || String(d.data().muadilPerfumeId ?? '');
+    if (mId) perMuadil.set(mId, (perMuadil.get(mId) ?? 0) + 1);
+  }
+
+  // Yorumları 490'lık parçalarla sil (batch limiti 500)
+  const docs = snap.docs;
+  for (let i = 0; i < docs.length; i += 490) {
+    const batch = db.batch();
+    docs.slice(i, i + 490).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  // Muadil sayaçlarını düşür (avg* dokunulmaz — mevcut adminDeleteReview ile aynı)
+  await Promise.all([...perMuadil.entries()].map(([mId, n]) =>
+    db.collection('muadils').doc(mId)
+      .update({ reviewCount: admin.firestore.FieldValue.increment(-n) })
+      .catch(() => { /* muadil silinmiş olabilir */ })
+  ));
+}
 
 exports.cleanupUnverifiedUsers = onSchedule(
-  { schedule: 'every 60 minutes', region: 'us-central1', timeZone: 'Europe/Istanbul' },
+  { schedule: 'every 10 minutes', region: 'us-central1', timeZone: 'Europe/Istanbul' },
   async () => {
     const db = admin.firestore();
     const cutoffMs = Date.now() - UNVERIFIED_TTL_MS;
@@ -141,14 +172,22 @@ exports.cleanupUnverifiedUsers = onSchedule(
           // Admin/moderatör hesapları yanlışlıkla doğrulanmamış görünse bile dokunma
           if (userData && (userData.role === 'admin' || userData.role === 'moderator')) continue;
 
+          // 1) Yorumları ve muadil sayaç etkisini temizle
+          await purgeUserReviews(db, uid);
+
+          // 2) usernames + publicProfiles belgelerini sil
           const batch = db.batch();
-          batch.delete(db.collection('users').doc(uid));
           if (userData?.username) batch.delete(db.collection('usernames').doc(userData.username));
+          batch.delete(db.collection('publicProfiles').doc(uid));
           await batch.commit();
 
+          // 3) users belgesi + alt koleksiyonları (favorites, perfumeLists) rekürsif sil
+          await db.recursiveDelete(db.collection('users').doc(uid));
+
+          // 4) Auth hesabını sil (en son)
           await admin.auth().deleteUser(uid);
           deletedCount++;
-          console.log(`✓ Doğrulanmamış hesap silindi (24s+): ${uid} (${authUser.email ?? ''})`);
+          console.log(`✓ Doğrulanmamış hesap + içerik silindi (48s+): ${uid} (${authUser.email ?? ''})`);
         } catch (e) {
           console.error(`✗ Doğrulanmamış hesap silinemedi (${uid}):`, e);
         }
@@ -291,10 +330,11 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
   const role = userData.role === 'admin' || userData.role === 'moderator' ? userData.role : 'user';
   const isStaff = role === 'admin' || role === 'moderator';
 
-  // ── E-posta doğrulaması (admin muaf — eski kurallarla aynı) ─────────────────
-  if (role !== 'admin' && auth.token.email_verified !== true) {
-    throw new HttpsError('failed-precondition', 'Yorum yapabilmek için e-posta adresinizi doğrulamalısınız.');
-  }
+  // ── E-posta doğrulaması ─────────────────────────────────────────────────────
+  // NOT: Artık doğrulanmamış kullanıcı da yorum yapabilir (ürün kararı). Yorumlar
+  // yine 'pending' (moderatör onayına kadar görünmez) ve rate-limit'lidir. Kullanıcı
+  // e-postasını 48 saat içinde doğrulamazsa cleanupUnverifiedUsers hesabı VE tüm
+  // yorumlarını kalıcı siler. Böylece bot yorumları kalıcı zemin bulamaz.
 
   // ── 1) Yeni hesap 24 saat yasağı (Auth createTime — kurcalanamaz) ──────────
   if (!isStaff) {
@@ -311,10 +351,16 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
     }
   }
 
-  // ── 3) Metin kalite kontrolü (sunucu tarafı kesin kapı) ────────────────────
+  // ── 3) Metin kalite kontrolü — metin OPSİYONEL ─────────────────────────────
+  // Boş (sadece puan) değerlendirme serbest. Metin varsa tam kalite kontrolü
+  // (min 40 karakter, küfür, düşük efor) uygulanır. 40 boşluk/karakter spam'i
+  // trim() ile boş sayılır → sadece puan olarak geçer, metin kaydedilmez.
   const text = String(data?.text ?? '');
-  const v = validateReviewText(text);
-  if (!v.ok) throw new HttpsError('invalid-argument', v.reason);
+  const hasText = text.trim().length > 0;
+  if (hasText) {
+    const v = validateReviewText(text);
+    if (!v.ok) throw new HttpsError('invalid-argument', v.reason);
+  }
 
   // ── 2) IP + kullanıcı bazlı hız limiti (atomik transaction, race-safe) ─────
   const ip = (rawRequest?.ip || rawRequest?.headers?.['x-forwarded-for']?.split(',')[0] || '').trim();
@@ -388,9 +434,10 @@ exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }
     }
 
     const abuseFlag = !!abuseReason;
-    // Moderatör ve admin yorumları otomatik onaylı (doğrudan yayınlanır); diğerleri pending.
-    // Abuse işaretliyse staff bile pending'e düşürülür (gözden geçirme şart).
-    const status = (isStaff && !abuseFlag) ? 'approved' : 'pending';
+    // Otomatik onay: (a) staff yorumu, VEYA (b) metinsiz (sadece puan) değerlendirme —
+    // moderasyona düşecek serbest metin yoktur. Metin varsa insan onayı gerekir → pending.
+    // Abuse işaretliyse her durumda pending (şüpheli hacim → gözden geçirme şart).
+    const status = (!abuseFlag && (isStaff || !hasText)) ? 'approved' : 'pending';
 
     // ── Yorum belgesini yaz (merge: var olanı güncellerken alanları koru) ──
     tx.set(reviewRef, {

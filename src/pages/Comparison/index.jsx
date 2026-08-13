@@ -12,6 +12,8 @@ import { PhotoSlot } from '@/components/shared/PhotoSlot';
 import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
 import { Lightbox } from '@/components/shared/Lightbox';
 import { uploadDataURL } from '@/lib/storage';
+import { savePendingReview, readPendingReview, clearPendingReview } from '@/lib/pendingReview';
+import { AuthPromptModal } from '@/components/shared/AuthPromptModal';
 import { useMuadilComments } from '@/hooks/useMuadilComments';
 import { Badge } from '@/components/ui/Badge';
 import { C, F, FH, FE } from '@/constants/theme';
@@ -163,10 +165,13 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
   const textCheck = validateReviewText(cText);
 
   const submit = () => {
-    if (!cText.trim()) return;
-    const matches = findProfanityMatches(cText);
-    if (matches.length > 0) { setProfanityError(true); setProfanityMatches(matches); return; }
-    if (!textCheck.ok) { setTextError(textCheck.reason); return; }
+    // Metin OPSİYONEL: yalnızca doluysa küfür + kalite (min 40) kontrolü uygulanır.
+    if (cText.trim()) {
+      const matches = findProfanityMatches(cText);
+      if (matches.length > 0) { setProfanityError(true); setProfanityMatches(matches); return; }
+      if (!textCheck.ok) { setTextError(textCheck.reason); return; }
+    }
+    // Zorunlu tek soru: orijinal kokuyu kokladın mı? (puanlar zaten hep set)
     if (cOwnsOriginal === null) { setOwnsOriginalError(true); return; }
     if (hasPhoto && !cConsent) { setConsentError(true); return; }
     onSubmit({
@@ -194,13 +199,18 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
       <textarea
         value={cText}
         onChange={(e) => { setCText(e.target.value); if (profanityError) { const m = findProfanityMatches(e.target.value); setProfanityError(m.length > 0); setProfanityMatches(m); } if (textError) setTextError(''); }}
-        placeholder="Deneyiminizi en az 40 karakterle paylaşın..."
+        placeholder="Bu muadili merak edenlere yol göster: orijinaline ne kadar yakın, nasıl kokuyor, ne zaman kullanılır? (opsiyonel)"
         rows={3}
         className="w-full rounded-lg px-3 py-[10px] text-[14px] outline-none resize-none box-border transition-[border-color] duration-200"
         style={{ border: `1px solid ${(profanityError || textError) ? C.red : C.border}`, color: C.text, background: C.card, marginBottom: (profanityError || textError) ? '6px' : '6px' }}
       />
-      <div className="flex justify-end mb-3 text-[11px]" style={{ color: cText.trim().length < REVIEW_MIN_LENGTH ? C.textLight : C.green }}>
-        {cText.trim().length}/{REVIEW_MIN_LENGTH} karakter
+      <div className="flex justify-between items-center gap-2 mb-3 text-[11px] flex-wrap">
+        <span style={{ color: C.textLight }}>Yorum opsiyonel — sadece puan verip geçebilirsin.</span>
+        {cText.trim().length > 0 && (
+          <span style={{ color: cText.trim().length < REVIEW_MIN_LENGTH ? C.red : C.green }}>
+            {cText.trim().length}/{REVIEW_MIN_LENGTH} karakter
+          </span>
+        )}
       </div>
       {profanityError && (
         <div className="flex items-start gap-2 rounded-lg px-3 py-2 mb-3 text-[13px] font-semibold" style={{ background: '#fef2f2', border: '1px solid #fecaca', color: C.red }}>
@@ -279,12 +289,16 @@ function CommentForm({ initialValues, isEditMode, isMod, isAdmin, sm, ownsOrigin
       <div className="text-[12px] text-(--color-text-mid) rounded-lg px-3 py-2 mb-2" style={{ background: C.blueBg, border: '1px solid #bfdbfe' }}>
         Verdiğiniz puanlar parfümün genel puan ortalamasına etki edecektir.
       </div>
-      {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.orange }}>Bu yorum moderatör onayından sonra yayınlanacak.</div>}
+      {!isMod && !isAdmin && (
+        cText.trim()
+          ? <div className="text-[12px] mb-2" style={{ color: C.orange }}>Yorum yazdığın için değerlendirmen moderatör onayından sonra yayınlanacak.</div>
+          : <div className="text-[12px] mb-2" style={{ color: C.textMid }}>Sadece puan verdiğin için değerlendirmen anında yayınlanır; puanların genel ortalamaya birkaç dakika içinde yansır.</div>
+      )}
       {!isMod && !isAdmin && <div className="text-[12px] mb-2" style={{ color: C.textMid }}>Yorumu düzenlemeniz için 5dk süreniz vardır.</div>}
       {submitError && <div className="text-[13px] rounded-lg px-3 py-2 mb-2" style={{ color: C.red, background: '#fff5f5', border: '1px solid #fecaca' }}>{submitError}</div>}
       <div className="flex gap-2 justify-end">
         <Btn variant="secondary" size="sm" onClick={onCancel} disabled={submitLoading}>İptal</Btn>
-        <Btn size="sm" onClick={submit} disabled={!cText.trim() || profanityError || !textCheck.ok || submitLoading}>
+        <Btn size="sm" onClick={submit} disabled={submitLoading || (!!cText.trim() && (profanityError || !textCheck.ok))}>
           {submitLoading
             ? <span className="flex items-center gap-2"><span className="w-[14px] h-[14px] rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />Gönderiliyor…</span>
             : (isEditMode ? 'Güncelle' : 'Gönder')}
@@ -307,7 +321,7 @@ export function ComparisonPage({ queryParams }) {
   });
   const { navigate } = useRouter();
   const { perfumes, muadilPerfumes, brands, comments, users, addComment, updateComment, deleteComment, toggleCompFavorite, isCompFavorite, toggleMuadilFavorite, isMuadilFavorite, incrementCompareCount, toggleMuadilRecommend, getMuadilRecommendStatus, ownsOriginalPerfume } = useData();
-  const { user, isMod, isAdmin } = useAuth();
+  const { user, isMod, isAdmin, sendVerificationEmail } = useAuth();
   const { w, sm, md, lg, xl, xs } = useW();
 
   // Onaylı yorumlardan parfüm/muadil fotoğraf haritası (yeni → eski)
@@ -347,6 +361,14 @@ export function ComparisonPage({ queryParams }) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editInitials, setEditInitials] = useState(null);
   const [submitError, setSubmitError] = useState('');
+  // Doğrulanmamış e-posta kullanıcısı yorum gönderince gösterilen uyarı
+  const [showVerifyWarn, setShowVerifyWarn] = useState(false);
+  const [verifyResent, setVerifyResent] = useState(false);
+  // Gönderim sonrası bilgi: metinsiz → puan yansıma, metinli → moderasyon
+  const [postSubmitMsg, setPostSubmitMsg] = useState(null);
+  // Anonim kullanıcı Gönder'e basınca açılan giriş/üye-ol modalı
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const isUnverified = !!user && user.emailVerified === false && user.provider !== 'google.com' && user.role !== 'admin' && user.role !== 'moderator';
   const [submitLoading, setSubmitLoading] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
@@ -473,31 +495,39 @@ export function ComparisonPage({ queryParams }) {
   const seasonDist = buildDist(SEASON_OPTS, 'seasons');
   const occasionDist = buildDist(OCCASION_OPTS, 'occasions');
 
-  const submitC = async (data) => {
+  // Formdan gelen ham veriyi payload'a çevir (görseller henüz dataURL olabilir)
+  const buildPayload = (data) => ({
+    similarity: data.similarity, projection: data.projection, longevity: data.longevity,
+    text: data.text, recommend: data.recommend,
+    blindBuy: data.blindBuy ?? null, ownsOriginal: data.ownsOriginal ?? null,
+    seasons: data.seasons ?? [], occasions: data.occasions ?? [],
+    originalImage: data.originalImage ?? null, muadilImage: data.muadilImage ?? null,
+    imageConsent: !!data.imageConsent,
+    targetPerfumeId: (selMuadil?.targetPerfumeId ?? selOrigId) ?? null,
+  });
+
+  // Gerçek gönderim — giriş yapılmış olmalı. payload görsel dataURL içerebilir → yüklenir.
+  const doSubmit = async (payload, { isEdit = false } = {}) => {
     if (!user || !selMuadil) return;
     setSubmitError('');
     setSubmitLoading(true);
     try {
-      // Yeni eklenen data URL'leri Storage'a yükle (zaten http URL ise olduğu gibi bırakılır)
-      let originalImage = data.originalImage ?? null;
-      let muadilImage = data.muadilImage ?? null;
+      let originalImage = payload.originalImage ?? null;
+      let muadilImage = payload.muadilImage ?? null;
       if (originalImage?.startsWith('data:')) originalImage = await uploadDataURL(originalImage, `reviews/${user.uid}`);
       if (muadilImage?.startsWith('data:')) muadilImage = await uploadDataURL(muadilImage, `reviews/${user.uid}`);
+      const finalPayload = { ...payload, originalImage, muadilImage };
 
-      const payload = {
-        similarity: data.similarity, projection: data.projection, longevity: data.longevity,
-        text: data.text, recommend: data.recommend,
-        blindBuy: data.blindBuy ?? null, ownsOriginal: data.ownsOriginal ?? null,
-        seasons: data.seasons ?? [], occasions: data.occasions ?? [],
-        originalImage, muadilImage,
-        imageConsent: !!data.imageConsent,
-        targetPerfumeId: selMuadil.targetPerfumeId ?? selOrigId ?? null,
-      };
-
-      if (isEditMode && userReview) {
-        await updateComment(userReview.id, payload);
+      if (isEdit && userReview) {
+        await updateComment(userReview.id, finalPayload);
       } else {
-        await addComment({ muadilPerfumeId: selMuadil.id, ...payload, status: isMod ? 'approved' : 'pending' });
+        const result = await addComment({ muadilPerfumeId: selMuadil.id, ...finalPayload, status: isMod ? 'approved' : 'pending' });
+        // Doğrulanmamış kullanıcı: her yorumdan sonra 48 saat uyarısı
+        if (isUnverified) { setVerifyResent(false); setShowVerifyWarn(true); }
+        // Metinsiz (otomatik onaylı) → puan yansıma bilgisi; metinli → moderasyon bilgisi
+        setPostSubmitMsg(result?.status === 'approved'
+          ? { kind: 'approved', text: 'Değerlendirmen yayınlandı. Verdiğin puanlar genel ortalamaya birkaç dakika içinde yansıyacak.' }
+          : { kind: 'pending', text: 'Yorumun alındı ve moderatör onayından sonra yayınlanacak.' });
       }
       setShowCForm(false); setIsEditMode(false); setEditInitials(null);
     } catch (e) {
@@ -507,6 +537,34 @@ export function ComparisonPage({ queryParams }) {
       setSubmitLoading(false);
     }
   };
+
+  const submitC = async (data) => {
+    if (!selMuadil) return;
+    const payload = buildPayload(data);
+    // Anonim kullanıcı + yeni değerlendirme → taslağı sakla, giriş/üye-ol modalını aç.
+    // Giriş sonrası aşağıdaki resume effect taslağı otomatik gönderir.
+    if (!user && !isEditMode) {
+      savePendingReview({
+        muadilId: String(selMuadil.id),
+        returnUrl: `/karsilastir?orijinal=${selOrigId || selMuadil.targetPerfumeId || ''}&muadil=${selMuadil.id}`,
+        payload,
+      });
+      setAuthPromptOpen(true);
+      return;
+    }
+    await doSubmit(payload, { isEdit: isEditMode });
+  };
+
+  // Giriş/üyelik tamamlanınca bekleyen taslağı otomatik gönder (bu muadile aitse)
+  useEffect(() => {
+    if (!user || !selMuadil) return;
+    const d = readPendingReview();
+    if (!d || String(d.muadilId) !== String(selMuadil.id)) return;
+    clearPendingReview();          // hemen temizle → çift gönderimi önle
+    setAuthPromptOpen(false);
+    doSubmit(d.payload);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, selMuadil?.id]);
 
   const openEditForm = () => {
     if (!userReview || !canEditReview) return;
@@ -673,7 +731,7 @@ export function ComparisonPage({ queryParams }) {
                   <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-semibold"
                     style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
                     <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
-                      <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.key === 'tumu' ? 'Tüm ortamlar uygun' : o.label}
+                      <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.key === 'tumu' ? 'Tüm ortamlara uygun' : o.label}
                     </p>
                   </div>
                 ))}
@@ -1103,10 +1161,41 @@ export function ComparisonPage({ queryParams }) {
             <Card style={{ padding: '22px' }}>
               <div className="flex justify-between items-center mb-[18px] pb-[14px]" style={{ borderBottom: `1px solid ${C.border}` }}>
                 <span className="font-bold text-[16px] text-(--color-navy)">Yorumlar ({muadilCommentsTotal})</span>
-                {user && !showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Yorum Ekle</Btn>}
+                {!showCForm && !userReview && <Btn size="sm" variant="ghost" onClick={() => setShowCForm(true)}>+ Değerlendir</Btn>}
                 {user && !showCForm && userReview && canEditReview && <Btn size="sm" variant="ghost" onClick={openEditForm}>Yorumunu Düzenle</Btn>}
                 {user && !showCForm && userReview && !canEditReview && <span className="text-[12px] text-(--color-text-light)">Düzenleme süresi doldu</span>}
               </div>
+
+              {showVerifyWarn && isUnverified && (
+                <div className="rounded-[10px] px-[14px] py-[12px] mb-4 flex items-start gap-3 flex-wrap"
+                  style={{ background: 'var(--color-orange-bg)', border: '1px solid #f0c878', color: 'var(--color-orange)' }}>
+                  <div className="flex-1 min-w-[220px] text-[13px] leading-[1.6]">
+                    Yorumun kaydedildi ve moderatör onayından sonra yayınlanacak.
+                    <strong> E-postanı doğrulamazsan 48 saat sonunda hesabın ve tüm yorumların kalıcı olarak silinir.</strong>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {verifyResent
+                      ? <span className="text-[12px] font-semibold" style={{ color: C.green }}>Doğrulama e-postası gönderildi</span>
+                      : <Btn size="sm" onClick={async () => { try { await sendVerificationEmail(); setVerifyResent(true); } catch { /* yoksay */ } }}>Doğrulama e-postası gönder</Btn>}
+                    <button onClick={() => setShowVerifyWarn(false)} aria-label="Kapat"
+                      className="bg-transparent border-none cursor-pointer text-[18px] leading-none" style={{ color: 'var(--color-orange)', fontFamily: F }}>×</button>
+                  </div>
+                </div>
+              )}
+
+              {postSubmitMsg && (
+                <div className="rounded-[10px] px-[14px] py-[12px] mb-4 flex items-start gap-3"
+                  style={{
+                    background: postSubmitMsg.kind === 'approved' ? C.greenBg : C.blueBg,
+                    border: `1px solid ${postSubmitMsg.kind === 'approved' ? C.greenBorder : '#bfdbfe'}`,
+                    color: postSubmitMsg.kind === 'approved' ? C.green : C.blue,
+                  }}>
+                  <div className="flex-1 text-[13px] leading-[1.6]">{postSubmitMsg.text}</div>
+                  <button onClick={() => setPostSubmitMsg(null)} aria-label="Kapat"
+                    className="bg-transparent border-none cursor-pointer text-[18px] leading-none shrink-0"
+                    style={{ color: postSubmitMsg.kind === 'approved' ? C.green : C.blue, fontFamily: F }}>×</button>
+                </div>
+              )}
 
               {muadilCommentsTotal > 0 && (
                 <div className="flex gap-3 flex-wrap" style={{ marginTop: '-8px' }}>
@@ -1154,13 +1243,6 @@ export function ComparisonPage({ queryParams }) {
                 />
               )}
 
-              {!user && (
-                <div className="text-center p-[14px] rounded-[10px] mb-4" style={{ background: '#f9f9fb' }}>
-                  <div className="text-[13px] text-(--color-text-mid) mb-2">Yorum yapmak için giriş yapın</div>
-                  <Btn size="sm" onClick={() => navigate('/giris')}>Giriş Yap</Btn>
-                </div>
-              )}
-
               {userReview && (
                 <>
                   {renderCommentCard(userReview, { pinned: true, innerRef: ownReviewRef })}
@@ -1173,9 +1255,9 @@ export function ComparisonPage({ queryParams }) {
                   <div className="text-(--color-text-light) mb-3" style={{ fontSize: '30px' }}>
                     <FontAwesomeIcon icon={faPenToSquare} />
                   </div>
-                  <div className="text-[15px] font-semibold text-(--color-navy) mb-1" style={{ fontFamily: F }}>Bu karşılaştırma için henüz yorum yok</div>
-                  <div className={`text-[13px] text-(--color-text-light) ${user ? 'mb-4' : ''}`} style={{ fontFamily: F }}>İlk değerlendirmeyi sen yaparak topluluğa yön ver.</div>
-                  {user && <Btn size="sm" onClick={() => setShowCForm(true)}>İlk Yorumu Sen Yap</Btn>}
+                  <div className="text-[15px] font-semibold text-(--color-navy) mb-1" style={{ fontFamily: F }}>Bu karşılaştırma için henüz değerlendirme yok</div>
+                  <div className="text-[13px] text-(--color-text-light) mb-4" style={{ fontFamily: F }}>İlk değerlendirmeyi sen yaparak topluluğa yön ver.</div>
+                  <Btn size="sm" onClick={() => setShowCForm(true)}>İlk Değerlendirmeyi Sen Yap</Btn>
                 </div>
               )}
               {nonOwnMuadilComments.length > 0 && filteredMuadilComments.length === 0 && (
@@ -1209,6 +1291,7 @@ export function ComparisonPage({ queryParams }) {
           onIndex={(i) => setCommentLightbox((prev) => ({ ...prev, index: i }))}
         />
       )}
+      <AuthPromptModal open={authPromptOpen} onClose={() => setAuthPromptOpen(false)} />
     </div>
   );
 }

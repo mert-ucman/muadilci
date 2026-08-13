@@ -5,6 +5,8 @@ import { useData } from '@/contexts/DataContext';
 import { matchRoute, NO_LAYOUT_PATHS } from '@/constants/routes';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { VerificationGate } from '@/components/shared/VerificationGate';
+import { PendingReviewResumer } from '@/components/shared/PendingReviewResumer';
 import { LandingPage } from '@/pages/Landing';
 
 const ComparisonPage    = lazy(() => import('@/pages/Comparison').then(m => ({ default: m.ComparisonPage })));
@@ -16,7 +18,6 @@ const LoginPage         = lazy(() => import('@/pages/Auth/LoginPage').then(m => 
 const RegisterPage      = lazy(() => import('@/pages/Auth/RegisterPage').then(m => ({ default: m.RegisterPage })));
 const ForgotPasswordPage    = lazy(() => import('@/pages/Auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage     = lazy(() => import('@/pages/Auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
-const EmailVerificationPage = lazy(() => import('@/pages/Auth/EmailVerificationPage').then(m => ({ default: m.EmailVerificationPage })));
 const UsernameSetupPage     = lazy(() => import('@/pages/Auth/UsernameSetupPage').then(m => ({ default: m.UsernameSetupPage })));
 const ProfilePage       = lazy(() => import('@/pages/Profile').then(m => ({ default: m.ProfilePage })));
 const ModerationPage    = lazy(() => import('@/pages/Moderation').then(m => ({ default: m.ModerationPage })));
@@ -112,10 +113,9 @@ export function App() {
   // (Aksi halde veri gelmeden sayfalar "Marka bulunamadı" / boş kart gösteriyordu.)
   if (authLoading || dataLoading) return <LoadingScreen logoUrl={logoUrl} />;
 
-  // E-posta doğrulama gate — Google kullanıcıları, admin ve şifre sıfırlama hariç
-  if (user && !user.emailVerified && user.provider !== 'google.com' && !isAdmin && basePath !== '/sifre-yenile') {
-    return <EmailVerificationPage />;
-  }
+  // NOT: Doğrulanmamış e-posta kullanıcıları artık siteden KİLİTLENMEZ. Siteyi
+  // gezip yorum yapabilirler; <VerificationGate/> sürekli uyarır ve 48 saat içinde
+  // doğrulanmazsa cleanupUnverifiedUsers hesabı + tüm yorumları siler.
 
   // Google ile giriş yapan kullanıcılar için kullanıcı adı seçim ekranı
   if (user && user.provider === 'google.com' && !user.username) {
@@ -137,6 +137,8 @@ export function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
+      <VerificationGate />
+      <PendingReviewResumer />
       {!noLayout && <Navbar />}
       <div style={{ flex: 1 }}>
         <Suspense fallback={<PageSpinner />}>

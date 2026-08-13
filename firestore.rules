@@ -85,8 +85,8 @@ service cloud.firestore {
     }
 
     // ── Reviews ───────────────────────────────────────────────────────────
-    // Metin en az 40 karakter olmalı (spam/düşük efor sunucu kapısı).
-    function validReviewLen(t) { return t is string && t.size() >= 40 && t.size() <= 4000; }
+    // Metin OPSİYONEL: boş (sadece puan) VEYA 40–4000 karakter olmalı.
+    function validReviewLen(t) { return t is string && (t.size() == 0 || (t.size() >= 40 && t.size() <= 4000)); }
     // Sahip yalnızca gönderimden sonraki 5 dakika içinde düzenleyebilir.
     function withinEditWindow() {
       return resource.data.createdAt is timestamp

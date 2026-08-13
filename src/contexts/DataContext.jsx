@@ -438,22 +438,25 @@ export function DataProvider({ children }) {
     const muadil = muadilPerfumes.find((m) => String(m.id) === muadilId);
     const reviewId = res?.data?.id || `${user?.uid}_${muadilId}`;
 
-    // Moderatör/admin'e anlık bildirim
-    try {
-      await addDoc(col('notifications'), {
-        type: 'new_review',
-        forStaff: true,
-        userId: null,
-        reviewId,
-        muadilId,
-        muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
-        authorName: user?.username ? `@${user.username}` : (user?.name ?? ''),
-        readBy: [],
-        read: false,
-        createdAt: serverTimestamp(),
-      });
-    } catch (e) {
-      // bildirim hatası yorum gönderimini engellemesin
+    // Moderatör/admin'e anlık bildirim — yalnızca moderasyon gerektiren (pending)
+    // yorumlar için. Metinsiz (otomatik onaylı) değerlendirmede kuyruğa iş düşmez.
+    if (res?.data?.status !== 'approved') {
+      try {
+        await addDoc(col('notifications'), {
+          type: 'new_review',
+          forStaff: true,
+          userId: null,
+          reviewId,
+          muadilId,
+          muadilName: muadil ? `${muadil.brandName} ${muadil.name}` : '',
+          authorName: user?.username ? `@${user.username}` : (user?.name ?? ''),
+          readBy: [],
+          read: false,
+          createdAt: serverTimestamp(),
+        });
+      } catch (e) {
+        // bildirim hatası yorum gönderimini engellemesin
+      }
     }
 
     // Aktivite logu
@@ -467,6 +470,8 @@ export function DataProvider({ children }) {
     });
     // Muadil istatistikleri sunucu (submitReview) tarafında güncellenir; real-time
     // dinleyici güncel değerleri otomatik getirir.
+    // { ok, status, abuseFlag, id } → çağıran (submitC) onay/moderasyon mesajını seçer.
+    return res?.data;
   };
 
   const approveComment = async (id) => {

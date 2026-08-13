@@ -3,9 +3,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Btn } from '@/components/ui';
 
 const RESEND_COOLDOWN = 60; // saniye
+// NOT: Bu tam-ekran sayfa artık App.jsx tarafından RENDER EDİLMİYOR — yerini
+// <VerificationGate/> (siteyi kilitlemeyen modal + şerit) aldı. Dosya, ileride
+// bağımsız bir rota gerekirse diye korunuyor.
 // Sunucu tarafında (functions/index.js → cleanupUnverifiedUsers) doğrulanmamış
-// hesaplar kayıttan 24 saat sonra otomatik silinir — bu değer o süreyle eşleşmeli.
-const ACCOUNT_TTL_MS = 24 * 60 * 60 * 1000;
+// hesaplar kayıttan 48 saat sonra otomatik silinir — bu değer o süreyle eşleşmeli.
+const ACCOUNT_TTL_MS = 48 * 60 * 60 * 1000;
 
 function formatRemaining(ms) {
   const totalMinutes = Math.max(0, Math.floor(ms / 60000));
