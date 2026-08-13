@@ -1,6 +1,7 @@
 const { onDocumentUpdated, onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
@@ -8,6 +9,12 @@ const zlib = require('zlib');
 const { validateReviewText } = require('./reviewValidation');
 
 admin.initializeApp();
+
+// ── Maliyet tavanı ───────────────────────────────────────────────────────────
+// Tüm fonksiyonların aynı anda çalışabilecek örnek (instance) sayısını sınırlar.
+// Bir istek seli / maliyet DoS'unda fonksiyonlar sonsuza kadar ölçeklenip fatura
+// patlatamaz; bu sayının üstündeki eşzamanlı istekler kuyruğa alınır.
+setGlobalOptions({ maxInstances: 10 });
 
 // IP hash'lemede kullanılacak sunucu sırrı (raw IP asla saklanmaz).
 // Deploy öncesi: firebase functions:secrets:set IP_HASH_SALT
@@ -229,7 +236,7 @@ async function verifyPassword(apiKey, email, password) {
   return 'bad';                                  // INVALID_LOGIN_CREDENTIALS / INVALID_PASSWORD / EMAIL_NOT_FOUND
 }
 
-exports.resolveLoginEmail = onCall({ secrets: [WEB_API_KEY], region: 'us-central1' }, async (request) => {
+exports.resolveLoginEmail = onCall({ secrets: [WEB_API_KEY], region: 'us-central1', enforceAppCheck: true }, async (request) => {
   const username = String(request.data?.username ?? '').toLowerCase().trim();
   const password = String(request.data?.password ?? '');
   if (!username || !password) {
@@ -310,7 +317,7 @@ function hashIp(ip, salt) {
   return crypto.createHmac('sha256', `${salt}:${day}`).update(ip || 'unknown').digest('hex').slice(0, 32);
 }
 
-exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1' }, async (request) => {
+exports.submitReview = onCall({ secrets: [IP_HASH_SALT], region: 'us-central1', enforceAppCheck: true }, async (request) => {
   const { auth, data, rawRequest } = request;
 
   // ── Kimlik ─────────────────────────────────────────────────────────────────
