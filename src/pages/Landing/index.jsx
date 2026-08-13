@@ -6,6 +6,7 @@ import { BrandsBandSection }    from './BrandsBandSection';
 import { TestimonialsSection }  from './TestimonialsSection';
 import { CTASection }           from './CTASection';
 import { PageNavigator }        from '@/components/ui/PageNavigator';
+import { DailyComparisonModal } from '@/components/shared/DailyComparisonModal';
 import { useSeo } from '@/lib/seo';
 
 const SECTIONS = [
@@ -25,6 +26,7 @@ export function LandingPage() {
   });
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
+      <DailyComparisonModal />
       <PageNavigator sections={SECTIONS} />
       <div id="hero"><HeroSection /></div>
       <div id="how"><HowItWorksSection /></div>
