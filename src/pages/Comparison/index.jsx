@@ -673,7 +673,7 @@ export function ComparisonPage({ queryParams }) {
                   <div key={o.key} className="inline-flex items-center justify-center gap-1 rounded-[20px] px-2 py-1 font-semibold"
                     style={{ background: C.surface, border: `1px solid ${C.border}`, color: C.textMid }}>
                     <p className="m-0 p-0 w-max flex items-center gap-1 cap-center leading-none">
-                      <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.label}
+                      <FontAwesomeIcon icon={o.icon} style={{ fontSize: '10px' }} /> {o.key === 'tumu' ? 'Tüm ortamlar uygun' : o.label}
                     </p>
                   </div>
                 ))}
