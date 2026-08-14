@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { VerificationGate } from '@/components/shared/VerificationGate';
 import { PendingReviewResumer } from '@/components/shared/PendingReviewResumer';
+import { DailyComparison } from '@/components/shared/DailyComparisonModal';
 import { LandingPage } from '@/pages/Landing';
 
 const ComparisonPage    = lazy(() => import('@/pages/Comparison').then(m => ({ default: m.ComparisonPage })));
@@ -140,6 +141,7 @@ export function App() {
       <VerificationGate />
       <PendingReviewResumer />
       {!noLayout && <Navbar />}
+      {!noLayout && <DailyComparison />}
       <div style={{ flex: 1 }}>
         <Suspense fallback={<PageSpinner />}>
           <Page params={params} queryParams={query} />
