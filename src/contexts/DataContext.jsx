@@ -56,8 +56,11 @@ function cacheRead(key) {
 // okuma ücreti yok — yalnızca staff canlı Firestore dinler (admin panel anlık).
 const catalogFileUrl = (name) =>
   `https://firebasestorage.googleapis.com/v0/b/${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}/o/${encodeURIComponent(`catalog/${name}`)}?alt=media`;
-const CATALOG_URL = catalogFileUrl('catalog.json');
-const REVIEWS_URL = catalogFileUrl('reviews.json');
+// PROD'da katalog Hosting CDN arkasından (/data/*) servis edilir: edge-cache'li,
+// same-origin (CORS gerekmez) ve maliyet-DoS'a dayanıklı. DEV'de lokal Hosting
+// olmadığından doğrudan Storage URL'i kullanılır (bkz. functions → exports.catalog).
+const CATALOG_URL = import.meta.env.PROD ? '/data/catalog.json' : catalogFileUrl('catalog.json');
+const REVIEWS_URL = import.meta.env.PROD ? '/data/reviews.json' : catalogFileUrl('reviews.json');
 
 function cacheWrite(key, data) {
   try {

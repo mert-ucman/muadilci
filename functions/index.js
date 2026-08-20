@@ -1,6 +1,6 @@
 const { onDocumentUpdated, onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineSecret } = require('firebase-functions/params');
@@ -658,6 +658,51 @@ exports.rebuildCatalogCron = onSchedule(
     await rebuildIfDirty(meta, metaRef, {
       flagField: 'reviewsDirty', markField: 'reviewsMarkedAt', path: REVIEWS_PATH, rebuild: rebuildReviewsCatalog,
     });
+  },
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  KATALOG SERVİSİ — Hosting CDN arkasından (Denial-of-Wallet maliyet azaltma)
+//  ----------------------------------------------------------------------------
+//  Ziyaretçiler kataloğu ham Storage URL'inden (firebasestorage.googleapis.com)
+//  çekince her istek CDN'siz, faturalık egress oluyordu. Bu fonksiyon aynı
+//  gzip'li dosyayı okur ama Firebase Hosting rewrite'ı üzerinden servis edilir:
+//  Hosting global CDN'i (Fastly) yanıtı s-maxage boyunca edge'de cache'ler →
+//  tekrarlı/sel istekler bucket'a hiç ulaşmaz, edge'den karşılanır.
+//   • Global maxInstances (10) throughput'u sınırlar (ham GCS sonsuz ölçeklenirdi)
+//   • 60 sn'lik bellek-içi cache: cache-bust denemelerinde bile Storage'ı dövmez
+//   • Cache-Control: max-age (tarayıcı) + s-maxage (CDN edge)
+//  Rewrite: /data/catalog.json ve /data/reviews.json → bu fonksiyon (firebase.json)
+// ════════════════════════════════════════════════════════════════════════════
+
+const _catalogMem = { catalog: null, reviews: null };  // { buf, ts } bellek cache
+const CATALOG_MEM_TTL_MS = 60 * 1000;
+
+exports.catalog = onRequest(
+  { region: 'us-central1', maxInstances: 5, concurrency: 40 },
+  async (req, res) => {
+    const isReviews = req.path.includes('reviews');
+    const key  = isReviews ? 'reviews' : 'catalog';
+    const path = isReviews ? REVIEWS_PATH : CATALOG_PATH;
+
+    try {
+      let entry = _catalogMem[key];
+      if (!entry || Date.now() - entry.ts > CATALOG_MEM_TTL_MS) {
+        // decompress:false → Storage'daki gzip baytlarını olduğu gibi al (küçük payload)
+        const [buf] = await admin.storage().bucket().file(path).download({ decompress: false });
+        entry = { buf, ts: Date.now() };
+        _catalogMem[key] = entry;
+      }
+      res.set('Content-Type', 'application/json; charset=utf-8');
+      res.set('Content-Encoding', 'gzip');           // içerik gzip'li servis edilir
+      res.set('Vary', 'Accept-Encoding');
+      // Tarayıcı 2 dk, CDN edge 5 dk cache'ler (cron periyoduyla uyumlu)
+      res.set('Cache-Control', 'public, max-age=120, s-maxage=300');
+      res.status(200).end(entry.buf);
+    } catch (e) {
+      console.error(`✗ Katalog servis hatası (${path}):`, e.message);
+      res.status(503).json({ error: 'catalog unavailable' });
+    }
   },
 );
 
