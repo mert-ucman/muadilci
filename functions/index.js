@@ -1,11 +1,13 @@
 const { onDocumentUpdated, onDocumentCreated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onMessagePublished } = require('firebase-functions/v2/pubsub');
 const { setGlobalOptions } = require('firebase-functions/v2');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 const zlib = require('zlib');
+const { CloudBillingClient } = require('@google-cloud/billing');
 const { validateReviewText } = require('./reviewValidation');
 
 admin.initializeApp();
@@ -656,5 +658,78 @@ exports.rebuildCatalogCron = onSchedule(
     await rebuildIfDirty(meta, metaRef, {
       flagField: 'reviewsDirty', markField: 'reviewsMarkedAt', path: REVIEWS_PATH, rebuild: rebuildReviewsCatalog,
     });
+  },
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MALİYET TAVANI — SON GÜVENLİK AĞI (Denial-of-Wallet'a karşı kesin çözüm)
+//  ----------------------------------------------------------------------------
+//  Cloud Billing Budget, aylık maliyet belirlenen tavanı aşınca 'billing-alerts'
+//  Pub/Sub topic'ine bir mesaj yayınlar. Bu fonksiyon o mesajı okur; GERÇEK maliyet
+//  bütçeyi aştıysa PROJENİN FATURALANDIRMASINI TAMAMEN KAPATIR (billing account'u
+//  projeden ayırır). Sonuç: fatura senin belirlediğin tavanda durur — ama proje de
+//  durur (site offline olur, tüm servisler kesilir). Yeniden açmak için Cloud
+//  Console → Billing'den faturayı ELLE bağlaman gerekir. Bilinçli "para mı, erişim
+//  mi" tercihidir: felaket faturayı imkânsız kılar.
+//
+//  ÖNEMLİ: Bütçe verisi anlık değildir (Google tarafında saatlerce gecikebilir),
+//  bu yüzden tavanı ihtiyacının biraz ALTINA kur — bir miktar aşım payı bırak.
+//
+//  KURULUM (kod dışı, bir kerelik — bkz. functions/BILLING_CAP_SETUP.md):
+//   1) Cloud Billing API'yi etkinleştir
+//   2) Bütçe oluştur → bildirimi 'billing-alerts' Pub/Sub topic'ine bağla
+//   3) Function runtime servis hesabına "Billing Account Administrator" rolü ver
+// ════════════════════════════════════════════════════════════════════════════
+
+const BILLING_TOPIC = 'billing-alerts';
+
+exports.stopBilling = onMessagePublished(
+  { topic: BILLING_TOPIC, region: 'us-central1', maxInstances: 1, retry: false },
+  async (event) => {
+    // Bütçe bildirimi JSON'u: { costAmount, budgetAmount, currencyCode, ... }
+    let data;
+    try {
+      data = event.data.message.json;
+    } catch {
+      console.error('✗ Bütçe mesajı çözümlenemedi (JSON değil).');
+      return;
+    }
+
+    const cost   = Number(data?.costAmount ?? 0);
+    const budget = Number(data?.budgetAmount ?? 0);
+    const cur    = data?.currencyCode ?? '';
+    console.log(`Bütçe bildirimi alındı: maliyet=${cost} / tavan=${budget} ${cur}`);
+
+    // Yalnızca GERÇEK maliyet tavanı GEÇTİĞİNDE tetikle (öngörü/ara eşikler değil)
+    if (!(cost > budget) || budget <= 0) {
+      console.log('— Tavan aşılmadı, işlem yok.');
+      return;
+    }
+
+    const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
+    if (!projectId) {
+      console.error('✗ Proje kimliği okunamadı (GCLOUD_PROJECT boş).');
+      return;
+    }
+    const projectName = `projects/${projectId}`;
+    const billing = new CloudBillingClient();
+
+    try {
+      const [info] = await billing.getProjectBillingInfo({ name: projectName });
+      if (!info.billingEnabled) {
+        console.log('— Faturalandırma zaten kapalı, işlem yok.');
+        return;
+      }
+
+      // billingAccountName'i boşaltmak = faturayı projeden ayırmak = kapatmak
+      await billing.updateProjectBillingInfo({
+        name: projectName,
+        projectBillingInfo: { billingAccountName: '' },
+      });
+      console.error(`!!! MALİYET TAVANI AŞILDI (${cost} > ${budget} ${cur}). ` +
+                    `Faturalandırma KAPATILDI: ${projectName}. Yeniden açmak için Cloud Console → Billing.`);
+    } catch (e) {
+      console.error('✗ Faturalandırma kapatılamadı:', e.message);
+    }
   },
 );
