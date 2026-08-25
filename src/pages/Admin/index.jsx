@@ -936,7 +936,7 @@ async function getCroppedImg(imageSrc, pixelCrop, outputW, outputH) {
     pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height,
     0, 0, outputW, outputH,
   );
-  return canvas.toDataURL('image/jpeg', 0.88);
+  return canvas.toDataURL('image/webp', 0.88);
 }
 
 /* ─── Perfume Edit Modal ──────────────────────────────────────────────── */
