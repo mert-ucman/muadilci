@@ -6,7 +6,7 @@ import { useW } from '@/hooks/useW';
 import { calcScores } from '@/utils/scoring';
 import { containsProfanity, findProfanityMatches } from '@/utils/profanity';
 import { validateReviewText, REVIEW_MIN_LENGTH } from '@/utils/reviewValidation';
-import { Card, Select, Btn, ScoreBar } from '@/components/ui';
+import { Card, Select, SearchableSelect, Btn, ScoreBar } from '@/components/ui';
 import { GenderBadge } from '@/components/shared';
 import { PhotoSlot } from '@/components/shared/PhotoSlot';
 import { PerfumeGallery } from '@/components/shared/PerfumeGallery';
@@ -585,10 +585,10 @@ export function ComparisonPage({ queryParams }) {
     setShowCForm(true);
   };
 
-  const origBrandOpts = [{ value: '', label: 'Orijinal Marka Seçin' }, ...origBrands.map((b) => ({ value: b, label: b }))];
-  const origPerfOpts = [{ value: '', label: 'Orijinal Parfüm Seçin' }, ...origFiltered.map((p) => ({ value: String(p.id), label: p.name }))];
-  const mBrandOpts = [{ value: '', label: 'Muadil Marka Seçin' }, ...mBrands.map((b) => ({ value: b, label: b }))];
-  const mPerfOpts = [{ value: '', label: 'Muadil Parfüm Seçin' }, ...mFiltered.map((m) => ({ value: String(m.id), label: m.name }))];
+  const origBrandOpts = origBrands.map((b) => ({ value: b, label: b }));
+  const origPerfOpts = origFiltered.map((p) => ({ value: String(p.id), label: p.name }));
+  const mBrandOpts = mBrands.map((b) => ({ value: b, label: b }));
+  const mPerfOpts = mFiltered.map((m) => ({ value: String(m.id), label: m.name }));
 
   // Tek bir yorum kartını render eder; hem normal listede hem de en üstteki
   // sabit "Benim Yorumum" kopyasında aynı görünüm için kullanılır.
@@ -790,15 +790,15 @@ export function ComparisonPage({ queryParams }) {
           <Card style={{ padding: '20px' }}>
             <div className="text-[12px] font-bold text-(--color-text-light) tracking-[.08em] uppercase mb-3">Orijinal Parfüm</div>
             <div className="flex gap-[10px]" style={{ flexDirection: sm ? 'column' : 'row' }}>
-              <div className="flex-1"><Select label="Marka" value={selOrigBrand} onChange={(e) => { setSelOrigBrand(e.target.value); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
-              <div className="flex-1"><Select label="Ürün" value={selOrigId} onChange={(e) => { const id = e.target.value; setSelOrigId(id); if (id) { const p = perfumes.find((p) => String(p.id) === String(id)); if (p) setSelOrigBrand(p.brandName); } setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
+              <div className="flex-1"><SearchableSelect label="Marka" placeholder="Orijinal Marka Seçin" value={selOrigBrand} onChange={(val) => { setSelOrigBrand(val); setSelOrigId(''); setSelMuadilBrand(''); setSelMuadilId(''); }} options={origBrandOpts} /></div>
+              <div className="flex-1"><SearchableSelect label="Ürün" placeholder="Orijinal Parfüm Seçin" value={selOrigId} onChange={(id) => { setSelOrigId(id); if (id) { const p = perfumes.find((p) => String(p.id) === String(id)); if (p) setSelOrigBrand(p.brandName); } setSelMuadilBrand(''); setSelMuadilId(''); }} options={origPerfOpts} /></div>
             </div>
           </Card>
           <Card style={{ padding: '20px' }}>
             <div className="text-[12px] font-bold text-(--color-text-light) tracking-[.08em] uppercase mb-3">Muadil Parfüm</div>
             <div className="flex gap-[10px]" style={{ flexDirection: sm ? 'column' : 'row' }}>
-              <div className="flex-1"><Select label="Marka" value={selMuadilBrand} onChange={(e) => { setSelMuadilBrand(e.target.value); setSelMuadilId(''); }} options={mBrandOpts} /></div>
-              <div className="flex-1"><Select label="Ürün" value={selMuadilId} onChange={(e) => { const id = e.target.value; setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); if (selOrigId && id) window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${id}`); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
+              <div className="flex-1"><SearchableSelect label="Marka" placeholder="Muadil Marka Seçin" value={selMuadilBrand} onChange={(val) => { setSelMuadilBrand(val); setSelMuadilId(''); }} options={mBrandOpts} /></div>
+              <div className="flex-1"><SearchableSelect label="Ürün" placeholder="Muadil Parfüm Seçin" value={selMuadilId} onChange={(id) => { setSelMuadilId(id); if (id) { const m = muadilPerfumes.find((m) => String(m.id) === String(id)); if (m) setSelMuadilBrand(m.brandName); if (selOrigId && id) window.history.replaceState(null, '', `/karsilastir?orijinal=${selOrigId}&muadil=${id}`); } }} options={mPerfOpts} disabled={!selMuadilBrand} /></div>
             </div>
           </Card>
         </div>
