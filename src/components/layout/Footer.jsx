@@ -34,6 +34,39 @@ export function Footer() {
     { label: 'info@muadilci.com', href: 'mailto:info@muadilci.com' },
   ];
 
+  const socials = [
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/muadilciapp',
+      icon: (
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={C.textMid} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.5" cy="6.5" r="1" fill={C.textMid} stroke="none" />
+        </svg>
+      ),
+    },
+    {
+      label: 'YouTube',
+      href: 'https://www.youtube.com/@muadilci',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.textMid} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="4" />
+          <path d="M10 9l5 3-5 3z" fill={C.textMid} stroke="none" />
+        </svg>
+      ),
+    },
+    {
+      label: 'TikTok',
+      href: 'https://www.tiktok.com/@muadilci',
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill={C.textMid} stroke="none">
+          <path d="M16.6 2h-2.9v13.1a2.4 2.4 0 1 1-2.4-2.4c.2 0 .4 0 .6.1v-3a5.4 5.4 0 1 0 4.7 5.3V8.7a6.5 6.5 0 0 0 3.8 1.2V7a3.9 3.9 0 0 1-3.8-3.9V2z" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <footer className="bg-white border-t border-border" style={{ fontFamily: F }}>
       <div
@@ -57,21 +90,23 @@ export function Footer() {
             <p className="text-[13px] leading-[1.75] max-w-[240px] font-normal" style={{ color: C.textLight }}>
               Lüks parfümlerin muadillerini keşfet, karşılaştır ve en iyisini bul.
             </p>
-            <a
-              href="https://www.instagram.com/muadilciapp"
-              target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-5 px-[14px] py-2 rounded-[8px] no-underline transition-[border-color,background] duration-200"
-              style={{ border: `1px solid ${C.border}` }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = C.goldBg; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = 'transparent'; }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.textMid} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="1" fill={C.textMid} stroke="none" />
-              </svg>
-              <span className="text-[12px] font-medium" style={{ color: C.textMid }}>@muadilciapp</span>
-            </a>
+            <div className="flex items-center gap-[10px] mt-5">
+              {socials.map(({ label, href, icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank" rel="noopener noreferrer"
+                  aria-label={label}
+                  title={label}
+                  className="inline-flex items-center justify-center w-[38px] h-[38px] rounded-[8px] no-underline transition-[border-color,background] duration-200"
+                  style={{ border: `1px solid ${C.border}` }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.background = C.goldBg; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = 'transparent'; }}
+                >
+                  {icon}
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Keşfet */}

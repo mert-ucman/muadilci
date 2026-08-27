@@ -268,8 +268,11 @@ export function Navbar() {
                       </div>
                     </>
                   ) : (
-                    <div className="p-5 text-center text-[13px]" style={{ color: C.textLight }}>
-                      "<strong>{searchQ}</strong>" için sonuç bulunamadı
+                    <div className="p-5 text-center" style={{ color: C.textLight }}>
+                      <div className="text-[13px]">"<strong>{searchQ}</strong>" için sonuç bulunamadı</div>
+                      <div className="mt-2 text-[11px] leading-[1.5]" style={{ color: C.textMuted }}>
+                        Muadil ve Arap Parfümleri arama sonuçlarında gösterilmez. Lütfen sadece orijinal/muadil marka veya sadece orijinal parfüm aratınız.
+                      </div>
                     </div>
                   )}
                 </div>
@@ -598,32 +601,43 @@ export function Navbar() {
                   </button>
                 )}
               </div>
-              {searchQ.length > 1 && filtered.length > 0 && (
+              {searchQ.length > 1 && (
                 <div
                   className="mt-2 rounded-[8px] overflow-hidden"
                   style={{ border: `1px solid ${C.border}` }}
                 >
-                  <div
-                    className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[.1em]"
-                    style={{ color: C.textMuted }}
-                  >
-                    {filtered.length} sonuç bulundu
-                  </div>
-                  <div className="max-h-[260px] overflow-y-auto">
-                    {filtered.map((item, i) => (
+                  {filtered.length > 0 ? (
+                    <>
                       <div
-                        key={i}
-                        onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
-                        className="px-3 py-[10px] text-[13px] cursor-pointer"
-                        style={{
-                          color: C.text,
-                          borderTop: `1px solid ${C.borderLight}`,
-                        }}
+                        className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-[.1em]"
+                        style={{ color: C.textMuted }}
                       >
-                        {item.label}
+                        {filtered.length} sonuç bulundu
                       </div>
-                    ))}
-                  </div>
+                      <div className="max-h-[260px] overflow-y-auto">
+                        {filtered.map((item, i) => (
+                          <div
+                            key={i}
+                            onMouseDown={() => { handleNav(item.url); setSearchQ(''); }}
+                            className="px-3 py-[10px] text-[13px] cursor-pointer"
+                            style={{
+                              color: C.text,
+                              borderTop: `1px solid ${C.borderLight}`,
+                            }}
+                          >
+                            {item.label}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-4 text-center" style={{ color: C.textLight }}>
+                      <div className="text-[13px]">"<strong>{searchQ}</strong>" için sonuç bulunamadı</div>
+                      <div className="mt-2 text-[11px] leading-[1.5]" style={{ color: C.textMuted }}>
+                        Muadil ve Arap Parfümleri arama sonuçlarında gösterilmez. Lütfen sadece orijinal/muadil marka veya sadece orijinal parfüm aratınız.
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
