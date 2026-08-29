@@ -8,6 +8,7 @@ import { Footer } from '@/components/layout/Footer';
 import { VerificationGate } from '@/components/shared/VerificationGate';
 import { PendingReviewResumer } from '@/components/shared/PendingReviewResumer';
 import { DailyComparison } from '@/components/shared/DailyComparisonModal';
+import { claimDailyLoginFn, istanbulToday } from '@/lib/gamification';
 import { LandingPage } from '@/pages/Landing';
 
 const ComparisonPage    = lazy(() => import('@/pages/Comparison').then(m => ({ default: m.ComparisonPage })));
@@ -93,6 +94,17 @@ export function App() {
     if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
     link.href = faviconUrl;
   }, [faviconUrl]);
+
+  // Günlük giriş ödülü — oturum açık kullanıcı için günde 1 kez (tarayıcı guard'ı
+  // + sunucu idempotent). Fonksiyon deploy değilse sessizce yutulur (localde UI çalışır).
+  useEffect(() => {
+    if (!user?.uid) return;
+    const key = `muadilci_login_${user.uid}_${istanbulToday()}`;
+    try { if (localStorage.getItem(key)) return; } catch { /* noop */ }
+    claimDailyLoginFn()
+      .then(() => { try { localStorage.setItem(key, '1'); } catch { /* noop */ } })
+      .catch(() => { /* deploy edilmemiş / offline — sessiz geç */ });
+  }, [user?.uid]);
 
   // Route korumaları — render sırasında değil, effect içinde yönlendir
   useEffect(() => {

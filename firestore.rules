@@ -18,12 +18,21 @@ service cloud.firestore {
       // Güncelleme: admin her şeyi; sahip ise role/active/deleted alanlarını DEĞİŞTİREMEZ
       // (yetki yükseltme ve kendini-aktif-etmeyi engeller)
       // (createdAt sabittir: 24 saat yeni-hesap kuralının atlatılmasını engeller)
+      // Oyunlaştırma alanları (xp/mp/rozet/günlük sayaç) yalnızca sunucuda (Admin
+      // SDK, rules'ı baypas eder) yazılır; sahip bunları client'tan DEĞİŞTİREMEZ.
       allow update: if isAdmin()
                      || (isOwner(uid)
                          && request.resource.data.role == resource.data.role
                          && request.resource.data.active == resource.data.active
                          && request.resource.data.get('deleted', false) == resource.data.get('deleted', false)
-                         && request.resource.data.createdAt == resource.data.createdAt);
+                         && request.resource.data.createdAt == resource.data.createdAt
+                         && request.resource.data.get('xpTotal', 0) == resource.data.get('xpTotal', 0)
+                         && request.resource.data.get('xpWeekly', 0) == resource.data.get('xpWeekly', 0)
+                         && request.resource.data.get('mp', 0) == resource.data.get('mp', 0)
+                         && request.resource.data.get('approvedReviewCount', 0) == resource.data.get('approvedReviewCount', 0)
+                         && request.resource.data.get('weeklyChampionCount', 0) == resource.data.get('weeklyChampionCount', 0)
+                         && request.resource.data.get('badges', []) == resource.data.get('badges', [])
+                         && request.resource.data.get('daily', {}) == resource.data.get('daily', {}));
       allow delete: if isOwner(uid) || isAdmin();
 
       // Favoriler alt-koleksiyonu
@@ -39,9 +48,33 @@ service cloud.firestore {
     }
 
     // ── Public Profiles ───────────────────────────────────────────────────
+    // Leaderboard + herkese açık profil buradan okunur. XP/rozet alanları
+    // yalnızca sunucuda (Admin SDK) yazılır; sahip yalnızca ad/kullanıcı adı/
+    // foto/rol gibi alanları değiştirebilir, XP alanlarına dokunamaz.
     match /publicProfiles/{uid} {
       allow read: if true;
-      allow write: if isOwner(uid) || isAdmin();
+      allow create: if isAdmin()
+                     || (isOwner(uid)
+                         && !request.resource.data.keys().hasAny(['xpTotal','xpWeekly','badges','weeklyChampionCount']));
+      allow update: if isAdmin()
+                     || (isOwner(uid)
+                         && request.resource.data.get('xpTotal', 0) == resource.data.get('xpTotal', 0)
+                         && request.resource.data.get('xpWeekly', 0) == resource.data.get('xpWeekly', 0)
+                         && request.resource.data.get('weeklyChampionCount', 0) == resource.data.get('weeklyChampionCount', 0)
+                         && request.resource.data.get('badges', []) == resource.data.get('badges', []));
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // ── Leaderboard Şampiyonları (haftalık arşiv; yalnız Cloud Functions yazar) ──
+    match /leaderboardChampions/{weekId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Ekonomi Ayarları (Faz 2 admin paneli; herkese açık okuma) ──────────
+    match /economyConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ── Usernames (benzersizlik için) ─────────────────────────────────────

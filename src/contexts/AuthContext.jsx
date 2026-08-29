@@ -680,8 +680,28 @@ export function AuthProvider({ children }) {
       if (data.role !== userRef.current?.role) {
         // Token'ı zorla yenile → Cloud Function'ın set ettiği custom claim'ler JWT'ye geçsin
         try { await auth.currentUser?.getIdToken(true); } catch { /* noop */ }
-        setUser((prev) => (prev ? { ...prev, role: data.role } : prev));
       }
+      // Rol + oyunlaştırma alanlarını (XP/MP/rozet — sunucu yazar) canlı senkronla
+      setUser((prev) => {
+        if (!prev) return prev;
+        const next = {
+          ...prev,
+          role: data.role ?? prev.role,
+          xpTotal: data.xpTotal || 0,
+          xpWeekly: data.xpWeekly || 0,
+          mp: data.mp || 0,
+          badges: data.badges || [],
+          approvedReviewCount: data.approvedReviewCount || 0,
+          weeklyChampionCount: data.weeklyChampionCount || 0,
+        };
+        const unchanged =
+          prev.role === next.role &&
+          prev.xpTotal === next.xpTotal && prev.xpWeekly === next.xpWeekly && prev.mp === next.mp &&
+          prev.approvedReviewCount === next.approvedReviewCount &&
+          prev.weeklyChampionCount === next.weeklyChampionCount &&
+          (prev.badges || []).join() === next.badges.join();
+        return unchanged ? prev : next;
+      });
     });
     return () => unsub();
   }, [user?.uid]);

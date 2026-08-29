@@ -12,6 +12,12 @@ const { validateReviewText } = require('./reviewValidation');
 
 admin.initializeApp();
 
+// ── Kullanıcı Çekme Planı — oyunlaştırma/ödül fonksiyonları ──────────────────
+// claimDailyLogin, awardOnReviewApproved, weeklyLeaderboardReset,
+// rebuildLeaderboardCron, leaderboard (onRequest). admin.initializeApp'ten SONRA
+// require edilir; fonksiyonlar admin.firestore()'u yalnızca çalışma anında çağırır.
+Object.assign(exports, require('./gamification'));
+
 // ── Maliyet tavanı ───────────────────────────────────────────────────────────
 // Tüm fonksiyonların aynı anda çalışabilecek örnek (instance) sayısını sınırlar.
 // Bir istek seli / maliyet DoS'unda fonksiyonlar sonsuza kadar ölçeklenip fatura

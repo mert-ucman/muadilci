@@ -9,6 +9,8 @@ import { usePerfumeLists } from '@/hooks/usePerfumeLists';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
+import { BadgeCollection } from '@/components/shared/Badges';
+import { levelFor } from '@/lib/gamification';
 import { ListsTab } from './ListsTab';
 
 function getCroppedImg(src, pixelCrop, outputSize = 300) {
@@ -41,10 +43,28 @@ const ROLE_COLOR = { admin: 'red', moderator: 'blue', user: 'gold' };
 
 const TABS = [
   { k: 'info', l: 'Bilgilerim' },
+  { k: 'achievements', l: 'Başarımlar' },
   { k: 'favorites', l: 'Favorilerim' },
   { k: 'reviews', l: 'Yorumlarım' },
   { k: 'lists', l: 'Listelerim' },
 ];
+
+// Profil başlığı (koyu zemin) için küçük istatistik çipi.
+// Dikey ortalama: sabit yükseklik + items-center + cap-center (text-box trim) —
+// py hack yok; etiket ve değer tek satırda ortak taban çizgisinde.
+function HeaderStat({ label, value, accent }) {
+  return (
+    <span className="inline-flex items-center rounded-[20px] px-[12px]"
+      style={{
+        height: '26px', gap: '6px', fontFamily: F,
+        background: accent ? 'rgba(201,164,107,.22)' : 'rgba(255,255,255,.12)',
+        border: `1px solid ${accent ? 'rgba(201,164,107,.5)' : 'rgba(255,255,255,.18)'}`,
+      }}>
+      <span className="cap-center" style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: accent ? '#e7cf9f' : 'rgba(255,255,255,.6)' }}>{label}</span>
+      <span className="cap-center" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+    </span>
+  );
+}
 
 const USERNAME_RE = /^[a-z0-9_\-]{3,20}$/;
 
@@ -127,7 +147,7 @@ export function ProfilePage({ queryParams }) {
   const { w, sm, xs } = useW();
   const { comments, perfumes, muadilPerfumes, brands, noImageUrl, updateUser, getUserFavoriteBrands, toggleBrandFavorite, getUserFavoritePerfumes, togglePerfumeFavorite, getUserFavoriteMuadils, toggleMuadilFavorite, getUserFavoriteComps, toggleCompFavorite, deleteComment } = useData();
 
-  const tabInit = queryParams?.tab === 'favorites' ? 'favorites' : queryParams?.tab === 'reviews' ? 'reviews' : queryParams?.tab === 'lists' ? 'lists' : 'info';
+  const tabInit = ['achievements', 'favorites', 'reviews', 'lists'].includes(queryParams?.tab) ? queryParams.tab : 'info';
   const [tab, setTab] = useState(tabInit);
   const [tabMenuOpen, setTabMenuOpen] = useState(false);
   const tabMenuRef = useRef(null);
@@ -214,6 +234,8 @@ export function ProfilePage({ queryParams }) {
   );
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
+  const isRegularUser = user.role === 'user';
+  const lvl = levelFor(user.xpTotal || 0);
 
   const saveUsername = async () => {
     if (unStatus === 'same') { setUsernameEdit(false); return; }
@@ -487,7 +509,16 @@ export function ProfilePage({ queryParams }) {
           <div className="flex-1 min-w-0">
             <div style={{ fontSize: sm ? '20px' : '26px' }} className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap">{user.name}</div>
             <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
-            <div className="flex gap-2 mt-2"><Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge></div>
+            <div className="flex gap-2 mt-2 items-center flex-wrap">
+              <Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge>
+              {isRegularUser && (
+                <>
+                  <HeaderStat label="Sv" value={`${lvl.lvl} · ${lvl.title}`} />
+                  <HeaderStat label="XP" value={user.xpTotal || 0} />
+                  <HeaderStat label="MP" value={user.mp || 0} accent />
+                </>
+              )}
+            </div>
           </div>
           <button
             onClick={() => { logout(); navigate('/'); }}
@@ -600,6 +631,66 @@ export function ProfilePage({ queryParams }) {
                   </p>
                   <Btn variant="danger" onClick={() => setShowDeleteModal(true)}>Hesabımı Kalıcı Olarak Sil</Btn>
                 </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {tab === 'achievements' && (
+          <div className="max-w-[640px]">
+            {!isRegularUser ? (
+              <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>
+                Başarımlar yalnızca üye hesaplarında toplanır.
+              </div>
+            ) : (
+              <>
+                {/* Seviye ilerlemesi */}
+                <div className="rounded-[16px] border border-(--color-border) mb-5" style={{ background: C.card, padding: '18px' }}>
+                  <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[.05em] text-(--color-text-light)">Seviye {lvl.lvl}</div>
+                      <div className="text-[19px] font-black text-(--color-navy)" style={{ fontFamily: F }}>{lvl.title}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[22px] font-black" style={{ color: C.gold, fontVariantNumeric: 'tabular-nums' }}>
+                        {user.xpTotal || 0} <span className="text-[12px] font-semibold text-(--color-text-light)">XP</span>
+                      </div>
+                      {lvl.next
+                        ? <div className="text-[11px] text-(--color-text-light)">Sonraki: {lvl.next.title} · {lvl.next.min} XP</div>
+                        : <div className="text-[11px] text-(--color-text-light)">En yüksek seviye</div>}
+                    </div>
+                  </div>
+                  <div className="h-[8px] rounded-full overflow-hidden" style={{ background: C.surface }}>
+                    <div style={{ width: `${Math.round(lvl.progress * 100)}%`, height: '100%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, transition: 'width .4s ease' }} />
+                  </div>
+                </div>
+
+                {/* Muadilci Puanı cüzdanı */}
+                <div className="rounded-[16px] border mb-6" style={{ background: C.goldBg, borderColor: C.goldBorder, padding: '18px' }}>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[.05em]" style={{ color: C.gold }}>Muadilci Puanı</div>
+                      <div className="text-[24px] font-black text-(--color-navy)" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {user.mp || 0} <span className="text-[13px] font-semibold text-(--color-text-light)">MP</span>
+                      </div>
+                    </div>
+                    <div className="text-right text-[12px] font-semibold" style={{ color: C.textMid, maxWidth: '52%' }}>
+                      {(user.mp || 0) >= 100
+                        ? 'İndirim kodu için yeterli puan birikti. Kod alma yakında açılıyor.'
+                        : `İndirim kodu için ${100 - (user.mp || 0)} MP kaldı`}
+                    </div>
+                  </div>
+                  <div className="h-[8px] rounded-full overflow-hidden mt-3" style={{ background: 'rgba(255,255,255,.7)' }}>
+                    <div style={{ width: `${Math.min(100, user.mp || 0)}%`, height: '100%', background: `linear-gradient(90deg,${C.green},#3fae68)`, transition: 'width .4s ease' }} />
+                  </div>
+                </div>
+
+                <BadgeCollection
+                  badges={user.badges || []}
+                  approvedReviewCount={user.approvedReviewCount || 0}
+                  weeklyChampionCount={user.weeklyChampionCount || 0}
+                  sm={sm}
+                />
               </>
             )}
           </div>

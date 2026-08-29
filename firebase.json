@@ -49,6 +49,10 @@
         "function": { "functionId": "catalog", "region": "us-central1" }
       },
       {
+        "source": "/data/leaderboard.json",
+        "function": { "functionId": "leaderboard", "region": "us-central1" }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
