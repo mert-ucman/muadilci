@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faTag, faSprayCan } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
@@ -183,28 +183,55 @@ function HeroMarquee({ reverse = false }) {
   );
 }
 
-function HeroOverlay({ navigate, lg }) {
+function HeroOverlay({ navigate, lg, brands = [], perfumes = [], muadilPerfumes = [] }) {
+  const nf = n => (n || 0).toLocaleString('tr-TR');
+  const stats = [
+    { n: brands.filter(b => b.type === 'original' && b.active !== false).length, l: 'orijinal marka',  icon: faTag,      gold: false, href: '/markalar?tab=original'  },
+    { n: perfumes.length,                                                        l: 'orijinal parfüm', icon: faSprayCan, gold: false, href: '/parfumler?tab=original' },
+    { n: brands.filter(b => b.type === 'muadil'   && b.active !== false).length, l: 'muadil marka',    icon: faTag,      gold: true,  href: '/markalar?tab=muadil'    },
+    { n: muadilPerfumes.length,                                                  l: 'muadil parfüm',   icon: faSprayCan, gold: true,  href: '/parfumler?tab=muadil'   },
+  ];
   return (
     <div className="absolute inset-0 flex items-center" style={{ padding: lg ? '52px 28px' : '52px 80px' }}>
       <div className="w-full max-w-[600px]">
         {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 mb-6">
+        <div className="inline-flex items-center gap-2 mb-4 sm:mb-6">
           <div className="w-5 h-px bg-(--color-gold)" />
           <span className="text-[11px] font-semibold text-(--color-gold) tracking-[.12em] uppercase" style={{ fontFamily: F }}>Muadilci</span>
         </div>
         <h1
-          className="font-normal text-white leading-[1.05] tracking-[-0.01em] mb-5"
-          style={{ fontFamily: FH, fontSize: 'clamp(40px, 5vw, 72px)' }}
+          className="font-normal text-white leading-[1.05] tracking-[-0.01em] mb-4 sm:mb-5"
+          style={{ fontFamily: FH, fontSize: 'clamp(34px, 5vw, 72px)' }}
         >
           Lüks kokuyu,<br /><em className="text-(--color-gold) italic">en yakın</em><br />muadiliyle keşfet.
         </h1>
-        <p className="text-[16px] text-white/65 leading-[1.7] mb-8 max-w-[420px]" style={{ fontFamily: F }}>
-          Chanel, Dior, Tom Ford ve daha fazlasının orijinaline en yakın muadillerini bul.
-        </p>
-        <div className="flex gap-3 flex-wrap">
+        <ul className="flex flex-col gap-2 mb-5 sm:gap-[10px] sm:mb-8 max-w-[420px]" style={{ fontFamily: F }}>
+          {stats.map(s => (
+            <li key={s.l}>
+              <a
+                href={s.href}
+                onClick={e => { e.preventDefault(); navigate(s.href); }}
+                className="group flex items-center gap-3 w-fit text-[15px] text-white/70 hover:text-white transition-colors cursor-pointer"
+              >
+                <FontAwesomeIcon icon={s.icon} className={`w-4 text-[13px] ${s.gold ? 'text-(--color-gold)' : 'text-white/45'} group-hover:text-(--color-gold) transition-colors`} />
+                <span
+                  className={`inline-flex items-center justify-center min-w-[54px] px-2.5 py-1 rounded-full text-[13px] font-semibold border tabular-nums transition-colors ${
+                    s.gold
+                      ? 'text-(--color-gold) bg-[rgba(184,147,90,0.14)] border-[rgba(184,147,90,0.35)] group-hover:bg-[rgba(184,147,90,0.24)]'
+                      : 'text-white bg-white/10 border-white/15 group-hover:bg-white/20'
+                  }`}
+                >
+                  {nf(s.n)}
+                </span>
+                <span className="underline decoration-transparent underline-offset-4 group-hover:decoration-current transition-[text-decoration-color]">{s.l}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-col sm:flex-row gap-3 sm:flex-wrap">
           <button
             onClick={() => navigate('/karsilastir')}
-            className="bg-(--color-gold) border-none rounded-[8px] px-7 py-[13px] text-white text-[14px] font-semibold cursor-pointer transition-[background] duration-200"
+            className="w-full sm:w-auto text-center bg-(--color-gold) border-none rounded-[8px] px-6 py-[11px] text-[13px] sm:px-7 sm:py-[13px] sm:text-[14px] text-white font-semibold cursor-pointer transition-[background] duration-200"
             style={{ fontFamily: F }}
             onMouseEnter={e => e.currentTarget.style.background = C.goldDeep}
             onMouseLeave={e => e.currentTarget.style.background = C.gold}
@@ -213,7 +240,7 @@ function HeroOverlay({ navigate, lg }) {
           </button>
           <button
             onClick={() => navigate('/parfumler?tab=muadil&sort=reviews_desc')}
-            className="group inline-flex items-center gap-2 bg-white/10 border border-white/25 rounded-[8px] px-7 py-[13px] text-white text-[14px] font-medium cursor-pointer transition-[background,border-color] duration-200"
+            className="group w-full sm:w-auto justify-center inline-flex items-center gap-2 bg-white/10 border border-white/25 rounded-[8px] px-6 py-[11px] text-[13px] sm:px-7 sm:py-[13px] sm:text-[14px] text-white font-medium cursor-pointer transition-[background,border-color] duration-200"
             style={{ fontFamily: F }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.2)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.4)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,.25)'; }}
@@ -369,7 +396,7 @@ export function HeroSection() {
           }}
         />
         <HeroMarquee />
-        <HeroOverlay navigate={navigate} lg={lg} />
+        <HeroOverlay navigate={navigate} lg={lg} brands={brands} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />
         <HeroMarquee reverse />
         <HeroLuxuryFrame />
       </section>
@@ -429,7 +456,7 @@ export function HeroSection() {
             />
             {/* Overlay — editorial: gradient from left dark, right lighter */}
             <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(10,8,6,.88)_0%,rgba(10,8,6,.55)_55%,rgba(10,8,6,.15)_100%)]" />
-            {i === 0 && <HeroOverlay navigate={navigate} lg={lg} />}
+            {i === 0 && <HeroOverlay navigate={navigate} lg={lg} brands={brands} perfumes={perfumes} muadilPerfumes={muadilPerfumes} />}
           </div>
         ))}
       </div>

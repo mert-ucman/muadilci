@@ -14,7 +14,8 @@ const STEPS = [
 ];
 
 export function HowItWorksSection() {
-  const { sm, xs } = useW();
+  const { sm, w } = useW();
+  const grid4 = w >= 880; // ≥880px: tek çerçeveli 4 sütun; altında ayrı kartlar (sm=1, 640-880=2x2)
   const { landingImages } = useData();
   const sectionRef = useRef(null);
   const bgSrc = landingImages?.howItWorksBg || null;
@@ -63,16 +64,15 @@ export function HowItWorksSection() {
           </h2>
         </div>
 
-        {/* Steps grid */}
+        {/* Steps — mobilde tek sütun tam genişlik kartlar, masaüstünde 4'lü grid */}
         <div
-          className="overflow-hidden"
           style={{
             display: 'grid',
-            gridTemplateColumns: xs ? 'repeat(2, 1fr)' : sm ? '1fr' : 'repeat(4, 1fr)',
-            gap: xs ? '12px' : sm ? '1px' : '0',
-            border: xs ? 'none' : `1px solid ${C.border}`,
+            gridTemplateColumns: sm ? '1fr' : grid4 ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)',
+            gap: grid4 ? '0' : '12px',
+            border: grid4 ? `1px solid ${C.border}` : 'none',
             borderRadius: '16px',
-            overflow: xs ? 'visible' : 'hidden',
+            overflow: grid4 ? 'hidden' : 'visible',
           }}
         >
           {STEPS.map((step, i) => (
@@ -80,37 +80,41 @@ export function HowItWorksSection() {
               key={step.n}
               className={`sr sr-d${i + 1} relative overflow-hidden transition-[background] duration-200`}
               style={{
-                padding: xs ? '24px 20px' : '36px 32px',
-                border: xs ? `1px solid ${C.border}` : 'none',
-                borderRadius: xs ? '16px' : '0',
-                borderRight: !sm && !xs && i < 3 ? `1px solid ${C.border}` : xs ? undefined : 'none',
-                borderBottom: sm && !xs && i < 3  ? `1px solid ${C.border}` : xs ? undefined : 'none',
+                padding: grid4 ? '36px 32px' : '24px 20px',
+                border: grid4 ? 'none' : `1px solid ${C.border}`,
+                borderRadius: grid4 ? '0' : '16px',
+                borderRight: grid4 && i < 3 ? `1px solid ${C.border}` : 'none',
                 background: '#fff',
               }}
               onMouseEnter={e => { e.currentTarget.style.background = C.goldBg; }}
               onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
             >
-              {/* Large decorative number */}
+              {/* Large decorative number — sadece masaüstü */}
               <div
-                className="absolute top-[-8px] right-5 font-light leading-none select-none tracking-[-0.02em] text-[80px] text-black/10"
+                className="hidden sm:block absolute top-[-8px] right-5 font-light leading-none select-none tracking-[-0.02em] text-[80px] text-black/10"
                 style={{ fontFamily: FH }}
               >
                 {step.n}
               </div>
 
-              {/* Icon */}
-              <div className="w-10 h-10 rounded-[10px] bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center mb-5">
-                <FontAwesomeIcon icon={step.icon} style={{ fontSize: '16px', color: C.gold }} />
+              {/* İçerik: mobilde ikon sol / yazı sağ, masaüstünde dikey */}
+              <div className="flex sm:block items-start gap-4">
+                {/* Icon */}
+                <div className="shrink-0 w-10 h-10 rounded-[10px] bg-(--color-gold-bg) border border-(--color-gold-border) flex items-center justify-center mb-0 sm:mb-5">
+                  <FontAwesomeIcon icon={step.icon} style={{ fontSize: '16px', color: C.gold }} />
+                </div>
+
+                <div className="min-w-0">
+                  {/* Step number label */}
+                  <div className="text-[10px] font-bold text-(--color-gold) tracking-[.1em] uppercase mb-[6px] sm:mb-[10px]" style={{ fontFamily: F }}>Adım {step.n}</div>
+
+                  {/* Title */}
+                  <h3 className="text-[18px] sm:text-[22px] font-medium text-(--color-text) mb-[4px] sm:mb-[10px] leading-[1.2]" style={{ fontFamily: FH }}>{step.title}</h3>
+
+                  {/* Desc */}
+                  <p className="text-[14px] text-(--color-text-light) leading-[1.6] sm:leading-[1.7] font-normal" style={{ fontFamily: F }}>{step.desc}</p>
+                </div>
               </div>
-
-              {/* Step number label */}
-              <div className="text-[10px] font-bold text-(--color-gold) tracking-[.1em] uppercase mb-[10px]" style={{ fontFamily: F }}>Adım {step.n}</div>
-
-              {/* Title */}
-              <h3 className="text-[22px] font-medium text-(--color-text) mb-[10px] leading-[1.2]" style={{ fontFamily: FH }}>{step.title}</h3>
-
-              {/* Desc */}
-              <p className="text-[14px] text-(--color-text-light) leading-[1.7] font-normal" style={{ fontFamily: F }}>{step.desc}</p>
             </div>
           ))}
         </div>

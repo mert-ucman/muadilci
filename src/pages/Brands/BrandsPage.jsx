@@ -76,12 +76,13 @@ export function BrandsPage() {
     title: 'Markalar',
     description: 'Orijinal ve muadil parfüm markalarını keşfet. Her markanın parfüm sayısı, kökeni ve topluluk puanlarıyla birlikte incele.',
   });
-  const { navigate } = useRouter();
+  const { navigate, query } = useRouter();
   const { brands, perfumes, muadilPerfumes, comments, toggleBrandFavorite, isBrandFavorite, noImageUrl } = useData();
   const { user } = useAuth();
   const { sm, xs } = useW();
 
-  const [tab, setTab]           = useState(() => localStorage.getItem('brands_tab')  || 'original');
+  // URL query (?tab=muadil) varsa localStorage'ı geçersiz kılar — Landing yönlendirmeleri için.
+  const [tab, setTab]           = useState(() => (query.tab === 'muadil' || query.tab === 'original') ? query.tab : (localStorage.getItem('brands_tab') || 'original'));
   const [sort, setSort]         = useState(() => localStorage.getItem('brands_sort_v2') || (tab === 'muadil' ? 'score_desc' : 'az'));
   const [view, setView]         = useState(() => localStorage.getItem('brands_view_v2') || 'list');
   const [perPage, setPerPage]   = useState(() => Number(localStorage.getItem('brands_pp')) || 10);
@@ -101,6 +102,12 @@ export function BrandsPage() {
   const switchSort = (v) => { setSort(v); setPage(1); };
   const switchPerPage = (n) => { setPerPage(n); setPage(1); };
   const handleSearch = (v) => { setSearchQ(v); setPage(1); };
+
+  // URL'deki ?tab= değişince (Landing linklerinden gelince) tab'ı senkronla
+  useEffect(() => {
+    if (query.tab === 'muadil' || query.tab === 'original') switchTab(query.tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query.tab]);
 
   const isOrig = tab === 'original';
 
