@@ -234,7 +234,6 @@ export function ProfilePage({ queryParams }) {
   );
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
-  const isRegularUser = user.role === 'user';
   const lvl = levelFor(user.xpTotal || 0);
 
   const saveUsername = async () => {
@@ -511,13 +510,9 @@ export function ProfilePage({ queryParams }) {
             <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
             <div className="flex gap-2 mt-2 items-center flex-wrap">
               <Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge>
-              {isRegularUser && (
-                <>
-                  <HeaderStat label="Sv" value={`${lvl.lvl} · ${lvl.title}`} />
-                  <HeaderStat label="XP" value={user.xpTotal || 0} />
-                  <HeaderStat label="MP" value={user.mp || 0} accent />
-                </>
-              )}
+              <HeaderStat label="Sv" value={`${lvl.lvl} · ${lvl.title}`} />
+              <HeaderStat label="XP" value={user.xpTotal || 0} />
+              <HeaderStat label="MP" value={user.mp || 0} accent />
             </div>
           </div>
           <button
@@ -638,12 +633,7 @@ export function ProfilePage({ queryParams }) {
 
         {tab === 'achievements' && (
           <div className="max-w-[640px]">
-            {!isRegularUser ? (
-              <div className="text-center text-(--color-text-light)" style={{ padding: sm ? '40px 20px' : '60px' }}>
-                Başarımlar yalnızca üye hesaplarında toplanır.
-              </div>
-            ) : (
-              <>
+            <>
                 {/* Seviye ilerlemesi */}
                 <div className="rounded-[16px] border border-(--color-border) mb-5" style={{ background: C.card, padding: '18px' }}>
                   <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
@@ -686,13 +676,10 @@ export function ProfilePage({ queryParams }) {
                 </div>
 
                 <BadgeCollection
-                  badges={user.badges || []}
                   approvedReviewCount={user.approvedReviewCount || 0}
-                  weeklyChampionCount={user.weeklyChampionCount || 0}
                   sm={sm}
                 />
               </>
-            )}
           </div>
         )}
 

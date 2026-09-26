@@ -161,16 +161,12 @@ export function PublicProfilePage({ params, queryParams }) {
             <div className="text-white/60 text-[13px] mb-2">@{username}</div>
             <div className="flex gap-2 items-center flex-wrap">
               <Badge color={ROLE_COLOR[profile.role] || 'gold'}>{ROLE_LABEL[profile.role] || 'Üye'}</Badge>
-              {(profile.role === 'user' || !profile.role) && (
-                <>
-                  <PubStat label="Sv" value={`${levelFor(profile.xpTotal || 0).lvl} · ${levelFor(profile.xpTotal || 0).title}`} />
-                  <PubStat label="XP" value={profile.xpTotal || 0} />
-                  {profile.weeklyChampionCount > 0 && (
-                    <span className="inline-flex items-center justify-center rounded-[20px] px-[12px]" style={{ height: '26px', background: 'rgba(201,164,107,.22)', border: '1px solid rgba(201,164,107,.5)' }}>
-                      <p className="m-0 p-0 w-max cap-center" style={{ fontSize: '13px', fontWeight: 800, color: '#e7cf9f', fontFamily: F }}>{profile.weeklyChampionCount}× Şampiyon</p>
-                    </span>
-                  )}
-                </>
+              <PubStat label="Sv" value={`${levelFor(profile.xpTotal || 0).lvl} · ${levelFor(profile.xpTotal || 0).title}`} />
+              <PubStat label="XP" value={profile.xpTotal || 0} />
+              {profile.weeklyChampionCount > 0 && (
+                <span className="inline-flex items-center justify-center rounded-[20px] px-[12px]" style={{ height: '26px', background: 'rgba(201,164,107,.22)', border: '1px solid rgba(201,164,107,.5)' }}>
+                  <p className="m-0 p-0 w-max cap-center" style={{ fontSize: '13px', fontWeight: 800, color: '#e7cf9f', fontFamily: F }}>{profile.weeklyChampionCount}× Şampiyon</p>
+                </span>
               )}
             </div>
           </div>
@@ -179,26 +175,27 @@ export function PublicProfilePage({ params, queryParams }) {
 
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: sm ? '24px 16px' : '32px 32px' }}>
         {/* Başarımlar (kazanılmış rozetler) */}
-        {profile.badges?.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-[18px] font-extrabold text-(--color-navy) mb-[14px]">
-              Başarımlar <span className="text-[13px] font-medium text-(--color-text-light)">({profile.badges.length})</span>
-            </h2>
-            <div className="flex flex-wrap gap-4">
-              {BADGE_ORDER.filter((id) => profile.badges.includes(id)).map((id) => (
-                <div key={id} className="flex flex-col items-center text-center" style={{ width: '92px' }}>
-                  <BadgeMedal id={id} size={56} unlocked />
-                  <div className="mt-2 text-[12px] font-bold" style={{ color: C.goldDeep }}>
-                    {BADGES[id].label}
-                    {id === 'weekly-champion' && profile.weeklyChampionCount > 1 && (
-                      <span style={{ color: C.gold }}> ×{profile.weeklyChampionCount}</span>
-                    )}
+        {(() => {
+          const earned = BADGE_ORDER.filter((id) => profile.badges?.includes(id));
+          if (earned.length === 0) return null;
+          return (
+            <div className="mb-10">
+              <h2 className="text-[18px] font-extrabold text-(--color-navy) mb-[14px]">
+                Başarımlar <span className="text-[13px] font-medium text-(--color-text-light)">({earned.length})</span>
+              </h2>
+              <div className="flex flex-wrap gap-4">
+                {earned.map((id) => (
+                  <div key={id} className="flex flex-col items-center text-center" style={{ width: '92px' }}>
+                    <BadgeMedal badge={BADGES[id]} size={56} unlocked />
+                    <div className="mt-2 text-[12px] font-bold" style={{ color: C.goldDeep }}>
+                      {BADGES[id].label}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Listeler */}
         {lists.length > 0 && (

@@ -28,12 +28,22 @@ const ECON = {
   reviewDailyMpCap: 10,   // yorumdan günde en fazla 10 MP
 };
 
-// ── Rozet tanımları (onaylı yorum sayısına göre) ─────────────────────────────
+// ── Rozet tanımları (onaylı yorum sayısına göre) — 13 kilometre taşı ─────────
+// NOT: id'ler src/lib/gamification.js → BADGE_GROUPS ile birebir aynı olmalı.
 const REVIEW_BADGES = [
-  { id: 'first-review',      min: 1 },
-  { id: 'amateur-nose',      min: 10 },
-  { id: 'experienced-nose',  min: 50 },
-  { id: 'collector',         min: 100 },
+  { id: 'ilk-kesif',           min: 1 },
+  { id: 'koku-meraklisi',      min: 5 },
+  { id: 'muadil-ciragi',       min: 10 },
+  { id: 'tester-avcisi',       min: 25 },
+  { id: 'koku-dedektifi',      min: 50 },
+  { id: 'blind-buy-kahramani', min: 75 },
+  { id: 'muadil-uzmani',       min: 100 },
+  { id: 'koku-kasifi',         min: 150 },
+  { id: 'nota-ustasi',         min: 200 },
+  { id: 'bronz-burun',         min: 250 },
+  { id: 'gumus-burun',         min: 500 },
+  { id: 'altin-burun',         min: 750 },
+  { id: 'muadilci-efsanesi',   min: 1000 },
 ];
 function reviewBadgesFor(count) {
   return REVIEW_BADGES.filter((b) => count >= b.min).map((b) => b.id);
@@ -64,7 +74,11 @@ function freshDaily(daily, today) {
   };
 }
 
-const isStaffRole = (role) => role === 'admin' || role === 'moderator';
+// Yalnızca ADMIN liderlik tablosundan / şampiyonluktan hariç tutulur (moderatörler
+// girer). XP/MP/rozet ise HERKESE (admin dahil) verilir: yetki alınıp verildiğinde
+// kazanılan ilerleme kaybolmasın — üye→moderatör ya da moderatör→üye geçişlerinde
+// birikim korunur.
+const isLeaderboardExcluded = (role) => role === 'admin';
 
 // XP/rozet alanlarını herkese açık publicProfiles'a yansıtır (leaderboard + profil
 // bu taraftan okunur; users belgesi gizlidir). Admin SDK rules'ı baypas eder.
@@ -104,10 +118,6 @@ exports.claimDailyLogin = onCall({ region: REGION, enforceAppCheck: true }, asyn
     if (!snap.exists) throw new HttpsError('failed-precondition', 'Kullanıcı profili bulunamadı.');
     const u = snap.data();
     if (u.deleted) throw new HttpsError('permission-denied', 'Hesabınız pasif durumda.');
-    // Staff sıralamaya girmez / puan kazanmaz
-    if (isStaffRole(u.role)) {
-      return { staff: true, alreadyClaimed: true, mp: u.mp || 0, xpTotal: u.xpTotal || 0, xpWeekly: u.xpWeekly || 0 };
-    }
 
     const daily = freshDaily(u.daily, today);
     if (daily.login) {
@@ -167,7 +177,7 @@ exports.awardOnReviewApproved = onDocumentWritten({ document: 'reviews/{id}', re
 
     if (!uSnap || !uSnap.exists) return null;
     const u = uSnap.data();
-    if (u.deleted || isStaffRole(u.role)) return null;   // staff puan kazanmaz
+    if (u.deleted) return null;   // silinmiş hesap ödül almaz (admin/mod dahil herkes kazanır)
 
     const daily = freshDaily(u.daily, today);
     // MP günlük tavanı (yorumdan en fazla reviewDailyMpCap)
@@ -204,12 +214,17 @@ exports.weeklyLeaderboardReset = onSchedule(
     const db = admin.firestore();
     const weekId = istanbulDate();   // sıfırlamanın yapıldığı pazartesi
 
-    // ── İlk 3'ü al ve arşivle ──
-    const topSnap = await db.collection('users')
-      .where('xpWeekly', '>', 0).orderBy('xpWeekly', 'desc').limit(3).get();
+    // Haftalık XP > 0 olan herkesi bir kez çek (hem şampiyon seçimi hem reset için).
+    const allSnap = await db.collection('users').where('xpWeekly', '>', 0).get();
 
-    if (!topSnap.empty) {
-      const champions = topSnap.docs.map((d, i) => {
+    // ── İlk 3'ü seç ve arşivle — ADMIN sıralamaya/şampiyonluğa GİRMEZ (mod girer) ──
+    const ranked = allSnap.docs
+      .filter((d) => !isLeaderboardExcluded(d.data().role))
+      .sort((a, b) => (b.data().xpWeekly || 0) - (a.data().xpWeekly || 0));
+    const top3 = ranked.slice(0, 3);
+
+    if (top3.length) {
+      const champions = top3.map((d, i) => {
         const u = d.data();
         return {
           rank: i + 1, uid: d.id,
@@ -222,7 +237,7 @@ exports.weeklyLeaderboardReset = onSchedule(
       });
 
       // 1.'ye kalıcı şampiyon rozeti + sayaç
-      const winner = topSnap.docs[0];
+      const winner = top3[0];
       const w = winner.data();
       const wBadges = mergeBadges(w.badges, ['weekly-champion']);
       await winner.ref.set({
@@ -234,8 +249,7 @@ exports.weeklyLeaderboardReset = onSchedule(
       });
     }
 
-    // ── Tüm xpWeekly'i sıfırla (users + publicProfiles) ──
-    const allSnap = await db.collection('users').where('xpWeekly', '>', 0).get();
+    // ── Tüm xpWeekly'i sıfırla (admin dahil; admin biriktirir ama sıralamada görünmez) ──
     const docs = allSnap.docs;
     for (let i = 0; i < docs.length; i += 400) {
       const batch = db.batch();
@@ -249,7 +263,7 @@ exports.weeklyLeaderboardReset = onSchedule(
     }
 
     await markLeaderboardDirty(db);
-    console.log(`✓ Haftalık liderlik sıfırlandı (${weekId}): ${docs.length} kullanıcı, ${topSnap.size} şampiyon.`);
+    console.log(`✓ Haftalık liderlik sıfırlandı (${weekId}): ${docs.length} kullanıcı, ${top3.length} şampiyon.`);
   },
 );
 
@@ -265,7 +279,7 @@ async function rebuildLeaderboard() {
   const snap = await db.collection('users').where('xpTotal', '>', 0).get();
   const rows = snap.docs
     .map((d) => ({ ...d.data(), uid: d.id }))
-    .filter((u) => !u.deleted && !isStaffRole(u.role))
+    .filter((u) => !u.deleted && !isLeaderboardExcluded(u.role))
     .map((u) => ({
       uid: u.uid,
       username: u.username || null,

@@ -14,15 +14,74 @@ export const istanbulToday = () =>
     timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(new Date());
 
-// ── Rozet tanımları ──────────────────────────────────────────────────────────
-export const BADGES = {
-  'first-review':     { label: 'İlk Yorum',           desc: 'İlk onaylı yorumunu yaptın.',            hint: '1 onaylı yorum',  metric: 'reviews', need: 1 },
-  'amateur-nose':     { label: 'Amatör Burun',        desc: '10 onaylı yoruma ulaştın.',              hint: '10 onaylı yorum', metric: 'reviews', need: 10 },
-  'experienced-nose': { label: 'Deneyimli Burun',     desc: '50 onaylı yoruma ulaştın.',              hint: '50 onaylı yorum', metric: 'reviews', need: 50 },
-  'collector':        { label: 'Koleksiyoncu',        desc: '100 onaylı yoruma ulaştın.',             hint: '100 onaylı yorum',metric: 'reviews', need: 100 },
-  'weekly-champion':  { label: 'Haftanın Şampiyonu',  desc: 'Haftalık liderlikte 1. oldun.',          hint: 'Haftalık 1.lik',  metric: 'champion', need: 1 },
+// ── Rozet sistemi ─────────────────────────────────────────────────────────────
+// 13 kilometre taşı (onaylı yorum sayısına göre), 4 gruba ayrılır. Her grubun bir
+// ÇERÇEVE ŞEKLİ (shape) ve renk kimliği; grup içindeki her rozetin ise kendi
+// AMBLEMİ (emblem) vardır. (Emoji YOK — metal kademeler çizili madalyon/taç ile.)
+export const BADGE_GROUPS = [
+  {
+    key: 'kesif', name: 'Keşif', meta: 'İlk adımlar', shape: 'circle',
+    c1: '#46c684', c2: '#0f7a3e',
+    badges: [
+      { id: 'ilk-kesif',      label: 'İlk Keşif',      need: 1,  emblem: 'bottlecompass' },
+      { id: 'koku-meraklisi', label: 'Koku Meraklısı', need: 5,  emblem: 'nose' },
+      { id: 'muadil-ciragi',  label: 'Muadil Çırağı',  need: 10, emblem: 'twobottle' },
+    ],
+  },
+  {
+    key: 'iz-surucu', name: 'İz Sürücü', meta: 'Takip & avcılık', shape: 'shield',
+    c1: '#4bb4f0', c2: '#14508f',
+    badges: [
+      { id: 'tester-avcisi',       label: 'Tester Avcısı',       need: 25, emblem: 'crosshair' },
+      { id: 'koku-dedektifi',      label: 'Koku Dedektifi',      need: 50, emblem: 'magnifier' },
+      { id: 'blind-buy-kahramani', label: 'Kör Alış Kahramanı', need: 75, emblem: 'blindbuy' },
+    ],
+  },
+  {
+    key: 'ustalik', name: 'Ustalık', meta: 'Uzmanlaşma', shape: 'hex',
+    c1: '#a978f0', c2: '#46188f',
+    badges: [
+      { id: 'muadil-uzmani', label: 'Muadil Uzmanı', need: 100, emblem: 'diploma' },
+      { id: 'koku-kasifi',   label: 'Koku Kâşifi',   need: 150, emblem: 'kasif' },
+      { id: 'nota-ustasi',   label: 'Nota Ustası',   need: 200, emblem: 'molecule' },
+    ],
+  },
+  {
+    key: 'prestij', name: 'Prestij', meta: 'Metal kademeleri', shape: 'laurel',
+    // Kademe kademe görkem artar (deco): ışın sayısı, iç halka, mücevher ve parıltı
+    // arttıkça rozet daha "şaşaalı" olur. Efsane'de tepede taç + en yoğun süsleme.
+    badges: [
+      { id: 'bronz-burun',       label: 'Bronz Burun',       need: 250,  emblem: 'star',  c1: '#e8a768', c2: '#8a4f1e', deco: { rays: 0,  ring: 1, gems: 0, sparks: 0 } },
+      { id: 'gumus-burun',       label: 'Gümüş Burun',       need: 500,  emblem: 'star',  c1: '#eef2f6', c2: '#8b97a6', deco: { rays: 0,  ring: 2, gems: 2, sparks: 1 } },
+      { id: 'altin-burun',       label: 'Altın Burun',       need: 750,  emblem: 'star',  c1: '#ffd766', c2: '#a8760c', deco: { rays: 12, ring: 2, gems: 3, sparks: 2 } },
+      // Efsane: metal değil MÜCEVHER — altından da değerli, zümrüt yeşili
+      { id: 'muadilci-efsanesi', label: 'Muadilci Efsanesi', need: 1000, emblem: 'crown', c1: '#3fe0a0', c2: '#0a5e3e', deco: { rays: 16, ring: 2, gems: 5, sparks: 4 } },
+    ],
+  },
+];
+
+// Sıralı 13 review rozet id'si (kilometre taşı sırası)
+export const BADGE_ORDER = BADGE_GROUPS.flatMap((g) => g.badges.map((b) => b.id));
+
+// id → meta (grup şekli/rengi çözülmüş). Champion aşağıda ayrıca eklenir.
+export const BADGES = {};
+for (const g of BADGE_GROUPS) {
+  for (const b of g.badges) {
+    BADGES[b.id] = {
+      ...b, metric: 'reviews', groupKey: g.key, shape: g.shape,
+      c1: b.c1 || g.c1, c2: b.c2 || g.c2,
+    };
+  }
+}
+
+// Haftanın Şampiyonu — ÖZEL rozet (metric: champion). Kilometre taşı grid'inde
+// değil; profil üstünde ayrıca gösterilecek (SONRA). Tanım burada durur ki her
+// yerde etiket/görsel çözümlenebilsin ve kazanım mantığı bozulmasın.
+export const CHAMPION_BADGE = {
+  id: 'weekly-champion', label: 'Haftanın Şampiyonu', metric: 'champion',
+  shape: 'laurel', emblem: 'trophy', c1: '#ffd35a', c2: '#a86a0c',
 };
-export const BADGE_ORDER = ['first-review', 'amateur-nose', 'experienced-nose', 'collector', 'weekly-champion'];
+BADGES[CHAMPION_BADGE.id] = CHAMPION_BADGE;
 
 // ── Seviye sistemi (xpTotal'a göre) ──────────────────────────────────────────
 export const LEVELS = [
