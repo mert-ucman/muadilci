@@ -930,34 +930,6 @@ export function DataProvider({ children }) {
     await setDoc(doc(db, 'settings', 'landingImages'), { [key]: url ?? null }, { merge: true });
   };
 
-  // ─── Günün Karşılaştırması (admin kürasyonlu) ──────────────────────────────
-  // Herkese açık; ziyaretçi oturum başına yalnızca BUGÜNÜN dokümanını okur.
-  const [todayComparison, setTodayComparison] = useState(null);
-  useEffect(() => {
-    const n = new Date();
-    const today = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-    const unsub = onSnapshot(
-      doc(db, 'dailyComparisons', today),
-      (s) => setTodayComparison(s.exists() ? { ...s.data(), id: s.id } : null),
-      () => setTodayComparison(null),
-    );
-    return () => unsub();
-  }, []);
-
-  const saveDailyComparison = async (date, data) => {
-    await setDoc(doc(db, 'dailyComparisons', date), {
-      date,
-      originalPerfumeId: String(data.originalPerfumeId),
-      muadilPerfumeId: String(data.muadilPerfumeId),
-      updatedAt: serverTimestamp(),
-    });
-  };
-  const deleteDailyComparison = async (date) => deleteDoc(doc(db, 'dailyComparisons', date));
-  const fetchDailyComparisons = async () => {
-    const snap = await getDocs(query(col('dailyComparisons'), orderBy('date', 'desc')));
-    return snap2arr(snap);
-  };
-
   // ─── Slider images ────────────────────────────────────────────────────────
   const MAX_SLIDER = 10;
   const MAX_SIZE_MB = 2;
@@ -1009,7 +981,6 @@ export function DataProvider({ children }) {
       addSliderImage, removeSliderImage, updateSliderImage, reorderSliderImages,
       MAX_SLIDER, MAX_SIZE_MB,
       updateLandingImage,
-      todayComparison, saveDailyComparison, deleteDailyComparison, fetchDailyComparisons,
       faviconUrl, updateFavicon,
       logoUrl, updateLogo,
       footerLogoUrl, updateFooterLogo,

@@ -13,11 +13,10 @@ import { db } from '@/lib/firebase';
 import { ActivityTab } from './ActivityTab';
 import { BrandProfilesTab } from './BrandProfilesTab';
 import { SecurityTab } from './SecurityTab';
-import { DailyComparisonTab } from './DailyComparisonTab';
 import { collection, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useSeo } from '@/lib/seo';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation, faSignature, faCalendarDay } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFlask, faStar, faCommentDots, faGauge, faBuilding, faSprayCan, faImages, faImage, faCodeMerge, faClockRotateLeft, faComments, faChevronUp, faChevronDown, faDownload, faTable, faFilePdf, faFile, faPalette, faShieldHalved, faTriangleExclamation, faSignature } from '@fortawesome/free-solid-svg-icons';
 import Cropper from 'react-easy-crop';
 
 const RL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
@@ -122,7 +121,6 @@ const TABS = [
   { k: 'perfumes',        l: 'Orijinal Parfümler', icon: faSprayCan },
   { k: 'muadil',          l: 'Muadil Parfümler',   icon: faStar },
   { k: 'reviews',         l: 'Tüm Yorumlar',       icon: faComments },
-  { k: 'daily-comparison', l: 'Günün Karşılaştırması', icon: faCalendarDay },
   { k: 'brand-profiles',  l: 'Marka Profilleri',   icon: faPalette },
   { k: 'slider',          l: 'Görsel Yönetimi',    icon: faImages },
   { k: 'favicon',         l: 'Favicon',            icon: faImage },
@@ -3361,7 +3359,6 @@ export function AdminPanel() {
 
         {tab === 'activity' && <ActivityTab />}
         {tab === 'security' && <SecurityTab />}
-        {tab === 'daily-comparison' && <DailyComparisonTab />}
 
         {tab === 'merge-perfumes' && (
           <MergePerfumesTab

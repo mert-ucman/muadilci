@@ -201,12 +201,6 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // ── Günün Karşılaştırması (admin kürasyonlu; herkese açık okuma) ───────
-    match /dailyComparisons/{date} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // ── Notifications ─────────────────────────────────────────────────────
     match /notifications/{notifId} {
       // Okuma: kullanıcı kendi bildirimlerini; mod/admin staff bildirimlerini okur
