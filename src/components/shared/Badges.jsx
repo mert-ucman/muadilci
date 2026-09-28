@@ -9,6 +9,28 @@ import { BADGE_GROUPS, BADGES, BADGE_ORDER } from '@/lib/gamification';
 const HEX = '50,4 91,27 91,73 50,96 9,73 9,27';
 const SHIELD = 'M50 5 L92 19 V50 C92 74 73 90 50 97 C27 90 8 74 8 50 V19 Z';
 
+// Hover: kart hafif büyür + imlecin TERS yönüne 3D eğilir + renkli parıltı.
+// (imleç aşağıda → üstten aşağı; sağda → soldan döner)
+const TILT_MAX = 15;
+function tiltMove(e) {
+  const el = e.currentTarget;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = el.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width - 0.5;   // -0.5 .. 0.5
+  const py = (e.clientY - r.top) / r.height - 0.5;
+  const rx = (py * TILT_MAX).toFixed(2);             // imleç aşağı → +rotateX
+  const ry = (-px * TILT_MAX).toFixed(2);            // imleç sağ → -rotateY
+  el.style.transform = `perspective(680px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.06)`;
+  el.style.boxShadow = `0 22px 34px -8px ${el.dataset.glow || 'rgba(0,0,0,.28)'}`;
+  el.style.zIndex = '2';
+}
+function tiltLeave(e) {
+  const el = e.currentTarget;
+  el.style.transform = '';
+  el.style.boxShadow = '';
+  el.style.zIndex = '';
+}
+
 // Prestij süslemesi — 4 köşeli parıltı ve sabit parıltı konumları
 const SPARK = 'M0 -6 L1.5 -1.5 L6 0 L1.5 1.5 L0 6 L-1.5 1.5 L-6 0 L-1.5 -1.5 Z';
 const SPARK_POS = [[30, 24, 1], [71, 26, 1.05], [22, 45, 0.8], [80, 47, 0.85]];
@@ -63,29 +85,40 @@ function Sparks({ n, unlocked }) {
 
 // ── Amblemler (beyaz gövde + kademe rengi aksan); hepsi 0..100 viewBox'ta ──
 const EMBLEMS = {
-  // İlk keşif: pusula — iğnesi parfüm şişesi biçiminde
-  bottlecompass: ({ c2 }) => (
-    <g>
-      {/* pusula halkası + yön çentikleri */}
-      <circle cx="50" cy="50" r="24" fill="none" stroke="#fff" strokeWidth="3.5" />
-      <g stroke="#fff" strokeWidth="2.6" strokeLinecap="round">
-        <path d="M50 27 v4 M50 69 v4 M27 50 h4 M69 50 h4" />
+  // İlk keşif: kalın halkalı pusula — iğnesi iki yöne bakan simetrik parfüm
+  bottlecompass: () => {
+    // Yeşil zeminle karışmasın diye alt yarı kehribar/altın (üst yarı beyaz).
+    const accent = '#eab54a';
+    // Küçük parfüm şişesi; sprey ucun SOLUNA açılı (güney yarı 180° → sağa bakar).
+    const half = (
+      <g>
+        <circle cx="48" cy="31" r="1.3" />
+        <circle cx="45.5" cy="29.5" r="1" />
+        <circle cx="49.2" cy="29" r="0.9" />
+        <circle cx="46.5" cy="27.3" r="0.8" />
+        <path d="M50 33 L47 37 L53 37 Z" />
+        <rect x="47.5" y="37" width="5" height="2.5" />
+        <rect x="45" y="39.5" width="10" height="10.5" rx="2.5" />
       </g>
-      {/* iğne = parfüm şişesi (dikey, kuzeye bakan) */}
-      <rect x="46" y="29" width="8" height="5" rx="1.5" fill="#fff" />
-      <rect x="47.5" y="34" width="5" height="4" fill="#fff" />
-      <path d="M47.5 38 L43 45 L57 45 L52.5 38 Z" fill="#fff" />
-      <rect x="43" y="45" width="14" height="17" rx="3.5" fill="#fff" />
-      <rect x="45.5" y="50" width="9" height="3.4" rx="1" fill={c2} />
-      <circle cx="50" cy="57.5" r="2" fill={c2} />
-    </g>
-  ),
-  // Koku meraklısı: yandan profil kaliteli bir burun
-  nose: ({ c2 }) => (
-    <g transform="translate(-3 1)">
-      <path d="M58 30 C55 38 47 47 39 52 C36 55 38 60 44 60 C47 60 50 59 52 57 C54 61 59 61 61 56 C63 48 61 38 58 30 Z" fill="#fff" />
-      <ellipse cx="55" cy="56.5" rx="2.4" ry="1.7" fill={c2} transform="rotate(18 55 56.5)" />
-      <path d="M39 52 q4 -6 12 -12" fill="none" stroke={c2} strokeWidth="1.4" strokeLinecap="round" opacity="0.35" />
+    );
+    return (
+      <g>
+        {/* ince pusula halkası */}
+        <circle cx="50" cy="50" r="27" fill="none" stroke="#fff" strokeWidth="4" />
+        {/* iğne: iki yönlü parfüm (üst beyaz / alt kehribar) */}
+        <g transform="rotate(38 50 50)">
+          <g fill="#fff">{half}</g>
+          <g fill={accent} transform="rotate(180 50 50)">{half}</g>
+        </g>
+        {/* merkez */}
+        <circle cx="50" cy="50" r="3.2" fill="#fff" stroke={accent} strokeWidth="1" />
+      </g>
+    );
+  },
+  // Koku meraklısı: çizgi-sanatı yandan burun (burun kanadı/nostril kıvrımlı)
+  nose: () => (
+    <g transform="translate(-2 0)" fill="none" stroke="#fff" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M58 27 C54 42 43 47 40 56 C38 61 44 64 49 62 C52.5 60.8 52 57.4 55 57.4 a3.4 3.4 0 1 1 -0.06 0.03" />
     </g>
   ),
   // Muadil çırağı: orijinal (atomizörlü) + muadil şişe, etiketli, parıltılı
@@ -315,9 +348,11 @@ export function BadgeCollection({ approvedReviewCount = 0, sm = false }) {
 
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-4">
+      <div className="flex items-baseline justify-between mb-4 flex-wrap gap-2">
         <h3 className="text-[18px] font-bold text-(--color-navy)">Başarımlar</h3>
         <span className="text-[13px] text-(--color-text-light)">
+          <strong style={{ color: C.gold }}>{approvedReviewCount}</strong> değerlendirme
+          <span className="mx-[6px]">·</span>
           <strong style={{ color: C.gold }}>{unlockedCount}</strong> / {BADGE_ORDER.length} açıldı
         </span>
       </div>
@@ -335,19 +370,25 @@ export function BadgeCollection({ approvedReviewCount = 0, sm = false }) {
               return (
                 <div key={b.id}
                   className="rounded-[14px] flex flex-col items-center justify-center"
+                  data-glow={`${(unlocked ? meta.c2 : '#8a857a')}55`}
+                  onMouseMove={tiltMove}
+                  onMouseLeave={tiltLeave}
                   style={{
                     height: '200px',
                     padding: '16px 14px',
                     backgroundColor: unlocked ? `${meta.c1}12` : C.card,
                     backgroundImage: unlocked ? `radial-gradient(125% 95% at 50% 20%, ${meta.c1}40, transparent 68%)` : 'none',
                     border: `1.5px solid ${unlocked ? meta.c2 : C.border}`,
+                    transformStyle: 'preserve-3d',
+                    transition: 'transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease',
+                    willChange: 'transform',
                   }}>
                   <BadgeMedal badge={meta} size={64} unlocked={unlocked} />
                   <div className="mt-[12px] text-[13px] font-bold text-center leading-[1.25]" style={{ color: unlocked ? C.goldDeep : C.textMid, fontFamily: F }}>
                     {b.label}
                   </div>
                   <div className="mt-[3px] text-[11px] leading-[1.35] text-center" style={{ color: unlocked ? C.gold : C.textLight }}>
-                    {unlocked ? 'Açıldı' : `${approvedReviewCount} / ${b.need} yorum`}
+                    {b.need} değerlendirme
                   </div>
                 </div>
               );
