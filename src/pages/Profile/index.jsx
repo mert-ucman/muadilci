@@ -9,7 +9,7 @@ import { usePerfumeLists } from '@/hooks/usePerfumeLists';
 import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { BadgeCollection } from '@/components/shared/Badges';
+import { BadgeCollection, LevelLadder } from '@/components/shared/Badges';
 import { levelFor } from '@/lib/gamification';
 import { ListsTab } from './ListsTab';
 
@@ -38,9 +38,6 @@ function getCroppedImg(src, pixelCrop, outputSize = 300) {
   });
 }
 
-const ROLE_LABEL = { admin: 'Admin', moderator: 'Moderatör', user: 'Üye' };
-const ROLE_COLOR = { admin: 'red', moderator: 'blue', user: 'gold' };
-
 const TABS = [
   { k: 'info', l: 'Bilgilerim' },
   { k: 'achievements', l: 'Başarımlar' },
@@ -49,20 +46,80 @@ const TABS = [
   { k: 'lists', l: 'Listelerim' },
 ];
 
-// Profil başlığı (koyu zemin) için küçük istatistik çipi.
-// Dikey ortalama: sabit yükseklik + items-center + cap-center (text-box trim) —
-// py hack yok; etiket ve değer tek satırda ortak taban çizgisinde.
-function HeaderStat({ label, value, accent }) {
+// ── Profil başlığı bileşenleri (koyu zemin) ──────────────────────────────────
+// Küçük SVG ikonları
+const IconLevel = ({ c = '#fff' }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 13l6-5 6 5" /><path d="M6 18l6-5 6 5" /></svg>
+);
+const IconXP = ({ c = '#fff' }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill={c}><path d="M12 2l2.5 7.2L22 11l-7.5 1.8L12 20l-2.5-7.2L2 11l7.5-1.8z" /></svg>
+);
+const IconMP = ({ c = '#fff' }) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><path d="M6 3h12l4 6-10 12L2 9z" /></svg>
+);
+const IconShield = ({ c = '#fff' }) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><path d="M12 2l8 3v6c0 5-3.4 8.6-8 11-4.6-2.4-8-6-8-11V5z" /></svg>
+);
+const IconCrown = ({ c = '#fff' }) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill={c}><path d="M3 7l4.5 4.5L12 4l4.5 7.5L21 7l-2 12H5z" /></svg>
+);
+const IconUser = ({ c = '#fff' }) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7z" /></svg>
+);
+
+const ROLE_META = {
+  admin:     { label: 'Admin',     c: '#ff9a9a', bg: 'rgba(237,77,87,.18)',  bd: 'rgba(237,77,87,.5)',  Icon: IconCrown },
+  moderator: { label: 'Moderatör', c: '#86cff8', bg: 'rgba(64,181,236,.18)', bd: 'rgba(64,181,236,.5)', Icon: IconShield },
+  user:      { label: 'Üye',       c: '#eed9ab', bg: 'rgba(201,164,107,.2)', bd: 'rgba(201,164,107,.5)', Icon: IconUser },
+};
+
+// Rol rozeti (ikon + etiket, role göre renk)
+function RolePill({ role }) {
+  const m = ROLE_META[role] || ROLE_META.user;
   return (
-    <span className="inline-flex items-center rounded-[20px] px-[12px]"
-      style={{
-        height: '26px', gap: '6px', fontFamily: F,
-        background: accent ? 'rgba(201,164,107,.22)' : 'rgba(255,255,255,.12)',
-        border: `1px solid ${accent ? 'rgba(201,164,107,.5)' : 'rgba(255,255,255,.18)'}`,
-      }}>
-      <span className="cap-center" style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: accent ? '#e7cf9f' : 'rgba(255,255,255,.6)' }}>{label}</span>
-      <span className="cap-center" style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+    <span className="inline-flex items-center" style={{ height: '32px', gap: '7px', padding: '0 13px 0 11px', borderRadius: '99px', background: m.bg, border: `1px solid ${m.bd}` }}>
+      <m.Icon c={m.c} />
+      <span style={{ fontSize: '12px', fontWeight: 800, color: m.c, letterSpacing: '.01em', fontFamily: F }}>{m.label}</span>
     </span>
+  );
+}
+
+// İstatistik çipi — ikon dairesi + üstte etiket / altta değer
+function StatChip({ Icon, label, value, gold }) {
+  return (
+    <span className="inline-flex items-center" style={{
+      height: '32px', gap: '8px', padding: '0 13px 0 6px', borderRadius: '99px',
+      background: gold ? 'rgba(201,164,107,.16)' : 'rgba(255,255,255,.07)',
+      border: `1px solid ${gold ? 'rgba(201,164,107,.4)' : 'rgba(255,255,255,.14)'}`,
+    }}>
+      <span style={{ display: 'inline-flex', width: '22px', height: '22px', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: gold ? 'rgba(201,164,107,.3)' : 'rgba(255,255,255,.1)' }}>
+        <Icon c={gold ? '#eed9ab' : 'rgba(255,255,255,.9)'} />
+      </span>
+      <span className="inline-flex flex-col" style={{ lineHeight: 1 }}>
+        <span style={{ fontSize: '8.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', color: gold ? '#e7cf9f' : 'rgba(255,255,255,.5)', fontFamily: F }}>{label}</span>
+        <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', marginTop: '3px', fontVariantNumeric: 'tabular-nums', fontFamily: F }}>{value}</span>
+      </span>
+    </span>
+  );
+}
+
+// Çıkış butonu — sade; hover'da canlı kırmızı gradient + glow
+function LogoutButton({ onClick }) {
+  const [h, setH] = useState(false);
+  return (
+    <button type="button" onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      title="Çıkış Yap" aria-label="Çıkış Yap"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '8px', height: '38px', padding: '0 16px',
+        borderRadius: '99px', cursor: 'pointer', fontFamily: F, fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap',
+        color: h ? '#fff' : 'rgba(255,255,255,.82)',
+        background: h ? 'linear-gradient(135deg,#ef4d57,#c0303a)' : 'rgba(255,255,255,.08)',
+        border: `1px solid ${h ? 'transparent' : 'rgba(255,255,255,.18)'}`,
+        boxShadow: h ? '0 8px 20px rgba(220,40,55,.35)' : 'none', transition: 'all .2s ease',
+      }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+      Çıkış Yap
+    </button>
   );
 }
 
@@ -435,7 +492,11 @@ export function ProfilePage({ queryParams }) {
       </Modal>
 
       {/* Profile header */}
-      <div style={{ background: `linear-gradient(135deg,${C.navy},${C.navyLight})`, padding: sm ? '28px 16px' : '40px 32px' }}>
+      <div style={{
+        background: `radial-gradient(120% 150% at 12% -30%, rgba(201,164,107,.16), transparent 46%), linear-gradient(135deg,${C.navy},${C.navyLight})`,
+        padding: sm ? '28px 16px' : '40px 32px',
+        borderBottom: '1px solid rgba(255,255,255,.06)',
+      }}>
         <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
           {/* Avatar */}
           <div className="relative shrink-0" ref={photoMenuRef}
@@ -506,22 +567,16 @@ export function ProfilePage({ queryParams }) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div style={{ fontSize: sm ? '20px' : '26px' }} className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap">{user.name}</div>
-            <div className="text-white/60 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
-            <div className="flex gap-2 mt-2 items-center flex-wrap">
-              <Badge color={ROLE_COLOR[user.role]}>{ROLE_LABEL[user.role]}</Badge>
-              <HeaderStat label="Sv" value={`${lvl.lvl} · ${lvl.title}`} />
-              <HeaderStat label="XP" value={user.xpTotal || 0} />
-              <HeaderStat label="MP" value={user.mp || 0} accent />
+            <div className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: sm ? '20px' : '27px', letterSpacing: '-.02em' }}>{user.name}</div>
+            <div className="text-white/55 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap mb-3">{user.email}</div>
+            <div className="flex gap-2 items-center flex-wrap">
+              <RolePill role={user.role} />
+              <StatChip Icon={IconLevel} label="Seviye" value={`${lvl.lvl} · ${lvl.title}`} />
+              <StatChip Icon={IconXP} label="XP" value={user.xpTotal || 0} />
+              <StatChip Icon={IconMP} label="MP" value={user.mp || 0} gold />
             </div>
           </div>
-          <button
-            onClick={() => { logout(); navigate('/'); }}
-            className="inline-flex items-center justify-center rounded-[20px] px-[16px] py-[7px] text-[13px] font-semibold cursor-pointer border-none shrink-0"
-            style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red, fontFamily: F }}
-          >
-            <p className="m-0 p-0 w-max cap-center">Çıkış Yap</p>
-          </button>
+          <LogoutButton onClick={() => { logout(); navigate('/'); }} />
         </div>
       </div>
 
@@ -636,18 +691,21 @@ export function ProfilePage({ queryParams }) {
             <>
                 {/* Seviye ilerlemesi */}
                 <div className="rounded-[16px] border border-(--color-border) mb-5" style={{ background: C.card, padding: '18px' }}>
-                  <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-[.05em] text-(--color-text-light)">Seviye {lvl.lvl}</div>
                       <div className="text-[19px] font-black text-(--color-navy)" style={{ fontFamily: F }}>{lvl.title}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-[22px] font-black" style={{ color: C.gold, fontVariantNumeric: 'tabular-nums' }}>
-                        {user.xpTotal || 0} <span className="text-[12px] font-semibold text-(--color-text-light)">XP</span>
+                    <div className="flex flex-col items-end gap-2">
+                      <LevelLadder xpTotal={user.xpTotal || 0} />
+                      <div className="text-right">
+                        <div className="text-[22px] font-black" style={{ color: C.gold, fontVariantNumeric: 'tabular-nums' }}>
+                          {user.xpTotal || 0} <span className="text-[12px] font-semibold text-(--color-text-light)">XP</span>
+                        </div>
+                        {lvl.next
+                          ? <div className="text-[11px] text-(--color-text-light)">Sonraki: {lvl.next.title} · {lvl.next.min} XP</div>
+                          : <div className="text-[11px] text-(--color-text-light)">En yüksek seviye</div>}
                       </div>
-                      {lvl.next
-                        ? <div className="text-[11px] text-(--color-text-light)">Sonraki: {lvl.next.title} · {lvl.next.min} XP</div>
-                        : <div className="text-[11px] text-(--color-text-light)">En yüksek seviye</div>}
                     </div>
                   </div>
                   <div className="h-[8px] rounded-full overflow-hidden" style={{ background: C.surface }}>

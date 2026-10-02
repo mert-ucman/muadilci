@@ -1,9 +1,9 @@
 // Kullanıcı Çekme Planı — rozet görselleri + gruplu profil vitrini
 // 13 kilometre taşı, 4 grup. Her grubun ÇERÇEVE ŞEKLİ (circle/shield/hex/laurel)
 // ve renk kimliği; her rozetin kendi AMBLEMİ vardır. Kilitliyse gri + kilit.
-import { useId } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 import { C, F } from '@/constants/theme';
-import { BADGE_GROUPS, BADGES, BADGE_ORDER } from '@/lib/gamification';
+import { BADGE_GROUPS, BADGES, BADGE_ORDER, LEVELS, levelFor } from '@/lib/gamification';
 
 // Çerçeve geometrileri
 const HEX = '50,4 91,27 91,73 50,96 9,73 9,27';
@@ -336,6 +336,75 @@ export function BadgeMedal({ badge, size = 64, unlocked = false }) {
           <rect x="7.5" y="11" width="9" height="7.5" rx="1.6" fill="#fff" />
           <path d="M9 11V9a3 3 0 0 1 6 0v2" fill="none" stroke="#fff" strokeWidth="1.8" />
         </svg>
+      )}
+    </div>
+  );
+}
+
+// Seviye tablosu — XP kartının sağ üstündeki "i" işareti; tıklayınca 0→1000 XP
+// arası tüm seviyeleri (isim + XP eşiği) listeler, mevcut seviye vurgulu.
+export function LevelLadder({ xpTotal = 0 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const cur = levelFor(xpTotal).lvl;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block', zIndex: 6 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label="Seviye listesi"
+        title="Seviye listesi"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '6px', height: '26px',
+          padding: '0 11px', borderRadius: '99px', cursor: 'pointer', whiteSpace: 'nowrap',
+          border: `1.5px solid ${C.goldBorder}`, background: open ? C.gold : C.goldBg,
+          color: open ? '#fff' : C.gold, fontFamily: F, fontSize: '11px', fontWeight: 700, lineHeight: 1,
+        }}
+      >
+        Seviye Listesi
+        <svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>
+          <path d="M1 3 L5 7 L9 3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '32px', right: 0, width: '236px',
+          background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px',
+          boxShadow: '0 12px 32px rgba(0,0,0,.18)', padding: '8px', zIndex: 10,
+        }}>
+          <div className="text-[11px] font-bold uppercase tracking-[.05em] px-[6px] pt-[2px] pb-[6px]" style={{ color: C.textLight }}>
+            Seviye tablosu
+          </div>
+          {LEVELS.map((l, i) => {
+            const active = l.lvl === cur;
+            const next = LEVELS[i + 1];
+            const range = next ? `${l.min}–${next.min - 1}` : `${l.min}+`;
+            return (
+              <div key={l.lvl}
+                className="flex items-center justify-between rounded-[8px] px-[8px] py-[5px]"
+                style={{ background: active ? C.goldBg : 'transparent' }}>
+                <div className="flex items-center gap-[8px] min-w-0">
+                  <span className="text-[11px] font-bold shrink-0" style={{ color: active ? C.gold : C.textLight, width: '26px' }}>Sv{l.lvl}</span>
+                  <span className="text-[13px] font-semibold truncate" style={{ color: active ? C.goldDeep : C.textMid, fontFamily: F }}>{l.title}</span>
+                </div>
+                <span className="text-[11px] font-semibold shrink-0" style={{ color: active ? C.gold : C.textLight, fontVariantNumeric: 'tabular-nums' }}>
+                  {range} XP
+                </span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

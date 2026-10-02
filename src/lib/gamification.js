@@ -85,13 +85,16 @@ BADGES[CHAMPION_BADGE.id] = CHAMPION_BADGE;
 
 // ── Seviye sistemi (xpTotal'a göre) ──────────────────────────────────────────
 export const LEVELS = [
-  { lvl: 1, min: 0,    title: 'Yeni Burun' },
-  { lvl: 2, min: 25,   title: 'Meraklı' },
-  { lvl: 3, min: 75,   title: 'Kokucu' },
-  { lvl: 4, min: 150,  title: 'Amatör Burun' },
-  { lvl: 5, min: 300,  title: 'Uzman Burun' },
-  { lvl: 6, min: 600,  title: 'Koku Ustası' },
-  { lvl: 7, min: 1000, title: 'Efsane Burun' },
+  { lvl: 1,  min: 0,    title: 'Yeni Burun' },
+  { lvl: 2,  min: 25,   title: 'Meraklı' },
+  { lvl: 3,  min: 75,   title: 'Kokucu' },
+  { lvl: 4,  min: 150,  title: 'Amatör Burun' },
+  { lvl: 5,  min: 275,  title: 'Deneyimli Burun' },
+  { lvl: 6,  min: 425,  title: 'Uzman Burun' },
+  { lvl: 7,  min: 600,  title: 'Koku Avcısı' },
+  { lvl: 8,  min: 775,  title: 'Koku Ustası' },
+  { lvl: 9,  min: 900,  title: 'Koku Üstadı' },
+  { lvl: 10, min: 1000, title: 'Efsane Burun' },
 ];
 
 // xpTotal → { lvl, title, min, next, progress(0..1) }
