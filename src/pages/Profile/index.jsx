@@ -12,6 +12,7 @@ import { useSeo } from '@/lib/seo';
 import { BadgeCollection, LevelLadder } from '@/components/shared/Badges';
 import { levelFor } from '@/lib/gamification';
 import { ListsTab } from './ListsTab';
+import { Sparkles, Gem, ShieldCheck, Crown, User, LogOut } from 'lucide-react';
 
 function getCroppedImg(src, pixelCrop, outputSize = 300) {
   return new Promise((resolve, reject) => {
@@ -47,25 +48,12 @@ const TABS = [
 ];
 
 // ── Profil başlığı bileşenleri (koyu zemin) ──────────────────────────────────
-// Küçük SVG ikonları
-const IconLevel = ({ c = '#fff' }) => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M6 13l6-5 6 5" /><path d="M6 18l6-5 6 5" /></svg>
-);
-const IconXP = ({ c = '#fff' }) => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill={c}><path d="M12 2l2.5 7.2L22 11l-7.5 1.8L12 20l-2.5-7.2L2 11l7.5-1.8z" /></svg>
-);
-const IconMP = ({ c = '#fff' }) => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><path d="M6 3h12l4 6-10 12L2 9z" /></svg>
-);
-const IconShield = ({ c = '#fff' }) => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><path d="M12 2l8 3v6c0 5-3.4 8.6-8 11-4.6-2.4-8-6-8-11V5z" /></svg>
-);
-const IconCrown = ({ c = '#fff' }) => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill={c}><path d="M3 7l4.5 4.5L12 4l4.5 7.5L21 7l-2 12H5z" /></svg>
-);
-const IconUser = ({ c = '#fff' }) => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill={c}><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7z" /></svg>
-);
+// Lucide ikonları — StatTile/RolePill API'siyle uyumlu sarmalayıcılar (c = renk, s = boyut)
+const IconXP = ({ c = '#fff', s = 13 }) => <Sparkles size={s} color={c} strokeWidth={2.2} />;
+const IconMP = ({ c = '#fff', s = 12 }) => <Gem size={s} color={c} strokeWidth={2.2} />;
+const IconShield = ({ c = '#fff', s = 13 }) => <ShieldCheck size={s} color={c} strokeWidth={2.2} />;
+const IconCrown = ({ c = '#fff', s = 13 }) => <Crown size={s} color={c} strokeWidth={2.2} />;
+const IconUser = ({ c = '#fff', s = 13 }) => <User size={s} color={c} strokeWidth={2.2} />;
 
 const ROLE_META = {
   admin:     { label: 'Admin',     c: '#ff9a9a', bg: 'rgba(237,77,87,.18)',  bd: 'rgba(237,77,87,.5)',  Icon: IconCrown },
@@ -103,6 +91,28 @@ function StatChip({ Icon, label, value, gold }) {
   );
 }
 
+// Büyük istatistik tile'ı (ilerleme paneli için) — ikon kutusu + büyük sayı
+function StatTile({ Icon, label, value, gold }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', borderRadius: '12px', minWidth: '92px',
+      background: gold ? 'rgba(201,164,107,.14)' : 'rgba(255,255,255,.06)',
+      border: `1px solid ${gold ? 'rgba(201,164,107,.35)' : 'rgba(255,255,255,.12)'}`,
+    }}>
+      <span style={{
+        width: '32px', height: '32px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        background: gold ? 'rgba(201,164,107,.28)' : 'rgba(255,255,255,.1)',
+      }}>
+        <Icon c={gold ? '#eed9ab' : 'rgba(255,255,255,.92)'} s={17} />
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+        <span style={{ fontSize: '20px', fontWeight: 900, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: F }}>{value}</span>
+        <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', marginTop: '4px', color: gold ? '#e7cf9f' : 'rgba(255,255,255,.5)', fontFamily: F }}>{label}</span>
+      </span>
+    </div>
+  );
+}
+
 // Çıkış butonu — sade; hover'da canlı kırmızı gradient + glow
 function LogoutButton({ onClick }) {
   const [h, setH] = useState(false);
@@ -117,7 +127,7 @@ function LogoutButton({ onClick }) {
         border: `1px solid ${h ? 'transparent' : 'rgba(255,255,255,.18)'}`,
         boxShadow: h ? '0 8px 20px rgba(220,40,55,.35)' : 'none', transition: 'all .2s ease',
       }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+      <LogOut size={16} strokeWidth={2.2} />
       Çıkış Yap
     </button>
   );
@@ -497,15 +507,29 @@ export function ProfilePage({ queryParams }) {
         padding: sm ? '28px 16px' : '40px 32px',
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+         <div style={{ display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
           {/* Avatar */}
           <div className="relative shrink-0" ref={photoMenuRef}
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
           >
+            {/* Seviye ilerleme halkası — XP'nin bir sonraki seviyeye oranı */}
+            <svg width={sm ? 78 : 94} height={sm ? 78 : 94} viewBox="0 0 100 100" aria-hidden="true"
+              style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 0, pointerEvents: 'none' }}>
+              <defs>
+                <linearGradient id="avatarLevelRing" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor={C.gold} /><stop offset="1" stopColor={C.goldLight} />
+                </linearGradient>
+              </defs>
+              <circle cx="50" cy="50" r="47" fill="none" stroke="rgba(255,255,255,.13)" strokeWidth="5" />
+              <circle cx="50" cy="50" r="47" fill="none" stroke="url(#avatarLevelRing)" strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 47} strokeDashoffset={(1 - lvl.progress) * 2 * Math.PI * 47}
+                transform="rotate(-90 50 50)" style={{ transition: 'stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1)' }} />
+            </svg>
             <div
               onClick={() => { if (photoLoading) return; if (user.photoURL) setPhotoMenu(v => !v); else fileInputRef.current?.click(); }}
-              style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', border: '3px solid rgba(255,255,255,.25)' }}
+              style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', zIndex: 1, border: '2px solid rgba(255,255,255,.22)' }}
             >
               {user.photoURL
                 ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -548,6 +572,14 @@ export function ProfilePage({ queryParams }) {
                 style={{ fontFamily: F }}
               >×</button>
             )}
+            {/* Seviye rozeti */}
+            <span style={{
+              position: 'absolute', bottom: '-4px', left: '50%', transform: 'translateX(-50%)', zIndex: 4,
+              minWidth: '22px', height: '22px', padding: '0 7px', borderRadius: '99px',
+              background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, border: `2px solid ${C.navy}`,
+              color: '#fff', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center',
+              justifyContent: 'center', fontFamily: F, boxShadow: '0 2px 7px rgba(0,0,0,.4)', fontVariantNumeric: 'tabular-nums',
+            }}>{lvl.lvl}</span>
             <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} />
           </div>
 
@@ -567,16 +599,40 @@ export function ProfilePage({ queryParams }) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div className="font-black text-white mb-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: sm ? '20px' : '27px', letterSpacing: '-.02em' }}>{user.name}</div>
-            <div className="text-white/55 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap mb-3">{user.email}</div>
-            <div className="flex gap-2 items-center flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap mb-1">
+              <span className="font-black text-white overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: sm ? '20px' : '27px', letterSpacing: '-.02em' }}>{user.name}</span>
               <RolePill role={user.role} />
-              <StatChip Icon={IconLevel} label="Seviye" value={`${lvl.lvl} · ${lvl.title}`} />
-              <StatChip Icon={IconXP} label="XP" value={user.xpTotal || 0} />
-              <StatChip Icon={IconMP} label="MP" value={user.mp || 0} gold />
             </div>
+            <div className="text-white/55 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
           </div>
           <LogoutButton onClick={() => { logout(); navigate('/'); }} />
+         </div>
+
+         {/* İlerleme paneli — seviye + XP bar + XP/MP tile'ları */}
+         <div style={{ marginTop: sm ? '18px' : '22px', display: 'flex', gap: sm ? '14px' : '24px', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '16px', padding: sm ? '14px 16px' : '16px 20px' }}>
+           <div style={{ flex: 1, minWidth: '220px' }}>
+             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px', marginBottom: '8px' }}>
+               <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontFamily: F }}>
+                 Seviye {lvl.lvl} <span style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}>·</span> <span style={{ color: '#eed9ab' }}>{lvl.title}</span>
+               </span>
+               <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,.55)', fontVariantNumeric: 'tabular-nums' }}>
+                 {lvl.next ? `${user.xpTotal || 0} / ${lvl.next.min} XP` : 'En yüksek seviye'}
+               </span>
+             </div>
+             <div style={{ height: '8px', borderRadius: '99px', background: 'rgba(255,255,255,.1)', overflow: 'hidden' }}>
+               <div style={{ width: `${Math.round(lvl.progress * 100)}%`, height: '100%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, borderRadius: '99px', transition: 'width .6s cubic-bezier(.2,.8,.2,1)' }} />
+             </div>
+             {lvl.next && (
+               <div style={{ marginTop: '7px', fontSize: '11px', color: 'rgba(255,255,255,.5)' }}>
+                 Sonraki: <span style={{ color: 'rgba(255,255,255,.78)', fontWeight: 600 }}>{lvl.next.title}</span>
+               </div>
+             )}
+           </div>
+           <div style={{ display: 'flex', gap: '10px' }}>
+             <StatTile Icon={IconXP} label="XP" value={user.xpTotal || 0} />
+             <StatTile Icon={IconMP} label="MP" value={user.mp || 0} gold />
+           </div>
+         </div>
         </div>
       </div>
 

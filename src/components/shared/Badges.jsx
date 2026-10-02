@@ -389,7 +389,7 @@ export function LevelLadder({ xpTotal = 0 }) {
           {LEVELS.map((l, i) => {
             const active = l.lvl === cur;
             const next = LEVELS[i + 1];
-            const range = next ? `${l.min}–${next.min - 1}` : `${l.min}+`;
+            const range = next ? `${l.min}-${next.min - 1}` : `${l.min}+`;
             return (
               <div key={l.lvl}
                 className="flex items-center justify-between rounded-[8px] px-[8px] py-[5px]"
