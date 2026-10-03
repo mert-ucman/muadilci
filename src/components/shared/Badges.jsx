@@ -432,7 +432,7 @@ export function BadgeCollection({ approvedReviewCount = 0, sm = false }) {
             <span className="text-[14px] font-extrabold text-(--color-navy)" style={{ fontFamily: F }}>{g.name}</span>
             <span className="text-[12px] text-(--color-text-light)">{g.meta}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 165px)', justifyContent: 'start', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: sm ? (g.badges.length === 1 ? 'repeat(3, minmax(0, 1fr))' : `repeat(${Math.min(g.badges.length, 4)}, minmax(0, 1fr))`) : 'repeat(auto-fill, 165px)', justifyContent: sm ? 'start' : (g.badges.length === 1 ? 'center' : 'start'), gap: sm ? '8px' : '12px' }}>
             {g.badges.map((b) => {
               const meta = BADGES[b.id];
               const unlocked = approvedReviewCount >= b.need;
@@ -443,8 +443,10 @@ export function BadgeCollection({ approvedReviewCount = 0, sm = false }) {
                   onMouseMove={tiltMove}
                   onMouseLeave={tiltLeave}
                   style={{
-                    height: '200px',
-                    padding: '16px 14px',
+                    gridColumn: (sm && g.badges.length === 1) ? '2' : undefined,
+                    height: sm ? 'auto' : '200px',
+                    minHeight: sm ? '132px' : undefined,
+                    padding: sm ? '12px 6px' : '16px 14px',
                     backgroundColor: unlocked ? `${meta.c1}12` : C.card,
                     backgroundImage: unlocked ? `radial-gradient(125% 95% at 50% 20%, ${meta.c1}40, transparent 68%)` : 'none',
                     border: `1.5px solid ${unlocked ? meta.c2 : C.border}`,
@@ -452,11 +454,11 @@ export function BadgeCollection({ approvedReviewCount = 0, sm = false }) {
                     transition: 'transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease',
                     willChange: 'transform',
                   }}>
-                  <BadgeMedal badge={meta} size={64} unlocked={unlocked} />
-                  <div className="mt-[12px] text-[13px] font-bold text-center leading-[1.25]" style={{ color: unlocked ? C.goldDeep : C.textMid, fontFamily: F }}>
+                  <BadgeMedal badge={meta} size={sm ? 44 : 64} unlocked={unlocked} />
+                  <div className="font-bold text-center leading-[1.2]" style={{ marginTop: sm ? '8px' : '12px', fontSize: sm ? '11px' : '13px', color: unlocked ? C.goldDeep : C.textMid, fontFamily: F }}>
                     {b.label}
                   </div>
-                  <div className="mt-[3px] text-[11px] leading-[1.35] text-center" style={{ color: unlocked ? C.gold : C.textLight }}>
+                  <div className="text-center leading-[1.3]" style={{ marginTop: '3px', fontSize: sm ? '9.5px' : '11px', color: unlocked ? C.gold : C.textLight }}>
                     {b.need} değerlendirme
                   </div>
                 </div>

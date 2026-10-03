@@ -6,13 +6,13 @@ import { useRouter } from '@/contexts/RouterContext';
 import { useData } from '@/contexts/DataContext';
 import { useW } from '@/hooks/useW';
 import { usePerfumeLists } from '@/hooks/usePerfumeLists';
-import { Card, Badge, Btn, Input, Textarea, Modal } from '@/components/ui';
+import { Card, Badge, Btn, Input, Modal } from '@/components/ui';
 import { C, F, FH } from '@/constants/theme';
 import { useSeo } from '@/lib/seo';
-import { BadgeCollection, LevelLadder } from '@/components/shared/Badges';
-import { levelFor } from '@/lib/gamification';
+import { BadgeCollection, LevelLadder, BadgeMedal } from '@/components/shared/Badges';
+import { levelFor, BADGE_ORDER, BADGES } from '@/lib/gamification';
 import { ListsTab } from './ListsTab';
-import { Sparkles, Gem, ShieldCheck, Crown, User, LogOut } from 'lucide-react';
+import { Sparkles, Gem, ShieldCheck, Crown, User, LogOut, Star, MessageSquare, Heart, ListChecks, Share, Calendar, Check, Trophy, UserRound, X, MoreVertical, Pencil, Mail, Globe, IdCard, Share2 } from 'lucide-react';
 
 function getCroppedImg(src, pixelCrop, outputSize = 300) {
   return new Promise((resolve, reject) => {
@@ -46,6 +46,7 @@ const TABS = [
   { k: 'reviews', l: 'Yorumlarım' },
   { k: 'lists', l: 'Listelerim' },
 ];
+const TAB_ICONS = { info: UserRound, achievements: Trophy, favorites: Heart, reviews: MessageSquare, lists: ListChecks };
 
 // ── Profil başlığı bileşenleri (koyu zemin) ──────────────────────────────────
 // Lucide ikonları — StatTile/RolePill API'siyle uyumlu sarmalayıcılar (c = renk, s = boyut)
@@ -66,8 +67,8 @@ function RolePill({ role }) {
   const m = ROLE_META[role] || ROLE_META.user;
   return (
     <span className="inline-flex items-center" style={{ height: '32px', gap: '7px', padding: '0 13px 0 11px', borderRadius: '99px', background: m.bg, border: `1px solid ${m.bd}` }}>
-      <m.Icon c={m.c} />
-      <span style={{ fontSize: '12px', fontWeight: 800, color: m.c, letterSpacing: '.01em', fontFamily: F }}>{m.label}</span>
+      <m.Icon c={m.c} s={16} />
+      <span style={{ fontSize: '12px', fontWeight: 800, lineHeight: 1, color: m.c, letterSpacing: '.01em', fontFamily: F }}>{m.label}</span>
     </span>
   );
 }
@@ -114,21 +115,94 @@ function StatTile({ Icon, label, value, gold }) {
 }
 
 // Çıkış butonu — sade; hover'da canlı kırmızı gradient + glow
-function LogoutButton({ onClick }) {
+// Dairesel "⋮" menü butonu — açılan panelde Çıkış Yap bulunur (dışarı tıklayınca kapanır)
+function MoreMenu({ onLogout }) {
+  const [open, setOpen] = useState(false);
   const [h, setH] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onEsc = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onEsc);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onEsc); };
+  }, [open]);
+  const hot = open || h;
   return (
-    <button type="button" onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      title="Çıkış Yap" aria-label="Çıkış Yap"
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button type="button" onClick={() => setOpen((o) => !o)} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+        aria-label="Daha fazla" aria-haspopup="menu" aria-expanded={open}
+        style={{
+          width: '38px', height: '38px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', color: hot ? '#fff' : 'rgba(255,255,255,.82)',
+          background: hot ? '#161616' : '#000',
+          border: `1px solid rgba(255,255,255,${hot ? '.28' : '.18'})`, transition: 'all .2s ease',
+        }}>
+        <MoreVertical size={18} strokeWidth={2.2} />
+      </button>
+      {open && (
+        <div role="menu" style={{ position: 'absolute', top: '46px', right: 0, minWidth: '176px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px', boxShadow: '0 16px 36px rgba(0,0,0,.28)', padding: '6px', zIndex: 40 }}>
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); onLogout(); }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(237,77,87,.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', padding: '10px 12px', borderRadius: '9px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: F, fontSize: '14px', fontWeight: 600, color: C.red, transition: 'background .15s' }}>
+            <LogOut size={16} strokeWidth={2.2} />
+            Çıkış Yap
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Üyelik tarihi (createdAt → "Ay Yıl"); yoksa null döner (uydurma yok)
+function memberSince(createdAt) {
+  if (!createdAt) return null;
+  let d;
+  try { d = typeof createdAt.toDate === 'function' ? createdAt.toDate() : new Date(createdAt); } catch { return null; }
+  if (!d || Number.isNaN(d.getTime())) return null;
+  return new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(d);
+}
+
+// Floating stats bar istatistik öğesi (ikon + sayı + etiket)
+function StatItem({ Icon, value, label, compact }) {
+  const circle = compact ? 30 : 34;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '8px' : '10px', padding: compact ? 0 : '0 6px' }}>
+      <span style={{ width: `${circle}px`, height: `${circle}px`, flexShrink: 0, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.1)' }}>
+        <Icon size={compact ? 14 : 16} color="#eed9ab" strokeWidth={2} />
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+        <span style={{ fontSize: compact ? '16.5px' : '18px', fontWeight: 900, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: F }}>{value}</span>
+        <span style={{ fontSize: compact ? '10px' : '10px', fontWeight: 600, color: 'rgba(255,255,255,.5)', marginTop: compact ? '4px' : '4px', fontFamily: F, whiteSpace: 'nowrap' }}>{label}</span>
+      </span>
+    </div>
+  );
+}
+
+// "Profili Paylaş" — herkese açık profil linkini panoya kopyalar (username yoksa gizli)
+function ShareButton({ username }) {
+  const [copied, setCopied] = useState(false);
+  const [h, setH] = useState(false);
+  if (!username) return null;
+  const share = async () => {
+    try { await navigator.clipboard.writeText(`${window.location.origin}/@${username}`); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* noop */ }
+  };
+  const hot = h && !copied;
+  return (
+    <button type="button" onClick={share} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      aria-label="Profili paylaş"
       style={{
-        display: 'inline-flex', alignItems: 'center', gap: '8px', height: '38px', padding: '0 16px',
-        borderRadius: '99px', cursor: 'pointer', fontFamily: F, fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap',
-        color: h ? '#fff' : 'rgba(255,255,255,.82)',
-        background: h ? 'linear-gradient(135deg,#ef4d57,#c0303a)' : 'rgba(255,255,255,.08)',
-        border: `1px solid ${h ? 'transparent' : 'rgba(255,255,255,.18)'}`,
-        boxShadow: h ? '0 8px 20px rgba(220,40,55,.35)' : 'none', transition: 'all .2s ease',
+        display: 'inline-flex', alignItems: 'center', gap: '8px', height: '38px', padding: '0 18px', borderRadius: '99px', cursor: 'pointer',
+        fontFamily: F, fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', transition: 'all .2s ease',
+        color: copied ? '#fff' : 'rgba(255,255,255,.92)',
+        background: copied ? 'linear-gradient(135deg,#3bb56e,#0f7a3e)' : (hot ? '#161616' : '#000'),
+        border: `1px solid ${copied ? 'transparent' : `rgba(255,255,255,${hot ? '.28' : '.18'})`}`,
+        boxShadow: copied ? '0 8px 20px rgba(15,122,62,.3)' : 'none',
       }}>
-      <LogOut size={16} strokeWidth={2.2} />
-      Çıkış Yap
+      {copied ? <Check size={16} strokeWidth={2.4} /> : <Share size={16} strokeWidth={2.2} />}
+      {copied ? 'Kopyalandı' : 'Profili Paylaş'}
     </button>
   );
 }
@@ -163,46 +237,177 @@ function UsernameStatus({ status }) {
   return null;
 }
 
-function ProfileInfoForm({ user, onSave }) {
+// ── Kişisel Bilgiler + Sosyal Medya kartları (mockup birebir) ────────────────
+// Marka ikonları — Lucide bu sürümde Instagram/Twitter içermiyor → özel SVG çiziyoruz.
+const IgIcon = ({ s = 17, c = C.textLight }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2.5" y="2.5" width="19" height="19" rx="5.4" />
+    <circle cx="12" cy="12" r="4.1" />
+    <circle cx="17.3" cy="6.7" r="1.05" fill={c} stroke="none" />
+  </svg>
+);
+const XIcon = ({ s = 16, c = C.textLight }) => (
+  <svg width={s} height={s} viewBox="0 0 24 24" fill={c} aria-hidden="true">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" />
+  </svg>
+);
+
+// Alan input stili (kart içi düzenleme)
+const FIELD_STYLE = {
+  width: '100%', boxSizing: 'border-box', border: `1px solid ${C.border}`, borderRadius: '10px',
+  padding: '9px 12px', fontSize: '14px', color: C.text, outline: 'none', fontFamily: F, background: C.card,
+};
+
+// Kart başlığındaki düzenle / kaydet-iptal kontrolü
+function EditControls({ editing, onEdit, onSave, onCancel, saving }) {
+  if (!editing) {
+    return (
+      <button type="button" onClick={onEdit}
+        className="inline-flex items-center gap-[7px] cursor-pointer"
+        style={{ height: '32px', padding: '0 13px', borderRadius: '99px', border: `1px solid ${C.border}`, background: C.card, color: C.textMid, fontFamily: F, fontSize: '13px', fontWeight: 600, transition: 'all .15s' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = C.surface; e.currentTarget.style.borderColor = C.goldBorder; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = C.card; e.currentTarget.style.borderColor = C.border; }}>
+        <Pencil size={14} strokeWidth={2} />
+        Düzenle
+      </button>
+    );
+  }
+  const round = { width: '32px', height: '32px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all .15s' };
+  return (
+    <div className="flex items-center gap-2">
+      <button type="button" onClick={onSave} disabled={saving} aria-label="Kaydet" title="Kaydet"
+        style={{ ...round, border: `1px solid ${C.greenBorder}`, background: C.greenBg, color: C.green, opacity: saving ? 0.6 : 1 }}>
+        <Check size={16} strokeWidth={2.6} />
+      </button>
+      <button type="button" onClick={onCancel} disabled={saving} aria-label="İptal" title="İptal"
+        style={{ ...round, border: `1px solid ${C.redBorder}`, background: C.redBg, color: C.red, opacity: saving ? 0.6 : 1 }}>
+        <X size={16} strokeWidth={2.6} />
+      </button>
+    </div>
+  );
+}
+
+// Kart satırı — sol ikon + etiket (sabit genişlik), sağ değer/alan
+function InfoRow({ icon, label, children, first, top }) {
+  return (
+    <div style={{ display: 'flex', alignItems: top ? 'flex-start' : 'center', gap: '12px', padding: '12px 2px', borderTop: first ? 'none' : `1px solid ${C.borderLight}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '140px', flexShrink: 0, color: C.textLight, paddingTop: top ? '9px' : 0 }}>
+        <span style={{ display: 'inline-flex', width: '18px', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}>{icon}</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: F, whiteSpace: 'nowrap' }}>{label}</span>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </div>
+  );
+}
+
+const CARD_STYLE = { background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '18px 20px', boxShadow: C.shadow };
+const CardHeader = ({ icon, title, right }) => (
+  <div className="flex items-center justify-between" style={{ marginBottom: '6px' }}>
+    <div className="flex items-center gap-[11px]">
+      <span style={{ width: '32px', height: '32px', flexShrink: 0, boxSizing: 'border-box', borderRadius: '9px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0, background: C.goldBg, border: `1px solid ${C.goldBorder}`, color: C.gold }}>{icon}</span>
+      <h3 style={{ margin: 0, fontSize: '17px', lineHeight: 1, fontWeight: 800, color: C.text, fontFamily: F }}>{title}</h3>
+    </div>
+    {right}
+  </div>
+);
+const viewText = (v) => <span style={{ fontSize: '14px', fontWeight: 600, color: C.text, fontFamily: F }}>{v}</span>;
+const dash = <span style={{ fontSize: '14px', color: C.textMuted, fontFamily: F }}>—</span>;
+
+// Kişisel Bilgiler kartı (Ad Soyad / E-posta / Hakkımda / Konum)
+function PersonalInfoCard({ user, onSave }) {
+  const init = { name: user?.name || '', bio: user?.bio || '' };
   const [edit, setEdit] = useState(false);
-  const [form, setForm] = useState({ name: user?.name || '', bio: user?.bio || '' });
-  const [saveLoading, setSaveLoading] = useState(false);
-  const [saveErr, setSaveErr] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(init);
+  const [form, setForm] = useState(init);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
 
   const save = async () => {
-    setSaveLoading(true);
-    setSaveErr('');
+    setSaving(true); setErr('');
     try {
-      await onSave(form.name, form.bio);
-      setSaved(true);
+      const patch = { name: form.name.trim(), bio: form.bio.trim() };
+      await onSave(patch);
+      setSaved(patch);
       setEdit(false);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      setSaveErr('Kaydedilemedi. Lütfen tekrar deneyin.');
-    } finally {
-      setSaveLoading(false);
-    }
+    } catch { setErr('Kaydedilemedi. Lütfen tekrar deneyin.'); }
+    finally { setSaving(false); }
   };
+  const cancel = () => { setForm(saved); setErr(''); setEdit(false); };
 
   return (
-    <>
-      {saved && <div className="bg-[#f0fff4] border border-[#9ae6b4] rounded-[10px] p-[11px_16px] text-[#276749] mb-[14px] text-[13px]">Bilgileriniz kaydedildi.</div>}
-      {saveErr && <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] p-[11px_16px] text-[#c53030] mb-[14px] text-[13px]">{saveErr}</div>}
-      <div className="flex justify-between items-center mb-[18px]">
-        <h3 className="text-[20px] font-extrabold text-(--color-navy)">Kişisel Bilgiler</h3>
-        {!edit && <Btn variant="ghost" size="sm" onClick={() => { setSaveErr(''); setEdit(true); }}>Düzenle</Btn>}
-      </div>
-      <Input label="Ad Soyad" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: toTitleCase(e.target.value) }))} disabled={!edit} />
-      <Input label="E-posta" type="email" value={user?.email || ''} disabled={true} />
-      <Textarea label="Hakkımda" value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} rows={3} disabled={!edit} />
-      {edit && (
-        <div className="flex gap-2 mt-1">
-          <Btn size="sm" onClick={save} disabled={saveLoading}>{saveLoading ? 'Kaydediliyor...' : 'Kaydet'}</Btn>
-          <Btn variant="secondary" size="sm" onClick={() => { setEdit(false); setSaveErr(''); setForm({ name: user?.name || '', bio: user?.bio || '' }); }}>İptal</Btn>
-        </div>
-      )}
-    </>
+    <div style={CARD_STYLE}>
+      <CardHeader icon={<IdCard size={17} strokeWidth={2} />} title="Kişisel Bilgiler"
+        right={<EditControls editing={edit} saving={saving} onEdit={() => { setForm(saved); setErr(''); setEdit(true); }} onSave={save} onCancel={cancel} />} />
+      {err && <div className="rounded-[10px] text-[13px] mb-2" style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red, padding: '9px 13px' }}>{err}</div>}
+
+      <InfoRow first icon={<UserRound size={16} strokeWidth={2} />} label="Ad Soyad">
+        {edit
+          ? <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: toTitleCase(e.target.value) }))} style={FIELD_STYLE} onFocus={(e) => { e.target.style.borderColor = C.gold; }} onBlur={(e) => { e.target.style.borderColor = C.border; }} />
+          : viewText(saved.name)}
+      </InfoRow>
+
+      <InfoRow icon={<Mail size={16} strokeWidth={2} />} label="E-posta">
+        <span style={{ fontSize: '14px', fontWeight: 600, color: edit ? C.textLight : C.text, fontFamily: F }}>{user?.email || '—'}</span>
+      </InfoRow>
+
+      <InfoRow top icon={<MessageSquare size={16} strokeWidth={2} />} label="Hakkımda">
+        {edit
+          ? (<div>
+              <textarea value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value.slice(0, 100) }))} rows={3} maxLength={100} placeholder="Kendinden kısaca bahset…" style={{ ...FIELD_STYLE, resize: 'vertical', lineHeight: 1.55 }} onFocus={(e) => { e.target.style.borderColor = C.gold; }} onBlur={(e) => { e.target.style.borderColor = C.border; }} />
+              <div style={{ textAlign: 'right', fontSize: '11px', color: C.textLight, marginTop: '3px', fontFamily: F, fontVariantNumeric: 'tabular-nums' }}>{form.bio.length}/100</div>
+            </div>)
+          : (saved.bio ? <span style={{ fontSize: '13.5px', color: C.textMid, lineHeight: 1.55, fontFamily: F }}>{saved.bio}</span> : dash)}
+      </InfoRow>
+    </div>
+  );
+}
+
+// Sosyal Medya kartı (Instagram / X / Kişisel Website) — link gösterir, "Bağla" yok
+const normUrl = (v) => { const t = (v || '').trim(); if (!t) return ''; return /^https?:\/\//i.test(t) ? t : `https://${t}`; };
+const cleanUrl = (v) => (v || '').trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+function SocialMediaCard({ user, onSave }) {
+  const init = { instagram: user?.instagram || '', twitter: user?.twitter || '', website: user?.website || '' };
+  const [edit, setEdit] = useState(false);
+  const [saved, setSaved] = useState(init);
+  const [form, setForm] = useState(init);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  const save = async () => {
+    setSaving(true); setErr('');
+    try {
+      const patch = { instagram: form.instagram.trim(), twitter: form.twitter.trim(), website: form.website.trim() };
+      await onSave(patch);
+      setSaved(patch); setEdit(false);
+    } catch { setErr('Kaydedilemedi. Lütfen tekrar deneyin.'); }
+    finally { setSaving(false); }
+  };
+  const cancel = () => { setForm(saved); setErr(''); setEdit(false); };
+
+  const linkView = (v) => v
+    ? <a href={normUrl(v)} target="_blank" rel="noopener noreferrer" className="overflow-hidden text-ellipsis whitespace-nowrap block" style={{ fontSize: '14px', fontWeight: 600, color: C.gold, textDecoration: 'none', fontFamily: F }}>{cleanUrl(v)}</a>
+    : dash;
+  const field = (keyName, ph) => (
+    <input value={form[keyName]} onChange={(e) => setForm((f) => ({ ...f, [keyName]: e.target.value }))} placeholder={ph} autoComplete="off" style={FIELD_STYLE}
+      onFocus={(e) => { e.target.style.borderColor = C.gold; }} onBlur={(e) => { e.target.style.borderColor = C.border; }} />
+  );
+
+  return (
+    <div style={{ ...CARD_STYLE, marginTop: '18px' }}>
+      <CardHeader icon={<Share2 size={17} strokeWidth={2} />} title="Sosyal Medya"
+        right={<EditControls editing={edit} saving={saving} onEdit={() => { setForm(saved); setErr(''); setEdit(true); }} onSave={save} onCancel={cancel} />} />
+      {err && <div className="rounded-[10px] text-[13px] mb-2" style={{ background: C.redBg, border: `1px solid ${C.redBorder}`, color: C.red, padding: '9px 13px' }}>{err}</div>}
+
+      <InfoRow first icon={<IgIcon />} label="Instagram">
+        {edit ? field('instagram', 'instagram.com/kullanici') : linkView(saved.instagram)}
+      </InfoRow>
+      <InfoRow icon={<XIcon />} label="X (Twitter)">
+        {edit ? field('twitter', 'x.com/kullanici') : linkView(saved.twitter)}
+      </InfoRow>
+      <InfoRow icon={<Globe size={16} strokeWidth={2} />} label="Kişisel Website">
+        {edit ? field('website', 'siteniz.com') : linkView(saved.website)}
+      </InfoRow>
+    </div>
   );
 }
 
@@ -302,6 +507,97 @@ export function ProfilePage({ queryParams }) {
 
   const myComments = comments.filter((c) => c.userId === user.uid || c.userId === user.id);
   const lvl = levelFor(user.xpTotal || 0);
+  // Hero/stats türetilmiş sayımlar (mevcut selector'lardan — uydurma yok)
+  const favUid = user.uid || user.id;
+  const favTotal = (getUserFavoriteBrands(favUid) || []).length + (getUserFavoritePerfumes(favUid) || []).length
+    + (getUserFavoriteMuadils(favUid) || []).length + (getUserFavoriteComps(favUid) || []).length;
+  const joinedLabel = memberSince(user.createdAt);
+  const wide = !sm && w >= 1000;           // 3 kolonlu dashboard eşiği (sol nav + içerik + sağ sidebar)
+
+  // Sağ sidebar türetilmiş veriler (yalnızca geniş ekran)
+  const approvedCount = user.approvedReviewCount || 0;
+  // Favori id'leri ekleme sırasını korur → "son 5" doğru olsun diye id üzerinden map'liyoruz
+  const favOrigIds = getUserFavoritePerfumes(favUid) || [];
+  const favMuadilIds = getUserFavoriteMuadils(favUid) || [];
+  const favOrigList = favOrigIds.map((id) => perfumes.find((p) => p.id === id)).filter(Boolean);
+  const favMuadilList = favMuadilIds.map((id) => muadilPerfumes.find((m) => m.id === id)).filter(Boolean);
+
+  // Sağ sidebar — "Rozetlerim" (kazanılmış review rozetleri)
+  const renderRozetler = () => {
+    const earned = BADGE_ORDER.map((id) => BADGES[id]).filter((b) => approvedCount >= b.need);
+    return (
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '16px' }}>
+        <div className="flex items-center justify-between mb-[14px]">
+          <h3 className="text-[15px] font-bold text-(--color-navy)">Rozetlerim</h3>
+          <span className="text-[12px] font-bold px-[9px] py-[2px] rounded-full" style={{ background: C.goldBg, color: C.goldDeep, fontVariantNumeric: 'tabular-nums' }}>{earned.length}/{BADGE_ORDER.length}</span>
+        </div>
+        {earned.length === 0 ? (
+          <div className="text-[13px] text-(--color-text-light) leading-relaxed">Henüz rozet kazanılmadı. İlk onaylı değerlendirmenle ilk rozetini aç.</div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', justifyItems: 'center' }}>
+              {earned.slice(-8).map((b) => (
+                <div key={b.id} title={`${b.label} · ${b.need} değerlendirme`}>
+                  <BadgeMedal badge={b} size={48} unlocked />
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setTab('achievements')} className="mt-[14px] w-full text-[13px] font-semibold rounded-[10px] py-[9px] cursor-pointer" style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.textMid, fontFamily: F }}>
+              Tümünü gör
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // Sağ sidebar — favori parfüm kartı (muadil / orijinal için ortak); her biri son 5'i gösterir
+  const renderFavCard = (title, list, { dot, onItem, subtitle }) => (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '16px' }}>
+      <div className="flex items-center justify-between mb-[14px]">
+        <h3 className="text-[15px] font-bold text-(--color-navy)">{title}</h3>
+        <span className="text-[12px] font-bold px-[9px] py-[2px] rounded-full" style={{ background: C.goldBg, color: C.goldDeep, fontVariantNumeric: 'tabular-nums' }}>{list.length}</span>
+      </div>
+      {list.length === 0 ? (
+        <div className="text-[13px] text-(--color-text-light) leading-relaxed">Henüz favori eklenmedi.</div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-[2px]">
+            {list.slice(-5).reverse().map((p) => (
+              <button key={p.id} onClick={() => onItem(p)} className="flex items-center gap-3 w-full text-left rounded-[10px] px-[10px] py-[9px] cursor-pointer" style={{ border: 'none', background: 'transparent', fontFamily: F, transition: 'background .15s' }} onMouseEnter={(e) => { e.currentTarget.style.background = C.surface; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                <span className="w-[8px] h-[8px] rounded-full shrink-0" style={{ background: dot }} />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-[13px] text-(--color-navy) overflow-hidden text-ellipsis whitespace-nowrap">{p.name}</span>
+                  <span className="block text-[11px] text-(--color-text-light) overflow-hidden text-ellipsis whitespace-nowrap">{subtitle(p)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          {list.length > 5 && (
+            <button onClick={() => setTab('favorites')} className="mt-[12px] w-full text-[13px] font-semibold rounded-[10px] py-[9px] cursor-pointer" style={{ border: `1px solid ${C.border}`, background: 'transparent', color: C.textMid, fontFamily: F }}>
+              +{list.length - 5} daha
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  // Sağ sidebar — "En Sevdiğim Muadil Parfümler" + "En Sevdiğim Orijinal Parfümler" (alt alta)
+  const renderFavoriler = () => (
+    <>
+      {renderFavCard('En Sevdiğim Muadil Parfümler', favMuadilList, {
+        dot: C.green,
+        subtitle: (m) => m.brandName,
+        onItem: (m) => navigate(`/karsilastir?orijinal=${m.targetPerfumeId}&muadil=${m.id}`),
+      })}
+      {renderFavCard('En Sevdiğim Orijinal Parfümler', favOrigList, {
+        dot: C.gold,
+        subtitle: (p) => p.brandName,
+        onItem: (p) => navigate(`/${p.brandSlug}/${p.slug}`),
+      })}
+    </>
+  );
 
   const saveUsername = async () => {
     if (unStatus === 'same') { setUsernameEdit(false); return; }
@@ -503,19 +799,26 @@ export function ProfilePage({ queryParams }) {
 
       {/* Profile header */}
       <div style={{
+        position: 'relative',
         background: `radial-gradient(120% 150% at 12% -30%, rgba(201,164,107,.16), transparent 46%), linear-gradient(135deg,${C.navy},${C.navyLight})`,
         padding: sm ? '28px 16px' : '40px 32px',
         borderBottom: '1px solid rgba(255,255,255,.06)',
       }}>
+        {/* Mobilde Profili Paylaş — sağ üst köşe */}
+        {sm && (
+          <div style={{ position: 'absolute', top: '14px', right: '14px', zIndex: 3, transform: 'scale(.75)', transformOrigin: 'top right' }}>
+            <ShareButton username={user.username} />
+          </div>
+        )}
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-         <div style={{ display: 'flex', gap: sm ? '16px' : '22px', alignItems: sm ? 'flex-start' : 'center', flexWrap: 'wrap' }}>
+         <div style={{ display: 'flex', flexDirection: sm ? 'column' : 'row', gap: sm ? '14px' : '22px', alignItems: 'center', textAlign: sm ? 'center' : 'left', flexWrap: sm ? 'nowrap' : 'wrap' }}>
           {/* Avatar */}
           <div className="relative shrink-0" ref={photoMenuRef}
             onMouseEnter={() => setAvatarHover(true)}
             onMouseLeave={() => setAvatarHover(false)}
           >
             {/* Seviye ilerleme halkası — XP'nin bir sonraki seviyeye oranı */}
-            <svg width={sm ? 78 : 94} height={sm ? 78 : 94} viewBox="0 0 100 100" aria-hidden="true"
+            <svg width={sm ? 104 : 130} height={sm ? 104 : 130} viewBox="0 0 100 100" aria-hidden="true"
               style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 0, pointerEvents: 'none' }}>
               <defs>
                 <linearGradient id="avatarLevelRing" x1="0" y1="0" x2="1" y2="1">
@@ -529,7 +832,7 @@ export function ProfilePage({ queryParams }) {
             </svg>
             <div
               onClick={() => { if (photoLoading) return; if (user.photoURL) setPhotoMenu(v => !v); else fileInputRef.current?.click(); }}
-              style={{ width: sm ? '64px' : '80px', height: sm ? '64px' : '80px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', zIndex: 1, border: '2px solid rgba(255,255,255,.22)' }}
+              style={{ width: sm ? '88px' : '112px', height: sm ? '88px' : '112px', borderRadius: '50%', background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', position: 'relative', zIndex: 1, border: '2px solid rgba(255,255,255,.22)' }}
             >
               {user.photoURL
                 ? <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -568,18 +871,13 @@ export function ProfilePage({ queryParams }) {
             {user.photoURL && !photoLoading && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleDeletePhoto(); }}
-                className="absolute top-0 right-0 w-5 h-5 rounded-full bg-[#e53e3e] border-2 border-white/40 flex items-center justify-center cursor-pointer text-[12px] text-white leading-none p-0"
-                style={{ fontFamily: F }}
-              >×</button>
+                aria-label="Profil fotoğrafını sil" title="Fotoğrafı sil"
+                className="absolute flex items-center justify-center cursor-pointer p-0"
+                style={{ top: '3px', right: '3px', width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg,#f2616a,#cf2f39)', border: `2px solid ${C.navy}`, color: '#fff', boxShadow: '0 2px 7px rgba(0,0,0,.45)', zIndex: 5 }}
+              >
+                <X size={12} strokeWidth={2.8} />
+              </button>
             )}
-            {/* Seviye rozeti */}
-            <span style={{
-              position: 'absolute', bottom: '-4px', left: '50%', transform: 'translateX(-50%)', zIndex: 4,
-              minWidth: '22px', height: '22px', padding: '0 7px', borderRadius: '99px',
-              background: `linear-gradient(135deg,${C.gold},${C.goldLight})`, border: `2px solid ${C.navy}`,
-              color: '#fff', fontSize: '11px', fontWeight: 800, display: 'inline-flex', alignItems: 'center',
-              justifyContent: 'center', fontFamily: F, boxShadow: '0 2px 7px rgba(0,0,0,.4)', fontVariantNumeric: 'tabular-nums',
-            }}>{lvl.lvl}</span>
             <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" className="hidden" onChange={handlePhotoChange} />
           </div>
 
@@ -598,53 +896,76 @@ export function ProfilePage({ queryParams }) {
               >×</button>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 flex-wrap mb-1">
-              <span className="font-black text-white overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: sm ? '20px' : '27px', letterSpacing: '-.02em' }}>{user.name}</span>
+          {/* Mobilde rol rozeti — avatarın hemen altında, %50 küçültülmüş */}
+          {sm && (
+            <div style={{ transform: 'scale(.75)', transformOrigin: 'center', margin: '-4px 0' }}>
               <RolePill role={user.role} />
             </div>
-            <div className="text-white/55 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className={`flex items-center gap-3 flex-wrap mb-1 ${sm ? 'justify-center' : ''}`}>
+              <span className="font-black text-white overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: sm ? '22px' : '28px', letterSpacing: '-.02em' }}>{user.name}</span>
+              {!sm && <RolePill role={user.role} />}
+            </div>
+            <div className={`flex items-center gap-2 flex-wrap mb-2 ${sm ? 'justify-center' : ''}`}>
+              {user.username && <span className="text-[13px] font-semibold" style={{ color: '#eed9ab' }}>@{user.username}</span>}
+              {user.username && <span className="text-white/25">·</span>}
+              <span className="text-white/55 text-[13px] overflow-hidden text-ellipsis whitespace-nowrap">{user.email}</span>
+            </div>
+            {user.bio && <div className={`text-white/70 text-[13px] leading-[1.5] mb-2 ${sm ? 'mx-auto' : ''}`} style={{ maxWidth: '58ch' }}>{user.bio}</div>}
+            {joinedLabel && (
+              <div className={`flex items-center gap-[6px] text-white/45 text-[12px] ${sm ? 'justify-center' : ''}`}>
+                <Calendar size={13} strokeWidth={2} />
+                <span>{joinedLabel} tarihinde aramıza katıldın.</span>
+              </div>
+            )}
           </div>
-          <LogoutButton onClick={() => { logout(); navigate('/'); }} />
+          {!sm && (
+            <div className="flex items-center gap-2 shrink-0" style={{ alignSelf: 'center' }}>
+              <ShareButton username={user.username} />
+              <MoreMenu onLogout={() => { logout(); navigate('/'); }} />
+            </div>
+          )}
          </div>
 
-         {/* İlerleme paneli — seviye + XP bar + XP/MP tile'ları */}
-         <div style={{ marginTop: sm ? '18px' : '22px', display: 'flex', gap: sm ? '14px' : '24px', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '16px', padding: sm ? '14px 16px' : '16px 20px' }}>
-           <div style={{ flex: 1, minWidth: '220px' }}>
-             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px', marginBottom: '8px' }}>
+         {/* Floating stats bar — Puan / Yorum / Favori / Liste + Seviye / XP */}
+         <div style={{ marginTop: sm ? '16px' : '22px', display: 'flex', flexDirection: sm ? 'column' : 'row', gap: sm ? '14px' : '26px', alignItems: sm ? 'stretch' : 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '16px', padding: sm ? '14px' : '14px 22px' }}>
+           <div style={{ display: 'flex', flexWrap: sm ? 'nowrap' : 'wrap', alignItems: 'center', justifyContent: sm ? 'space-between' : 'flex-start', gap: sm ? '6px' : '8px', width: sm ? '100%' : 'auto' }}>
+             <StatItem Icon={Star} value={user.mp || 0} label="Puan" compact={sm} />
+             {!sm && <span style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,.12)' }} />}
+             <StatItem Icon={MessageSquare} value={myComments.length} label="Yorum" compact={sm} />
+             {!sm && <span style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,.12)' }} />}
+             <StatItem Icon={Heart} value={favTotal} label="Favori" compact={sm} />
+             {!sm && <span style={{ width: '1px', height: '28px', background: 'rgba(255,255,255,.12)' }} />}
+             <StatItem Icon={ListChecks} value={lists.length} label="Liste" compact={sm} />
+           </div>
+           {sm && <div style={{ height: '1px', background: 'rgba(255,255,255,.1)' }} />}
+           <div style={{ flex: 1, minWidth: sm ? 'auto' : '240px', width: sm ? '100%' : undefined, marginLeft: sm ? 0 : 'auto' }}>
+             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '7px' }}>
                <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', fontFamily: F }}>
                  Seviye {lvl.lvl} <span style={{ color: 'rgba(255,255,255,.35)', fontWeight: 600 }}>·</span> <span style={{ color: '#eed9ab' }}>{lvl.title}</span>
                </span>
-               <span style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,.55)', fontVariantNumeric: 'tabular-nums' }}>
-                 {lvl.next ? `${user.xpTotal || 0} / ${lvl.next.min} XP` : 'En yüksek seviye'}
+               <span style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 10px', borderRadius: '99px', background: C.goldBg, border: 'none', color: C.goldDeep, fontSize: '11px', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontFamily: F }}>
+                 {lvl.next ? `${user.xpTotal || 0} / ${lvl.next.min} XP` : `${user.xpTotal || 0} XP`}
                </span>
              </div>
              <div style={{ height: '8px', borderRadius: '99px', background: 'rgba(255,255,255,.1)', overflow: 'hidden' }}>
                <div style={{ width: `${Math.round(lvl.progress * 100)}%`, height: '100%', background: `linear-gradient(90deg,${C.gold},${C.goldLight})`, borderRadius: '99px', transition: 'width .6s cubic-bezier(.2,.8,.2,1)' }} />
              </div>
-             {lvl.next && (
-               <div style={{ marginTop: '7px', fontSize: '11px', color: 'rgba(255,255,255,.5)' }}>
-                 Sonraki: <span style={{ color: 'rgba(255,255,255,.78)', fontWeight: 600 }}>{lvl.next.title}</span>
-               </div>
-             )}
-           </div>
-           <div style={{ display: 'flex', gap: '10px' }}>
-             <StatTile Icon={IconXP} label="XP" value={user.xpTotal || 0} />
-             <StatTile Icon={IconMP} label="MP" value={user.mp || 0} gold />
            </div>
          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '960px', margin: '0 auto', padding: sm ? '20px 16px' : `28px ${px}` }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: sm ? '20px 16px' : `28px ${px}` }}>
         {photoErr && (
           <div className="bg-[#fff5f5] border border-[#fc8181] rounded-[10px] p-[10px_14px] text-[#c53030] text-[13px] mb-4">
             {photoErr}
           </div>
         )}
-        {/* Tabs — mobilde dropdown, masaüstünde yatay */}
-        {sm ? (
-          <div ref={tabMenuRef} className="relative mb-7">
+        {/* Dar ekran (mobil/tablet): dropdown nav */}
+        {!wide && (
+          <div ref={tabMenuRef} className="relative mb-6">
             <button onClick={() => setTabMenuOpen((o) => !o)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', padding: '12px 16px', fontSize: '15px', fontWeight: 700, color: C.gold, fontFamily: F, cursor: 'pointer' }}>
               <span>{TABS.find((t) => t.k === tab)?.l}</span>
@@ -663,25 +984,39 @@ export function ProfilePage({ queryParams }) {
               </div>
             )}
           </div>
-        ) : (
-          <div className="tabs-scroll border-b border-(--color-border) mb-7">
-            {TABS.map(({ k, l }) => (
-              <button key={k} onClick={() => setTab(k)}
-                style={{ background: 'none', border: 'none', borderBottom: `2px solid ${tab === k ? C.gold : 'transparent'}`, padding: '10px 16px', color: tab === k ? C.gold : C.textMid, fontSize: '14px', fontWeight: tab === k ? 700 : 500, cursor: 'pointer', fontFamily: F, marginBottom: '-1px', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {l}
-              </button>
-            ))}
-          </div>
         )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: wide ? '220px minmax(0,1fr) 300px' : '1fr', gap: wide ? '24px' : '0', alignItems: 'start' }}>
+          {/* Sol sidebar — profil navigasyonu (geniş ekran) */}
+          {wide && (
+            <aside style={{ position: 'sticky', top: '16px' }}>
+              <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '10px' }}>
+                {TABS.map(({ k, l }) => {
+                  const Icon = TAB_ICONS[k]; const active = tab === k;
+                  return (
+                    <button key={k} onClick={() => setTab(k)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '11px', width: '100%', textAlign: 'left', padding: '11px 13px', borderRadius: '11px', border: 'none', cursor: 'pointer', fontFamily: F, fontSize: '14px', fontWeight: active ? 700 : 600, background: active ? C.goldBg : 'transparent', color: active ? C.goldDeep : C.textMid, transition: 'background .15s, color .15s' }}>
+                      <Icon size={18} strokeWidth={active ? 2.4 : 2} color={active ? C.gold : C.textLight} />
+                      {l}
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+          )}
+
+          {/* Orta içerik */}
+          <main style={{ minWidth: 0 }}>
 
         {tab === 'info' && (
           <div className="max-w-[480px]">
-            <ProfileInfoForm user={user} onSave={(name, bio) => updateUser(user.uid, { name, bio })} />
+            <PersonalInfoCard user={user} onSave={(patch) => updateUser(user.uid, patch)} />
+            <SocialMediaCard user={user} onSave={(patch) => updateUser(user.uid, patch)} />
 
             {user.role !== 'admin' && (
               <>
                 {/* Kullanıcı Adı Bölümü */}
-                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                <div style={{ ...CARD_STYLE, marginTop: '18px' }}>
                   <div className="flex justify-between items-center mb-[14px]">
                     <h3 className="text-[18px] font-bold text-(--color-navy)">Kullanıcı Adı</h3>
                     {!usernameEdit && (
@@ -726,11 +1061,11 @@ export function ProfilePage({ queryParams }) {
                   )}
                 </div>
 
-                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                <div style={{ ...CARD_STYLE, marginTop: '18px' }}>
                   <h3 className="text-[18px] font-bold text-(--color-navy) mb-3">Şifre Değiştir</h3>
                   <Btn variant="ghost" onClick={() => navigate('/sifre-sifirla')}>Sıfırlama E-postası Gönder</Btn>
                 </div>
-                <div className="mt-8 pt-[22px] border-t border-(--color-border)">
+                <div style={{ ...CARD_STYLE, marginTop: '18px' }}>
                   <h3 className="text-[18px] font-bold text-[#c53030] mb-[6px]">Tehlikeli Bölge</h3>
                   <p className="text-[13px] text-(--color-text-light) mb-[14px] leading-[1.6]">
                     Hesabınızı kalıcı olarak silmek istiyorsanız aşağıdaki butona tıklayın. Bu işlem geri alınamaz.
@@ -1038,6 +1373,16 @@ export function ProfilePage({ queryParams }) {
             muadilPerfumes={muadilPerfumes}
           />
         )}
+          </main>
+
+          {/* Sağ sidebar — Rozetlerim + En Sevdiğim Parfümler (yalnızca geniş ekran) */}
+          {wide && (
+            <aside style={{ position: 'sticky', top: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {renderRozetler()}
+              {renderFavoriler()}
+            </aside>
+          )}
+        </div>
       </div>
     </div>
   );

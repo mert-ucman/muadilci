@@ -49,12 +49,17 @@ export const BADGE_GROUPS = [
   {
     key: 'prestij', name: 'Prestij', meta: 'Metal kademeleri', shape: 'laurel',
     // Kademe kademe görkem artar (deco): ışın sayısı, iç halka, mücevher ve parıltı
-    // arttıkça rozet daha "şaşaalı" olur. Efsane'de tepede taç + en yoğun süsleme.
+    // arttıkça rozet daha "şaşaalı" olur.
     badges: [
       { id: 'bronz-burun',       label: 'Bronz Burun',       need: 250,  emblem: 'star',  c1: '#e8a768', c2: '#8a4f1e', deco: { rays: 0,  ring: 1, gems: 0, sparks: 0 } },
       { id: 'gumus-burun',       label: 'Gümüş Burun',       need: 500,  emblem: 'star',  c1: '#eef2f6', c2: '#8b97a6', deco: { rays: 0,  ring: 2, gems: 2, sparks: 1 } },
       { id: 'altin-burun',       label: 'Altın Burun',       need: 750,  emblem: 'star',  c1: '#ffd766', c2: '#a8760c', deco: { rays: 12, ring: 2, gems: 3, sparks: 2 } },
-      // Efsane: metal değil MÜCEVHER — altından da değerli, zümrüt yeşili
+    ],
+  },
+  {
+    key: 'efsanevi', name: 'Efsanevi', meta: 'Zirve', shape: 'laurel',
+    badges: [
+      // Efsane: metal değil MÜCEVHER — altından da değerli, zümrüt yeşili; tepede taç + en yoğun süsleme
       { id: 'muadilci-efsanesi', label: 'Muadilci Efsanesi', need: 1000, emblem: 'crown', c1: '#3fe0a0', c2: '#0a5e3e', deco: { rays: 16, ring: 2, gems: 5, sparks: 4 } },
     ],
   },
